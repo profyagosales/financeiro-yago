@@ -5,6 +5,8 @@ import { useOrcamentos, addOrcamento, deleteOrcamento } from '@/db/hooks/useOrca
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useGastosPorCategoria } from '@/db/hooks/useTransacoes'
 import { fmt, mesAnoAtual } from '@/lib/format'
+import { Confetti } from "@/components/ui/Confetti"
+import { sounds, haptic } from "@/lib/sounds"
 import { Dobrao } from '@/components/mascot/Dobrao'
 
 const ICONS_META = ['🏠','✈️','🚗','📱','💻','🎓','💍','🏖️','📦','💰','🎯','🌟']
