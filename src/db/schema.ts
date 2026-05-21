@@ -15,10 +15,11 @@ class FinanceiroYagoDB extends Dexie {
   cartoes!: Table<Cartao>; lancamentosCartao!: Table<LancamentoCartao>
   contasFixas!: Table<ContaFixa>; pagamentosFixos!: Table<PagamentoFixo>
   metas!: Table<Meta>; patrimonio!: Table<PatrimonioItem>
+  orcamentos!: Table<Orcamento>
 
   constructor() {
     super('FinanceiroYago')
-    this.version(2).stores({
+    this.version(3).stores({
       contas: '++id, tipo, ativo, syncId',
       categorias: '++id, tipo, syncId',
       transacoes: '++id, data, tipo, contaId, categoriaId, status, syncId',
@@ -28,6 +29,7 @@ class FinanceiroYagoDB extends Dexie {
       pagamentosFixos: '++id, contaFixaId, [contaFixaId+mes+ano], [mes+ano], syncId',
       metas: '++id, ativo, syncId',
       patrimonio: '++id, tipo, syncId',
+      orcamentos: '++id, categoriaId, syncId',
     })
   }
 }
@@ -54,3 +56,5 @@ export async function seedCategories() {
     { nome: 'Outros', tipo: 'receita', icone: '✨', cor: '#7A5C4F', ordem: 14 },
   ])
 }
+
+export interface Orcamento { id?: number; categoriaId: number; valorLimite: number; periodo: string; rollover: boolean; inicio?: string; fim?: string; syncId?: string }
