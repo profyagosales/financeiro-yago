@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTransacoes, deleteTransacao } from '@/db/hooks/useTransacoes'
 import { useAnexos, addAnexo, deleteAnexo } from '@/db/hooks/useAnexos'
 import { fmt, fmtDate } from '@/lib/format'
-import { db } from '@/db/schema'
+import { db } from "@/db/schema"
+import { CategoryIcon } from "@/components/ui/CategoryIcon"
 import { Dobrao } from '@/components/mascot/Dobrao'
 import { useRef } from 'react'
 
