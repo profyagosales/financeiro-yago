@@ -44,3 +44,7 @@ export async function deleteTransacao(id: number) {
   }
   haptic('heavy')
 }
+
+export async function editTransacao(id: number, data: Partial<import('../schema').Transacao>) {
+  return db.transacoes.update(id, { ...data, updatedAt: Date.now() })
+}

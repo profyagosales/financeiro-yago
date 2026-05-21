@@ -45,3 +45,7 @@ export async function addLancamentoCartao(data: {
   }
   return firstId
 }
+
+export async function editCartao(id: number, data: Partial<import('../schema').Cartao>) {
+  return db.cartoes.update(id, data)
+}
