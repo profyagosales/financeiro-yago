@@ -125,12 +125,14 @@ function TxRow({ tx, i }: { tx: any; i: number }) {
           <CategoryIcon nome={cat?.nome ?? ''} cor={catCor} size={46} radius={14} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.descricao}</p>
-            <div style={{ display: 'flex', gap: 6, marginTop: 3, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 6, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: catCor }}>{cat?.nome}</span>
               <span style={{ color: '#C4B4A8', fontSize: 10 }}>·</span>
               <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>{fmtDate(tx.data)}</span>
               {conta && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, background: `rgba(${hexToRgb(conta.cor)},0.15)`, color: conta.cor, padding: '1px 6px', borderRadius: 20, fontWeight: 600 }}>{conta.nome}</span>}
+              {tx.status === 'pendente' && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, background: '#FDF4E3', color: '#D4A017', padding: '1px 6px', borderRadius: 20, fontWeight: 700, border: '1px solid #F0D8A8' }}>⏳ pendente</span>}
               {anexos.length > 0 && <span style={{ fontSize: 11, color: '#3A8580', fontWeight: 600 }}>📎</span>}
+              {tx.tags?.map((tag: string) => <span key={tag} style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, background: `rgba(${hexToRgb(catCor)},0.12)`, color: catCor, padding: '1px 6px', borderRadius: 20, fontWeight: 600 }}>#{tag}</span>)}
             </div>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>

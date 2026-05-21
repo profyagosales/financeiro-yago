@@ -1,5 +1,5 @@
-import { Outlet } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
+import { Outlet, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { FabModal } from './FabModal'
@@ -8,6 +8,7 @@ import { useUIStore } from '@/store/ui'
 
 export function AppShell() {
   const { fabOpen, fabDefaultContaId, openFab, closeFab } = useUIStore()
+  const location = useLocation()
 
   return (
     <div style={{ display: 'flex', height: '100dvh', background: '#FAF6F0', overflow: 'hidden' }}>
@@ -17,9 +18,17 @@ export function AppShell() {
       </div>
 
       {/* Main content */}
-      <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingBottom: 80 }} className="main-content">
-        <Outlet />
-      </main>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.main key={location.pathname}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingBottom: 80 }}
+          className="main-content">
+          <Outlet />
+        </motion.main>
+      </AnimatePresence>
 
       {/* Bottom nav — mobile only */}
       <div className="bottomnav-mobile">

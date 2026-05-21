@@ -38,17 +38,43 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   )
 }
 
+function useMesAnterior(mes: number, ano: number) {
+  const pm = mes === 1 ? 12 : mes - 1
+  const pa = mes === 1 ? ano - 1 : ano
+  return useTransacoesByMes(pm, pa)
+}
+
+function Comparativo({ atual, anterior, label, cor }: { atual: number; anterior: number; label: string; cor: string }) {
+  const diff = anterior > 0 ? ((atual - anterior) / anterior) * 100 : null
+  const subiu = diff !== null && diff > 0
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '0.5px solid #F5F0E8' }}>
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: cor, flexShrink: 0 }} />
+      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', flex: 1 }}>{label}</span>
+      <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F' }}>{fmt(atual)}</span>
+      {diff !== null && (
+        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, background: Math.abs(diff) < 5 ? '#F5F0E8' : subiu ? '#FAF0EE' : '#EBF5F0', color: Math.abs(diff) < 5 ? '#9B7B6A' : subiu ? '#C4553B' : '#3A8580', padding: '2px 7px', borderRadius: 20 }}>
+          {subiu ? '↑' : '↓'} {Math.abs(diff).toFixed(0)}%
+        </span>
+      )}
+    </div>
+  )
+}
+
 export function Page() {
   const now = new Date()
   const [mes, setMes] = useState(now.getMonth() + 1)
   const [ano, setAno] = useState(now.getFullYear())
   const transacoes = useTransacoesByMes(mes, ano)
+  const txAnterior = useMesAnterior(mes, ano)
   const categorias = useCategorias('despesa')
   const historico = useUltimos6Meses()
 
   const receitas = transacoes.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
   const despesas = transacoes.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
   const saldo = receitas - despesas
+  const recAnt = txAnterior.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
+  const despAnt = txAnterior.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
 
   const gastosMap = new Map<number, number>()
   transacoes.filter(t => t.tipo === 'despesa').forEach(t => gastosMap.set(t.categoriaId, (gastosMap.get(t.categoriaId) ?? 0) + t.valor))
@@ -78,6 +104,17 @@ export function Page() {
           </div>
         ))}
       </div>
+
+      {/* Comparativo mês a mês */}
+      {(recAnt > 0 || despAnt > 0) && (
+        <div style={{ background: '#FFFDF9', border: '0.5px solid #E8E0D5', borderRadius: 20, padding: '18px', marginBottom: 20 }}>
+          <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: '#2C1A0F', marginBottom: 4 }}>Comparativo</h2>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginBottom: 12 }}>vs mês anterior</p>
+          <Comparativo atual={receitas} anterior={recAnt} label="Receitas" cor="#3A8580" />
+          <Comparativo atual={despesas} anterior={despAnt} label="Despesas" cor="#C4553B" />
+          <Comparativo atual={saldo} anterior={recAnt - despAnt} label="Saldo" cor="#D4A017" />
+        </div>
+      )}
 
       {/* Spending by category */}
       {pieData.length > 0 && (

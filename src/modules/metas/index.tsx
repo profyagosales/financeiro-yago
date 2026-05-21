@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMetas, addMeta, editMeta, aportarMeta, deleteMeta } from '@/db/hooks/useMetas'
 import { useOrcamentos, addOrcamento, deleteOrcamento } from '@/db/hooks/useOrcamentos'
@@ -8,6 +8,24 @@ import { fmt, mesAnoAtual } from '@/lib/format'
 import { Confetti } from "@/components/ui/Confetti"
 import { sounds, haptic } from "@/lib/sounds"
 import { Dobrao } from '@/components/mascot/Dobrao'
+
+function CircularProgress({ pct, cor, size = 60 }: { pct: number; cor: string; size?: number }) {
+  const stroke = 5
+  const r = (size - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const dash = Math.min(100, pct) / 100 * circ
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F0EAE2" strokeWidth={stroke} />
+      <motion.circle cx={size/2} cy={size/2} r={r} fill="none" stroke={pct >= 100 ? '#3A8580' : cor} strokeWidth={stroke}
+        strokeLinecap="round"
+        initial={{ strokeDasharray: `0 ${circ}` }}
+        animate={{ strokeDasharray: `${dash} ${circ}` }}
+        transition={{ type: 'spring', stiffness: 100, damping: 22 }}
+      />
+    </svg>
+  )
+}
 
 const ICONS_META = ['🏠','✈️','🚗','📱','💻','🎓','💍','🏖️','📦','💰','🎯','🌟']
 const CORES_META = ['#C4553B','#3A8580','#D4A017','#8B4BC8','#3D7EB5','#E89527','#D94F8A','#1E7D5A']
@@ -24,36 +42,35 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
 
   return (
     <motion.div layout style={{ background: '#FFFDF9', border: `0.5px solid ${atingida ? '#D0E8D8' : '#E8E0D5'}`, borderRadius: 20, padding: '16px 18px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 16, background: meta.cor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-          {atingida ? '🎉' : meta.icone}
+      <div style={{ display: 'flex', gap: 14, marginBottom: 10 }}>
+        {/* Circular progress */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <CircularProgress pct={pct} cor={meta.cor} size={60} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: atingida ? 18 : 14, lineHeight: 1 }}>{atingida ? '🎉' : meta.icone}</span>
+          </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: '#2C1A0F' }}>{meta.nome}</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F' }}>{meta.nome}</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: atingida ? '#3A8580' : meta.cor, marginTop: 1 }}>{Math.round(pct)}%</p>
+            </div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>✏️</button>
+              <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18 }}>×</button>
+            </div>
+          </div>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 4 }}>
+            {fmt(meta.valorAtual)} de {fmt(meta.valorAlvo)}
+          </p>
           {meta.prazo && !atingida && (
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>
-              {diasRestantes !== null && diasRestantes > 0 ? `${diasRestantes} dias restantes` : 'Prazo atingido'}
-              {aporteMensal && ` · ${fmt(aporteMensal)}/mês sugerido`}
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', marginTop: 2 }}>
+              {diasRestantes !== null && diasRestantes > 0 ? `${diasRestantes}d restantes` : 'Prazo atingido'}
+              {aporteMensal && ` · ${fmt(aporteMensal)}/mês`}
             </p>
           )}
           {atingida && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#3A8580', fontWeight: 600, marginTop: 2 }}>Meta atingida! 🎊</p>}
-        </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            ✏️
-          </button>
-          <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18 }}>×</button>
-        </div>
-      </div>
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A' }}>{fmt(meta.valorAtual)} de {fmt(meta.valorAlvo)}</span>
-          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: atingida ? '#3A8580' : meta.cor }}>{Math.round(pct)}%</span>
-        </div>
-        <div style={{ background: '#F0EAE2', borderRadius: 8, height: 10, overflow: 'hidden' }}>
-          <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-            transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-            style={{ height: '100%', background: atingida ? '#3A8580' : meta.cor, borderRadius: 8 }} />
         </div>
       </div>
       {!atingida && (
@@ -86,6 +103,7 @@ function OrcamentoRow({ orc, gastos }: { orc: any; gastos: Map<number, number> }
   const [catNome, setCatNome] = useState('')
   const [catCor, setCatCor] = useState('#9B8A7A')
   const [catIcon, setCatIcon] = useState('💸')
+  const shook = useRef(false)
   useState(() => {
     import('@/db/schema').then(({ db }) => db.categorias.get(orc.categoriaId).then(c => { if (c) { setCatNome(c.nome); setCatCor(c.cor); setCatIcon(c.icone) } }))
   })
@@ -93,8 +111,18 @@ function OrcamentoRow({ orc, gastos }: { orc: any; gastos: Map<number, number> }
   const pct = Math.min(100, (gasto / orc.valorLimite) * 100)
   const estourado = gasto > orc.valorLimite
 
+  useEffect(() => {
+    if (estourado && !shook.current) {
+      shook.current = true
+      sounds.error()
+    }
+  }, [estourado])
+
   return (
-    <div style={{ background: '#FFFDF9', border: `0.5px solid ${estourado ? '#FAD0D0' : '#E8E0D5'}`, borderRadius: 14, padding: '12px 14px' }}>
+    <motion.div
+      animate={estourado ? { x: [0, -5, 5, -5, 5, -3, 3, 0] } : { x: 0 }}
+      transition={{ duration: 0.45 }}
+      style={{ background: '#FFFDF9', border: `0.5px solid ${estourado ? '#FAD0D0' : '#E8E0D5'}`, borderRadius: 14, padding: '12px 14px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F' }}>{catIcon} {catNome}</span>
         <div style={{ textAlign: 'right' }}>
@@ -107,8 +135,15 @@ function OrcamentoRow({ orc, gastos }: { orc: any; gastos: Map<number, number> }
           transition={{ type: 'spring', stiffness: 200, damping: 25 }}
           style={{ height: '100%', background: estourado ? '#C4553B' : pct > 80 ? '#D4A017' : catCor, borderRadius: 6 }} />
       </div>
-      {estourado && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4553B', fontWeight: 600, marginTop: 4 }}>Estourou em {fmt(gasto - orc.valorLimite)}</p>}
-    </div>
+      {estourado && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
+          <span style={{ fontSize: 12 }}>🚨</span>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4553B', fontWeight: 700 }}>
+            Estourou em {fmt(gasto - orc.valorLimite)}!
+          </p>
+        </div>
+      )}
+    </motion.div>
   )
 }
 

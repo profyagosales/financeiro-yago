@@ -37,6 +37,8 @@ function FaturaSheet({ cartao, onClose }: { cartao: any; onClose: () => void }) 
   const prevMes = () => { if (viewMes === 1) { setViewMes(12); setViewAno(a => a-1) } else setViewMes(m => m-1) }
   const nextMes = () => { if (viewMes === 12) { setViewMes(1); setViewAno(a => a+1) } else setViewMes(m => m+1) }
   const mesNome = new Date(viewAno, viewMes-1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  const isFutura = viewAno > ano || (viewAno === ano && viewMes > mes)
+  const isAtual = viewMes === mes && viewAno === ano
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,15,0.55)', zIndex: 300, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={onClose}>
@@ -54,7 +56,11 @@ function FaturaSheet({ cartao, onClose }: { cartao: any; onClose: () => void }) 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FAF6F0', borderRadius: 14, padding: '10px 16px', marginBottom: 16 }}>
           <button onClick={prevMes} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#C4553B', padding: '0 8px' }}>‹</button>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', textTransform: 'capitalize' }}>{mesNome}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 2 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', textTransform: 'capitalize' }}>{mesNome}</p>
+              {isFutura && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, background: '#FDF4E3', color: '#D4A017', padding: '1px 6px', borderRadius: 10, border: '1px solid #F0D8A8' }}>PROJEÇÃO</span>}
+              {isAtual && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, background: '#EBF5F0', color: '#3A8580', padding: '1px 6px', borderRadius: 10 }}>ATUAL</span>}
+            </div>
             <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F' }}>{fmt(total)}</p>
           </div>
           <button onClick={nextMes} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#C4553B', padding: '0 8px' }}>›</button>

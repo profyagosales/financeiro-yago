@@ -34,6 +34,16 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
   // Recorrência
   const [recorrente, setRecorrente] = useState(false)
 
+  // Status + Tags
+  const [status, setStatus] = useState<'confirmado' | 'pendente'>('confirmado')
+  const [tags, setTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
+  const addTag = (val: string) => {
+    const t = val.trim().toLowerCase().replace(/[^a-záàâãéèêíóôõúç0-9_-]/gi, '')
+    if (t && !tags.includes(t)) setTags(prev => [...prev, t])
+    setTagInput('')
+  }
+
   // Anexo
   const [preview, setPreview] = useState<{ url: string; file: File } | null>(null)
   const [showAttach, setShowAttach] = useState(false)
@@ -71,7 +81,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
     } else if (fontePag === 'cartao' && cartaoId) {
       await addLancamentoCartao({ cartaoId, descricao: desc || categorias.find(c=>c.id===catId)?.nome || '', valor: num, data, categoriaId: catId!, totalParcelas: parcelas, mes, ano })
     } else if (contaId) {
-      const id = await addTransacao({ data, valor: num, tipo, contaId, categoriaId: catId!, descricao: desc || categorias.find(c=>c.id===catId)?.nome || '', status: 'confirmado', recorrencia: recorrente ? 'mensal' : 'unica' })
+      const id = await addTransacao({ data, valor: num, tipo, contaId, categoriaId: catId!, descricao: desc || categorias.find(c=>c.id===catId)?.nome || '', status, tags: tags.length > 0 ? tags : undefined, recorrencia: recorrente ? 'mensal' : 'unica' })
       if (preview && id) await addAnexo(id as number, preview.file)
     }
 
@@ -267,6 +277,37 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                 </motion.button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Status (confirmado/pendente) */}
+        {tipo !== 'transferencia' && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            {(['confirmado', 'pendente'] as const).map(s => (
+              <button key={s} onClick={() => setStatus(s)}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 10, border: `1.5px solid ${status === s ? (s === 'confirmado' ? '#3A8580' : '#D4A017') : '#E8E0D5'}`, background: status === s ? (s === 'confirmado' ? '#EBF5F0' : '#FDF4E3') : 'white', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: status === s ? (s === 'confirmado' ? '#3A8580' : '#D4A017') : '#9B7B6A', transition: 'all .15s' }}>
+                {s === 'confirmado' ? '✓ Confirmado' : '⏳ Pendente'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Tags */}
+        {tipo !== 'transferencia' && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: tags.length > 0 ? 6 : 0 }}>
+              {tags.map(t => (
+                <span key={t} onClick={() => setTags(ts => ts.filter(x => x !== t))}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: `${corBotao}18`, border: `1px solid ${corBotao}40`, borderRadius: 20, padding: '3px 10px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: corBotao, cursor: 'pointer' }}>
+                  #{t} ×
+                </span>
+              ))}
+            </div>
+            <input value={tagInput} onChange={e => setTagInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(tagInput) } }}
+              onBlur={() => { if (tagInput.trim()) addTag(tagInput) }}
+              placeholder="# Adicionar tag (Enter)"
+              style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '9px 14px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#2C1A0F', outline: 'none', boxSizing: 'border-box' }} />
           </div>
         )}
 
