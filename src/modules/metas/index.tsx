@@ -8,6 +8,7 @@ import { fmt, mesAnoAtual } from '@/lib/format'
 import { Confetti } from "@/components/ui/Confetti"
 import { sounds, haptic } from "@/lib/sounds"
 import { Dobrao } from '@/components/mascot/Dobrao'
+import { IconEdit, IconX, IconTrash, IconTarget, IconChartBar, IconAlertTriangle, IconTrophy } from '@tabler/icons-react'
 
 function CircularProgress({ pct, cor, size = 60 }: { pct: number; cor: string; size?: number }) {
   const stroke = 5
@@ -57,8 +58,8 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: atingida ? '#3A8580' : meta.cor, marginTop: 1 }}>{Math.round(pct)}%</p>
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
-              <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>✏️</button>
-              <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18 }}>×</button>
+              <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconEdit size={12} stroke={1.8} color="#7A5C4F" /></button>
+              <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26 }}><IconX size={14} stroke={2} color="#C4B4A8" /></button>
             </div>
           </div>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 4 }}>
@@ -70,7 +71,7 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
               {aporteMensal && ` · ${fmt(aporteMensal)}/mês`}
             </p>
           )}
-          {atingida && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#3A8580', fontWeight: 600, marginTop: 2 }}>Meta atingida! 🎊</p>}
+          {atingida && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#3A8580', fontWeight: 600, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}><IconTrophy size={12} color="#3A8580" stroke={2} /> Meta atingida!</p>}
         </div>
       </div>
       {!atingida && (
@@ -86,7 +87,7 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
               style={{ background: meta.cor, color: 'white', border: 'none', borderRadius: 10, padding: '8px 16px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
               Aportar
             </motion.button>
-            <button onClick={() => setAporting(false)} style={{ background: '#F5F0E8', border: 'none', borderRadius: 10, padding: '8px 12px', cursor: 'pointer', fontSize: 16, color: '#9B7B6A' }}>×</button>
+            <button onClick={() => setAporting(false)} style={{ background: '#F5F0E8', border: 'none', borderRadius: 10, padding: '0', cursor: 'pointer', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconX size={15} stroke={2} color="#9B7B6A" /></button>
           </motion.div>
         ) : (
           <motion.button whileTap={{ scale: 0.97 }} onClick={() => setAporting(true)}
@@ -131,8 +132,8 @@ function OrcamentoRow({ orc, gastos, onEdit }: { orc: any; gastos: Map<number, n
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}> / {fmt(orc.valorLimite)}</span>
           </div>
           <div style={{ display: 'flex', gap: 3 }}>
-            <button onClick={e => { e.stopPropagation(); onEdit() }} style={{ background: '#F5F0E8', border: 'none', borderRadius: 7, width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>✏️</button>
-            <button onClick={e => { e.stopPropagation(); deleteOrcamento(orc.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 17, lineHeight: 1, display: 'flex', alignItems: 'center' }}>×</button>
+            <button onClick={e => { e.stopPropagation(); onEdit() }} style={{ background: '#F5F0E8', border: 'none', borderRadius: 7, width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconEdit size={11} stroke={1.8} color="#7A5C4F" /></button>
+            <button onClick={e => { e.stopPropagation(); deleteOrcamento(orc.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}><IconX size={14} stroke={2} color="#C4B4A8" /></button>
           </div>
         </div>
       </div>
@@ -143,7 +144,7 @@ function OrcamentoRow({ orc, gastos, onEdit }: { orc: any; gastos: Map<number, n
       </div>
       {estourado && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
-          <span style={{ fontSize: 12 }}>🚨</span>
+          <IconAlertTriangle size={13} color="#C4553B" stroke={2} />
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4553B', fontWeight: 700 }}>
             Estourou em {fmt(gasto - orc.valorLimite)}!
           </p>
@@ -219,7 +220,10 @@ export function Page() {
         {(['metas', 'orcamento'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', cursor: 'pointer', background: tab === t ? '#C4553B' : 'transparent', color: tab === t ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, transition: 'all .15s' }}>
-            {t === 'metas' ? `🎯 Metas (${metas.length})` : `📊 Orçamento (${orcamentos.length})`}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              {t === 'metas' ? <IconTarget size={14} stroke={1.8} /> : <IconChartBar size={14} stroke={1.8} />}
+              {t === 'metas' ? `Metas (${metas.length})` : `Orçamento (${orcamentos.length})`}
+            </span>
           </button>
         ))}
       </div>

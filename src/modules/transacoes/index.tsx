@@ -9,7 +9,7 @@ import { fmt, fmtDate } from '@/lib/format'
 import { db } from '@/db/schema'
 import { Dobrao } from '@/components/mascot/Dobrao'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { IconEdit, IconTrash, IconPaperclip, IconX, IconFilterOff } from '@tabler/icons-react'
+import { IconEdit, IconTrash, IconPaperclip, IconX, IconFilterOff, IconClock, IconCheck } from '@tabler/icons-react'
 
 function hexToRgb(hex: string) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
@@ -130,8 +130,8 @@ function TxRow({ tx, i }: { tx: any; i: number }) {
               <span style={{ color: '#C4B4A8', fontSize: 10 }}>·</span>
               <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>{fmtDate(tx.data)}</span>
               {conta && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, background: `rgba(${hexToRgb(conta.cor)},0.15)`, color: conta.cor, padding: '1px 6px', borderRadius: 20, fontWeight: 600 }}>{conta.nome}</span>}
-              {tx.status === 'pendente' && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, background: '#FDF4E3', color: '#D4A017', padding: '1px 6px', borderRadius: 20, fontWeight: 700, border: '1px solid #F0D8A8' }}>⏳ pendente</span>}
-              {anexos.length > 0 && <span style={{ fontSize: 11, color: '#3A8580', fontWeight: 600 }}>📎</span>}
+              {tx.status === 'pendente' && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, background: '#FDF4E3', color: '#D4A017', padding: '2px 7px', borderRadius: 20, fontWeight: 700, border: '1px solid #F0D8A8', display: 'inline-flex', alignItems: 'center', gap: 3 }}><IconClock size={9} stroke={2.5} color="#D4A017" /> pendente</span>}
+              {anexos.length > 0 && <IconPaperclip size={12} color="#3A8580" stroke={1.8} />}
               {tx.tags?.map((tag: string) => <span key={tag} style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, background: `rgba(${hexToRgb(catCor)},0.12)`, color: catCor, padding: '1px 6px', borderRadius: 20, fontWeight: 600 }}>#{tag}</span>)}
             </div>
           </div>
@@ -192,7 +192,7 @@ function TxRow({ tx, i }: { tx: any; i: number }) {
                       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.nomeArquivo}</p>
                       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>{(a.tamanho/1024).toFixed(0)} KB</p>
                     </div>
-                    <button onClick={() => a.id && deleteAnexo(a.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18 }}>×</button>
+                    <button onClick={() => a.id && deleteAnexo(a.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28 }}><IconX size={15} stroke={2} color="#C4B4A8" /></button>
                   </div>
                 ))
               }
@@ -309,7 +309,11 @@ export function Page() {
             style={{ padding: '6px 13px', borderRadius: 20, border: filtroStatus === s ? 'none' : '1.5px solid #E8E0D5', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, transition: 'all .15s',
               background: filtroStatus === s ? (s === 'pendente' ? '#FDF4E3' : s === 'confirmado' ? '#EBF5F0' : '#F5F0E8') : 'transparent',
               color: filtroStatus === s ? (s === 'pendente' ? '#D4A017' : s === 'confirmado' ? '#3A8580' : '#2C1A0F') : '#9B7B6A' }}>
-            {s === 'todos' ? 'Qualquer status' : s === 'confirmado' ? '✓ Confirmado' : '⏳ Pendente'}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              {s === 'confirmado' && <IconCheck size={11} stroke={2.5} />}
+              {s === 'pendente' && <IconClock size={11} stroke={2} />}
+              {s === 'todos' ? 'Qualquer status' : s === 'confirmado' ? 'Confirmado' : 'Pendente'}
+            </span>
           </motion.button>
         ))}
       </div>

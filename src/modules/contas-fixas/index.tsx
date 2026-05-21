@@ -36,8 +36,9 @@ function ContaFixaRow({ cf, mes, ano, onEdit, onDelete }: { cf: any; mes: number
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600, color: pago ? '#9B7B6A' : '#2C1A0F', textDecoration: pago ? 'line-through' : 'none' }}>{cf.nome}</p>
         <div style={{ display: 'flex', gap: 6, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, background: pago ? '#D0E8D8' : vencida ? '#FAD0D0' : urgente ? '#FAEBD0' : '#F5F0E8', color: pago ? '#3A8580' : vencida ? '#C4553B' : urgente ? '#D4A017' : '#9B7B6A', padding: '2px 8px', borderRadius: 20 }}>
-            {pago ? 'Pago ✓' : vencida ? `Venceu dia ${cf.diaVencimento}` : `Vence dia ${cf.diaVencimento}`}
+          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, background: pago ? '#D0E8D8' : vencida ? '#FAD0D0' : urgente ? '#FAEBD0' : '#F5F0E8', color: pago ? '#3A8580' : vencida ? '#C4553B' : urgente ? '#D4A017' : '#9B7B6A', padding: '2px 8px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            {pago && <IconCheck size={9} stroke={3} color="#3A8580" />}
+            {pago ? 'Pago' : vencida ? `Venceu dia ${cf.diaVencimento}` : `Vence dia ${cf.diaVencimento}`}
           </span>
           {cat && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4B4A8' }}>{cat.nome}</span>}
         </div>
@@ -59,7 +60,10 @@ function ContaFixaRow({ cf, mes, ano, onEdit, onDelete }: { cf: any; mes: number
               }
             }}
             style={{ background: pago ? '#F5F0E8' : '#C4553B', color: pago ? '#7A5C4F' : 'white', border: 'none', borderRadius: 8, padding: '5px 11px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'background .2s' }}>
-            {justPaid ? '✓ Pago!' : pago ? 'Desfazer' : 'Pagar'}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              {justPaid && <IconCheck size={11} stroke={3} color="white" />}
+              {justPaid ? 'Pago!' : pago ? 'Desfazer' : 'Pagar'}
+            </span>
           </motion.button>
           <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <IconEdit size={12} color="#7A5C4F" stroke={2} />

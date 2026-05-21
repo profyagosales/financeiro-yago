@@ -3,9 +3,21 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNetWorth, addPatrimonioItem, deletePatrimonioItem, updatePatrimonioItem } from '@/db/hooks/usePatrimonio'
 import { fmt } from '@/lib/format'
 import { Dobrao } from '@/components/mascot/Dobrao'
+import { IconEdit, IconX, IconTrash, IconHome, IconCar, IconChartLine, IconPigMoney, IconArchive, IconBuildingBank, IconCreditCard, IconCash, IconListDetails } from '@tabler/icons-react'
 
-const SUBTIPOS_ATIVO = [{ v: 'imovel', l: '🏠 Imóvel' }, { v: 'veiculo', l: '🚗 Veículo' }, { v: 'investimento', l: '📈 Investimento' }, { v: 'poupanca', l: '💰 Poupança' }, { v: 'outros', l: '📦 Outros' }]
-const SUBTIPOS_PASSIVO = [{ v: 'financiamento', l: '🏦 Financiamento' }, { v: 'cartao', l: '💳 Cartão' }, { v: 'emprestimo', l: '💸 Empréstimo' }, { v: 'outros', l: '📋 Outros' }]
+const SUBTIPOS_ATIVO = [
+  { v: 'imovel', l: 'Imóvel', icon: IconHome },
+  { v: 'veiculo', l: 'Veículo', icon: IconCar },
+  { v: 'investimento', l: 'Investimento', icon: IconChartLine },
+  { v: 'poupanca', l: 'Poupança', icon: IconPigMoney },
+  { v: 'outros', l: 'Outros', icon: IconArchive },
+]
+const SUBTIPOS_PASSIVO = [
+  { v: 'financiamento', l: 'Financiamento', icon: IconBuildingBank },
+  { v: 'cartao', l: 'Cartão', icon: IconCreditCard },
+  { v: 'emprestimo', l: 'Empréstimo', icon: IconCash },
+  { v: 'outros', l: 'Outros', icon: IconListDetails },
+]
 
 export function Page() {
   const { ativos, passivos, netWorth, items } = useNetWorth()
@@ -83,17 +95,24 @@ export function Page() {
             <div style={{ marginBottom: 20 }}>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#3A8580', marginBottom: 8, letterSpacing: '.05em' }}>ATIVOS</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {ativosItems.map(item => (
-                  <motion.div key={item.id} layout style={{ background: '#FFFDF9', border: '0.5px solid #D0E8D8', borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600, color: '#2C1A0F' }}>{item.nome}</p>
-                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>{SUBTIPOS_ATIVO.find(s => s.v === item.subtipo)?.l ?? item.subtipo}</p>
-                    </div>
-                    <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#3A8580' }}>{fmt(item.valor)}</p>
-                    <button onClick={() => openEdit(item)} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 4, flexShrink: 0 }}>✏️</button>
-                    <button onClick={() => deletePatrimonioItem(item.id!)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18, padding: '0 4px' }}>×</button>
-                  </motion.div>
-                ))}
+                {ativosItems.map(item => {
+                  const sub = SUBTIPOS_ATIVO.find(s => s.v === item.subtipo)
+                  const SubIcon = sub?.icon ?? IconArchive
+                  return (
+                    <motion.div key={item.id} layout style={{ background: '#FFFDF9', border: '0.5px solid #D0E8D8', borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 11, background: '#EBF5F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <SubIcon size={18} stroke={1.8} color="#3A8580" />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600, color: '#2C1A0F' }}>{item.nome}</p>
+                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>{sub?.l ?? item.subtipo}</p>
+                      </div>
+                      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#3A8580' }}>{fmt(item.valor)}</p>
+                      <button onClick={() => openEdit(item)} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><IconEdit size={13} stroke={1.8} color="#7A5C4F" /></button>
+                      <button onClick={() => deletePatrimonioItem(item.id!)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28 }}><IconX size={15} stroke={2} color="#C4B4A8" /></button>
+                    </motion.div>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -102,20 +121,27 @@ export function Page() {
             <div style={{ marginBottom: 20 }}>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#C4553B', marginBottom: 8, letterSpacing: '.05em' }}>PASSIVOS / DÍVIDAS</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {passivosItems.map(item => (
-                  <motion.div key={item.id} layout style={{ background: '#FFFDF9', border: '0.5px solid #FAD0D0', borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600, color: '#2C1A0F' }}>{item.nome}</p>
-                      <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
-                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A' }}>{SUBTIPOS_PASSIVO.find(s => s.v === item.subtipo)?.l ?? item.subtipo}</span>
-                        {item.jurosAnual && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4553B', fontWeight: 600 }}>{(item.jurosAnual * 100).toFixed(1)}% a.a.</span>}
+                {passivosItems.map(item => {
+                  const sub = SUBTIPOS_PASSIVO.find(s => s.v === item.subtipo)
+                  const SubIcon = sub?.icon ?? IconListDetails
+                  return (
+                    <motion.div key={item.id} layout style={{ background: '#FFFDF9', border: '0.5px solid #FAD0D0', borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 11, background: '#FAF0EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <SubIcon size={18} stroke={1.8} color="#C4553B" />
                       </div>
-                    </div>
-                    <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#C4553B' }}>{fmt(item.valor)}</p>
-                    <button onClick={() => openEdit(item)} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 4, flexShrink: 0 }}>✏️</button>
-                    <button onClick={() => deletePatrimonioItem(item.id!)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18, padding: '0 4px' }}>×</button>
-                  </motion.div>
-                ))}
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600, color: '#2C1A0F' }}>{item.nome}</p>
+                        <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+                          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A' }}>{sub?.l ?? item.subtipo}</span>
+                          {item.jurosAnual && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4553B', fontWeight: 600 }}>{(item.jurosAnual * 100).toFixed(1)}% a.a.</span>}
+                        </div>
+                      </div>
+                      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#C4553B' }}>{fmt(item.valor)}</p>
+                      <button onClick={() => openEdit(item)} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><IconEdit size={13} stroke={1.8} color="#7A5C4F" /></button>
+                      <button onClick={() => deletePatrimonioItem(item.id!)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28 }}><IconX size={15} stroke={2} color="#C4B4A8" /></button>
+                    </motion.div>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -160,7 +186,8 @@ export function Page() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                 {(tipo === 'ativo' ? SUBTIPOS_ATIVO : SUBTIPOS_PASSIVO).map(s => (
                   <button key={s.v} onClick={() => setForm(f => ({ ...f, subtipo: s.v }))}
-                    style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: form.subtipo === s.v ? '#C4553B' : '#F5F0E8', color: form.subtipo === s.v ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s' }}>
+                    style={{ padding: '6px 12px', borderRadius: 20, border: 'none', cursor: 'pointer', background: form.subtipo === s.v ? '#C4553B' : '#F5F0E8', color: form.subtipo === s.v ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <s.icon size={13} stroke={1.8} color={form.subtipo === s.v ? 'white' : '#7A5C4F'} />
                     {s.l}
                   </button>
                 ))}
