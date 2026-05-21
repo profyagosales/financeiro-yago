@@ -1,21 +1,30 @@
 import { motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  IconLayoutDashboard, IconBuildingBank, IconCreditCard, IconArrowsExchange,
+  IconRepeat, IconCalendarStats, IconTarget, IconTrendingUp, IconChartBar,
+  IconSettings, IconChevronRight
+} from '@tabler/icons-react'
 
 const MENU = [
-  { group: '', items: [{ path: '/', icon: '⌂', label: 'Dashboard' }] },
+  { group: '', items: [
+    { path: '/', icon: IconLayoutDashboard, label: 'Dashboard' },
+  ]},
   { group: 'Finanças', items: [
-    { path: '/contas', icon: '🏦', label: 'Contas' },
-    { path: '/cartoes', icon: '💳', label: 'Cartões' },
-    { path: '/transacoes', icon: '⇄', label: 'Transações' },
-    { path: '/contas-fixas', icon: '↺', label: 'Contas Fixas' },
-    { path: '/parcelamentos', icon: '📅', label: 'Parcelamentos' },
+    { path: '/contas', icon: IconBuildingBank, label: 'Contas' },
+    { path: '/cartoes', icon: IconCreditCard, label: 'Cartões' },
+    { path: '/transacoes', icon: IconArrowsExchange, label: 'Transações' },
+    { path: '/contas-fixas', icon: IconRepeat, label: 'Contas Fixas' },
+    { path: '/parcelamentos', icon: IconCalendarStats, label: 'Parcelamentos' },
   ]},
   { group: 'Planejamento', items: [
-    { path: '/metas', icon: '🎯', label: 'Metas & Orçamento' },
-    { path: '/patrimonio', icon: '📈', label: 'Patrimônio' },
-    { path: '/relatorios', icon: '📊', label: 'Relatórios' },
+    { path: '/metas', icon: IconTarget, label: 'Metas & Orçamento' },
+    { path: '/patrimonio', icon: IconTrendingUp, label: 'Patrimônio' },
+    { path: '/relatorios', icon: IconChartBar, label: 'Relatórios' },
   ]},
-  { group: '', items: [{ path: '/configuracoes', icon: '⚙', label: 'Configurações' }] },
+  { group: '', items: [
+    { path: '/configuracoes', icon: IconSettings, label: 'Configurações' },
+  ]},
 ]
 
 export function Sidebar() {
@@ -24,14 +33,13 @@ export function Sidebar() {
 
   return (
     <aside style={{
-      width: 240, flexShrink: 0, background: '#FFFDF9',
+      width: 230, flexShrink: 0, background: '#FFFDF9',
       borderRight: '0.5px solid #E8E0D5', height: '100dvh',
-      position: 'sticky', top: 0, overflowY: 'auto', padding: '20px 12px',
-      display: 'flex', flexDirection: 'column', gap: 4,
+      position: 'sticky', top: 0, overflowY: 'auto',
+      padding: '16px 10px', display: 'flex', flexDirection: 'column',
     }}>
-      {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px 20px' }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: '#C4553B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: '#C4553B', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <span style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 700, color: '#FAF6F0' }}>FY</span>
         </div>
         <div>
@@ -47,26 +55,26 @@ export function Sidebar() {
               {group.group}
             </div>
           )}
-          {group.items.map(item => (
-            <SideItem key={item.path} item={item} active={pathname === item.path} onClick={() => navigate(item.path)} />
-          ))}
+          {group.items.map(item => {
+            const active = pathname === item.path
+            const Icon = item.icon
+            return (
+              <motion.button key={item.path} onClick={() => navigate(item.path)} whileHover={{ x: 2 }}
+                style={{
+                  width: '100%', padding: '8px 10px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                  background: active ? '#FAF0EE' : 'transparent',
+                  display: 'flex', alignItems: 'center', gap: 9, textAlign: 'left', marginBottom: 1,
+                }}>
+                <Icon size={18} stroke={1.8} color={active ? '#C4553B' : '#9B7B6A'} />
+                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: active ? 600 : 500, color: active ? '#C4553B' : '#7A5C4F', flex: 1 }}>
+                  {item.label}
+                </span>
+                {active && <div style={{ width: 3, height: 16, borderRadius: 2, background: '#C4553B' }} />}
+              </motion.button>
+            )
+          })}
         </div>
       ))}
     </aside>
-  )
-}
-
-function SideItem({ item, active, onClick }: { item: { path: string; icon: string; label: string }; active: boolean; onClick: () => void }) {
-  return (
-    <motion.button onClick={onClick} whileHover={{ x: 2 }}
-      style={{
-        width: '100%', padding: '9px 10px', borderRadius: 10, border: 'none', cursor: 'pointer',
-        background: active ? '#F5E8E4' : 'transparent',
-        display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
-      }}>
-      <span style={{ fontSize: 16 }}>{item.icon}</span>
-      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: active ? '#C4553B' : '#7A5C4F' }}>{item.label}</span>
-      {active && <motion.div layoutId="side-indicator" style={{ width: 3, height: 16, borderRadius: 2, background: '#C4553B', marginLeft: 'auto' }} />}
-    </motion.button>
   )
 }
