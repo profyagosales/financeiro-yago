@@ -18,8 +18,12 @@ import { Page as ConfiguracoesPage } from '@/modules/configuracoes'
 import { seedCategories } from '@/db/schema'
 
 export default function App() {
-  const isUnlocked = useAuthStore(s => s.isUnlocked)
-  useEffect(() => { seedCategories() }, [])
+  const { isUnlocked, checkSession } = useAuthStore()
+
+  useEffect(() => {
+    checkSession()
+    seedCategories()
+  }, [])
 
   return (
     <AnimatePresence mode="wait">
