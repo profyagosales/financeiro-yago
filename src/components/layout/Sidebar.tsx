@@ -7,45 +7,68 @@ import {
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
 import { useCartoes, useTotalFatura } from '@/db/hooks/useCartoes'
 import { mesAnoAtual } from '@/lib/format'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '@/db/schema'
 
 function useSidebarBadges() {
   const { mes, ano } = mesAnoAtual()
   const fixas = useContasFixas()
   const pags = usePagamentosFixos(mes, ano)
-  const pendentes = fixas.filter(cf => !pags.find(p => p.contaFixaId === cf.id && p.status === 'pago')).length
   const hoje = new Date().getDate()
-  const urgentes = fixas.filter(cf => {
-    const pago = pags.find(p => p.contaFixaId === cf.id && p.status === 'pago')
-    return !pago && cf.diaVencimento >= hoje && cf.diaVencimento <= hoje + 3
-  }).length
-  return { contasFixas: pendentes, urgentes }
+
+  const fixasPendentes = fixas.filter(cf => !pags.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
+  const fixasUrgentes = fixasPendentes.filter(cf => cf.diaVencimento >= hoje && cf.diaVencimento <= hoje + 3)
+  const fixasHoje = fixasPendentes.filter(cf => cf.diaVencimento === hoje)
+
+  // Count cartoes with fatura > 0 this month
+  const cartoes = useCartoes()
+  const faturasAtivas = useLiveQuery(async () => {
+    let count = 0
+    for (const c of cartoes) {
+      const items = await db.lancamentosCartao.where('[cartaoId+mes+ano]').equals([c.id!, mes, ano]).count()
+      if (items > 0) count++
+    }
+    return count
+  }, [cartoes, mes, ano]) ?? 0
+
+  const badgeFixas = fixasHoje.length > 0
+    ? { label: `${fixasHoje.length} hoje`, urgent: true }
+    : fixasUrgentes.length > 0
+    ? { label: `${fixasUrgentes.length} urgent`, urgent: true }
+    : fixasPendentes.length > 0
+    ? { label: `${fixasPendentes.length}`, urgent: false }
+    : null
+
+  const badgeCartoes = faturasAtivas > 0 ? { label: `${faturasAtivas} fatura${faturasAtivas !== 1 ? 's' : ''}`, urgent: false } : null
+
+  return { fixas: badgeFixas, cartoes: badgeCartoes }
 }
 
 const MENU = [
-  { group: '', items: [{ path: '/', icon: IconLayoutDashboard, label: 'Dashboard', badge: null }] },
+  { group: '', items: [{ path: '/', icon: IconLayoutDashboard, label: 'Dashboard', badgeKey: null }] },
   { group: 'Finanças', items: [
-    { path: '/contas', icon: IconBuildingBank, label: 'Contas', badge: null },
-    { path: '/cartoes', icon: IconCreditCard, label: 'Cartões', badge: null },
-    { path: '/transacoes', icon: IconArrowsExchange, label: 'Transações', badge: null },
-    { path: '/contas-fixas', icon: IconRepeat, label: 'Contas Fixas', badge: 'fixas' },
-    { path: '/parcelamentos', icon: IconCalendarStats, label: 'Parcelamentos', badge: null },
+    { path: '/contas', icon: IconBuildingBank, label: 'Contas', badgeKey: null },
+    { path: '/cartoes', icon: IconCreditCard, label: 'Cartões', badgeKey: 'cartoes' },
+    { path: '/transacoes', icon: IconArrowsExchange, label: 'Transações', badgeKey: null },
+    { path: '/contas-fixas', icon: IconRepeat, label: 'Contas Fixas', badgeKey: 'fixas' },
+    { path: '/parcelamentos', icon: IconCalendarStats, label: 'Parcelamentos', badgeKey: null },
   ]},
   { group: 'Planejamento', items: [
-    { path: '/metas', icon: IconTarget, label: 'Metas & Orçamento', badge: null },
-    { path: '/patrimonio', icon: IconTrendingUp, label: 'Patrimônio', badge: null },
-    { path: '/relatorios', icon: IconChartBar, label: 'Relatórios', badge: null },
+    { path: '/metas', icon: IconTarget, label: 'Metas & Orçamento', badgeKey: null },
+    { path: '/patrimonio', icon: IconTrendingUp, label: 'Patrimônio', badgeKey: null },
+    { path: '/relatorios', icon: IconChartBar, label: 'Relatórios', badgeKey: null },
   ]},
-  { group: '', items: [{ path: '/configuracoes', icon: IconSettings, label: 'Configurações', badge: null }] },
+  { group: '', items: [{ path: '/configuracoes', icon: IconSettings, label: 'Configurações', badgeKey: null }] },
 ]
 
 export function Sidebar() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { contasFixas, urgentes } = useSidebarBadges()
+  const badges = useSidebarBadges()
 
-  const getBadge = (badge: string | null) => {
-    if (badge === 'fixas' && contasFixas > 0) return { count: contasFixas, urgent: urgentes > 0 }
-    return null
+  const getBadge = (key: string | null) => {
+    if (!key) return null
+    return badges[key as keyof typeof badges]
   }
 
   return (
@@ -70,16 +93,16 @@ export function Sidebar() {
           {group.items.map(item => {
             const active = pathname === item.path
             const Icon = item.icon
-            const badge = getBadge(item.badge)
+            const badge = getBadge(item.badgeKey)
             return (
               <motion.button key={item.path} onClick={() => navigate(item.path)} whileHover={{ x: 2 }}
                 style={{ width: '100%', padding: '8px 10px', borderRadius: 10, border: 'none', cursor: 'pointer', background: active ? '#FAF0EE' : 'transparent', display: 'flex', alignItems: 'center', gap: 9, textAlign: 'left', marginBottom: 1 }}>
                 <Icon size={18} stroke={1.8} color={active ? '#C4553B' : '#9B7B6A'} />
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: active ? 600 : 500, color: active ? '#C4553B' : '#7A5C4F', flex: 1 }}>{item.label}</span>
                 {badge && (
-                  <div style={{ minWidth: 18, height: 18, borderRadius: 9, background: badge.urgent ? '#C4553B' : '#D4A017', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
-                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: 'white' }}>{badge.count}</span>
-                  </div>
+                  <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, background: badge.urgent ? '#FAD0D0' : '#F5F0E8', color: badge.urgent ? '#C4553B' : '#9B7B6A', padding: '2px 7px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                    {badge.label}
+                  </span>
                 )}
                 {active && !badge && <div style={{ width: 3, height: 16, borderRadius: 2, background: '#C4553B' }} />}
               </motion.button>

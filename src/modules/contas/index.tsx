@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useContas, addConta, deleteConta, editConta, useSaldoTotal } from '@/db/hooks/useContas'
 import { fmt } from '@/lib/format'
 import { Dobrao } from '@/components/mascot/Dobrao'
-import { IconPlus, IconX, IconTrash, IconEdit } from '@tabler/icons-react'
+import { IconPlus, IconX, IconTrash, IconEdit, IconBuildingBank } from '@tabler/icons-react'
 
 const BANCOS = [
   { nome: 'Nubank', cor: '#820AD1', abrev: 'NU' },
@@ -15,13 +15,12 @@ const BANCOS = [
   { nome: 'Inter', cor: '#FF8700', abrev: 'IN' },
   { nome: 'C6 Bank', cor: '#1D1D1B', abrev: 'C6' },
   { nome: 'XP', cor: '#2C2C2C', abrev: 'XP' },
+  { nome: 'Nomad', cor: '#0047FF', abrev: 'NO' },
+  { nome: 'BRB', cor: '#006B3C', abrev: 'BRB' },
   { nome: 'Outro', cor: '#3A8580', abrev: '?' },
   { nome: 'Dinheiro', cor: '#5B8A3C', abrev: 'R$' },
 ]
 const TIPOS = ['corrente','poupança','digital','dinheiro','investimento'] as const
-
-type ContaForm = { nome: string; tipo: typeof TIPOS[number]; saldoAtual: string; cor: string; icone: string }
-const EMPTY: ContaForm = { nome: '', tipo: 'corrente', saldoAtual: '', cor: '#820AD1', icone: 'NU' }
 
 export function Page() {
   const contas = useContas()
@@ -30,15 +29,14 @@ export function Page() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [banco, setBanco] = useState(BANCOS[0])
-  const [form, setForm] = useState<ContaForm>(EMPTY)
+  const [form, setForm] = useState({ nome: '', tipo: 'corrente' as typeof TIPOS[number], saldoAtual: '' })
 
-  const openAdd = () => { setEditingId(null); setBanco(BANCOS[0]); setForm(EMPTY); setFormOpen(true) }
-
+  const openAdd = () => { setEditingId(null); setBanco(BANCOS[0]); setForm({ nome: '', tipo: 'corrente', saldoAtual: '' }); setFormOpen(true) }
   const openEdit = (c: any) => {
     setEditingId(c.id)
-    const b = BANCOS.find(b => b.cor === c.cor) ?? BANCOS[BANCOS.length - 1]
+    const b = BANCOS.find(b => b.cor === c.cor || b.abrev === c.icone) ?? BANCOS[BANCOS.length - 2]
     setBanco(b)
-    setForm({ nome: c.nome, tipo: c.tipo, saldoAtual: String(c.saldoAtual), cor: c.cor, icone: c.icone })
+    setForm({ nome: c.nome, tipo: c.tipo, saldoAtual: String(c.saldoAtual) })
     setFormOpen(true)
   }
 
@@ -73,27 +71,48 @@ export function Page() {
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginTop: 6 }}>Adicione sua conta bancária para começar</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {contas.map(c => (
             <motion.div key={c.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -3 }}
-              style={{ background: c.cor, borderRadius: 22, padding: '20px 22px', position: 'relative' }}>
-              {/* Action buttons */}
-              <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 6 }}>
-                <button onClick={() => openEdit(c)}
-                  style={{ background: 'rgba(255,255,255,0.25)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <IconEdit size={14} color="white" stroke={2} />
-                </button>
-                <button onClick={() => setConfirmDelete(c.id!)}
-                  style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <IconTrash size={14} color="white" stroke={2} />
-                </button>
+              style={{ background: '#2C1A0F', borderRadius: 22, padding: '22px 22px 16px', position: 'relative', overflow: 'hidden' }}>
+              {/* Color accent bar */}
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: c.cor }} />
+              {/* Bank badge */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 9, background: c.cor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontFamily: 'Georgia,serif', fontSize: 10, fontWeight: 700, color: 'white' }}>{c.icone}</span>
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{c.nome}</p>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{c.tipo}</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={() => openEdit(c)}
+                    style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconEdit size={13} color="rgba(255,255,255,0.6)" />
+                  </button>
+                  <button onClick={() => setConfirmDelete(c.id!)}
+                    style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconTrash size={13} color="rgba(255,255,255,0.4)" />
+                  </button>
+                </div>
               </div>
-              <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                <span style={{ fontFamily: 'Georgia,serif', fontSize: 11, fontWeight: 700, color: 'white' }}>{c.icone}</span>
+              {/* Balance */}
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 34, fontWeight: 700, color: 'white', letterSpacing: '-1px', marginBottom: 4 }}>{fmt(c.saldoAtual)}</p>
+              <div style={{ height: 3, background: c.cor, borderRadius: 2, marginBottom: 16, width: `${Math.min(100, Math.max(10, (c.saldoAtual / (c.saldoAtual + 1000)) * 100))}%`, opacity: 0.8 }} />
+              {/* CTA buttons */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <motion.button whileTap={{ scale: 0.96 }}
+                  style={{ flex: 1, background: '#C4553B', border: 'none', borderRadius: 10, padding: '9px 0', color: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  + Lançar
+                </motion.button>
+                <motion.button whileTap={{ scale: 0.96 }}
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '9px 0', color: 'rgba(255,255,255,0.8)', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  Histórico
+                </motion.button>
               </div>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.75)', marginBottom: 4 }}>{c.nome}</p>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 28, fontWeight: 700, color: 'white', letterSpacing: '-0.5px' }}>{fmt(c.saldoAtual)}</p>
-              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, background: 'rgba(255,255,255,0.15)', color: 'white', padding: '3px 10px', borderRadius: 20, marginTop: 8, display: 'inline-block' }}>{c.tipo}</span>
             </motion.div>
           ))}
         </div>
@@ -104,12 +123,10 @@ export function Page() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setConfirmDelete(null)}
             style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,15,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              onClick={e => e.stopPropagation()}
-              style={{ background: '#FFFDF9', borderRadius: 22, padding: '28px 24px', maxWidth: 340, width: '100%', textAlign: 'center' }}>
-              <IconTrash size={32} color="#C4553B" stroke={1.5} style={{ margin: '0 auto 12px' }} />
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} onClick={e => e.stopPropagation()}
+              style={{ background: '#FFFDF9', borderRadius: 22, padding: '28px 24px', maxWidth: 320, width: '100%', textAlign: 'center' }}>
               <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 8 }}>Excluir conta?</p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginBottom: 24 }}>As transações associadas serão mantidas.</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginBottom: 24 }}>Transações associadas serão mantidas.</p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #E8E0D5', background: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600, color: '#7A5C4F', cursor: 'pointer' }}>Cancelar</button>
                 <motion.button whileTap={{ scale: 0.97 }} onClick={async () => { await deleteConta(confirmDelete); setConfirmDelete(null) }}
@@ -128,9 +145,7 @@ export function Page() {
               onClick={e => e.stopPropagation()}
               style={{ width: '100%', maxWidth: 520, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '20px 20px 48px', maxHeight: '90dvh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F' }}>
-                  {editingId ? 'Editar conta' : 'Nova conta'}
-                </h3>
+                <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F' }}>{editingId ? 'Editar conta' : 'Nova conta'}</h3>
                 <button onClick={() => setFormOpen(false)} style={{ background: '#F5F0E8', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <IconX size={16} color="#9B7B6A" />
                 </button>
@@ -138,10 +153,10 @@ export function Page() {
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 8, letterSpacing: '.05em' }}>BANCO</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
                 {BANCOS.map(b => (
-                  <motion.button key={b.nome} whileTap={{ scale: 0.93 }} onClick={() => { setBanco(b); setForm(f => ({ ...f, nome: b.nome, cor: b.cor, icone: b.abrev })) }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 10, border: banco.nome === b.nome ? `2px solid ${b.cor}` : '1.5px solid #E8E0D5', background: banco.nome === b.nome ? `${b.cor}18` : 'white', cursor: 'pointer' }}>
-                    <div style={{ width: 24, height: 24, borderRadius: 7, background: b.cor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontFamily: 'Georgia,serif', fontSize: 9, fontWeight: 700, color: b.textCor ?? 'white' }}>{b.abrev}</span>
+                  <motion.button key={b.nome} whileTap={{ scale: 0.93 }} onClick={() => { setBanco(b); setForm(f => ({ ...f, nome: editingId ? f.nome : b.nome })) }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 10, border: banco.nome === b.nome ? `2px solid ${b.cor}` : '1.5px solid #E8E0D5', background: banco.nome === b.nome ? `${b.cor}18` : 'white', cursor: 'pointer', transition: 'all .15s' }}>
+                    <div style={{ width: 22, height: 22, borderRadius: 6, background: b.cor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontFamily: 'Georgia,serif', fontSize: 8, fontWeight: 700, color: b.textCor ?? 'white' }}>{b.abrev}</span>
                     </div>
                     <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#2C1A0F' }}>{b.nome}</span>
                   </motion.button>
