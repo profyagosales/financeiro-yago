@@ -2,19 +2,16 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type ContaFixa } from '../schema'
 
 export function useContasFixas() {
-  return useLiveQuery(() => db.contasFixas.where('ativo').equals(1).toArray(), []) ?? []
+  return useLiveQuery(() => db.contasFixas.filter(c => c.ativo).toArray(), []) ?? []
 }
-
 export function usePagamentosFixos(mes: number, ano: number) {
   return useLiveQuery(
     () => db.pagamentosFixos.where('[mes+ano]').equals([mes, ano]).toArray(),
     [mes, ano]
   ) ?? []
 }
-
 export async function addContaFixa(data: Omit<ContaFixa, 'id' | 'syncId'>) {
   const id = await db.contasFixas.add(data)
-  // Create payment entries for current and next 3 months
   const now = new Date()
   for (let i = 0; i < 4; i++) {
     let m = now.getMonth() + 1 + i
@@ -24,21 +21,16 @@ export async function addContaFixa(data: Omit<ContaFixa, 'id' | 'syncId'>) {
   }
   return id
 }
-
 export async function marcarPago(contaFixaId: number, mes: number, ano: number, valor: number) {
   const existing = await db.pagamentosFixos.where({ contaFixaId, mes, ano }).first()
-  if (existing) {
-    await db.pagamentosFixos.update(existing.id!, { status: 'pago', dataPagamento: new Date().toISOString().split('T')[0], valor })
-  } else {
-    await db.pagamentosFixos.add({ contaFixaId, mes, ano, status: 'pago', dataPagamento: new Date().toISOString().split('T')[0], valor })
-  }
+  const today = new Date().toISOString().split('T')[0]
+  if (existing) await db.pagamentosFixos.update(existing.id!, { status: 'pago', dataPagamento: today, valor })
+  else await db.pagamentosFixos.add({ contaFixaId, mes, ano, status: 'pago', dataPagamento: today, valor })
 }
-
 export async function marcarPendente(contaFixaId: number, mes: number, ano: number) {
   const existing = await db.pagamentosFixos.where({ contaFixaId, mes, ano }).first()
   if (existing) await db.pagamentosFixos.update(existing.id!, { status: 'pendente', dataPagamento: undefined })
 }
-
 export async function deleteContaFixa(id: number) {
   return db.contasFixas.update(id, { ativo: false })
 }
