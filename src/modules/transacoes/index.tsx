@@ -225,6 +225,8 @@ export function Page() {
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'receita' | 'despesa'>('todos')
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'confirmado' | 'pendente'>('todos')
   const [filtroCategoria, setFiltroCategoria] = useState<number | null>(null)
+  const [filtroMes, setFiltroMes] = useState<number | null>(null)
+  const [filtroAno, setFiltroAno] = useState<number>(new Date().getFullYear())
 
   const filtroContaId = searchParams.get('conta') ? Number(searchParams.get('conta')) : null
   const contaFiltrada = filtroContaId ? contas.find(c => c.id === filtroContaId) : null
@@ -235,7 +237,8 @@ export function Page() {
     const okConta = !filtroContaId || tx.contaId === filtroContaId
     const okStatus = filtroStatus === 'todos' || (tx.status ?? 'confirmado') === filtroStatus
     const okCat = !filtroCategoria || tx.categoriaId === filtroCategoria
-    return okTipo && okBusca && okConta && okStatus && okCat
+    const okMes = !filtroMes || tx.data.startsWith(`${filtroAno}-${String(filtroMes).padStart(2,'0')}`)
+    return okTipo && okBusca && okConta && okStatus && okCat && okMes
   })
 
   const grupos = groupByDate(filtradas)

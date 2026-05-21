@@ -12,11 +12,27 @@ export function Page() {
   const [adding, setAdding] = useState(false)
   const [tipo, setTipo] = useState<'ativo' | 'passivo'>('ativo')
   const [form, setForm] = useState({ nome: '', valor: '', subtipo: 'imovel', jurosAnual: '' })
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingTipo, setEditingTipo] = useState<'ativo' | 'passivo'>('ativo')
 
-  const handleAdd = async () => {
+  const openEdit = (item: any) => {
+    setEditingId(item.id)
+    setEditingTipo(item.tipo)
+    setTipo(item.tipo)
+    setForm({ nome: item.nome, valor: String(item.valor), subtipo: item.subtipo, jurosAnual: item.jurosAnual ? String(item.jurosAnual * 100) : '' })
+    setAdding(true)
+  }
+
+  const handleSave = async () => {
     if (!form.nome || !form.valor) return
-    await addPatrimonioItem({ nome: form.nome, tipo, subtipo: form.subtipo, valor: parseFloat(form.valor.replace(',','.')), jurosAnual: form.jurosAnual ? parseFloat(form.jurosAnual.replace(',','.')) / 100 : undefined })
+    const data = { nome: form.nome, tipo, subtipo: form.subtipo, valor: parseFloat(form.valor.replace(',','.')), jurosAnual: form.jurosAnual ? parseFloat(form.jurosAnual.replace(',','.')) / 100 : undefined }
+    if (editingId !== null) {
+      await updatePatrimonioItem(editingId, data)
+    } else {
+      await addPatrimonioItem(data)
+    }
     setAdding(false)
+    setEditingId(null)
     setForm({ nome: '', valor: '', subtipo: 'imovel', jurosAnual: '' })
   }
 
@@ -31,7 +47,7 @@ export function Page() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "24px 28px", width: "100%" }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F' }}>Patrimônio</h1>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={() => setAdding(true)}
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setEditingId(null); setTipo('ativo'); setForm({ nome: '', valor: '', subtipo: 'imovel', jurosAnual: '' }); setAdding(true) }}
           style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
           + Adicionar
         </motion.button>
@@ -74,6 +90,7 @@ export function Page() {
                       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>{SUBTIPOS_ATIVO.find(s => s.v === item.subtipo)?.l ?? item.subtipo}</p>
                     </div>
                     <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#3A8580' }}>{fmt(item.valor)}</p>
+                    <button onClick={() => openEdit(item)} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 4, flexShrink: 0 }}>✏️</button>
                     <button onClick={() => deletePatrimonioItem(item.id!)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18, padding: '0 4px' }}>×</button>
                   </motion.div>
                 ))}
@@ -95,6 +112,7 @@ export function Page() {
                       </div>
                     </div>
                     <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#C4553B' }}>{fmt(item.valor)}</p>
+                    <button onClick={() => openEdit(item)} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 4, flexShrink: 0 }}>✏️</button>
                     <button onClick={() => deletePatrimonioItem(item.id!)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18, padding: '0 4px' }}>×</button>
                   </motion.div>
                 ))}
@@ -130,7 +148,7 @@ export function Page() {
               onClick={e => e.stopPropagation()}
               style={{ width: '100%', maxWidth: 520, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '20px 20px 48px' }}>
               <div style={{ width: 40, height: 4, borderRadius: 2, background: '#E8E0D5', margin: '0 auto 16px' }} />
-              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>Novo item</h3>
+              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>{editingId ? 'Editar item' : 'Novo item'}</h3>
               <div style={{ display: 'flex', background: '#F5F0E8', borderRadius: 12, padding: 4, marginBottom: 12 }}>
                 {(['ativo', 'passivo'] as const).map(t => (
                   <button key={t} onClick={() => { setTipo(t); setForm(f => ({ ...f, subtipo: t === 'ativo' ? 'imovel' : 'financiamento' })) }}
@@ -161,9 +179,9 @@ export function Page() {
                     style={{ border: 'none', background: 'transparent', fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none' }} />
                 </div>
               )}
-              <motion.button onClick={handleAdd} whileTap={{ scale: 0.97 }} disabled={!form.nome || !form.valor}
+              <motion.button onClick={handleSave} whileTap={{ scale: 0.97 }} disabled={!form.nome || !form.valor}
                 style={{ width: '100%', padding: '14px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: form.nome && form.valor ? '#C4553B' : '#E8E0D5', color: form.nome && form.valor ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, transition: 'all .2s' }}>
-                Adicionar
+                {editingId ? 'Salvar alterações' : 'Adicionar'}
               </motion.button>
             </motion.div>
           </motion.div>

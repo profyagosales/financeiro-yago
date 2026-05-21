@@ -14,6 +14,7 @@ function ContaFixaRow({ cf, mes, ano, onEdit, onDelete }: { cf: any; mes: number
   const pgto = pagamentos.find(p => p.contaFixaId === cf.id)
   const pago = pgto?.status === 'pago'
   const [cat, setCat] = useState<any>(null)
+  const [justPaid, setJustPaid] = useState(false)
   useState(() => { db.categorias.get(cf.categoriaId).then(setCat) })
 
   const hoje = new Date().getDate()
@@ -44,9 +45,21 @@ function ContaFixaRow({ cf, mes, ano, onEdit, onDelete }: { cf: any; mes: number
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
         <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: pago ? '#9B7B6A' : '#2C1A0F' }}>{fmt(cf.valor)}</p>
         <div style={{ display: 'flex', gap: 4, marginTop: 5, justifyContent: 'flex-end' }}>
-          <motion.button whileTap={{ scale: 0.9 }} onClick={() => pago ? marcarPendente(cf.id, mes, ano) : marcarPago(cf.id, mes, ano, cf.valor)}
-            style={{ background: pago ? '#F5F0E8' : '#C4553B', color: pago ? '#7A5C4F' : 'white', border: 'none', borderRadius: 8, padding: '5px 11px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all .2s' }}>
-            {pago ? 'Desfazer' : 'Pagar'}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            animate={justPaid ? { scale: [1, 1.2, 1], backgroundColor: ['#C4553B', '#3A8580', '#3A8580'] } : {}}
+            transition={{ duration: 0.4 }}
+            onClick={() => {
+              if (pago) {
+                marcarPendente(cf.id, mes, ano)
+              } else {
+                marcarPago(cf.id, mes, ano, cf.valor)
+                setJustPaid(true)
+                setTimeout(() => setJustPaid(false), 1500)
+              }
+            }}
+            style={{ background: pago ? '#F5F0E8' : '#C4553B', color: pago ? '#7A5C4F' : 'white', border: 'none', borderRadius: 8, padding: '5px 11px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'background .2s' }}>
+            {justPaid ? '✓ Pago!' : pago ? 'Desfazer' : 'Pagar'}
           </motion.button>
           <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <IconEdit size={12} color="#7A5C4F" stroke={2} />

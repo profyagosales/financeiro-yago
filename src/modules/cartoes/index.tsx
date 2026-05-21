@@ -262,22 +262,24 @@ function CartaoCard({ cartao, mes, ano, onClick, onEdit, onDelete }: { cartao: a
   const pct = Math.min(100, (total / cartao.limite) * 100)
   return (
     <motion.div whileHover={{ y: -3 }} style={{ background: cartao.cor, borderRadius: 24, padding: '20px 22px', cursor: 'pointer', position: 'relative' }}>
-      <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', gap: 6 }}>
-        <button onClick={e => { e.stopPropagation(); onEdit() }}
-          style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <IconEdit size={13} color="white" stroke={2} />
-        </button>
-        <button onClick={e => { e.stopPropagation(); onDelete() }}
-          style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <IconTrash size={13} color="rgba(255,255,255,0.8)" stroke={2} />
-        </button>
+      {/* Top row: bandeira + buttons */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>{cartao.bandeira}</p>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={e => { e.stopPropagation(); onEdit() }}
+            style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconEdit size={13} color="white" stroke={2} />
+          </button>
+          <button onClick={e => { e.stopPropagation(); onDelete() }}
+            style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconTrash size={13} color="rgba(255,255,255,0.8)" stroke={2} />
+          </button>
+        </div>
       </div>
+      {/* Main content — clickable */}
       <div onClick={onClick}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-          <div>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>{cartao.bandeira}</p>
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: 'white' }}>{cartao.nome}</p>
-          </div>
+          <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: 'white' }}>{cartao.nome}</p>
           <div style={{ textAlign: 'right' }}>
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>FATURA</p>
             <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: 'white' }}>{fmt(total)}</p>

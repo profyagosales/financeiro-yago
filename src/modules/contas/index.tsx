@@ -24,6 +24,16 @@ const BANCOS = [
 ]
 const TIPOS = ['corrente','poupança','digital','dinheiro','investimento'] as const
 
+function textColor(hex: string) {
+  if (!hex || hex.length < 7) return 'white'
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
+  return (0.299*r + 0.587*g + 0.114*b) > 186 ? '#2C1A0F' : 'white'
+}
+function textAlpha(hex: string, alpha: string) {
+  const tc = textColor(hex)
+  return tc === 'white' ? `rgba(255,255,255,${alpha})` : `rgba(44,26,15,${alpha})`
+}
+
 export function Page() {
   const contas = useContas()
   const saldoTotal = useSaldoTotal()
@@ -78,7 +88,7 @@ export function Page() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {contas.map(c => (
             <motion.div key={c.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -3 }}
-              style={{ background: '#2C1A0F', borderRadius: 22, padding: '22px 22px 16px', position: 'relative', overflow: 'hidden' }}>
+              style={{ background: c.cor, borderRadius: 22, padding: '22px 22px 16px', position: 'relative', overflow: 'hidden' }}>
               {/* Color accent bar */}
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: c.cor }} />
               {/* Bank badge */}
@@ -88,23 +98,23 @@ export function Page() {
                     <span style={{ fontFamily: 'Georgia,serif', fontSize: 10, fontWeight: 700, color: 'white' }}>{c.icone}</span>
                   </div>
                   <div>
-                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{c.nome}</p>
-                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{c.tipo}</p>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: textAlpha(c.cor, '0.6'), textTransform: 'uppercase', letterSpacing: '.04em' }}>{c.nome}</p>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: textAlpha(c.cor, '0.5') }}>{c.tipo}</p>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button onClick={() => openEdit(c)}
-                    style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <IconEdit size={13} color="rgba(255,255,255,0.6)" />
+                    style={{ background: 'rgba(0,0,0,0.15)', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconEdit size={13} color={textAlpha(c.cor, '0.7')} />
                   </button>
                   <button onClick={() => setConfirmDelete(c.id!)}
-                    style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <IconTrash size={13} color="rgba(255,255,255,0.4)" />
+                    style={{ background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconTrash size={13} color={textAlpha(c.cor, '0.5')} />
                   </button>
                 </div>
               </div>
               {/* Balance */}
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 34, fontWeight: 700, color: 'white', letterSpacing: '-1px', marginBottom: 4 }}>{fmt(c.saldoAtual)}</p>
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 34, fontWeight: 700, color: textColor(c.cor), letterSpacing: '-1px', marginBottom: 4 }}>{fmt(c.saldoAtual)}</p>
               <div style={{ height: 3, background: c.cor, borderRadius: 2, marginBottom: 16, width: `${Math.min(100, Math.max(10, (c.saldoAtual / (c.saldoAtual + 1000)) * 100))}%`, opacity: 0.8 }} />
               {/* CTA buttons */}
               <div style={{ display: 'flex', gap: 8 }}>
@@ -113,7 +123,7 @@ export function Page() {
                   + Lançar
                 </motion.button>
                 <motion.button whileTap={{ scale: 0.96 }} onClick={() => navigate(`/transacoes?conta=${c.id}`)}
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '9px 0', color: 'rgba(255,255,255,0.8)', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  style={{ flex: 1, background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, padding: '9px 0', color: textAlpha(c.cor, '0.85'), fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                   Histórico
                 </motion.button>
               </div>

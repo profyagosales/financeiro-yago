@@ -7,7 +7,7 @@ import { useContas, useSaldoTotal } from '@/db/hooks/useContas'
 import { useTransacoes, useTotaisMes, useGastosPorCategoria } from '@/db/hooks/useTransacoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
-import { useAllLancamentosAtivos } from '@/db/hooks/useCartoes'
+import { useCartoes, useAllLancamentosAtivos } from '@/db/hooks/useCartoes'
 import { useOrcamentos } from '@/db/hooks/useOrcamentos'
 import { db, seedCategories } from '@/db/schema'
 import { fmt, fmtDate, mesAnoAtual } from '@/lib/format'
@@ -51,6 +51,12 @@ export function DashboardPage() {
     const pago = pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago')
     return !pago && cf.diaVencimento >= hoje && cf.diaVencimento <= hoje + 7
   }).sort((a, b) => a.diaVencimento - b.diaVencimento)
+
+  const cartoes = useCartoes()
+  const cartoesAlerta = cartoes.filter(c => {
+    const diasParaFechar = c.diaFechamento >= hoje ? c.diaFechamento - hoje : 31 - hoje + c.diaFechamento
+    return diasParaFechar <= 5
+  })
 
   const pieData = categorias.map(c => ({ name: c.nome, value: gastosPorCat.get(c.id!) ?? 0, color: c.cor, cat: c }))
     .filter(d => d.value > 0).sort((a, b) => b.value - a.value).slice(0, 6)
@@ -153,6 +159,35 @@ export function DashboardPage() {
                     </p>
                   </div>
                   <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 15, fontWeight: 700, color: '#2C1A0F' }}>{fmt(cf.valor)}</p>
+                </div>
+              )
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Alertas de fatura de cartão */}
+      {cartoesAlerta.length > 0 && (
+        <motion.div variants={I} style={{ background: '#FAF0EE', borderRadius: 18, padding: '14px 16px', marginBottom: 16, border: '0.5px solid #F0C8B8' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <IconCreditCard size={15} color="#C4553B" stroke={2.2} />
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#C4553B', letterSpacing: '.05em' }}>FATURA FECHANDO EM BREVE</p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {cartoesAlerta.map(c => {
+              const dias = c.diaFechamento >= hoje ? c.diaFechamento - hoje : 0
+              return (
+                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/cartoes')}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: c.cor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <IconCreditCard size={17} color="white" stroke={1.8} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F' }}>{c.nome}</p>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: dias === 0 ? '#C4553B' : '#D4A017', fontWeight: 600 }}>
+                      {dias === 0 ? 'Fecha hoje!' : `Fecha em ${dias} dia${dias !== 1 ? 's' : ''}`}
+                    </p>
+                  </div>
+                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A' }}>dia {c.diaFechamento}</p>
                 </div>
               )
             })}

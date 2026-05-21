@@ -5,6 +5,7 @@ import { BottomNav } from './BottomNav'
 import { FabModal } from './FabModal'
 import { PWABanner } from './PWABanner'
 import { useUIStore } from '@/store/ui'
+import { IconPlus } from '@tabler/icons-react'
 
 export function AppShell() {
   const { fabOpen, fabDefaultContaId, openFab, closeFab } = useUIStore()
@@ -37,7 +38,7 @@ export function AppShell() {
 
       {/* Desktop FAB */}
       <button className="fab-desktop" onClick={() => openFab()}>
-        <span style={{ fontSize: 28, color: 'white', lineHeight: 1 }}>+</span>
+        <IconPlus size={26} color="white" stroke={2.5} />
       </button>
 
       <AnimatePresence>
