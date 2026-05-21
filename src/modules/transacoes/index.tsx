@@ -271,6 +271,26 @@ export function Page() {
       <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="🔍  Buscar..."
         style={{ width: '100%', background: '#FFFDF9', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '12px 16px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#2C1A0F', outline: 'none', marginBottom: 10, boxSizing: 'border-box' }} />
 
+      {/* Month filter */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 4 }}>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => setFiltroMes(null)}
+          style={{ padding: '6px 13px', borderRadius: 20, border: filtroMes === null ? 'none' : '1.5px solid #E8E0D5', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, background: filtroMes === null ? '#2C1A0F' : 'transparent', color: filtroMes === null ? 'white' : '#9B7B6A', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          Todos
+        </motion.button>
+        {Array.from({ length: 12 }, (_, i) => {
+          const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i)
+          const m = d.getMonth() + 1, a = d.getFullYear()
+          const label = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+          const active = filtroMes === m && filtroAno === a
+          return (
+            <motion.button key={`${a}-${m}`} whileTap={{ scale: 0.95 }} onClick={() => { setFiltroMes(m); setFiltroAno(a) }}
+              style={{ padding: '6px 13px', borderRadius: 20, border: active ? 'none' : '1.5px solid #E8E0D5', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, background: active ? '#C4553B' : 'transparent', color: active ? 'white' : '#9B7B6A', whiteSpace: 'nowrap', flexShrink: 0, textTransform: 'capitalize' }}>
+              {label}
+            </motion.button>
+          )
+        })}
+      </div>
+
       <div style={{ display: 'flex', gap: 7, marginBottom: 10, flexWrap: 'wrap' }}>
         {(['todos', 'receita', 'despesa'] as const).map(f => (
           <motion.button key={f} whileTap={{ scale: 0.95 }} onClick={() => setFiltroTipo(f)}
