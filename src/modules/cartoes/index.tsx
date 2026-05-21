@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useCartoes, addCartao, deleteCartao, useTotalFatura, useLancamentosCartao, addLancamentoCartao } from '@/db/hooks/useCartoes'
+import { useCartoes, addCartao, editCartao, deleteCartao, useTotalFatura, useLancamentosCartao, addLancamentoCartao } from '@/db/hooks/useCartoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { fmt, mesAnoAtual } from '@/lib/format'
 import { Dobrao } from '@/components/mascot/Dobrao'
 import { db } from '@/db/schema'
-import { IconPlus, IconX, IconTrash } from '@tabler/icons-react'
+import { IconPlus, IconX, IconTrash, IconEdit } from '@tabler/icons-react'
 
 const BANDEIRAS = ['Visa','Mastercard','Elo','Hipercard','Amex']
 const CORES = ['#2C1A0F','#820AD1','#FF8700','#1E7D5A','#3D7EB5','#C4553B','#D94F8A','#7C5CBF']
@@ -127,21 +127,35 @@ export function Page() {
   const cartoes = useCartoes()
   const { mes, ano } = mesAnoAtual()
   const [adding, setAdding] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [selectedCartao, setSelectedCartao] = useState<any>(null)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [form, setForm] = useState({ nome: '', bandeira: 'Visa', limite: '', cor: '#2C1A0F', diaFechamento: 1, diaVencimento: 10 })
 
-  const handleAdd = async () => {
+  const openAdd = () => { setEditingId(null); setForm({ nome: '', bandeira: 'Visa', limite: '', cor: '#2C1A0F', diaFechamento: 1, diaVencimento: 10 }); setAdding(true) }
+  const openEdit = (c: any) => {
+    setEditingId(c.id)
+    setForm({ nome: c.nome, bandeira: c.bandeira, limite: String(c.limite), cor: c.cor, diaFechamento: c.diaFechamento, diaVencimento: c.diaVencimento })
+    setAdding(true)
+  }
+
+  const handleSave = async () => {
     if (!form.nome || !form.limite) return
-    await addCartao({ nome: form.nome, bandeira: form.bandeira, limite: parseFloat(form.limite.replace(',','.')), cor: form.cor, diaFechamento: form.diaFechamento, diaVencimento: form.diaVencimento, ativo: true })
-    setAdding(false); setForm({ nome: '', bandeira: 'Visa', limite: '', cor: '#2C1A0F', diaFechamento: 1, diaVencimento: 10 })
+    const data = { nome: form.nome, bandeira: form.bandeira, limite: parseFloat(form.limite.replace(',','.')), cor: form.cor, diaFechamento: form.diaFechamento, diaVencimento: form.diaVencimento }
+    if (editingId !== null) {
+      await editCartao(editingId, data)
+    } else {
+      await addCartao({ ...data, ativo: true })
+    }
+    setAdding(false)
+    setForm({ nome: '', bandeira: 'Visa', limite: '', cor: '#2C1A0F', diaFechamento: 1, diaVencimento: 10 })
   }
 
   return (
     <div style={{ padding: '24px 28px', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 28, fontWeight: 700, color: '#2C1A0F' }}>Cartões</h1>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={() => setAdding(true)}
+        <motion.button whileTap={{ scale: 0.95 }} onClick={openAdd}
           style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
           <IconPlus size={16} stroke={2.5} /> Adicionar
         </motion.button>
@@ -155,7 +169,7 @@ export function Page() {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-          {cartoes.map(c => <CartaoCard key={c.id} cartao={c} mes={mes} ano={ano} onClick={() => setSelectedCartao(c)} onDelete={() => setConfirmDelete(c.id!)} />)}
+          {cartoes.map(c => <CartaoCard key={c.id} cartao={c} mes={mes} ano={ano} onClick={() => setSelectedCartao(c)} onEdit={() => openEdit(c)} onDelete={() => setConfirmDelete(c.id!)} />)}
         </div>
       )}
 
@@ -188,7 +202,7 @@ export function Page() {
               onClick={e => e.stopPropagation()}
               style={{ width: '100%', maxWidth: 520, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '20px 20px 48px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F' }}>Novo cartão</h3>
+                <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F' }}>{editingId ? 'Editar cartão' : 'Novo cartão'}</h3>
                 <button onClick={() => setAdding(false)} style={{ background: '#F5F0E8', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconX size={16} color="#9B7B6A" /></button>
               </div>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A', marginBottom: 6 }}>BANDEIRA</p>
@@ -223,9 +237,9 @@ export function Page() {
               <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
                 {CORES.map(c => <button key={c} onClick={() => setForm(f => ({ ...f, cor: c }))} style={{ width: 32, height: 32, borderRadius: '50%', background: c, border: form.cor === c ? '3px solid #C4553B' : '2px solid transparent', cursor: 'pointer' }} />)}
               </div>
-              <motion.button onClick={handleAdd} whileTap={{ scale: 0.97 }} disabled={!form.nome || !form.limite}
+              <motion.button onClick={handleSave} whileTap={{ scale: 0.97 }} disabled={!form.nome || !form.limite}
                 style={{ width: '100%', padding: '14px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: form.nome && form.limite ? '#C4553B' : '#E8E0D5', color: form.nome && form.limite ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, transition: 'all .2s' }}>
-                Adicionar cartão
+                {editingId ? 'Salvar alterações' : 'Adicionar cartão'}
               </motion.button>
             </motion.div>
           </motion.div>
@@ -236,16 +250,22 @@ export function Page() {
   )
 }
 
-function CartaoCard({ cartao, mes, ano, onClick, onDelete }: { cartao: any; mes: number; ano: number; onClick: () => void; onDelete: () => void }) {
+function CartaoCard({ cartao, mes, ano, onClick, onEdit, onDelete }: { cartao: any; mes: number; ano: number; onClick: () => void; onEdit: () => void; onDelete: () => void }) {
   const total = useTotalFatura(cartao.id, mes, ano)
   const disponivel = cartao.limite - total
   const pct = Math.min(100, (total / cartao.limite) * 100)
   return (
     <motion.div whileHover={{ y: -3 }} style={{ background: cartao.cor, borderRadius: 24, padding: '20px 22px', cursor: 'pointer', position: 'relative' }}>
-      <button onClick={e => { e.stopPropagation(); onDelete() }}
-        style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <IconTrash size={14} color="white" stroke={2} />
-      </button>
+      <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', gap: 6 }}>
+        <button onClick={e => { e.stopPropagation(); onEdit() }}
+          style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <IconEdit size={13} color="white" stroke={2} />
+        </button>
+        <button onClick={e => { e.stopPropagation(); onDelete() }}
+          style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <IconTrash size={13} color="rgba(255,255,255,0.8)" stroke={2} />
+        </button>
+      </div>
       <div onClick={onClick}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>

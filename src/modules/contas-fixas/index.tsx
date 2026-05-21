@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useContasFixas, usePagamentosFixos, addContaFixa, marcarPago, marcarPendente, deleteContaFixa } from '@/db/hooks/useContasFixas'
+import { useContasFixas, usePagamentosFixos, addContaFixa, editContaFixa, marcarPago, marcarPendente, deleteContaFixa } from '@/db/hooks/useContasFixas'
 import { useContas } from '@/db/hooks/useContas'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { fmt, mesAnoAtual } from '@/lib/format'
 import { Dobrao } from '@/components/mascot/Dobrao'
 import { db } from '@/db/schema'
-import { IconPlus, IconX, IconTrash, IconCheck } from '@tabler/icons-react'
+import { IconPlus, IconX, IconTrash, IconCheck, IconEdit } from '@tabler/icons-react'
 
-function ContaFixaRow({ cf, mes, ano }: { cf: any; mes: number; ano: number }) {
+function ContaFixaRow({ cf, mes, ano, onEdit, onDelete }: { cf: any; mes: number; ano: number; onEdit: () => void; onDelete: () => void }) {
   const pagamentos = usePagamentosFixos(mes, ano)
   const pgto = pagamentos.find(p => p.contaFixaId === cf.id)
   const pago = pgto?.status === 'pago'
@@ -43,10 +43,18 @@ function ContaFixaRow({ cf, mes, ano }: { cf: any; mes: number; ano: number }) {
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
         <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: pago ? '#9B7B6A' : '#2C1A0F' }}>{fmt(cf.valor)}</p>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => pago ? marcarPendente(cf.id, mes, ano) : marcarPago(cf.id, mes, ano, cf.valor)}
-          style={{ marginTop: 5, background: pago ? '#F5F0E8' : '#C4553B', color: pago ? '#7A5C4F' : 'white', border: 'none', borderRadius: 8, padding: '5px 11px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all .2s' }}>
-          {pago ? 'Desfazer' : 'Pagar'}
-        </motion.button>
+        <div style={{ display: 'flex', gap: 4, marginTop: 5, justifyContent: 'flex-end' }}>
+          <motion.button whileTap={{ scale: 0.9 }} onClick={() => pago ? marcarPendente(cf.id, mes, ano) : marcarPago(cf.id, mes, ano, cf.valor)}
+            style={{ background: pago ? '#F5F0E8' : '#C4553B', color: pago ? '#7A5C4F' : 'white', border: 'none', borderRadius: 8, padding: '5px 11px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all .2s' }}>
+            {pago ? 'Desfazer' : 'Pagar'}
+          </motion.button>
+          <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconEdit size={12} color="#7A5C4F" stroke={2} />
+          </button>
+          <button onClick={onDelete} style={{ background: '#FAF0EE', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconTrash size={12} color="#C4553B" stroke={2} />
+          </button>
+        </div>
       </div>
     </motion.div>
   )
@@ -57,10 +65,17 @@ export function Page() {
   const contasFixas = useContasFixas()
   const pagamentos = usePagamentosFixos(mes, ano)
   const [adding, setAdding] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const categorias = useCategorias('despesa')
   const contas = useContas()
   const [form, setForm] = useState({ nome: '', valor: '', diaVencimento: 10, categoriaId: null as number | null, contaId: null as number | null })
+
+  const openEdit = (cf: any) => {
+    setEditingId(cf.id)
+    setForm({ nome: cf.nome, valor: String(cf.valor), diaVencimento: cf.diaVencimento, categoriaId: cf.categoriaId, contaId: cf.contaId ?? null })
+    setAdding(true)
+  }
 
   const pagas = contasFixas.filter(cf => pagamentos.find(p => p.contaFixaId === cf.id)?.status === 'pago')
   const pendentes = contasFixas.filter(cf => !pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
@@ -68,10 +83,16 @@ export function Page() {
   const totalPago = pagas.reduce((s, cf) => s + cf.valor, 0)
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
 
-  const handleAdd = async () => {
+  const handleSave = async () => {
     if (!form.nome || !form.valor || !form.categoriaId) return
-    await addContaFixa({ nome: form.nome, valor: parseFloat(form.valor.replace(',', '.')), diaVencimento: form.diaVencimento, categoriaId: form.categoriaId, contaId: form.contaId, cartaoId: undefined, recorrencia: 'mensal', alertaDiasAntes: 3, ativo: true })
+    const data = { nome: form.nome, valor: parseFloat(form.valor.replace(',', '.')), diaVencimento: form.diaVencimento, categoriaId: form.categoriaId, contaId: form.contaId }
+    if (editingId !== null) {
+      await editContaFixa(editingId, data)
+    } else {
+      await addContaFixa({ ...data, cartaoId: undefined, recorrencia: 'mensal', alertaDiasAntes: 3, ativo: true })
+    }
     setAdding(false)
+    setEditingId(null)
     setForm({ nome: '', valor: '', diaVencimento: 10, categoriaId: null, contaId: null })
   }
 
@@ -82,7 +103,7 @@ export function Page() {
           <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 28, fontWeight: 700, color: '#2C1A0F' }}>Contas Fixas</h1>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 2, textTransform: 'capitalize' }}>{mesNome} · {contasFixas.length} conta{contasFixas.length !== 1 ? 's' : ''}</p>
         </div>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={() => setAdding(true)}
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setEditingId(null); setForm({ nome: '', valor: '', diaVencimento: 10, categoriaId: null, contaId: null }); setAdding(true) }}
           style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
           <IconPlus size={16} stroke={2.5} /> Adicionar
         </motion.button>
@@ -117,13 +138,13 @@ export function Page() {
           {pendentes.length > 0 && (
             <>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', margin: '4px 0', letterSpacing: '.05em' }}>A PAGAR</p>
-              {pendentes.map(cf => <ContaFixaRow key={cf.id} cf={cf} mes={mes} ano={ano} />)}
+              {pendentes.map(cf => <ContaFixaRow key={cf.id} cf={cf} mes={mes} ano={ano} onEdit={() => openEdit(cf)} onDelete={() => setConfirmDelete(cf.id!)} />)}
             </>
           )}
           {pagas.length > 0 && (
             <>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', margin: '12px 0 4px', letterSpacing: '.05em' }}>PAGAS</p>
-              {pagas.map(cf => <ContaFixaRow key={cf.id} cf={cf} mes={mes} ano={ano} />)}
+              {pagas.map(cf => <ContaFixaRow key={cf.id} cf={cf} mes={mes} ano={ano} onEdit={() => openEdit(cf)} onDelete={() => setConfirmDelete(cf.id!)} />)}
             </>
           )}
         </div>
@@ -156,7 +177,7 @@ export function Page() {
               onClick={e => e.stopPropagation()}
               style={{ width: '100%', maxWidth: 520, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '20px 20px 48px', maxHeight: '90dvh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-                <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F' }}>Nova conta fixa</h3>
+                <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F' }}>{editingId ? 'Editar conta fixa' : 'Nova conta fixa'}</h3>
                 <button onClick={() => setAdding(false)} style={{ background: '#F5F0E8', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <IconX size={16} color="#9B7B6A" />
                 </button>
@@ -204,9 +225,9 @@ export function Page() {
                 </>
               )}
 
-              <motion.button onClick={handleAdd} whileTap={{ scale: 0.97 }} disabled={!form.nome || !form.valor || !form.categoriaId}
+              <motion.button onClick={handleSave} whileTap={{ scale: 0.97 }} disabled={!form.nome || !form.valor || !form.categoriaId}
                 style={{ width: '100%', padding: '15px 0', borderRadius: 14, border: 'none', cursor: form.nome && form.valor && form.categoriaId ? 'pointer' : 'default', background: form.nome && form.valor && form.categoriaId ? '#C4553B' : '#E8E0D5', color: form.nome && form.valor && form.categoriaId ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, transition: 'all .2s' }}>
-                Adicionar conta fixa
+                {editingId ? 'Salvar alterações' : 'Adicionar conta fixa'}
               </motion.button>
             </motion.div>
           </motion.div>

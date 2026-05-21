@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useMetas, addMeta, aportarMeta, deleteMeta } from '@/db/hooks/useMetas'
+import { useMetas, addMeta, editMeta, aportarMeta, deleteMeta } from '@/db/hooks/useMetas'
 import { useOrcamentos, addOrcamento, deleteOrcamento } from '@/db/hooks/useOrcamentos'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useGastosPorCategoria } from '@/db/hooks/useTransacoes'
@@ -12,7 +12,7 @@ import { Dobrao } from '@/components/mascot/Dobrao'
 const ICONS_META = ['🏠','✈️','🚗','📱','💻','🎓','💍','🏖️','📦','💰','🎯','🌟']
 const CORES_META = ['#C4553B','#3A8580','#D4A017','#8B4BC8','#3D7EB5','#E89527','#D94F8A','#1E7D5A']
 
-function MetaCard({ meta }: { meta: any }) {
+function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
   const pct = meta.valorAlvo > 0 ? Math.min(100, (meta.valorAtual / meta.valorAlvo) * 100) : 0
   const falta = meta.valorAlvo - meta.valorAtual
   const [aporting, setAporting] = useState(false)
@@ -38,7 +38,12 @@ function MetaCard({ meta }: { meta: any }) {
           )}
           {atingida && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#3A8580', fontWeight: 600, marginTop: 2 }}>Meta atingida! 🎊</p>}
         </div>
-        <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18 }}>×</button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            ✏️
+          </button>
+          <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18 }}>×</button>
+        </div>
       </div>
       <div style={{ marginBottom: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -115,14 +120,27 @@ export function Page() {
   const gastos = useGastosPorCategoria(mes, ano)
   const [tab, setTab] = useState<'metas' | 'orcamento'>('metas')
   const [addingMeta, setAddingMeta] = useState(false)
+  const [editingMetaId, setEditingMetaId] = useState<number | null>(null)
   const [addingOrc, setAddingOrc] = useState(false)
   const [formMeta, setFormMeta] = useState({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' })
   const [formOrc, setFormOrc] = useState({ categoriaId: null as number | null, valorLimite: '' })
 
-  const handleAddMeta = async () => {
+  const openEditMeta = (meta: any) => {
+    setEditingMetaId(meta.id)
+    setFormMeta({ nome: meta.nome, valorAlvo: String(meta.valorAlvo), valorAtual: String(meta.valorAtual), prazo: meta.prazo ?? '', cor: meta.cor, icone: meta.icone })
+    setAddingMeta(true)
+  }
+
+  const handleSaveMeta = async () => {
     if (!formMeta.nome || !formMeta.valorAlvo) return
-    await addMeta({ nome: formMeta.nome, valorAlvo: parseFloat(formMeta.valorAlvo.replace(',','.')), valorAtual: parseFloat(formMeta.valorAtual.replace(',','.')) || 0, prazo: formMeta.prazo || undefined, cor: formMeta.cor, icone: formMeta.icone, ativo: true })
+    const data = { nome: formMeta.nome, valorAlvo: parseFloat(formMeta.valorAlvo.replace(',','.')), valorAtual: parseFloat(formMeta.valorAtual.replace(',','.')) || 0, prazo: formMeta.prazo || undefined, cor: formMeta.cor, icone: formMeta.icone }
+    if (editingMetaId !== null) {
+      await editMeta(editingMetaId, data)
+    } else {
+      await addMeta({ ...data, ativo: true })
+    }
     setAddingMeta(false)
+    setEditingMetaId(null)
     setFormMeta({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' })
   }
 
@@ -137,7 +155,7 @@ export function Page() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "24px 28px", width: "100%" }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F' }}>Metas & Orçamento</h1>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={() => tab === 'metas' ? setAddingMeta(true) : setAddingOrc(true)}
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { if (tab === 'metas') { setEditingMetaId(null); setFormMeta({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' }); setAddingMeta(true) } else setAddingOrc(true) }}
           style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
           + Adicionar
         </motion.button>
@@ -161,7 +179,7 @@ export function Page() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {metas.map(m => <MetaCard key={m.id} meta={m} />)}
+            {metas.map(m => <MetaCard key={m.id} meta={m} onEdit={() => openEditMeta(m)} />)}
           </div>
         )
       )}
@@ -190,7 +208,7 @@ export function Page() {
               onClick={e => e.stopPropagation()}
               style={{ width: '100%', maxWidth: 520, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '20px 20px 48px', maxHeight: '90dvh', overflowY: 'auto' }}>
               <div style={{ width: 40, height: 4, borderRadius: 2, background: '#E8E0D5', margin: '0 auto 16px' }} />
-              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>Nova meta</h3>
+              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>{editingMetaId ? 'Editar meta' : 'Nova meta'}</h3>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A', marginBottom: 6 }}>ÍCONE</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
                 {ICONS_META.map(ic => (
@@ -229,9 +247,9 @@ export function Page() {
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 {CORES_META.map(c => <button key={c} onClick={() => setFormMeta(f => ({ ...f, cor: c }))} style={{ width: 32, height: 32, borderRadius: '50%', background: c, border: formMeta.cor === c ? '3px solid #2C1A0F' : '2px solid transparent', cursor: 'pointer' }} />)}
               </div>
-              <motion.button onClick={handleAddMeta} whileTap={{ scale: 0.97 }} disabled={!formMeta.nome || !formMeta.valorAlvo}
+              <motion.button onClick={handleSaveMeta} whileTap={{ scale: 0.97 }} disabled={!formMeta.nome || !formMeta.valorAlvo}
                 style={{ width: '100%', padding: '14px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: formMeta.nome && formMeta.valorAlvo ? '#C4553B' : '#E8E0D5', color: formMeta.nome && formMeta.valorAlvo ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, transition: 'all .2s' }}>
-                Criar meta
+                {editingMetaId ? 'Salvar alterações' : 'Criar meta'}
               </motion.button>
             </motion.div>
           </motion.div>

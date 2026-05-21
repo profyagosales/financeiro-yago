@@ -31,6 +31,9 @@ export async function marcarPendente(contaFixaId: number, mes: number, ano: numb
   const existing = await db.pagamentosFixos.where({ contaFixaId, mes, ano }).first()
   if (existing) await db.pagamentosFixos.update(existing.id!, { status: 'pendente', dataPagamento: undefined })
 }
+export async function editContaFixa(id: number, data: Partial<import('../schema').ContaFixa>) {
+  return db.contasFixas.update(id, data)
+}
 export async function deleteContaFixa(id: number) {
   return db.contasFixas.update(id, { ativo: false })
 }

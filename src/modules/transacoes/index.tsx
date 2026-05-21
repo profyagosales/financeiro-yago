@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTransacoes, deleteTransacao, editTransacao } from '@/db/hooks/useTransacoes'
 import { useAnexos, addAnexo, deleteAnexo } from '@/db/hooks/useAnexos'
@@ -8,7 +9,7 @@ import { fmt, fmtDate } from '@/lib/format'
 import { db } from '@/db/schema'
 import { Dobrao } from '@/components/mascot/Dobrao'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { IconEdit, IconTrash, IconPaperclip, IconX } from '@tabler/icons-react'
+import { IconEdit, IconTrash, IconPaperclip, IconX, IconFilterOff } from '@tabler/icons-react'
 
 function hexToRgb(hex: string) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
@@ -214,13 +215,20 @@ function groupByDate(txs: any[]) {
 
 export function Page() {
   const transacoes = useTransacoes(200)
+  const contas = useContas()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [busca, setBusca] = useState('')
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'receita' | 'despesa'>('todos')
+
+  const filtroContaId = searchParams.get('conta') ? Number(searchParams.get('conta')) : null
+  const contaFiltrada = filtroContaId ? contas.find(c => c.id === filtroContaId) : null
 
   const filtradas = transacoes.filter(tx => {
     const okTipo = filtroTipo === 'todos' || tx.tipo === filtroTipo
     const okBusca = !busca || tx.descricao.toLowerCase().includes(busca.toLowerCase())
-    return okTipo && okBusca
+    const okConta = !filtroContaId || tx.contaId === filtroContaId
+    return okTipo && okBusca && okConta
   })
 
   const grupos = groupByDate(filtradas)
@@ -235,6 +243,20 @@ export function Page() {
         <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 28, fontWeight: 700, color: '#2C1A0F' }}>Transações</h1>
         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', background: '#F5F0E8', padding: '4px 10px', borderRadius: 20 }}>{filtradas.length} itens</span>
       </div>
+
+      {contaFiltrada && (
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, background: `${contaFiltrada.cor}15`, border: `1.5px solid ${contaFiltrada.cor}30`, borderRadius: 12, padding: '8px 14px', marginBottom: 12 }}>
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: contaFiltrada.cor, flexShrink: 0 }} />
+          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: contaFiltrada.cor, flex: 1 }}>
+            {contaFiltrada.nome}
+          </span>
+          <button onClick={() => navigate('/transacoes')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12 }}>
+            <IconFilterOff size={14} stroke={1.8} /> Limpar
+          </button>
+        </motion.div>
+      )}
 
       <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="🔍  Buscar..."
         style={{ width: '100%', background: '#FFFDF9', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '12px 16px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#2C1A0F', outline: 'none', marginBottom: 10, boxSizing: 'border-box' }} />

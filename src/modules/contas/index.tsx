@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useContas, addConta, deleteConta, editConta, useSaldoTotal } from '@/db/hooks/useContas'
 import { fmt } from '@/lib/format'
 import { Dobrao } from '@/components/mascot/Dobrao'
 import { IconPlus, IconX, IconTrash, IconEdit, IconBuildingBank } from '@tabler/icons-react'
+import { useUIStore } from '@/store/ui'
 
 const BANCOS = [
   { nome: 'Nubank', cor: '#820AD1', abrev: 'NU' },
@@ -25,6 +27,8 @@ const TIPOS = ['corrente','poupança','digital','dinheiro','investimento'] as co
 export function Page() {
   const contas = useContas()
   const saldoTotal = useSaldoTotal()
+  const navigate = useNavigate()
+  const { openFab } = useUIStore()
   const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
@@ -104,11 +108,11 @@ export function Page() {
               <div style={{ height: 3, background: c.cor, borderRadius: 2, marginBottom: 16, width: `${Math.min(100, Math.max(10, (c.saldoAtual / (c.saldoAtual + 1000)) * 100))}%`, opacity: 0.8 }} />
               {/* CTA buttons */}
               <div style={{ display: 'flex', gap: 8 }}>
-                <motion.button whileTap={{ scale: 0.96 }}
+                <motion.button whileTap={{ scale: 0.96 }} onClick={() => openFab(c.id!)}
                   style={{ flex: 1, background: '#C4553B', border: 'none', borderRadius: 10, padding: '9px 0', color: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   + Lançar
                 </motion.button>
-                <motion.button whileTap={{ scale: 0.96 }}
+                <motion.button whileTap={{ scale: 0.96 }} onClick={() => navigate(`/transacoes?conta=${c.id}`)}
                   style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '9px 0', color: 'rgba(255,255,255,0.8)', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                   Histórico
                 </motion.button>

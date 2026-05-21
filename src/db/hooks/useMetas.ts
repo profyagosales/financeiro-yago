@@ -12,6 +12,9 @@ export async function aportarMeta(id: number, valor: number) {
   if (!meta) return
   return db.metas.update(id, { valorAtual: Math.min(meta.valorAtual + valor, meta.valorAlvo), updatedAt: Date.now() })
 }
+export async function editMeta(id: number, data: Partial<import('../schema').Meta>) {
+  return db.metas.update(id, { ...data, updatedAt: Date.now() })
+}
 export async function deleteMeta(id: number) {
   return db.metas.update(id, { ativo: false, updatedAt: Date.now() })
 }

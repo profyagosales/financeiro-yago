@@ -1,13 +1,13 @@
-import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { FabModal } from './FabModal'
 import { PWABanner } from './PWABanner'
+import { useUIStore } from '@/store/ui'
 
 export function AppShell() {
-  const [fabOpen, setFabOpen] = useState(false)
+  const { fabOpen, fabDefaultContaId, openFab, closeFab } = useUIStore()
 
   return (
     <div style={{ display: 'flex', height: '100dvh', background: '#FAF6F0', overflow: 'hidden' }}>
@@ -23,16 +23,16 @@ export function AppShell() {
 
       {/* Bottom nav — mobile only */}
       <div className="bottomnav-mobile">
-        <BottomNav onFab={() => setFabOpen(true)} />
+        <BottomNav onFab={() => openFab()} />
       </div>
 
       {/* Desktop FAB */}
-      <button className="fab-desktop" onClick={() => setFabOpen(true)}>
+      <button className="fab-desktop" onClick={() => openFab()}>
         <span style={{ fontSize: 28, color: 'white', lineHeight: 1 }}>+</span>
       </button>
 
       <AnimatePresence>
-        {fabOpen && <FabModal onClose={() => setFabOpen(false)} />}
+        {fabOpen && <FabModal defaultContaId={fabDefaultContaId} onClose={closeFab} />}
       </AnimatePresence>
 
       <PWABanner />

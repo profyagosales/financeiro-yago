@@ -13,7 +13,7 @@ type TipoLanc = 'despesa' | 'receita' | 'transferencia'
 type FontePag = 'conta' | 'cartao'
 const METODOS = ['PIX','Débito','Dinheiro','TED/DOC','Boleto'] as const
 
-export function FabModal({ onClose }: { onClose: () => void }) {
+export function FabModal({ onClose, defaultContaId }: { onClose: () => void; defaultContaId?: number | null }) {
   const [tipo, setTipo] = useState<TipoLanc>('despesa')
   const [valor, setValor] = useState('')
   const [desc, setDesc] = useState('')
@@ -23,7 +23,7 @@ export function FabModal({ onClose }: { onClose: () => void }) {
 
   // Fonte de pagamento
   const [fontePag, setFontePag] = useState<FontePag>('conta')
-  const [contaId, setContaId] = useState<number | null>(null)
+  const [contaId, setContaId] = useState<number | null>(defaultContaId ?? null)
   const [cartaoId, setCartaoId] = useState<number | null>(null)
   const [metodoPag, setMetodoPag] = useState<string>('PIX')
   const [parcelas, setParcelas] = useState(1)
