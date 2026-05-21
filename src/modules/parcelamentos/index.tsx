@@ -45,7 +45,7 @@ export function Page() {
   const totalMensal = parcelamentos.reduce((s, l) => s + l.valor, 0)
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '20px 16px', maxWidth: 680, margin: '0 auto' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "24px 28px", width: "100%" }}>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F' }}>Parcelamentos</h1>
         {parcelamentos.length > 0 && (

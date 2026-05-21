@@ -70,7 +70,7 @@ export function DashboardPage() {
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
 
   return (
-    <motion.div variants={C} initial="hidden" animate="show" style={{ padding: '24px 20px', maxWidth: 680, margin: '0 auto' }}>
+    <motion.div variants={C} initial="hidden" animate="show" style={{ padding: "24px 28px", width: "100%" }}>
 
       {/* Header */}
       <motion.div variants={I} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>

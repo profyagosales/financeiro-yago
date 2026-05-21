@@ -72,7 +72,7 @@ export function Page() {
   const mesNome = new Date(ano, mes-1, 1).toLocaleDateString('pt-BR', { month: 'long' })
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '20px 16px', maxWidth: 680, margin: '0 auto' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "24px 28px", width: "100%" }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F' }}>Contas Fixas</h1>
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => setAdding(true)}

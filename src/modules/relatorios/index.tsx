@@ -59,7 +59,7 @@ export function Page() {
   const nextMes = () => { if (mes === 12) { setMes(1); setAno(a => a+1) } else setMes(m => m+1) }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '20px 16px', maxWidth: 680, margin: '0 auto' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "24px 28px", width: "100%" }}>
       <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F', marginBottom: 16 }}>Relatórios</h1>
 
       {/* Month nav */}
