@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { Dobrao } from '@/components/mascot/Dobrao'
@@ -7,42 +7,17 @@ import { useContas, useSaldoTotal } from '@/db/hooks/useContas'
 import { useTransacoes, useTotaisMes, useGastosPorCategoria } from '@/db/hooks/useTransacoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
+import { useAllLancamentosAtivos } from '@/db/hooks/useCartoes'
 import { useOrcamentos } from '@/db/hooks/useOrcamentos'
 import { db, seedCategories } from '@/db/schema'
 import { fmt, fmtDate, mesAnoAtual } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { OdometroSaldo } from '@/components/ui/OdometroSaldo'
-import { IconTrendingUp, IconTrendingDown, IconAlertCircle, IconChevronRight, IconCalendarEvent } from '@tabler/icons-react'
+import { DoodleCircles, DoodleDots } from '@/components/ui/Doodle'
+import { IconTrendingUp, IconTrendingDown, IconAlertCircle, IconChevronRight, IconCalendarEvent, IconCreditCard, IconRepeat, IconCalendarStats } from '@tabler/icons-react'
 
-const C = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } }
+const C = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }
 const I = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 26 } } }
-
-function useProximosVencimentos() {
-  const fixas = useContasFixas()
-  const { mes, ano } = mesAnoAtual()
-  const pagamentos = usePagamentosFixos(mes, ano)
-  const hoje = new Date().getDate()
-  return fixas
-    .filter(cf => {
-      const pago = pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago')
-      return !pago && cf.diaVencimento >= hoje && cf.diaVencimento <= hoje + 7
-    })
-    .sort((a, b) => a.diaVencimento - b.diaVencimento)
-}
-
-function useQuantoPossoGastar() {
-  const { mes, ano } = mesAnoAtual()
-  const { receitas, despesas } = useTotaisMes(mes, ano)
-  const fixas = useContasFixas()
-  const pagamentos = usePagamentosFixos(mes, ano)
-  const pendentes = fixas.filter(cf => !pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
-  const comprometido = pendentes.reduce((s, cf) => s + cf.valor, 0)
-  const diasNoMes = new Date(ano, mes, 0).getDate()
-  const diaAtual = new Date().getDate()
-  const diasRestantes = Math.max(1, diasNoMes - diaAtual + 1)
-  const disponivel = receitas - despesas - comprometido
-  return { disponivel, porDia: disponivel / diasRestantes, diasRestantes }
-}
 
 export function DashboardPage() {
   const { mes, ano } = mesAnoAtual()
@@ -53,96 +28,131 @@ export function DashboardPage() {
   const { receitas, despesas } = useTotaisMes(mes, ano)
   const gastosPorCat = useGastosPorCategoria(mes, ano)
   const categorias = useCategorias('despesa')
-  const proximosVenc = useProximosVencimentos()
-  const { disponivel, porDia } = useQuantoPossoGastar()
+  const contasFixas = useContasFixas()
+  const pagamentos = usePagamentosFixos(mes, ano)
+  const parcelamentos = useAllLancamentosAtivos().filter(l => l.totalParcelas > 1)
   const orcamentos = useOrcamentos()
 
   useEffect(() => { seedCategories() }, [])
 
-  const pieData = categorias
-    .map(c => ({ name: c.nome, value: gastosPorCat.get(c.id!) ?? 0, color: c.cor, cat: c }))
-    .filter(d => d.value > 0)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6)
+  // Cálculos integrados do mês
+  const fixasPendentes = contasFixas.filter(cf => !pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
+  const fixasPagas = contasFixas.filter(cf => pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
+  const totalFixasMes = contasFixas.reduce((s, cf) => s + cf.valor, 0)
+  const totalFixasPagas = fixasPagas.reduce((s, cf) => s + cf.valor, 0)
+  const totalParcelamentos = parcelamentos.reduce((s, l) => s + l.valor, 0)
+  const totalComprometido = despesas + fixasPendentes.reduce((s, cf) => s + cf.valor, 0) + totalParcelamentos
+  const saldoLivre = receitas - totalComprometido
+  const hoje = new Date().getDate()
+  const diasNoMes = new Date(ano, mes, 0).getDate()
+  const diasRestantes = Math.max(1, diasNoMes - hoje + 1)
+  const porDia = saldoLivre / diasRestantes
+  const proximosVenc = contasFixas.filter(cf => {
+    const pago = pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago')
+    return !pago && cf.diaVencimento >= hoje && cf.diaVencimento <= hoje + 7
+  }).sort((a, b) => a.diaVencimento - b.diaVencimento)
+
+  const pieData = categorias.map(c => ({ name: c.nome, value: gastosPorCat.get(c.id!) ?? 0, color: c.cor, cat: c }))
+    .filter(d => d.value > 0).sort((a, b) => b.value - a.value).slice(0, 6)
 
   const h = new Date().getHours()
   const saudacao = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
 
   return (
-    <motion.div variants={C} initial="hidden" animate="show" style={{ padding: "24px 28px", width: "100%" }}>
+    <motion.div variants={C} initial="hidden" animate="show" style={{ padding: '24px 28px', width: '100%' }}>
 
       {/* Header */}
-      <motion.div variants={I} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
+      <motion.div variants={I} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginBottom: 4 }}>{saudacao}, Yago!</p>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginBottom: 4 }}>{saudacao}, Yago!</p>
           <OdometroSaldo value={saldoTotal} style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 40, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-1.5px', display: 'block' }} />
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 4 }}>
-            Saldo total · {contas.length} conta{contas.length !== 1 ? 's' : ''}
-          </p>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 4 }}>Saldo em {contas.length} conta{contas.length !== 1 ? 's' : ''}</p>
         </div>
-        <Dobrao mood={saldoTotal < 0 ? 'sad' : proximosVenc.length > 0 ? 'happy' : 'happy'} size={72} />
+        <Dobrao mood={saldoLivre < 0 ? 'sad' : 'happy'} size={72} />
       </motion.div>
 
-      {/* Receitas / Despesas */}
-      <motion.div variants={I} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-        <div style={{ background: '#EBF5F0', borderRadius: 18, padding: '16px 18px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-            <IconTrendingUp size={13} color="#3A8580" stroke={2.5} />
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#3A8580', letterSpacing: '.05em' }}>RECEITAS</p>
-          </div>
-          <OdometroSaldo value={receitas} style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', display: 'block' }} />
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#3A8580', marginTop: 2, textTransform: 'capitalize' }}>{mesNome}</p>
+      {/* Panorama financeiro do mês — BLOCO CENTRAL */}
+      <motion.div variants={I} style={{ background: '#2C1A0F', borderRadius: 22, padding: '20px 22px', marginBottom: 20, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, opacity: 0.15 }}>
+          <DoodleCircles color="white" opacity={0.4} />
         </div>
-        <div style={{ background: '#FAF0EE', borderRadius: 18, padding: '16px 18px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-            <IconTrendingDown size={13} color="#C4553B" stroke={2.5} />
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#C4553B', letterSpacing: '.05em' }}>DESPESAS</p>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, opacity: 0.1 }}>
+          <DoodleDots color="white" opacity={0.5} />
+        </div>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '.06em', marginBottom: 14, textTransform: 'capitalize' }}>PANORAMA DE {mesNome.toUpperCase()}</p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+          <div style={{ background: 'rgba(58,133,128,0.2)', borderRadius: 14, padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+              <IconTrendingUp size={12} color="#6EC9C4" stroke={2.5} />
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#6EC9C4' }}>ENTRADAS</p>
+            </div>
+            <OdometroSaldo value={receitas} style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: 'white', display: 'block' }} />
           </div>
-          <OdometroSaldo value={despesas} style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', display: 'block' }} />
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#C4553B', marginTop: 2, textTransform: 'capitalize' }}>{mesNome}</p>
+          <div style={{ background: 'rgba(196,85,59,0.2)', borderRadius: 14, padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+              <IconTrendingDown size={12} color="#F0957A" stroke={2.5} />
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#F0957A' }}>SAÍDAS TOTAIS</p>
+            </div>
+            <OdometroSaldo value={totalComprometido} style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: 'white', display: 'block' }} />
+          </div>
+        </div>
+
+        {/* Breakdown das saídas */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+          {[
+            { icon: IconTrendingDown, label: 'Gastos variáveis', valor: despesas, cor: '#F0957A' },
+            { icon: IconRepeat, label: `Contas fixas (${contasFixas.length})`, valor: totalFixasMes, cor: '#FBDB65', sub: `${fixasPagas.length} pagas · ${fixasPendentes.length} pendentes` },
+            { icon: IconCalendarStats, label: `Parcelamentos (${parcelamentos.length})`, valor: totalParcelamentos, cor: '#C4B0FF' },
+          ].map((item, i) => item.valor > 0 && (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <item.icon size={13} color={item.cor} stroke={2} />
+              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.65)', flex: 1 }}>
+                {item.label}{item.sub ? <span style={{ opacity: 0.6 }}> · {item.sub}</span> : ''}
+              </span>
+              <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700, color: 'white' }}>{fmt(item.valor)}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Saldo livre */}
+        <div style={{ background: saldoLivre >= 0 ? 'rgba(58,133,128,0.25)' : 'rgba(196,85,59,0.25)', borderRadius: 14, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: saldoLivre >= 0 ? '#6EC9C4' : '#F0957A', marginBottom: 3 }}>SALDO LIVRE DO MÊS</p>
+            <OdometroSaldo value={saldoLivre} style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: 'white', display: 'block' }} />
+          </div>
+          {receitas > 0 && (
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.5)', marginBottom: 3 }}>por dia</p>
+              <OdometroSaldo value={Math.max(0, porDia)} style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,0.85)', display: 'block' }} />
+            </div>
+          )}
         </div>
       </motion.div>
 
-      {/* Quanto posso gastar */}
-      {receitas > 0 && (
-        <motion.div variants={I} style={{ background: disponivel > 0 ? '#EBF5F0' : '#FAF0EE', borderRadius: 18, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: disponivel > 0 ? '#3A8580' : '#C4553B', letterSpacing: '.05em', marginBottom: 4 }}>QUANTO POSSO GASTAR HOJE</p>
-            <OdometroSaldo value={Math.max(0, porDia)} style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700, color: '#2C1A0F', display: 'block' }} />
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>
-              {fmt(Math.max(0, disponivel))} disponível no mês
-            </p>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A' }}>por dia</p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Próximos vencimentos */}
+      {/* Alertas de vencimento */}
       {proximosVenc.length > 0 && (
-        <motion.div variants={I} style={{ background: '#FFFDF9', borderRadius: 20, border: '0.5px solid #F0D8A8', padding: '16px 18px', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <IconAlertCircle size={16} color="#D4A017" stroke={2} />
-            <h3 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#D4A017', letterSpacing: '.05em' }}>VENCIMENTOS PRÓXIMOS</h3>
+        <motion.div variants={I} style={{ background: '#FDF4E3', borderRadius: 18, padding: '14px 16px', marginBottom: 16, border: '0.5px solid #F0D8A8' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <IconAlertCircle size={15} color="#D4A017" stroke={2.2} />
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#D4A017', letterSpacing: '.05em' }}>VENCIMENTOS PRÓXIMOS</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {proximosVenc.slice(0, 3).map(cf => {
-              const hoje = new Date().getDate()
               const dias = cf.diaVencimento - hoje
               return (
                 <div key={cf.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/contas-fixas')}>
-                  <div style={{ width: 36, height: 36, borderRadius: 11, background: dias === 0 ? '#FAD0D0' : '#FDF4E3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <IconCalendarEvent size={18} color={dias === 0 ? '#C4553B' : '#D4A017'} stroke={1.8} />
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: dias === 0 ? '#FAD0D0' : '#FDF4E3', border: `1px solid ${dias === 0 ? '#F0A8A8' : '#F0D8A8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <IconCalendarEvent size={17} color={dias === 0 ? '#C4553B' : '#D4A017'} stroke={1.8} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F' }}>{cf.nome}</p>
                     <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: dias === 0 ? '#C4553B' : '#D4A017', fontWeight: 600 }}>
-                      {dias === 0 ? 'Vence hoje!' : `Vence em ${dias} dia${dias !== 1 ? 's' : ''}`}
+                      {dias === 0 ? 'Vence hoje!' : `${dias} dia${dias !== 1 ? 's' : ''}`}
                     </p>
                   </div>
-                  <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 15, fontWeight: 700, color: '#2C1A0F', flexShrink: 0 }}>{fmt(cf.valor)}</p>
+                  <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 15, fontWeight: 700, color: '#2C1A0F' }}>{fmt(cf.valor)}</p>
                 </div>
               )
             })}
@@ -174,10 +184,15 @@ export function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Donut chart + orçamentos */}
+      {/* Donut + categorias */}
       {pieData.length > 0 && (
-        <motion.div variants={I} style={{ background: '#FFFDF9', borderRadius: 20, border: '0.5px solid #E8E0D5', padding: '18px', marginBottom: 20 }}>
-          <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F', marginBottom: 16 }}>Gastos de {mesNome}</h2>
+        <motion.div variants={I} style={{ background: '#FFFDF9', borderRadius: 20, border: '0.5px solid #E8E0D5', padding: 18, marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F' }}>Gastos por categoria</h2>
+            <button onClick={() => navigate('/relatorios')} style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#C4553B', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }}>
+              Relatórios <IconChevronRight size={14} />
+            </button>
+          </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ width: 130, height: 130, flexShrink: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -195,15 +210,14 @@ export function DashboardPage() {
                 const pct = orc ? Math.min(100, (d.value / orc.valorLimite) * 100) : null
                 return (
                   <div key={d.name}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: pct !== null ? 4 : 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: pct !== null ? 3 : 0 }}>
                       <div style={{ width: 10, height: 10, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
                       <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#2C1A0F', flex: 1 }}>{d.name}</span>
                       <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F' }}>{fmt(d.value)}</span>
                     </div>
                     {pct !== null && (
-                      <div style={{ background: '#F0EAE2', borderRadius: 4, height: 5, overflow: 'hidden', marginLeft: 17 }}>
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-                          transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                      <div style={{ background: '#F0EAE2', borderRadius: 4, height: 4, overflow: 'hidden', marginLeft: 17 }}>
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ type: 'spring', stiffness: 200, damping: 25 }}
                           style={{ height: '100%', background: pct > 90 ? '#C4553B' : pct > 75 ? '#D4A017' : d.color, borderRadius: 4 }} />
                       </div>
                     )}
@@ -234,7 +248,6 @@ export function DashboardPage() {
           </div>
         )}
       </motion.div>
-
       <div style={{ height: 24 }} />
     </motion.div>
   )
