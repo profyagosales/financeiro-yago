@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { FabModal } from './FabModal'
+import { PWABanner } from './PWABanner'
 
 export function AppShell() {
   const [fabOpen, setFabOpen] = useState(false)
@@ -29,6 +30,7 @@ export function AppShell() {
       <AnimatePresence>
         {fabOpen && <FabModal onClose={() => setFabOpen(false)} />}
       </AnimatePresence>
+      <PWABanner />
 
       <style>{`
         @media (min-width: 768px) {
