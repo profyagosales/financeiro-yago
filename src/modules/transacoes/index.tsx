@@ -218,10 +218,13 @@ function groupByDate(txs: any[]) {
 export function Page() {
   const transacoes = useTransacoes(200)
   const contas = useContas()
+  const categoriasTodas = useCategorias()
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const [busca, setBusca] = useState('')
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'receita' | 'despesa'>('todos')
+  const [filtroStatus, setFiltroStatus] = useState<'todos' | 'confirmado' | 'pendente'>('todos')
+  const [filtroCategoria, setFiltroCategoria] = useState<number | null>(null)
 
   const filtroContaId = searchParams.get('conta') ? Number(searchParams.get('conta')) : null
   const contaFiltrada = filtroContaId ? contas.find(c => c.id === filtroContaId) : null
@@ -230,7 +233,9 @@ export function Page() {
     const okTipo = filtroTipo === 'todos' || tx.tipo === filtroTipo
     const okBusca = !busca || tx.descricao.toLowerCase().includes(busca.toLowerCase())
     const okConta = !filtroContaId || tx.contaId === filtroContaId
-    return okTipo && okBusca && okConta
+    const okStatus = filtroStatus === 'todos' || (tx.status ?? 'confirmado') === filtroStatus
+    const okCat = !filtroCategoria || tx.categoriaId === filtroCategoria
+    return okTipo && okBusca && okConta && okStatus && okCat
   })
 
   const grupos = groupByDate(filtradas)
@@ -263,7 +268,7 @@ export function Page() {
       <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="🔍  Buscar..."
         style={{ width: '100%', background: '#FFFDF9', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '12px 16px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#2C1A0F', outline: 'none', marginBottom: 10, boxSizing: 'border-box' }} />
 
-      <div style={{ display: 'flex', gap: 7, marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 7, marginBottom: 10, flexWrap: 'wrap' }}>
         {(['todos', 'receita', 'despesa'] as const).map(f => (
           <motion.button key={f} whileTap={{ scale: 0.95 }} onClick={() => setFiltroTipo(f)}
             style={{ padding: '8px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, transition: 'all .15s',
@@ -273,6 +278,34 @@ export function Page() {
           </motion.button>
         ))}
       </div>
+
+      {/* Status filter */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+        {(['todos', 'confirmado', 'pendente'] as const).map(s => (
+          <motion.button key={s} whileTap={{ scale: 0.95 }} onClick={() => setFiltroStatus(s)}
+            style={{ padding: '6px 13px', borderRadius: 20, border: filtroStatus === s ? 'none' : '1.5px solid #E8E0D5', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, transition: 'all .15s',
+              background: filtroStatus === s ? (s === 'pendente' ? '#FDF4E3' : s === 'confirmado' ? '#EBF5F0' : '#F5F0E8') : 'transparent',
+              color: filtroStatus === s ? (s === 'pendente' ? '#D4A017' : s === 'confirmado' ? '#3A8580' : '#2C1A0F') : '#9B7B6A' }}>
+            {s === 'todos' ? 'Qualquer status' : s === 'confirmado' ? '✓ Confirmado' : '⏳ Pendente'}
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Category filter */}
+      {categoriasTodas.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => setFiltroCategoria(null)}
+            style={{ padding: '6px 13px', borderRadius: 20, border: filtroCategoria === null ? 'none' : '1.5px solid #E8E0D5', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, background: filtroCategoria === null ? '#F5F0E8' : 'transparent', color: filtroCategoria === null ? '#2C1A0F' : '#9B7B6A', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            Todas categorias
+          </motion.button>
+          {categoriasTodas.map(c => (
+            <motion.button key={c.id} whileTap={{ scale: 0.95 }} onClick={() => setFiltroCategoria(filtroCategoria === c.id! ? null : c.id!)}
+              style={{ padding: '6px 11px', borderRadius: 20, border: filtroCategoria === c.id ? 'none' : '1.5px solid #E8E0D5', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, background: filtroCategoria === c.id ? c.cor : 'transparent', color: filtroCategoria === c.id ? 'white' : '#9B7B6A', whiteSpace: 'nowrap', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, transition: 'all .15s' }}>
+              <span style={{ fontSize: 12 }}>{c.icone}</span> {c.nome}
+            </motion.button>
+          ))}
+        </div>
+      )}
 
       {filtradas.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 0' }}>

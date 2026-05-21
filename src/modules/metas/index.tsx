@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMetas, addMeta, editMeta, aportarMeta, deleteMeta } from '@/db/hooks/useMetas'
-import { useOrcamentos, addOrcamento, deleteOrcamento } from '@/db/hooks/useOrcamentos'
+import { useOrcamentos, addOrcamento, editOrcamento, deleteOrcamento } from '@/db/hooks/useOrcamentos'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useGastosPorCategoria } from '@/db/hooks/useTransacoes'
 import { fmt, mesAnoAtual } from '@/lib/format'
@@ -99,7 +99,7 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
   )
 }
 
-function OrcamentoRow({ orc, gastos }: { orc: any; gastos: Map<number, number> }) {
+function OrcamentoRow({ orc, gastos, onEdit }: { orc: any; gastos: Map<number, number>; onEdit: () => void }) {
   const [catNome, setCatNome] = useState('')
   const [catCor, setCatCor] = useState('#9B8A7A')
   const [catIcon, setCatIcon] = useState('💸')
@@ -125,9 +125,15 @@ function OrcamentoRow({ orc, gastos }: { orc: any; gastos: Map<number, number> }
       style={{ background: '#FFFDF9', border: `0.5px solid ${estourado ? '#FAD0D0' : '#E8E0D5'}`, borderRadius: 14, padding: '12px 14px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F' }}>{catIcon} {catNome}</span>
-        <div style={{ textAlign: 'right' }}>
-          <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: estourado ? '#C4553B' : '#2C1A0F' }}>{fmt(gasto)}</span>
-          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}> / {fmt(orc.valorLimite)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: estourado ? '#C4553B' : '#2C1A0F' }}>{fmt(gasto)}</span>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}> / {fmt(orc.valorLimite)}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 3 }}>
+            <button onClick={e => { e.stopPropagation(); onEdit() }} style={{ background: '#F5F0E8', border: 'none', borderRadius: 7, width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>✏️</button>
+            <button onClick={e => { e.stopPropagation(); deleteOrcamento(orc.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 17, lineHeight: 1, display: 'flex', alignItems: 'center' }}>×</button>
+          </div>
         </div>
       </div>
       <div style={{ background: '#F0EAE2', borderRadius: 6, height: 7, overflow: 'hidden' }}>
@@ -157,6 +163,7 @@ export function Page() {
   const [addingMeta, setAddingMeta] = useState(false)
   const [editingMetaId, setEditingMetaId] = useState<number | null>(null)
   const [addingOrc, setAddingOrc] = useState(false)
+  const [editingOrcId, setEditingOrcId] = useState<number | null>(null)
   const [formMeta, setFormMeta] = useState({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' })
   const [formOrc, setFormOrc] = useState({ categoriaId: null as number | null, valorLimite: '' })
 
@@ -179,10 +186,22 @@ export function Page() {
     setFormMeta({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' })
   }
 
-  const handleAddOrc = async () => {
+  const openEditOrc = (orc: any) => {
+    setEditingOrcId(orc.id)
+    setFormOrc({ categoriaId: orc.categoriaId, valorLimite: String(orc.valorLimite) })
+    setAddingOrc(true)
+  }
+
+  const handleSaveOrc = async () => {
     if (!formOrc.categoriaId || !formOrc.valorLimite) return
-    await addOrcamento({ categoriaId: formOrc.categoriaId, valorLimite: parseFloat(formOrc.valorLimite.replace(',','.')), periodo: 'mensal', rollover: false })
+    const valor = parseFloat(formOrc.valorLimite.replace(',','.'))
+    if (editingOrcId !== null) {
+      await editOrcamento(editingOrcId, { valorLimite: valor })
+    } else {
+      await addOrcamento({ categoriaId: formOrc.categoriaId, valorLimite: valor, periodo: 'mensal', rollover: false })
+    }
     setAddingOrc(false)
+    setEditingOrcId(null)
     setFormOrc({ categoriaId: null, valorLimite: '' })
   }
 
@@ -190,7 +209,7 @@ export function Page() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "24px 28px", width: "100%" }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F' }}>Metas & Orçamento</h1>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { if (tab === 'metas') { setEditingMetaId(null); setFormMeta({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' }); setAddingMeta(true) } else setAddingOrc(true) }}
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { if (tab === 'metas') { setEditingMetaId(null); setFormMeta({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' }); setAddingMeta(true) } else { setEditingOrcId(null); setFormOrc({ categoriaId: null, valorLimite: '' }); setAddingOrc(true) } }}
           style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
           + Adicionar
         </motion.button>
@@ -228,7 +247,7 @@ export function Page() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {orcamentos.map(o => <OrcamentoRow key={o.id} orc={o} gastos={gastos} />)}
+            {orcamentos.map(o => <OrcamentoRow key={o.id} orc={o} gastos={gastos} onEdit={() => openEditOrc(o)} />)}
           </div>
         )
       )}
@@ -299,24 +318,24 @@ export function Page() {
               onClick={e => e.stopPropagation()}
               style={{ width: '100%', maxWidth: 520, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '20px 20px 48px' }}>
               <div style={{ width: 40, height: 4, borderRadius: 2, background: '#E8E0D5', margin: '0 auto 16px' }} />
-              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>Novo orçamento mensal</h3>
+              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>{editingOrcId ? 'Editar orçamento' : 'Novo orçamento mensal'}</h3>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A', marginBottom: 6 }}>CATEGORIA</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                 {categorias.map(c => (
-                  <button key={c.id} onClick={() => setFormOrc(f => ({ ...f, categoriaId: c.id! }))}
-                    style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: formOrc.categoriaId === c.id ? c.cor : '#F5F0E8', color: formOrc.categoriaId === c.id ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <button key={c.id} onClick={() => !editingOrcId && setFormOrc(f => ({ ...f, categoriaId: c.id! }))}
+                    style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: editingOrcId ? 'default' : 'pointer', background: formOrc.categoriaId === c.id ? c.cor : '#F5F0E8', color: formOrc.categoriaId === c.id ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 4, opacity: editingOrcId && formOrc.categoriaId !== c.id ? 0.4 : 1 }}>
                     {c.icone} {c.nome}
                   </button>
                 ))}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 14px', gap: 6, marginBottom: 16 }}>
                 <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, color: '#C4553B', fontWeight: 700 }}>R$</span>
-                <input value={formOrc.valorLimite} onChange={e => setFormOrc(f => ({ ...f, valorLimite: e.target.value }))} placeholder="Limite mensal" type="tel"
+                <input value={formOrc.valorLimite} onChange={e => setFormOrc(f => ({ ...f, valorLimite: e.target.value }))} placeholder="Limite mensal" type="tel" autoFocus
                   style={{ border: 'none', background: 'transparent', fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none' }} />
               </div>
-              <motion.button onClick={handleAddOrc} whileTap={{ scale: 0.97 }} disabled={!formOrc.categoriaId || !formOrc.valorLimite}
+              <motion.button onClick={handleSaveOrc} whileTap={{ scale: 0.97 }} disabled={!formOrc.categoriaId || !formOrc.valorLimite}
                 style={{ width: '100%', padding: '14px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: formOrc.categoriaId && formOrc.valorLimite ? '#C4553B' : '#E8E0D5', color: formOrc.categoriaId && formOrc.valorLimite ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, transition: 'all .2s' }}>
-                Criar orçamento
+                {editingOrcId ? 'Salvar alterações' : 'Criar orçamento'}
               </motion.button>
             </motion.div>
           </motion.div>
