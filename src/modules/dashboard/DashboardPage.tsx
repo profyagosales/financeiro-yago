@@ -91,12 +91,7 @@ export function DashboardPage() {
   const dataHoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
   const hasAlerts = proximosVenc.length > 0 || cartoesAlerta.length > 0
 
-  const kpis = [
-    { label: 'Saldo total', value: saldoTotal as number | null, color: '#2C1A0F', icon: <IconWallet size={16} color="#9B7B6A" stroke={1.8} />, acent: '#2C1A0F', pct: null as number | null },
-    { label: 'Entradas', value: receitas as number | null, color: '#3A8580', icon: <IconArrowUpRight size={16} color="#3A8580" stroke={2} />, acent: '#3A8580', pct: null as number | null },
-    { label: 'Saídas', value: totalComprometido as number | null, color: '#C4553B', icon: <IconArrowDownRight size={16} color="#C4553B" stroke={2} />, acent: '#C4553B', pct: null as number | null },
-    { label: 'Taxa de poupança', value: null as number | null, color: taxaPoupanca > 20 ? '#3A8580' : taxaPoupanca > 0 ? '#D4A017' : '#C4553B', icon: <IconPercentage size={16} color="#9B7B6A" stroke={1.8} />, acent: '#9B7B6A', pct: taxaPoupanca },
-  ]
+  const poupancaColor = taxaPoupanca > 20 ? '#3A8580' : taxaPoupanca > 0 ? '#D4A017' : '#C4553B'
 
   return (
     <motion.div
@@ -131,33 +126,66 @@ export function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* ─── ROW 2: 4 KPI blocks ─── */}
+      {/* ─── ROW 2: 4 KPI blocks — cada um com identidade visual única ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
-        {kpis.map((kpi, i) => (
-          <motion.div key={i} whileHover={{ y: -3, boxShadow: '0 8px 28px rgba(44,26,15,0.1)' }}
-            style={{ ...CARD, padding: '18px 20px', transition: 'box-shadow .18s', borderTop: `3px solid ${kpi.acent}22` }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-              {kpi.icon}
-              <span style={{ ...LABEL }}>{kpi.label}</span>
+
+        {/* SALDO TOTAL — card escuro, peso máximo */}
+        <motion.div whileHover={{ y: -3, boxShadow: '0 12px 36px rgba(13,6,4,0.4)' }} style={{ background: 'linear-gradient(145deg, #1E0B05 0%, #2C1208 100%)', borderRadius: 20, padding: '18px 20px', boxShadow: '0 4px 20px rgba(13,6,4,0.3)', border: '1px solid rgba(255,255,255,0.07)', transition: 'box-shadow .18s' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconWallet size={12} color="rgba(255,255,255,0.7)" stroke={2} />
             </div>
-            {kpi.value !== null ? (
-              <OdometroSaldo value={kpi.value} style={{ ...DISPLAY, fontSize: 26, color: kpi.color, display: 'block' }} />
-            ) : (
-              <div>
-                <p style={{ ...DISPLAY, fontSize: 26, color: kpi.color }}>{kpi.pct!.toFixed(1)}%</p>
-                <div style={{ background: '#F5F0E8', borderRadius: 4, height: 4, overflow: 'hidden', marginTop: 8 }}>
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, kpi.pct!)}%` }}
-                    transition={{ type: 'spring', stiffness: 180, damping: 24, delay: 0.3 }}
-                    style={{ height: '100%', background: kpi.color, borderRadius: 4 }} />
-                </div>
-              </div>
-            )}
-          </motion.div>
-        ))}
+            <span style={{ ...LABEL, color: 'rgba(255,255,255,0.4)' }}>Saldo total</span>
+          </div>
+          <OdometroSaldo value={saldoTotal} style={{ ...DISPLAY, fontSize: 26, color: 'white', display: 'block' }} />
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>
+            {contas.length} conta{contas.length !== 1 ? 's' : ''}
+          </p>
+        </motion.div>
+
+        {/* ENTRADAS — teal */}
+        <motion.div whileHover={{ y: -3, boxShadow: '0 8px 28px rgba(58,133,128,0.2)' }} style={{ background: 'linear-gradient(145deg, #EBF5F0 0%, #FFFFFF 100%)', borderRadius: 20, padding: '18px 20px', border: '1px solid rgba(58,133,128,0.2)', boxShadow: '0 2px 12px rgba(58,133,128,0.08)', transition: 'box-shadow .18s' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(58,133,128,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconArrowUpRight size={12} color="#3A8580" stroke={2.5} />
+            </div>
+            <span style={{ ...LABEL, color: '#3A8580' }}>Entradas</span>
+          </div>
+          <OdometroSaldo value={receitas} style={{ ...DISPLAY, fontSize: 26, color: '#3A8580', display: 'block' }} />
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(58,133,128,0.6)', marginTop: 6 }}>em {mesNome}</p>
+        </motion.div>
+
+        {/* SAÍDAS — terra */}
+        <motion.div whileHover={{ y: -3, boxShadow: '0 8px 28px rgba(196,85,59,0.2)' }} style={{ background: 'linear-gradient(145deg, #FAF0EE 0%, #FFFFFF 100%)', borderRadius: 20, padding: '18px 20px', border: '1px solid rgba(196,85,59,0.2)', boxShadow: '0 2px 12px rgba(196,85,59,0.08)', transition: 'box-shadow .18s' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(196,85,59,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconArrowDownRight size={12} color="#C4553B" stroke={2.5} />
+            </div>
+            <span style={{ ...LABEL, color: '#C4553B' }}>Saídas</span>
+          </div>
+          <OdometroSaldo value={totalComprometido} style={{ ...DISPLAY, fontSize: 26, color: '#C4553B', display: 'block' }} />
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(196,85,59,0.55)', marginTop: 6 }}>comprometido</p>
+        </motion.div>
+
+        {/* TAXA DE POUPANÇA — amber */}
+        <motion.div whileHover={{ y: -3, boxShadow: `0 8px 28px ${poupancaColor}22` }} style={{ background: `linear-gradient(145deg, ${poupancaColor}12 0%, #FFFFFF 100%)`, borderRadius: 20, padding: '18px 20px', border: `1px solid ${poupancaColor}28`, boxShadow: `0 2px 12px ${poupancaColor}10`, transition: 'box-shadow .18s' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <div style={{ width: 22, height: 22, borderRadius: 7, background: `${poupancaColor}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconPercentage size={12} color={poupancaColor} stroke={2} />
+            </div>
+            <span style={{ ...LABEL, color: poupancaColor }}>Poupança</span>
+          </div>
+          <p style={{ ...DISPLAY, fontSize: 26, color: poupancaColor }}>{taxaPoupanca.toFixed(1)}%</p>
+          <div style={{ background: `${poupancaColor}18`, borderRadius: 4, height: 4, overflow: 'hidden', marginTop: 10 }}>
+            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, taxaPoupanca)}%` }}
+              transition={{ type: 'spring', stiffness: 180, damping: 24, delay: 0.3 }}
+              style={{ height: '100%', background: poupancaColor, borderRadius: 4 }} />
+          </div>
+        </motion.div>
       </motion.div>
 
       {/* ─── ROW 3: Hero dark card (2/3) + Gastos por categoria (1/3) ─── */}
-      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, marginBottom: 20, alignItems: 'start' }}>
+      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, marginBottom: 20 }}>
 
         {/* Hero dark card — PANORAMA */}
         <div style={{
@@ -219,8 +247,8 @@ export function DashboardPage() {
           )}
         </div>
 
-        {/* Gastos por categoria */}
-        <div style={{ ...CARD, padding: '22px', display: 'flex', flexDirection: 'column' }}>
+        {/* Gastos por categoria — fundo creme com accent teal */}
+        <div style={{ background: 'linear-gradient(160deg, #F5FAF9 0%, #FFFFFF 60%)', border: '1px solid rgba(58,133,128,0.15)', borderRadius: 22, padding: '22px', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 16px rgba(58,133,128,0.07)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
             <h2 style={{ ...DISPLAY, fontSize: 17, color: '#2C1A0F' }}>Por categoria</h2>
             <button onClick={() => navigate('/relatorios')}
