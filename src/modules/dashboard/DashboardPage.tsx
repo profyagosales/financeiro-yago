@@ -119,116 +119,134 @@ export function DashboardPage() {
       {/* ─── ROW 1: Greeting ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '4fr 1fr', gap: 14, marginBottom: 20 }}>
 
-        {/* ── Greeting card — dois layers: background clipped + fairy livre ── */}
-        <div style={{
-          position: 'relative',
-          minHeight: 218,
-          borderRadius: 24,
-          boxShadow: '0 8px 40px rgba(17,14,42,0.55)',
-        }}>
+        {/* ══════════════════════════════════════════════════════════
+            GREETING CARD — aurora pastel + cena mágica + fada livre
+            Estrutura: outer sem overflow (fairy pode escapar)
+                        inner com overflow:hidden (bg clipped)
+            ══════════════════════════════════════════════════════════ */}
+        <div style={{ position:'relative', minHeight:222, borderRadius:24,
+          boxShadow:'0 4px 28px rgba(80,78,118,0.14), 0 1px 6px rgba(44,26,15,0.06)' }}>
 
-          {/* ── Layer 1: background visual (clipped nos cantos arredondados) ── */}
+          {/* ── Background layer — clipped, rico, aurora pastel ── */}
           <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(145deg, #1E1A3C 0%, #120F2A 50%, #1C0E2E 100%)',
-            borderRadius: 24,
-            overflow: 'hidden',
-            pointerEvents: 'none',
+            position:'absolute', inset:0, borderRadius:24, overflow:'hidden',
+            background:'linear-gradient(145deg, #FFF8F4 0%, #F2ECFF 38%, #FFF6EC 72%, #EDFAF6 100%)',
+            pointerEvents:'none',
           }}>
-            {/* Orb laranja — direita, pulsante */}
-            <motion.div style={{
-              position:'absolute', right:'-6%', top:'-25%',
-              width:380, height:380, borderRadius:'50%',
-              background:'radial-gradient(circle, rgba(241,100,46,0.24) 0%, transparent 62%)',
-              filter:'blur(48px)',
-            }}
-              animate={{ scale:[1,1.14,1], opacity:[0.65,1,0.65] }}
-              transition={{ duration:9, repeat:Infinity, ease:'easeInOut' }}
-            />
-            {/* Orb roxo — esquerda-baixo */}
-            <motion.div style={{
-              position:'absolute', left:'25%', bottom:'-35%',
-              width:300, height:300, borderRadius:'50%',
-              background:'radial-gradient(circle, rgba(139,92,246,0.22) 0%, transparent 62%)',
-              filter:'blur(42px)',
-            }}
-              animate={{ scale:[1,1.1,1], opacity:[0.5,0.85,0.5] }}
-              transition={{ duration:12, repeat:Infinity, ease:'easeInOut', delay:4 }}
-            />
-            {/* Orb rosa — esquerda-topo */}
-            <motion.div style={{
-              position:'absolute', left:'-4%', top:'10%',
-              width:220, height:220, borderRadius:'50%',
-              background:'radial-gradient(circle, rgba(255,107,157,0.14) 0%, transparent 62%)',
-              filter:'blur(36px)',
-            }}
-              animate={{ scale:[1,1.07,1], opacity:[0.4,0.72,0.4] }}
-              transition={{ duration:10, repeat:Infinity, ease:'easeInOut', delay:2 }}
-            />
-            {/* Sparkles sutis */}
+
+            {/* Linhas de vento SVG — sutis, cheias de movimento */}
+            <svg style={{position:'absolute',inset:0,width:'100%',height:'100%'}}
+              viewBox="0 0 820 222" fill="none" preserveAspectRatio="xMidYMid meet">
+              <path d="M-10,55 Q220,5 480,75 Q650,120 840,45"
+                stroke="rgba(196,85,59,0.1)" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M-10,100 Q200,45 420,95 Q600,135 840,85"
+                stroke="rgba(196,195,227,0.28)" strokeWidth="1.2" strokeLinecap="round"/>
+              <path d="M-10,155 Q260,110 470,148 Q640,172 840,135"
+                stroke="rgba(58,133,128,0.13)" strokeWidth="1" strokeLinecap="round"/>
+              <path d="M250,222 Q480,190 840,205"
+                stroke="rgba(212,160,23,0.1)" strokeWidth="1" strokeLinecap="round"/>
+              <path d="M-10,185 Q180,160 340,178 Q520,198 700,175"
+                stroke="rgba(196,195,227,0.16)" strokeWidth="0.8" strokeLinecap="round"/>
+            </svg>
+
+            {/* Constelação — canto direito */}
+            <svg style={{position:'absolute',right:0,top:0,width:'48%',height:'100%'}}
+              viewBox="0 0 390 222" fill="none">
+              {/* Pontos */}
+              <circle cx="100" cy="52"  r="2.8" fill="rgba(196,195,227,0.55)"/>
+              <circle cx="175" cy="30"  r="2.2" fill="rgba(196,195,227,0.48)"/>
+              <circle cx="238" cy="62"  r="3.2" fill="rgba(196,195,227,0.6)"/>
+              <circle cx="218" cy="118" r="2"   fill="rgba(196,195,227,0.42)"/>
+              <circle cx="128" cy="105" r="2.5" fill="rgba(196,195,227,0.5)"/>
+              <circle cx="278" cy="46"  r="2"   fill="rgba(212,160,23,0.4)"/>
+              <circle cx="308" cy="138" r="2.2" fill="rgba(58,133,128,0.32)"/>
+              <circle cx="155" cy="75"  r="1.5" fill="rgba(196,85,59,0.3)"/>
+              <circle cx="262" cy="90"  r="1.8" fill="rgba(196,195,227,0.38)"/>
+              {/* Linhas */}
+              <line x1="100" y1="52"  x2="175" y2="30"  stroke="rgba(196,195,227,0.2)"  strokeWidth="0.9"/>
+              <line x1="175" y1="30"  x2="238" y2="62"  stroke="rgba(196,195,227,0.2)"  strokeWidth="0.9"/>
+              <line x1="238" y1="62"  x2="278" y2="46"  stroke="rgba(196,195,227,0.16)" strokeWidth="0.8"/>
+              <line x1="100" y1="52"  x2="128" y2="105" stroke="rgba(196,195,227,0.16)" strokeWidth="0.8"/>
+              <line x1="128" y1="105" x2="218" y2="118" stroke="rgba(196,195,227,0.16)" strokeWidth="0.8"/>
+              <line x1="238" y1="62"  x2="218" y2="118" stroke="rgba(196,195,227,0.14)" strokeWidth="0.8"/>
+              <line x1="218" y1="118" x2="308" y2="138" stroke="rgba(58,133,128,0.14)"  strokeWidth="0.8"/>
+              <line x1="155" y1="75"  x2="262" y2="90"  stroke="rgba(196,195,227,0.12)" strokeWidth="0.7"/>
+            </svg>
+
+            {/* Moedas douradas flutuando */}
             {([
-              {x:'40%',y:'18%',d:0  },{x:'62%',y:'65%',d:2.2},
-              {x:'78%',y:'12%',d:1.4},{x:'52%',y:'80%',d:3.8},
-            ] as {x:string;y:string;d:number}[]).map((p,i)=>(
-              <motion.div key={i} style={{position:'absolute',left:p.x,top:p.y}}
-                animate={{opacity:[0.04,0.32,0.04],scale:[0.6,1.1,0.6]}}
-                transition={{duration:3.5+i*0.4,repeat:Infinity,ease:'easeInOut',delay:p.d}}>
-                <svg width="10" height="10" viewBox="0 0 20 20" fill="none">
-                  <path d="M10 2 L11.3 8 L17 9 L11.3 10 L10 16 L8.7 10 L3 9 L8.7 8 Z" fill="rgba(255,220,80,0.65)"/>
+              { l:'68%', t:'14%', s:36, d:0,   o:0.7 },
+              { l:'81%', t:'55%', s:28, d:2.6,  o:0.6 },
+              { l:'57%', t:'64%', s:22, d:4.8,  o:0.55 },
+            ] as {l:string;t:string;s:number;d:number;o:number}[]).map((c,i) => (
+              <motion.div key={i} style={{
+                position:'absolute', left:c.l, top:c.t,
+                width:c.s, height:c.s, borderRadius:'50%',
+                background:'radial-gradient(circle at 35% 30%, rgba(255,224,100,0.55), rgba(212,160,23,0.24))',
+                border:'1.5px solid rgba(212,160,23,0.32)',
+                boxShadow:'0 3px 14px rgba(212,160,23,0.2)',
+              }}
+                animate={{ y:[0,-9,0], opacity:[c.o,c.o+0.2,c.o] }}
+                transition={{ duration:6+i*0.9, repeat:Infinity, ease:'easeInOut', delay:c.d }}
+              />
+            ))}
+
+            {/* Sparkles mágicos */}
+            {([
+              {l:'44%',t:'16%',d:0  },{l:'60%',t:'70%',d:2.4},
+              {l:'75%',t:'10%',d:1.6},{l:'85%',t:'48%',d:3.8},
+              {l:'52%',t:'82%',d:0.9},{l:'90%',t:'72%',d:5.1},
+            ] as {l:string;t:string;d:number}[]).map((s,i)=>(
+              <motion.div key={i} style={{position:'absolute',left:s.l,top:s.t}}
+                animate={{opacity:[0.08,0.45,0.08],scale:[0.7,1.2,0.7]}}
+                transition={{duration:4+i*0.45,repeat:Infinity,ease:'easeInOut',delay:s.d}}>
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2 L11.3 8 L17 9 L11.3 10 L10 16 L8.7 10 L3 9 L8.7 8 Z"
+                    fill="rgba(212,160,23,0.65)"/>
                 </svg>
               </motion.div>
             ))}
           </div>
 
-          {/* ── Layer 2: texto de saudação (z-index alto, clicável) ── */}
-          <div style={{ position:'relative', zIndex:1, padding:'34px 40px', minHeight:218 }}>
+          {/* ── Texto de saudação — 3 linhas limpas ── */}
+          <div style={{ position:'relative', zIndex:1, padding:'34px 36px', minHeight:222 }}>
+            {/* linha 1 */}
             <p style={{
-              fontFamily:"'Fraunces',Georgia,serif", fontStyle:'italic',
-              fontSize:18, fontWeight:400,
-              color:'rgba(255,255,255,0.45)', marginBottom:4, letterSpacing:'-0.3px',
+              fontFamily:"'Fraunces',Georgia,serif",
+              fontStyle:'italic', fontSize:17, fontWeight:400,
+              color:'#9B7B6A', marginBottom:2, letterSpacing:'-0.2px',
             }}>{saudacao},</p>
+            {/* linha 2 */}
             <h1 style={{
-              fontFamily:"'Fraunces',Georgia,serif", fontWeight:700,
-              fontSize:54, lineHeight:0.9, letterSpacing:'-2.5px', margin:0,
-              background:'linear-gradient(130deg, #FFFFFF 30%, rgba(196,195,227,0.72) 100%)',
-              WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
-            }}>
-              Yago<span style={{WebkitTextFillColor:'#F1642E',color:'#F1642E'}}>.</span>
-            </h1>
-            <div style={{
-              marginTop:16, display:'inline-flex', alignItems:'center', gap:8,
-              background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.12)',
-              borderRadius:30, padding:'5px 12px 5px 8px',
-            }}>
-              <div style={{width:6,height:6,borderRadius:'50%',background:'#F1642E'}}/>
-              <p style={{
-                fontFamily:"'Plus Jakarta Sans',sans-serif",
-                fontSize:12.5, fontWeight:500,
-                color:'rgba(255,255,255,0.55)', letterSpacing:'.015em', margin:0,
-              }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
-            </div>
+              fontFamily:"'Fraunces',Georgia,serif",
+              fontWeight:700, fontSize:52,
+              lineHeight:0.92, letterSpacing:'-2px',
+              color:'#2C1A0F', margin:0,
+            }}>Yago</h1>
+            {/* linha 3 */}
+            <p style={{
+              fontFamily:"'Plus Jakarta Sans',sans-serif",
+              fontSize:13, fontWeight:500,
+              color:'#7A5C4F', marginTop:12,
+              letterSpacing:'.01em',
+            }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
           </div>
 
-          {/* ── Layer 3: fada + bubble — voa FORA do clip, cobre todo o card ── */}
-          {/* Outer wrapper não tem overflow:hidden → bubble pode sair levemente acima */}
+          {/* ── Fada voa livremente — bubble centralizado acima dela ── */}
           <motion.div
-            style={{ position:'absolute', zIndex:2, pointerEvents:'none', left:'22%', top:'50%' }}
+            style={{ position:'absolute', zIndex:2, pointerEvents:'none', left:'22%', top:'48%' }}
             animate={{
-              left: ['22%', '64%', '30%', '70%', '16%', '56%', '42%', '22%'],
-              top:  ['50%', '12%', '4%',  '40%', '22%', '48%', '5%',  '50%'],
+              left: ['22%', '62%', '32%', '68%', '18%', '58%', '40%', '22%'],
+              top:  ['48%', '14%', '5%',  '38%', '24%', '46%', '6%',  '48%'],
             }}
             transition={{
-              duration: 40, repeat: Infinity, ease: 'easeInOut',
-              times: [0, 0.14, 0.28, 0.43, 0.57, 0.71, 0.85, 1],
+              duration:60, repeat:Infinity, ease:'easeInOut',
+              times:[0, 0.14, 0.28, 0.43, 0.57, 0.71, 0.85, 1],
             }}
           >
-            {/* Bubble centralizado acima da fada */}
             <div style={{
-              position: 'absolute',
-              bottom: '88px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              whiteSpace: 'nowrap',
+              position:'absolute', bottom:'92px', left:'50%',
+              transform:'translateX(-50%)', whiteSpace:'nowrap', zIndex:1,
             }}>
               <FairyBubble phrase={activePhrase} />
             </div>

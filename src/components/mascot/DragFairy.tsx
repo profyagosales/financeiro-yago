@@ -75,83 +75,93 @@ const PHRASES: Phrase[] = [
   { text: 'A Lady Gaga aprovaria seus gastos?',           emoji: 'warning' },
 ]
 
-// ─── Hook — sempre rotaciona a cada 10s ──────────────────────────
+// ─── Hook — rotaciona a cada 12s ─────────────────────────────────
 export function useFairyPhrase(contextPhrase?: Phrase): Phrase {
   const [idx, setIdx] = useState(0)
   const allPhrases = contextPhrase ? [contextPhrase, ...PHRASES] : PHRASES
   useEffect(() => {
-    const timer = setInterval(() => setIdx(i => (i + 1) % allPhrases.length), 10000)
+    const timer = setInterval(() => setIdx(i => (i + 1) % allPhrases.length), 12000)
     return () => clearInterval(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextPhrase])
   return allPhrases[idx % allPhrases.length]
 }
 
-// ─── Speech Bubble — só texto, fundo quase invisível ─────────────
+// ─── Speech Bubble — glassmorphism suave para fundo claro ────────
 export function FairyBubble({ phrase }: { phrase: Phrase }) {
   return (
     <AnimatePresence mode="wait">
-      <motion.p
+      <motion.div
         key={phrase.text}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -6 }}
-        transition={{ duration: 0.55, ease: 'easeOut' }}
+        initial={{ opacity: 0, y: 10, scale: 0.94 }}
+        animate={{ opacity: 1, y: 0,  scale: 1 }}
+        exit={{ opacity: 0, y: -8, scale: 0.96 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
         style={{
-          fontFamily: "'Fraunces',Georgia,serif",
-          fontStyle: 'italic',
-          fontSize: 14,
-          fontWeight: 400,
-          color: 'rgba(255,255,255,0.88)',
-          lineHeight: 1.5,
-          maxWidth: 240,
-          margin: 0,
-          textShadow: '0 2px 18px rgba(0,0,0,0.95), 0 1px 6px rgba(0,0,0,0.8)',
+          background: 'rgba(255,255,255,0.68)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          borderRadius: 14,
+          padding: '8px 16px',
+          maxWidth: 230,
+          textAlign: 'center',
+          boxShadow: '0 4px 18px rgba(80,78,118,0.12)',
+          border: '1px solid rgba(255,255,255,0.85)',
         }}
       >
-        {phrase.text}
-      </motion.p>
+        <p style={{
+          fontFamily: "'Fraunces',Georgia,serif",
+          fontStyle: 'italic',
+          fontSize: 13.5,
+          fontWeight: 400,
+          color: '#504E76',
+          lineHeight: 1.45,
+          margin: 0,
+        }}>
+          {phrase.text}
+        </p>
+      </motion.div>
     </AnimatePresence>
   )
 }
 
-// ─── CSS keyframes para animações do SVG ─────────────────────────
+// ─── CSS keyframes — tudo devagar e suave ────────────────────────
 const FAIRY_CSS = `
   @keyframes dfFlapL {
     0%,100% { transform: scaleY(1);    }
-    40%,60% { transform: scaleY(0.06); }
+    40%,60% { transform: scaleY(0.08); }
   }
   @keyframes dfFlapR {
     0%,100% { transform: scaleY(1);    }
-    40%,60% { transform: scaleY(0.06); }
+    40%,60% { transform: scaleY(0.08); }
   }
-  /* Varinha: lento, multi-step, y+rotate natural — 5.5s */
+  /* Varinha: muito lento, flutuante — 10s */
   @keyframes dfWand {
-    0%   { transform: rotate(-5deg) translateY(0px); }
-    18%  { transform: rotate(4deg)  translateY(-3px); }
-    35%  { transform: rotate(-3deg) translateY(2px);  }
-    52%  { transform: rotate(7deg)  translateY(-4px); }
-    70%  { transform: rotate(-4deg) translateY(1px);  }
-    85%  { transform: rotate(5deg)  translateY(-2px); }
-    100% { transform: rotate(-5deg) translateY(0px);  }
+    0%   { transform: rotate(-4deg) translateY(0px);  }
+    20%  { transform: rotate(3deg)  translateY(-2px); }
+    38%  { transform: rotate(-2deg) translateY(1px);  }
+    55%  { transform: rotate(5deg)  translateY(-3px); }
+    72%  { transform: rotate(-3deg) translateY(1px);  }
+    88%  { transform: rotate(4deg)  translateY(-2px); }
+    100% { transform: rotate(-4deg) translateY(0px);  }
   }
-  /* Pó mágico: opacity+translate (sem scale que causava bug de interpolação) */
-  @keyframes dfDust1 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.9;transform:translate(6px,4px)}   100%{opacity:0;transform:translate(16px,12px)} }
-  @keyframes dfDust2 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.85;transform:translate(-4px,5px)} 100%{opacity:0;transform:translate(-11px,14px)} }
-  @keyframes dfDust3 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.9;transform:translate(7px,-2px)}  100%{opacity:0;transform:translate(18px,-7px)} }
-  @keyframes dfDust4 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.8;transform:translate(-5px,3px)}  100%{opacity:0;transform:translate(-13px,8px)} }
-  @keyframes dfDust5 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.85;transform:translate(3px,6px)}  100%{opacity:0;transform:translate(8px,16px)} }
-  @keyframes dfDust6 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.75;transform:translate(-2px,-4px)} 100%{opacity:0;transform:translate(-6px,-12px)} }
+  /* Pó mágico: 2.5s cada — ficam muito mais tempo visíveis */
+  @keyframes dfDust1 { 0%{opacity:0;transform:translate(0,0)}   20%{opacity:.85;transform:translate(6px,4px)}   100%{opacity:0;transform:translate(18px,14px)} }
+  @keyframes dfDust2 { 0%{opacity:0;transform:translate(0,0)}   20%{opacity:.8;transform:translate(-4px,5px)}  100%{opacity:0;transform:translate(-13px,16px)} }
+  @keyframes dfDust3 { 0%{opacity:0;transform:translate(0,0)}   20%{opacity:.85;transform:translate(7px,-2px)} 100%{opacity:0;transform:translate(20px,-9px)} }
+  @keyframes dfDust4 { 0%{opacity:0;transform:translate(0,0)}   20%{opacity:.75;transform:translate(-5px,3px)} 100%{opacity:0;transform:translate(-15px,9px)} }
+  @keyframes dfDust5 { 0%{opacity:0;transform:translate(0,0)}   20%{opacity:.8;transform:translate(3px,6px)}   100%{opacity:0;transform:translate(9px,18px)} }
+  @keyframes dfDust6 { 0%{opacity:0;transform:translate(0,0)}   20%{opacity:.7;transform:translate(-2px,-4px)} 100%{opacity:0;transform:translate(-7px,-14px)} }
 
-  .df-wing-l { transform-box:fill-box; transform-origin:right center; animation:dfFlapL 0.42s ease-in-out infinite; }
-  .df-wing-r { transform-box:fill-box; transform-origin:left center;  animation:dfFlapR 0.42s ease-in-out infinite 0.02s; }
-  .df-wand-g { transform-box:fill-box; transform-origin:73px 46px;    animation:dfWand  5.5s ease-in-out infinite; }
-  .df-dust-1 { animation:dfDust1 1.4s ease-out infinite; }
-  .df-dust-2 { animation:dfDust2 1.6s ease-out infinite 0.3s; }
-  .df-dust-3 { animation:dfDust3 1.3s ease-out infinite 0.6s; }
-  .df-dust-4 { animation:dfDust4 1.7s ease-out infinite 0.9s; }
-  .df-dust-5 { animation:dfDust5 1.5s ease-out infinite 1.2s; }
-  .df-dust-6 { animation:dfDust6 1.2s ease-out infinite 0.45s; }
+  .df-wing-l { transform-box:fill-box; transform-origin:right center; animation:dfFlapL 1.1s ease-in-out infinite; }
+  .df-wing-r { transform-box:fill-box; transform-origin:left center;  animation:dfFlapR 1.1s ease-in-out infinite 0.06s; }
+  .df-wand-g { transform-box:fill-box; transform-origin:73px 46px;    animation:dfWand  10s ease-in-out infinite; }
+  .df-dust-1 { animation:dfDust1 2.5s ease-out infinite; }
+  .df-dust-2 { animation:dfDust2 2.8s ease-out infinite 0.45s; }
+  .df-dust-3 { animation:dfDust3 2.4s ease-out infinite 0.9s; }
+  .df-dust-4 { animation:dfDust4 3.0s ease-out infinite 1.35s; }
+  .df-dust-5 { animation:dfDust5 2.6s ease-out infinite 1.8s; }
+  .df-dust-6 { animation:dfDust6 2.2s ease-out infinite 0.65s; }
 `
 
 // ─── Fairy SVG — pose de voo horizontal (viewBox 0 0 110 80) ─────
@@ -312,11 +322,11 @@ export function DragFairy() {
   return (
     <motion.div
       animate={{
-        y: [0, -4, 2, -5, 1, -3, 0],
-        rotate: [-1, 0.7, -1.6, 1.1, -0.7, 1.4, -1],
+        y: [0, -3, 1.5, -4, 1, -2.5, 0],
+        rotate: [-0.8, 0.5, -1.2, 0.9, -0.5, 1.1, -0.8],
       }}
       transition={{
-        duration: 14, ease: 'easeInOut', repeat: Infinity,
+        duration: 18, ease: 'easeInOut', repeat: Infinity,
         times: [0, 0.17, 0.33, 0.5, 0.67, 0.83, 1],
       }}
       style={{
