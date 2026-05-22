@@ -12,74 +12,44 @@ import { mesAnoAtual } from '@/lib/format'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/schema'
 import { useAuthStore } from '@/store/auth'
+import { Dobrao } from '@/components/mascot/Dobrao'
 
 // ─── Paleta ──────────────────────────────────────────────────────
-const BG            = '#504E76'
-const ACTIVE        = '#F1642E'
-const TEXT_MUTED    = 'rgba(255,255,255,0.55)'
-const TEXT_ACTIVE   = '#ffffff'
-const GROUP_LABEL   = 'rgba(255,255,255,0.32)'
-const DIVIDER       = 'rgba(255,255,255,0.1)'
-const HOVER_BG      = 'rgba(255,255,255,0.08)'
-
-// ─── Logo animada — moeda estilizada ─────────────────────────────
-function LogoMark({ size = 48 }: { size?: number }) {
-  return (
-    <motion.div
-      animate={{ rotate: [0, -4, 4, -2, 0] }}
-      transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', repeatDelay: 3 }}
-      style={{ width: size, height: size, flexShrink: 0 }}
-    >
-      <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-        {/* Sombra/depth */}
-        <ellipse cx="25" cy="44" rx="14" ry="3" fill="rgba(0,0,0,0.25)" />
-        {/* Corpo da moeda */}
-        <circle cx="24" cy="23" r="18" fill={ACTIVE} />
-        {/* Anel interno */}
-        <circle cx="24" cy="23" r="18" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
-        {/* Brilho topo-esquerdo */}
-        <ellipse cx="18" cy="15" rx="6" ry="4" fill="rgba(255,255,255,0.18)" transform="rotate(-30 18 15)" />
-        {/* Letra F estilizada */}
-        <text x="24" y="28" textAnchor="middle" fontFamily="'Fraunces', Georgia, serif"
-          fontSize="15" fontWeight="700" fill="white" letterSpacing="-0.5">
-          FY
-        </text>
-        {/* Cartola */}
-        <rect x="15" y="5" width="18" height="2.5" rx="1.2" fill="#2D2B3E" />
-        <rect x="17.5" y="0" width="13" height="7" rx="2.5" fill="#2D2B3E" />
-        {/* Faixa da cartola */}
-        <rect x="17.5" y="5.5" width="13" height="1.5" rx="0.7" fill={ACTIVE} opacity="0.8" />
-      </svg>
-    </motion.div>
-  )
-}
+const BG           = '#504E76'
+const ACTIVE_BG    = 'rgba(255,255,255,0.13)'
+const ACTIVE_BORD  = '#F1642E'
+const TEXT_MUTED   = 'rgba(255,255,255,0.52)'
+const TEXT_ACTIVE  = '#ffffff'
+const GROUP_LABEL  = 'rgba(255,255,255,0.3)'
+const DIVIDER      = 'rgba(255,255,255,0.09)'
+const HOVER_BG     = 'rgba(255,255,255,0.07)'
 
 // ─── Badges ──────────────────────────────────────────────────────
 function useSidebarBadges() {
   const { mes, ano } = mesAnoAtual()
-  const fixas  = useContasFixas()
-  const pags   = usePagamentosFixos(mes, ano)
-  const hoje   = new Date().getDate()
-  const fixasPendentes = fixas.filter(
+  const fixas   = useContasFixas()
+  const pags    = usePagamentosFixos(mes, ano)
+  const hoje    = new Date().getDate()
+  const pendentes = fixas.filter(
     cf => !pags.find(p => p.contaFixaId === cf.id && p.status === 'pago')
   )
-  const fixasHoje = fixasPendentes.filter(cf => cf.diaVencimento === hoje)
-  const cartoes   = useCartoes()
-  const faturasAtivas = useLiveQuery(async () => {
-    let count = 0
+  const hoje_   = pendentes.filter(cf => cf.diaVencimento === hoje)
+  const cartoes = useCartoes()
+  const faturas = useLiveQuery(async () => {
+    let n = 0
     for (const c of cartoes) {
-      const n = await db.lancamentosCartao
+      const k = await db.lancamentosCartao
         .where('[cartaoId+mes+ano]').equals([c.id!, mes, ano]).count()
-      if (n > 0) count++
+      if (k > 0) n++
     }
-    return count
+    return n
   }, [cartoes, mes, ano]) ?? 0
 
   return {
-    fixas:   fixasHoje.length   > 0 ? { label: `${fixasHoje.length}`, urgent: true }
-           : fixasPendentes.length > 0 ? { label: `${fixasPendentes.length}`, urgent: false }
+    fixas:   hoje_.length    > 0 ? { label: `${hoje_.length}`,   urgent: true  }
+           : pendentes.length > 0 ? { label: `${pendentes.length}`, urgent: false }
            : null,
-    cartoes: faturasAtivas > 0 ? { label: `${faturasAtivas}`, urgent: false } : null,
+    cartoes: faturas > 0 ? { label: `${faturas}`, urgent: false } : null,
   }
 }
 
@@ -127,7 +97,6 @@ export function Sidebar() {
   const getBadge = (key: string | null) => key ? badges[key as keyof typeof badges] : null
 
   return (
-    // Wrapper com overflow visible para o botão colapso "extrapolar"
     <motion.aside
       animate={{ width: collapsed ? 64 : 232 }}
       transition={{ type: 'spring', stiffness: 340, damping: 34 }}
@@ -136,12 +105,11 @@ export function Sidebar() {
         position: 'sticky',
         top: 0,
         height: '100dvh',
-        // overflow visible = botão pode extrapolar a borda
         overflow: 'visible',
         zIndex: 10,
       }}
     >
-      {/* ── Corpo da sidebar com cantos arredondados no lado direito ── */}
+      {/* ── Corpo: arredondado no lado direito ── */}
       <div style={{
         width: '100%',
         height: '100%',
@@ -149,43 +117,61 @@ export function Sidebar() {
         borderRadius: '0 24px 24px 0',
         display: 'flex',
         flexDirection: 'column',
-        padding: collapsed ? '24px 10px' : '24px 14px',
-        overflow: 'hidden',   // clip do conteúdo interno
-        boxShadow: '4px 0 32px rgba(80,78,118,0.3)',
+        padding: collapsed ? '20px 10px' : '20px 14px',
+        overflow: 'hidden',
+        boxShadow: '4px 0 28px rgba(80,78,118,0.28)',
+        position: 'relative',
       }}>
 
         {/* ── Logo ── */}
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: collapsed ? 'column' : 'row',
           alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          paddingBottom: 22,
-          marginBottom: 16,
+          gap: collapsed ? 6 : 12,
+          paddingBottom: 20,
+          marginBottom: 14,
           borderBottom: `1px solid ${DIVIDER}`,
           flexShrink: 0,
         }}>
-          <LogoMark size={collapsed ? 36 : 48} />
+          {/* Dobrão — mascote do app */}
+          <div style={{ flexShrink: 0 }}>
+            <Dobrao mood="happy" size={collapsed ? 32 : 42} />
+          </div>
 
           <AnimatePresence>
             {!collapsed && (
               <motion.div
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1,  y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.18 }}
-                style={{ marginTop: 10 }}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1,  x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.16 }}
+                style={{ minWidth: 0 }}
               >
+                {/* "Financeiro" em Fraunces itálico — elegante */}
                 <p style={{
                   fontFamily: "'Fraunces',Georgia,serif",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: TEXT_ACTIVE,
+                  fontStyle: 'italic',
+                  fontSize: 17,
+                  fontWeight: 400,
+                  color: '#ffffff',
+                  lineHeight: 1.1,
                   letterSpacing: '-0.2px',
-                  lineHeight: 1.2,
+                  whiteSpace: 'nowrap',
                 }}>
-                  Financeiro do Yago
+                  Financeiro
+                </p>
+                {/* "do Yago" em sans menor, mais discreto */}
+                <p style={{
+                  fontFamily: "'Plus Jakarta Sans',sans-serif",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.45)',
+                  letterSpacing: '.08em',
+                  textTransform: 'uppercase',
+                  marginTop: 2,
+                }}>
+                  do Yago
                 </p>
               </motion.div>
             )}
@@ -204,7 +190,7 @@ export function Sidebar() {
                   color: GROUP_LABEL,
                   letterSpacing: '.12em',
                   textTransform: 'uppercase',
-                  padding: '10px 12px 5px',
+                  padding: '10px 10px 5px',
                 }}>
                   {group.group}
                 </p>
@@ -220,27 +206,30 @@ export function Sidebar() {
                     key={item.path}
                     onClick={() => navigate(item.path)}
                     title={collapsed ? item.label : undefined}
-                    whileHover={{ background: active ? undefined : HOVER_BG }}
+                    whileHover={{ background: active ? ACTIVE_BG : HOVER_BG }}
                     style={{
                       width: '100%',
-                      padding: collapsed ? '10px 0' : '9px 12px',
-                      borderRadius: 12,
+                      padding: collapsed ? '10px 0' : '9px 10px',
+                      borderRadius: 11,
                       border: 'none',
                       cursor: 'pointer',
-                      background: active ? ACTIVE : 'transparent',
+                      background: active ? ACTIVE_BG : 'transparent',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: collapsed ? 'center' : 'flex-start',
                       gap: collapsed ? 0 : 10,
-                      marginBottom: 3,
+                      marginBottom: 2,
                       transition: 'background .12s',
                       position: 'relative',
-                      boxShadow: active ? `0 4px 16px rgba(241,100,46,0.4)` : 'none',
+                      // Borda esquerda laranja — acento discreto mas presente
+                      boxShadow: active && !collapsed
+                        ? `inset 3px 0 0 ${ACTIVE_BORD}`
+                        : 'none',
                     }}
                   >
                     <Icon
-                      size={18}
-                      stroke={active ? 2.2 : 1.8}
+                      size={17}
+                      stroke={active ? 2.2 : 1.6}
                       color={active ? TEXT_ACTIVE : TEXT_MUTED}
                       style={{ flexShrink: 0 }}
                     />
@@ -262,9 +251,11 @@ export function Sidebar() {
                             fontFamily: "'Plus Jakarta Sans',sans-serif",
                             fontSize: 10,
                             fontWeight: 700,
-                            background: badge.urgent ? '#ef4444' : 'rgba(255,255,255,0.15)',
+                            background: badge.urgent
+                              ? 'rgba(239,68,68,0.85)'
+                              : 'rgba(255,255,255,0.14)',
                             color: 'white',
-                            padding: '2px 8px',
+                            padding: '1px 7px',
                             borderRadius: 20,
                             flexShrink: 0,
                           }}>
@@ -273,10 +264,17 @@ export function Sidebar() {
                         )}
                       </>
                     )}
+                    {collapsed && active && (
+                      <div style={{
+                        position: 'absolute', left: 0, top: '20%', bottom: '20%',
+                        width: 3, borderRadius: '0 2px 2px 0', background: ACTIVE_BORD,
+                      }} />
+                    )}
                     {collapsed && badge?.urgent && (
                       <div style={{
-                        position: 'absolute', top: 5, right: 8,
-                        width: 6, height: 6, borderRadius: '50%', background: '#ef4444',
+                        position: 'absolute', top: 4, right: 7,
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: '#ef4444',
                       }} />
                     )}
                   </motion.button>
@@ -287,42 +285,42 @@ export function Sidebar() {
         </div>
 
         {/* ── Footer ── */}
-        <div style={{ borderTop: `1px solid ${DIVIDER}`, paddingTop: 10, flexShrink: 0 }}>
-          {[
-            { path: '/configuracoes', icon: IconSettings, label: 'Configurações' },
-          ].map(item => {
+        <div style={{
+          borderTop: `1px solid ${DIVIDER}`,
+          paddingTop: 8,
+          flexShrink: 0,
+        }}>
+          {[{ path: '/configuracoes', icon: IconSettings, label: 'Configurações' }].map(item => {
             const active = pathname === item.path
-            const Icon   = item.icon
             return (
               <motion.button
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 title={collapsed ? item.label : undefined}
-                whileHover={{ background: active ? undefined : HOVER_BG }}
+                whileHover={{ background: active ? ACTIVE_BG : HOVER_BG }}
                 style={{
                   width: '100%',
-                  padding: collapsed ? '10px 0' : '9px 12px',
-                  borderRadius: 12,
+                  padding: collapsed ? '10px 0' : '9px 10px',
+                  borderRadius: 11,
                   border: 'none',
                   cursor: 'pointer',
-                  background: active ? ACTIVE : 'transparent',
+                  background: active ? ACTIVE_BG : 'transparent',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   gap: collapsed ? 0 : 10,
-                  marginBottom: 3,
+                  marginBottom: 2,
                   transition: 'background .12s',
-                  boxShadow: active ? `0 4px 16px rgba(241,100,46,0.4)` : 'none',
+                  boxShadow: active && !collapsed ? `inset 3px 0 0 ${ACTIVE_BORD}` : 'none',
                 }}
               >
-                <Icon size={18} stroke={active ? 2.2 : 1.8} color={active ? TEXT_ACTIVE : TEXT_MUTED} />
+                <IconSettings size={17} stroke={active ? 2.2 : 1.6} color={active ? TEXT_ACTIVE : TEXT_MUTED} />
                 {!collapsed && (
                   <span style={{
                     fontFamily: "'Plus Jakarta Sans',sans-serif",
                     fontSize: 13,
                     fontWeight: active ? 600 : 400,
                     color: active ? TEXT_ACTIVE : TEXT_MUTED,
-                    textAlign: 'left',
                   }}>
                     {item.label}
                   </span>
@@ -337,8 +335,8 @@ export function Sidebar() {
             whileHover={{ background: HOVER_BG }}
             style={{
               width: '100%',
-              padding: collapsed ? '10px 0' : '9px 12px',
-              borderRadius: 12,
+              padding: collapsed ? '10px 0' : '9px 10px',
+              borderRadius: 11,
               border: 'none',
               cursor: 'pointer',
               background: 'transparent',
@@ -349,13 +347,12 @@ export function Sidebar() {
               transition: 'background .12s',
             }}
           >
-            <IconLogout size={18} stroke={1.8} color="rgba(255,255,255,0.28)" />
+            <IconLogout size={17} stroke={1.6} color="rgba(255,255,255,0.25)" />
             {!collapsed && (
               <span style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif",
                 fontSize: 13,
-                color: 'rgba(255,255,255,0.28)',
-                textAlign: 'left',
+                color: 'rgba(255,255,255,0.25)',
               }}>
                 Bloquear
               </span>
@@ -364,35 +361,36 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* ── Botão colapso — extrapola a borda da sidebar ── */}
+      {/* ── Botão colapso — topo, na altura da logo, extrapolando a borda ── */}
       <motion.button
         onClick={toggle}
-        whileHover={{ scale: 1.05, x: 2 }}
-        whileTap={{ scale: 0.95 }}
-        animate={{ rotate: collapsed ? 0 : 180 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        title={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.93 }}
+        title={collapsed ? 'Expandir' : 'Recolher'}
         style={{
           position: 'absolute',
-          // Fica exatamente na borda direita, metade dentro metade fora
-          right: -14,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: 28,
-          height: 28,
+          right: -13,
+          top: 28,               // Na altura da logo
+          width: 26,
+          height: 26,
           borderRadius: '0 8px 8px 0',
           background: BG,
-          border: `1px solid ${DIVIDER}`,
+          border: `1px solid rgba(255,255,255,0.15)`,
           borderLeft: 'none',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '4px 0 12px rgba(80,78,118,0.35)',
+          boxShadow: '3px 0 10px rgba(80,78,118,0.4)',
           zIndex: 20,
         }}
       >
-        <IconChevronLeft size={13} stroke={2.5} color="rgba(255,255,255,0.7)" />
+        <motion.div
+          animate={{ rotate: collapsed ? 0 : 180 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+        >
+          <IconChevronRight size={12} stroke={2.5} color="rgba(255,255,255,0.65)" />
+        </motion.div>
       </motion.button>
     </motion.aside>
   )
