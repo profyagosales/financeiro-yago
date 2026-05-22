@@ -37,71 +37,6 @@ const CARD: React.CSSProperties = {
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: '#9B7B6A' }
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.1 }
 
-// ─── Cena financeira do card de saudação ─────────────────────────
-function FinancialScene() {
-  const sparkles = [
-    { x:'36%', y:'15%', d:0   }, { x:'50%', y:'68%', d:1.5 },
-    { x:'62%', y:'10%', d:2.8 }, { x:'74%', y:'55%', d:0.7 },
-    { x:'86%', y:'22%', d:3.5 }, { x:'92%', y:'72%', d:1.9 },
-  ]
-  return (
-    <div style={{ position:'absolute', inset:0, zIndex:0, overflow:'hidden', pointerEvents:'none' }}>
-
-      {/* ── Área chart — peça principal, cobre toda a metade direita ── */}
-      <svg style={{ position:'absolute', right:0, bottom:0, width:'70%', height:'115%' }}
-        viewBox="0 0 320 130" fill="none" preserveAspectRatio="xMaxYMax meet">
-        <defs>
-          <linearGradient id="fsArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="rgba(163,181,101,0.2)"/>
-            <stop offset="100%" stopColor="rgba(163,181,101,0.01)"/>
-          </linearGradient>
-          <linearGradient id="fsGlow" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%"   stopColor="rgba(163,181,101,0)"/>
-            <stop offset="100%" stopColor="rgba(163,181,101,0.18)"/>
-          </linearGradient>
-        </defs>
-        {/* Linhas de grid — muito sutis */}
-        {[20,48,76,104].map(y => (
-          <line key={y} x1="0" y1={y} x2="320" y2={y}
-            stroke="rgba(255,255,255,0.03)" strokeWidth="1"/>
-        ))}
-        {/* Área sob a curva */}
-        <path
-          d="M0,120 C50,112 80,108 110,90 C140,72 165,82 195,58 C225,34 255,46 285,22 C296,15 308,12 320,6 V130 H0Z"
-          fill="url(#fsArea)"/>
-        {/* Glow lateral */}
-        <rect x="220" y="0" width="100" height="130" fill="url(#fsGlow)"/>
-        {/* Linha principal */}
-        <path
-          d="M0,120 C50,112 80,108 110,90 C140,72 165,82 195,58 C225,34 255,46 285,22 C296,15 308,12 320,6"
-          stroke="rgba(163,181,101,0.45)" strokeWidth="2" fill="none"
-          strokeLinecap="round" strokeLinejoin="round"/>
-        {/* Pontos em destaque */}
-        {[{x:110,y:90},{x:195,y:58},{x:285,y:22}].map((p,i) => (
-          <g key={i}>
-            <circle cx={p.x} cy={p.y} r="6"   fill="rgba(163,181,101,0.12)"/>
-            <circle cx={p.x} cy={p.y} r="3.5" fill="rgba(163,181,101,0.6)"
-              stroke="rgba(163,181,101,0.3)" strokeWidth="1"/>
-          </g>
-        ))}
-      </svg>
-
-      {/* ── Sparkles mágicos — coincidem com a paleta da fada ── */}
-      {sparkles.map((s,i) => (
-        <motion.div key={i}
-          style={{ position:'absolute', left:s.x, top:s.y }}
-          animate={{ opacity:[0.06,0.4,0.06], scale:[0.6,1.2,0.6] }}
-          transition={{ duration:3.2+i*0.35, repeat:Infinity, ease:'easeInOut', delay:s.d }}
-        >
-          <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
-            <path d="M10 2 L11.3 8 L17 9 L11.3 10 L10 16 L8.7 10 L3 9 L8.7 8 Z"
-              fill="rgba(255,220,80,0.55)"/>
-          </svg>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
 
 // ─── Dark tooltip para Recharts ──────────────────────────────────
 function DarkTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ color?: string; value: number }>; label?: string }) {
@@ -184,115 +119,119 @@ export function DashboardPage() {
       {/* ─── ROW 1: Greeting ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '4fr 1fr', gap: 14, marginBottom: 20 }}>
 
-        {/* ── Greeting card — dark, atmosférico, fada voa livremente ── */}
+        {/* ── Greeting card — dois layers: background clipped + fairy livre ── */}
         <div style={{
-          background: 'linear-gradient(140deg, #1C1838 0%, #110E2A 55%, #1A0E2C 100%)',
-          borderRadius: 24,
-          boxShadow: '0 8px 40px rgba(17,14,42,0.5)',
           position: 'relative',
-          overflow: 'hidden',
-          minHeight: 210,
-          padding: '34px 40px',
+          minHeight: 218,
+          borderRadius: 24,
+          boxShadow: '0 8px 40px rgba(17,14,42,0.55)',
         }}>
-          {/* Orb laranja — fundo direito */}
-          <div style={{
-            position: 'absolute', right: '-8%', top: '-30%',
-            width: 340, height: 340, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(241,100,46,0.22) 0%, transparent 65%)',
-            pointerEvents: 'none',
-          }} />
-          {/* Orb roxo — centro-baixo */}
-          <div style={{
-            position: 'absolute', left: '30%', bottom: '-40%',
-            width: 280, height: 280, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 65%)',
-            pointerEvents: 'none',
-          }} />
-          {/* Orb rosa — esquerda */}
-          <div style={{
-            position: 'absolute', left: '-5%', top: '20%',
-            width: 200, height: 200, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,107,157,0.1) 0%, transparent 65%)',
-            pointerEvents: 'none',
-          }} />
 
-          {/* Cena financeira no background */}
-          <FinancialScene />
+          {/* ── Layer 1: background visual (clipped nos cantos arredondados) ── */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(145deg, #1E1A3C 0%, #120F2A 50%, #1C0E2E 100%)',
+            borderRadius: 24,
+            overflow: 'hidden',
+            pointerEvents: 'none',
+          }}>
+            {/* Orb laranja — direita, pulsante */}
+            <motion.div style={{
+              position:'absolute', right:'-6%', top:'-25%',
+              width:380, height:380, borderRadius:'50%',
+              background:'radial-gradient(circle, rgba(241,100,46,0.24) 0%, transparent 62%)',
+              filter:'blur(48px)',
+            }}
+              animate={{ scale:[1,1.14,1], opacity:[0.65,1,0.65] }}
+              transition={{ duration:9, repeat:Infinity, ease:'easeInOut' }}
+            />
+            {/* Orb roxo — esquerda-baixo */}
+            <motion.div style={{
+              position:'absolute', left:'25%', bottom:'-35%',
+              width:300, height:300, borderRadius:'50%',
+              background:'radial-gradient(circle, rgba(139,92,246,0.22) 0%, transparent 62%)',
+              filter:'blur(42px)',
+            }}
+              animate={{ scale:[1,1.1,1], opacity:[0.5,0.85,0.5] }}
+              transition={{ duration:12, repeat:Infinity, ease:'easeInOut', delay:4 }}
+            />
+            {/* Orb rosa — esquerda-topo */}
+            <motion.div style={{
+              position:'absolute', left:'-4%', top:'10%',
+              width:220, height:220, borderRadius:'50%',
+              background:'radial-gradient(circle, rgba(255,107,157,0.14) 0%, transparent 62%)',
+              filter:'blur(36px)',
+            }}
+              animate={{ scale:[1,1.07,1], opacity:[0.4,0.72,0.4] }}
+              transition={{ duration:10, repeat:Infinity, ease:'easeInOut', delay:2 }}
+            />
+            {/* Sparkles sutis */}
+            {([
+              {x:'40%',y:'18%',d:0  },{x:'62%',y:'65%',d:2.2},
+              {x:'78%',y:'12%',d:1.4},{x:'52%',y:'80%',d:3.8},
+            ] as {x:string;y:string;d:number}[]).map((p,i)=>(
+              <motion.div key={i} style={{position:'absolute',left:p.x,top:p.y}}
+                animate={{opacity:[0.04,0.32,0.04],scale:[0.6,1.1,0.6]}}
+                transition={{duration:3.5+i*0.4,repeat:Infinity,ease:'easeInOut',delay:p.d}}>
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2 L11.3 8 L17 9 L11.3 10 L10 16 L8.7 10 L3 9 L8.7 8 Z" fill="rgba(255,220,80,0.65)"/>
+                </svg>
+              </motion.div>
+            ))}
+          </div>
 
-          {/* Texto de saudação */}
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* "Boa tarde," — Fraunces italic, quente */}
+          {/* ── Layer 2: texto de saudação (z-index alto, clicável) ── */}
+          <div style={{ position:'relative', zIndex:1, padding:'34px 40px', minHeight:218 }}>
             <p style={{
-              fontFamily: "'Fraunces',Georgia,serif",
-              fontStyle: 'italic',
-              fontSize: 18,
-              fontWeight: 400,
-              color: 'rgba(255,255,255,0.45)',
-              marginBottom: 4,
-              letterSpacing: '-0.3px',
+              fontFamily:"'Fraunces',Georgia,serif", fontStyle:'italic',
+              fontSize:18, fontWeight:400,
+              color:'rgba(255,255,255,0.45)', marginBottom:4, letterSpacing:'-0.3px',
             }}>{saudacao},</p>
-
-            {/* "Yago." — gradient text, imponente */}
             <h1 style={{
-              fontFamily: "'Fraunces',Georgia,serif",
-              fontWeight: 700,
-              fontSize: 54,
-              lineHeight: 0.9,
-              letterSpacing: '-2.5px',
-              background: 'linear-gradient(130deg, #FFFFFF 30%, rgba(196,195,227,0.75) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              margin: 0,
+              fontFamily:"'Fraunces',Georgia,serif", fontWeight:700,
+              fontSize:54, lineHeight:0.9, letterSpacing:'-2.5px', margin:0,
+              background:'linear-gradient(130deg, #FFFFFF 30%, rgba(196,195,227,0.72) 100%)',
+              WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
             }}>
-              Yago<span style={{ WebkitTextFillColor: '#F1642E', color: '#F1642E' }}>.</span>
+              Yago<span style={{WebkitTextFillColor:'#F1642E',color:'#F1642E'}}>.</span>
             </h1>
-
-            {/* Data — badge pill elegante */}
             <div style={{
-              marginTop: 16,
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 30,
-              padding: '5px 12px 5px 8px',
+              marginTop:16, display:'inline-flex', alignItems:'center', gap:8,
+              background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.12)',
+              borderRadius:30, padding:'5px 12px 5px 8px',
             }}>
-              <div style={{
-                width: 6, height: 6, borderRadius: '50%',
-                background: '#F1642E',
-              }} />
+              <div style={{width:6,height:6,borderRadius:'50%',background:'#F1642E'}}/>
               <p style={{
-                fontFamily: "'Plus Jakarta Sans',sans-serif",
-                fontSize: 12.5, fontWeight: 500,
-                color: 'rgba(255,255,255,0.55)',
-                letterSpacing: '.015em',
-                margin: 0,
-              }}>
-                {dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}
-              </p>
+                fontFamily:"'Plus Jakarta Sans',sans-serif",
+                fontSize:12.5, fontWeight:500,
+                color:'rgba(255,255,255,0.55)', letterSpacing:'.015em', margin:0,
+              }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
             </div>
           </div>
 
-          {/* Speech bubble — fixo no card, não segue a fada */}
-          <div style={{
-            position: 'absolute', zIndex: 3, pointerEvents: 'none',
-            top: 20, right: 28,
-          }}>
-            <FairyBubble phrase={activePhrase} />
-          </div>
-
-          {/* Fada voa livremente por todo o card — 10 pontos, 50s */}
+          {/* ── Layer 3: fada + bubble — voa FORA do clip, cobre todo o card ── */}
+          {/* Outer wrapper não tem overflow:hidden → bubble pode sair levemente acima */}
           <motion.div
-            style={{ position: 'absolute', zIndex: 2, pointerEvents: 'none', left: '24%', top: '10%' }}
+            style={{ position:'absolute', zIndex:2, pointerEvents:'none', left:'22%', top:'50%' }}
             animate={{
-              left: ['24%', '68%', '38%', '78%', '22%', '62%', '45%', '80%', '28%', '24%'],
-              top:  ['10%', '18%', '58%', '8%',  '50%', '5%',  '52%', '22%', '58%', '10%'],
+              left: ['22%', '64%', '30%', '70%', '16%', '56%', '42%', '22%'],
+              top:  ['50%', '12%', '4%',  '40%', '22%', '48%', '5%',  '50%'],
             }}
             transition={{
-              duration: 50, repeat: Infinity, ease: 'easeInOut',
-              times: [0, 0.11, 0.22, 0.33, 0.44, 0.56, 0.67, 0.78, 0.89, 1],
+              duration: 40, repeat: Infinity, ease: 'easeInOut',
+              times: [0, 0.14, 0.28, 0.43, 0.57, 0.71, 0.85, 1],
             }}
           >
+            {/* Bubble centralizado acima da fada */}
+            <div style={{
+              position: 'absolute',
+              bottom: '88px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              whiteSpace: 'nowrap',
+            }}>
+              <FairyBubble phrase={activePhrase} />
+            </div>
             <DragFairy />
           </motion.div>
         </div>
