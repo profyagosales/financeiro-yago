@@ -136,16 +136,27 @@ export function DashboardPage() {
       {/* ─── ROW 2: 4 KPI blocks — cada um com identidade visual única ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
 
-        {/* SALDO TOTAL — card escuro, peso máximo */}
-        <motion.div whileHover={{ y: -3, boxShadow: '0 12px 36px rgba(13,6,4,0.4)' }} style={{ background: 'linear-gradient(145deg, #1E0B05 0%, #2C1208 100%)', borderRadius: 20, padding: '18px 20px', boxShadow: '0 4px 20px rgba(13,6,4,0.3)', border: '1px solid rgba(255,255,255,0.07)', transition: 'box-shadow .18s' }}>
+        {/* SALDO TOTAL — glassmorphism com acento terra forte */}
+        <motion.div whileHover={{ y: -3, boxShadow: '0 12px 36px rgba(196,85,59,0.22)' }}
+          style={{
+            background: 'rgba(255,255,255,0.78)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            borderRadius: 22,
+            padding: '18px 20px',
+            border: '1.5px solid rgba(196,85,59,0.25)',
+            borderTop: '3px solid #C4553B',
+            boxShadow: '0 8px 32px rgba(196,85,59,0.1), 0 2px 8px rgba(44,26,15,0.04)',
+            transition: 'box-shadow .18s',
+          }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconWallet size={12} color="rgba(255,255,255,0.7)" stroke={2} />
+            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(196,85,59,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconWallet size={12} color="#C4553B" stroke={2} />
             </div>
-            <span style={{ ...LABEL, color: 'rgba(255,255,255,0.4)' }}>Saldo total</span>
+            <span style={{ ...LABEL, color: '#C4553B' }}>Saldo total</span>
           </div>
-          <OdometroSaldo value={saldoTotal} style={{ ...DISPLAY, fontSize: 26, color: 'white', display: 'block' }} />
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>
+          <OdometroSaldo value={saldoTotal} style={{ ...DISPLAY, fontSize: 26, color: '#2C1A0F', display: 'block' }} />
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 6 }}>
             {contas.length} conta{contas.length !== 1 ? 's' : ''}
           </p>
         </motion.div>
@@ -221,37 +232,36 @@ export function DashboardPage() {
       {/* ─── ROW 3: Hero dark card (2/3) + Gastos por categoria (1/3) ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, marginBottom: 20 }}>
 
-        {/* Hero dark card — PANORAMA */}
+        {/* PANORAMA — glassmorphism limpo, cores vibrantes */}
         <div style={{
-          background: 'linear-gradient(148deg, #080302 0%, #180804 45%, #0D0402 100%)',
+          background: 'rgba(255,255,255,0.72)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           borderRadius: 22,
           padding: '26px 28px',
-          boxShadow: '0 16px 48px rgba(13,6,4,0.5), 0 4px 16px rgba(13,6,4,0.25)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid rgba(255,255,255,0.65)',
+          boxShadow: '0 8px 40px rgba(44,26,15,0.07), 0 2px 8px rgba(44,26,15,0.04)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
-            <div>
-              <p style={{ ...LABEL, color: 'rgba(255,255,255,0.35)', marginBottom: 6 }}>Panorama · {mesNome}</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
-                    <IconArrowUpRight size={11} color="#6EC9C4" stroke={2.5} />
-                    <span style={{ ...LABEL, color: '#6EC9C4', fontSize: 9 }}>Entradas</span>
-                  </div>
-                  <OdometroSaldo value={receitas} style={{ ...DISPLAY, fontSize: 24, color: 'white', display: 'block' }} />
-                </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
-                    <IconArrowDownRight size={11} color="#F0957A" stroke={2.5} />
-                    <span style={{ ...LABEL, color: '#F0957A', fontSize: 9 }}>Saídas</span>
-                  </div>
-                  <OdometroSaldo value={totalComprometido} style={{ ...DISPLAY, fontSize: 24, color: 'white', display: 'block' }} />
-                </div>
+          <p style={{ ...LABEL, color: '#9B7B6A', marginBottom: 18 }}>Panorama · {mesNome}</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+            <div style={{ background: 'rgba(58,133,128,0.08)', borderRadius: 16, padding: '14px 16px', border: '1px solid rgba(58,133,128,0.15)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+                <IconArrowUpRight size={11} color="#3A8580" stroke={2.5} />
+                <span style={{ ...LABEL, color: '#3A8580', fontSize: 9 }}>Entradas</span>
               </div>
+              <OdometroSaldo value={receitas} style={{ ...DISPLAY, fontSize: 24, color: '#3A8580', display: 'block' }} />
+            </div>
+            <div style={{ background: 'rgba(196,85,59,0.08)', borderRadius: 16, padding: '14px 16px', border: '1px solid rgba(196,85,59,0.15)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+                <IconArrowDownRight size={11} color="#C4553B" stroke={2.5} />
+                <span style={{ ...LABEL, color: '#C4553B', fontSize: 9 }}>Saídas</span>
+              </div>
+              <OdometroSaldo value={totalComprometido} style={{ ...DISPLAY, fontSize: 24, color: '#C4553B', display: 'block' }} />
             </div>
           </div>
 
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', marginBottom: 16 }} />
+          <div style={{ height: 1, background: 'rgba(44,26,15,0.07)', marginBottom: 16 }} />
 
           {[
             { icon: IconTrendingDown, label: 'Gastos variáveis', valor: despesas, sub: undefined as string | undefined },
@@ -259,23 +269,23 @@ export function DashboardPage() {
             { icon: IconCalendarStats, label: `Parcelamentos (${parcelamentos.length})`, valor: totalParcelamentos, sub: undefined as string | undefined },
           ].filter(item => item.valor > 0).map((item, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <item.icon size={12} color="rgba(255,255,255,0.28)" stroke={1.8} />
-              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.45)', flex: 1 }}>
-                {item.label}{item.sub ? <span style={{ opacity: .65 }}> · {item.sub}</span> : ''}
+              <item.icon size={12} color="#C4B4A8" stroke={1.8} />
+              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', flex: 1 }}>
+                {item.label}{item.sub ? <span style={{ opacity: .7 }}> · {item.sub}</span> : ''}
               </span>
-              <span style={{ ...DISPLAY, fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{fmt(item.valor)}</span>
+              <span style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F' }}>{fmt(item.valor)}</span>
             </div>
           ))}
 
           {receitas > 0 && (
-            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(44,26,15,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ ...LABEL, color: saldoLivre >= 0 ? '#6EC9C4' : '#F0957A', marginBottom: 5 }}>Saldo livre</p>
-                <OdometroSaldo value={saldoLivre} style={{ ...DISPLAY, fontSize: 22, color: 'white', display: 'block' }} />
+                <p style={{ ...LABEL, color: saldoLivre >= 0 ? '#3A8580' : '#C4553B', marginBottom: 5 }}>Saldo livre</p>
+                <OdometroSaldo value={saldoLivre} style={{ ...DISPLAY, fontSize: 22, color: saldoLivre >= 0 ? '#3A8580' : '#C4553B', display: 'block' }} />
               </div>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ ...LABEL, color: 'rgba(255,255,255,0.28)', marginBottom: 5 }}>Por dia</p>
-                <OdometroSaldo value={Math.max(0, porDia)} style={{ ...DISPLAY, fontSize: 18, color: 'rgba(255,255,255,0.6)', display: 'block' }} />
+                <p style={{ ...LABEL, marginBottom: 5 }}>Por dia</p>
+                <OdometroSaldo value={Math.max(0, porDia)} style={{ ...DISPLAY, fontSize: 18, color: '#2C1A0F', display: 'block' }} />
               </div>
             </div>
           )}
