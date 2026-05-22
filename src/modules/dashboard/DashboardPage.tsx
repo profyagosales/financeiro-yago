@@ -295,36 +295,36 @@ export function DashboardPage() {
       )}
 
       {/* ─── ROW 5: Transações (3/5) + Alertas (2/5) ─── */}
-      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 14, alignItems: 'start' }}>
+      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 14 }}>
 
-        {/* Últimas transações */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h2 style={{ ...DISPLAY, fontSize: 20, color: '#2C1A0F' }}>Últimas transações</h2>
+        {/* Últimas transações — título dentro do card */}
+        <div style={{ ...CARD, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 18px 0' }}>
+            <h2 style={{ ...DISPLAY, fontSize: 18, color: '#2C1A0F' }}>Últimas transações</h2>
             <button onClick={() => navigate('/transacoes')}
               style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#C4553B', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
               Ver todas <IconChevronRight size={14} />
             </button>
           </div>
           {transacoes.length === 0 ? (
-            <div style={{ ...CARD, textAlign: 'center', padding: '36px 0' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0' }}>
               <Dobrao mood="sleeping" size={64} />
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 8 }}>Sem transações · toque no + para lançar</p>
             </div>
           ) : (
-            <div style={{ ...CARD, overflow: 'hidden' }}>
+            <div style={{ marginTop: 8 }}>
               {transacoes.map((tx, i) => <TxRow key={tx.id} tx={tx} i={i} last={i === transacoes.length - 1} />)}
             </div>
           )}
         </div>
 
-        {/* Alertas e resumo */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {/* Alertas e resumo — card único que estica para igualar altura */}
+        <div style={{ ...CARD, padding: '18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
           {/* Vencimentos */}
           <AnimatePresence>
             {proximosVenc.length > 0 && (
-              <div style={{ ...CARD, padding: '18px', borderColor: '#F5DFA0' }}>
+              <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                   <div style={{ width: 30, height: 30, borderRadius: 9, background: '#FEF3CC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <IconAlertCircle size={14} color="#D4A017" stroke={2} />
@@ -356,7 +356,7 @@ export function DashboardPage() {
           {/* Alertas cartão */}
           <AnimatePresence>
             {cartoesAlerta.length > 0 && (
-              <div style={{ ...CARD, padding: '18px', borderColor: '#F5C8B8' }}>
+              <div style={{ borderTop: proximosVenc.length > 0 ? '1px solid #F5F0E8' : 'none', paddingTop: proximosVenc.length > 0 ? 12 : 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                   <div style={{ width: 30, height: 30, borderRadius: 9, background: '#FEE2DC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <IconCreditCard size={14} color="#C4553B" stroke={2} />
@@ -387,7 +387,7 @@ export function DashboardPage() {
 
           {/* Se não há alertas — resumo rápido */}
           {!hasAlerts && (
-            <div style={{ ...CARD, padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <h3 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F' }}>Resumo do mês</h3>
               {[
                 { label: 'Contas fixas', val: totalFixasMes, sub: `${fixasPagas.length}/${contasFixas.length} pagas`, cor: '#D4A017' },
