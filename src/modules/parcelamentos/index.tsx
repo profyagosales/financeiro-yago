@@ -17,22 +17,13 @@ function lightenHex(hex: string, pct: number) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
   return `#${Math.min(255,Math.round(r+(255-r)*pct/100)).toString(16).padStart(2,'0')}${Math.min(255,Math.round(g+(255-g)*pct/100)).toString(16).padStart(2,'0')}${Math.min(255,Math.round(b+(255-b)*pct/100)).toString(16).padStart(2,'0')}`
 }
-function darkenHex(hex: string, pct: number) {
-  if (!hex || hex.length < 7) return hex
-  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
-  return `#${Math.max(0,Math.round(r*(1-pct/100))).toString(16).padStart(2,'0')}${Math.max(0,Math.round(g*(1-pct/100))).toString(16).padStart(2,'0')}${Math.max(0,Math.round(b*(1-pct/100))).toString(16).padStart(2,'0')}`
-}
-function isLightColor(hex: string) {
-  if (!hex || hex.length < 7) return false
-  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
-  return (0.299*r + 0.587*g + 0.114*b) > 170
-}
 
 function ParcelaRow({ lanc, cor }: { lanc: any; cor: string }) {
   const [cat, setCat] = useState<any>(null)
   const pct = Math.round((lanc.parcelaAtual / lanc.totalParcelas) * 100)
   const restantes = lanc.totalParcelas - lanc.parcelaAtual
   const totalRestante = lanc.valor * restantes
+  const isUltima = lanc.parcelaAtual === lanc.totalParcelas - 1
 
   useEffect(() => { db.categorias.get(lanc.categoriaId).then(setCat) }, [lanc.categoriaId])
 
@@ -44,10 +35,20 @@ function ParcelaRow({ lanc, cor }: { lanc: any; cor: string }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         {cat && <CategoryIcon nome={cat.nome} cor={cat.cor} size={44} radius={13} />}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ ...BODY, fontSize: 14, fontWeight: 600, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lanc.descricao}</p>
-          <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>
-            {lanc.parcelaAtual}/{lanc.totalParcelas} parcelas &middot; {restantes === 0 ? 'Última parcela' : `${restantes} restante${restantes !== 1 ? 's' : ''}`}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+            <p style={{ ...BODY, fontSize: 14, fontWeight: 600, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lanc.descricao}</p>
+            {isUltima && (
+              <span style={{ ...BODY, fontSize: 9, fontWeight: 700, color: '#3A8580', background: '#EBF5F0', border: '1px solid #C0DED9', padding: '2px 7px', borderRadius: 20, flexShrink: 0 }}>Última!</span>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span style={{ ...BODY, fontSize: 11, fontWeight: 700, color: 'white', background: cor, padding: '2px 9px', borderRadius: 20 }}>
+              {lanc.parcelaAtual}/{lanc.totalParcelas}x
+            </span>
+            <span style={{ ...BODY, fontSize: 11, color: '#9B7B6A' }}>
+              {restantes === 0 ? 'Concluída' : `${restantes} restante${restantes !== 1 ? 's' : ''}`}
+            </span>
+          </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <p style={{ ...DISPLAY, fontSize: 15, color: '#C4553B' }}>
@@ -59,8 +60,8 @@ function ParcelaRow({ lanc, cor }: { lanc: any; cor: string }) {
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div style={{ background: '#F5F0E8', borderRadius: 6, height: 5, overflow: 'hidden', marginBottom: 5 }}>
+      {/* Progress bar — 7px, gradient */}
+      <div style={{ background: '#F5F0E8', borderRadius: 6, height: 7, overflow: 'hidden', marginBottom: 5 }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
@@ -78,9 +79,6 @@ function ParcelaRow({ lanc, cor }: { lanc: any; cor: string }) {
 function CartaoGroup({ cartao, lancamentos }: { cartao: any; lancamentos: any[] }) {
   const [expanded, setExpanded] = useState(true)
   const totalMensal = lancamentos.reduce((s, l) => s + l.valor, 0)
-  const light = isLightColor(cartao.cor)
-  const txt = light ? 'rgba(30,15,0,0.9)' : 'rgba(255,255,255,0.96)'
-  const subTxt = light ? 'rgba(30,15,0,0.5)' : 'rgba(255,255,255,0.55)'
 
   return (
     <div style={{ marginBottom: 20 }}>
@@ -88,29 +86,34 @@ function CartaoGroup({ cartao, lancamentos }: { cartao: any; lancamentos: any[] 
         whileTap={{ scale: 0.98 }}
         onClick={() => setExpanded(e => !e)}
         style={{
-          width: '100%', border: 'none', cursor: 'pointer', borderRadius: 20,
-          padding: '16px 18px', marginBottom: expanded ? 10 : 0,
-          background: `linear-gradient(140deg, ${lightenHex(cartao.cor, 22)} 0%, ${cartao.cor} 50%, ${darkenHex(cartao.cor, 30)} 100%)`,
-          boxShadow: `0 6px 24px ${cartao.cor}38`,
-          position: 'relative', overflow: 'hidden',
+          width: '100%', cursor: 'pointer', marginBottom: expanded ? 10 : 0,
+          background: '#FFFFFF',
+          border: `1px solid ${cartao.cor}30`,
+          borderLeft: `4px solid ${cartao.cor}`,
+          borderRadius: 20,
+          padding: '16px 20px',
+          boxShadow: `0 2px 12px ${cartao.cor}15, 0 1px 3px rgba(44,26,15,0.05)`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-        <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.07)', pointerEvents: 'none' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: light ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.18)', border: light ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconCreditCard size={18} color={txt} stroke={1.8} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 13, background: cartao.cor, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 3px 10px ${cartao.cor}40` }}>
+            <IconCreditCard size={18} color="white" stroke={1.8} />
           </div>
           <div style={{ textAlign: 'left' }}>
-            <p style={{ ...BODY, fontSize: 12, fontWeight: 800, color: txt, letterSpacing: '.04em', textTransform: 'uppercase' }}>{cartao.nome}</p>
-            <p style={{ ...BODY, fontSize: 10, color: subTxt, marginTop: 1 }}>{lancamentos.length} parcelamento{lancamentos.length !== 1 ? 's' : ''} em aberto</p>
+            <p style={{ ...BODY, fontSize: 14, fontWeight: 700, color: '#2C1A0F' }}>{cartao.nome}</p>
+            <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginTop: 1 }}>
+              {lancamentos.length} parcelamento{lancamentos.length !== 1 ? 's' : ''} em aberto
+            </p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ ...BODY, fontSize: 9, color: subTxt, letterSpacing: '.06em' }}>POR MÊS</p>
-            <p style={{ ...DISPLAY, fontSize: 18, color: txt }}>{fmt(totalMensal)}</p>
+            <p style={{ ...BODY, fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em' }}>POR MÊS</p>
+            <p style={{ ...DISPLAY, fontSize: 18, color: cartao.cor }}>{fmt(totalMensal)}</p>
           </div>
-          {expanded ? <IconChevronUp size={16} color={txt} stroke={2} /> : <IconChevronDown size={16} color={txt} stroke={2} />}
+          <div style={{ background: `${cartao.cor}15`, borderRadius: 9, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {expanded ? <IconChevronUp size={15} color={cartao.cor} stroke={2.5} /> : <IconChevronDown size={15} color={cartao.cor} stroke={2.5} />}
+          </div>
         </div>
       </motion.button>
 
@@ -164,7 +167,7 @@ export function Page() {
       {parcelamentos.length > 0 && (
         <div style={{ ...CARD, margin: '0 28px 24px', padding: '18px 20px' }}>
           <p style={{ ...LABEL, marginBottom: 14 }}>Resumo</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
             <div>
               <p style={{ ...LABEL, fontSize: 9, marginBottom: 5 }}>POR MÊS</p>
               <p style={{ ...DISPLAY, fontSize: 20, color: '#C4553B' }}>{fmt(totalMensal)}</p>
@@ -177,6 +180,28 @@ export function Page() {
               <p style={{ ...LABEL, fontSize: 9, marginBottom: 5 }}>EM ABERTO</p>
               <p style={{ ...DISPLAY, fontSize: 20, color: '#2C1A0F' }}>{parcelamentos.length}</p>
             </div>
+          </div>
+          {/* Mini bar chart */}
+          <div style={{ borderTop: '1px solid #EDE6DC', paddingTop: 14 }}>
+            <p style={{ ...LABEL, fontSize: 9, marginBottom: 12 }}>Maior impacto mensal</p>
+            {parcelamentos.slice(0, 5).map(l => {
+              const pctBar = totalMensal > 0 ? (l.valor / totalMensal) * 100 : 0
+              return (
+                <div key={l.id} style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <span style={{ ...BODY, fontSize: 11, color: '#7A5C4F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{l.descricao}</span>
+                    <span style={{ ...DISPLAY, fontSize: 12, color: '#2C1A0F', flexShrink: 0 }}>{fmt(l.valor)}</span>
+                  </div>
+                  <div style={{ background: '#F5F0E8', borderRadius: 4, height: 4, overflow: 'hidden' }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pctBar}%` }}
+                      transition={{ type: 'spring', stiffness: 180, damping: 24 }}
+                      style={{ height: '100%', background: '#C4553B', borderRadius: 4 }} />
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

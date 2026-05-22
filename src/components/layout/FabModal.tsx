@@ -95,13 +95,27 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
   const corBotao = tipo === 'receita' ? '#3A8580' : tipo === 'transferencia' ? '#7C5CBF' : '#C4553B'
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,15,0.6)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,15,0.55)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
         transition={{ type: 'spring', stiffness: 320, damping: 32 }}
         onClick={e => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 560, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '20px 20px 48px', maxHeight: '94dvh', overflowY: 'auto' }}>
+        style={{ width: '100%', maxWidth: 560, background: '#FFFFFF', borderRadius: '28px 28px 0 0', padding: '20px 20px 48px', maxHeight: '94dvh', overflowY: 'auto', boxShadow: '0 -8px 40px rgba(44,26,15,0.2)' }}>
+
+        {/* Handle bar */}
+        <motion.div
+          initial={{ scaleX: 0.5 }}
+          animate={{ scaleX: 1 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
+          style={{ width: 40, height: 4, borderRadius: 2, background: '#E8E0D5', margin: '0 auto 20px' }} />
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -112,19 +126,26 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
         </div>
 
         {/* Tipo */}
-        <div style={{ display: 'flex', background: '#F5F0E8', borderRadius: 14, padding: 4, marginBottom: 16, gap: 4 }}>
+        <motion.div
+          layout
+          style={{ display: 'flex', background: '#F5F0E8', borderRadius: 16, padding: 4, marginBottom: 18, gap: 4 }}>
           {(['despesa','receita','transferencia'] as TipoLanc[]).map(t => (
-            <button key={t} onClick={() => { setTipo(t); setCatId(null); if (t === 'transferencia') setFontePag('conta') }}
-              style={{ flex: 1, padding: '10px 4px', borderRadius: 11, border: 'none', cursor: 'pointer', transition: 'all .15s', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+            <motion.button key={t}
+              layout
+              onClick={() => { setTipo(t); setCatId(null); if (t === 'transferencia') setFontePag('conta') }}
+              style={{ flex: 1, padding: '10px 4px', borderRadius: 12, border: 'none', cursor: 'pointer',
                 background: tipo === t ? (t==='receita'?'#3A8580':t==='transferencia'?'#7C5CBF':'#C4553B') : 'transparent',
-                color: tipo === t ? 'white' : '#9B7B6A' }}>
-              {t === 'despesa' ? '− Despesa' : t === 'receita' ? '+ Receita' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconArrowsExchange size={13} stroke={2} /> Transfer.</span>}
-            </button>
+                color: tipo === t ? 'white' : '#9B7B6A',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+                boxShadow: tipo === t ? `0 4px 14px ${t==='receita'?'rgba(58,133,128,0.35)':t==='transferencia'?'rgba(124,92,191,0.35)':'rgba(196,85,59,0.35)'}` : 'none',
+                transition: 'all .15s' }}>
+              {t === 'despesa' ? '− Despesa' : t === 'receita' ? '+ Receita' : '⇄ Transf.'}
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
 
         {/* Valor */}
-        <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: `2px solid ${valor ? corBotao : '#E8E0D5'}`, borderRadius: 16, padding: '12px 16px', gap: 8, marginBottom: 12, transition: 'border-color .2s' }}>
+        <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: `2px solid ${valor ? corBotao : '#E8E0D5'}`, borderRadius: 16, padding: '12px 16px', gap: 8, marginBottom: 12, transition: 'border-color .2s, box-shadow .2s', boxShadow: valor ? `0 0 0 4px ${corBotao}10` : 'none' }}>
           <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, color: corBotao, fontWeight: 700 }}>R$</span>
           <input value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" type="tel" autoFocus
             style={{ border: 'none', background: 'transparent', fontFamily: "'Fraunces',Georgia,serif", fontSize: 32, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none', width: '100%' }} />
@@ -273,7 +294,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 8, letterSpacing: '.04em' }}>CATEGORIA</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: 8 }}>
               {categorias.map(c => (
-                <motion.button key={c.id} onClick={() => setCatId(c.id!)} whileTap={{ scale: 0.92 }}
+                <motion.button key={c.id} onClick={() => setCatId(c.id!)} whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.05 }}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '10px 4px', borderRadius: 14, border: catId === c.id ? `2px solid ${c.cor}` : '1.5px solid #E8E0D5', background: catId === c.id ? `${c.cor}12` : 'white', cursor: 'pointer', transition: 'all .15s' }}>
                   <CategoryIcon nome={c.nome} cor={c.cor} size={38} radius={11} />
                   <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: catId === c.id ? c.cor : '#7A5C4F', textAlign: 'center', lineHeight: 1.2 }}>{c.nome}</span>

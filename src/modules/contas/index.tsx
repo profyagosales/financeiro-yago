@@ -41,13 +41,11 @@ function darkenHex(hex: string, pct: number) {
   return `#${Math.max(0, Math.round(r * (1 - pct / 100))).toString(16).padStart(2, '0')}${Math.max(0, Math.round(g * (1 - pct / 100))).toString(16).padStart(2, '0')}${Math.max(0, Math.round(b * (1 - pct / 100))).toString(16).padStart(2, '0')}`
 }
 
-const LABEL: React.CSSProperties = {
-  fontFamily: "'Plus Jakarta Sans',sans-serif",
-  fontSize: 10,
-  fontWeight: 700,
-  letterSpacing: '.09em',
-  textTransform: 'uppercase',
-}
+const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: '#9B7B6A' }
+const BODY: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif" }
+const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
+const BTN_PRIMARY = { background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 20px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(196,85,59,0.3)', display: 'flex', alignItems: 'center', gap: 6 } as const
 
 function ContaCard({ c, onEdit, onDelete }: { c: any; onEdit: () => void; onDelete: () => void }) {
   const { openFab } = useUIStore()
@@ -177,16 +175,17 @@ export function Page() {
   }
 
   return (
-    <div style={{ padding: '24px 28px', width: '100%' }}>
+    <div style={{ padding: '32px', width: '100%' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 28, fontWeight: 700, color: '#2C1A0F' }}>Contas</h1>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 2 }}>Total: {fmt(saldoTotal)}</p>
+          <h1 style={{ ...DISPLAY, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Contas</h1>
+          <p style={{ ...BODY, fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>
+            {contas.length > 0 ? `${contas.length} conta${contas.length !== 1 ? 's' : ''} cadastrada${contas.length !== 1 ? 's' : ''}` : 'Gerencie suas contas bancárias'}
+          </p>
         </div>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={openAdd}
-          style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 14px rgba(196,85,59,0.35)' }}>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={openAdd} style={BTN_PRIMARY}>
           <IconPlus size={16} stroke={2.5} /> Adicionar
         </motion.button>
       </div>
@@ -198,11 +197,27 @@ export function Page() {
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginTop: 6 }}>Adicione sua conta bancária para começar</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-          {contas.map(c => (
-            <ContaCard key={c.id} c={c} onEdit={() => openEdit(c)} onDelete={() => setConfirmDelete(c.id!)} />
-          ))}
-        </div>
+        <>
+          {/* KPI strip */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
+            {[
+              { label: 'Saldo total', value: fmt(saldoTotal), cor: saldoTotal >= 0 ? '#2C1A0F' : '#C4553B' },
+              { label: 'Contas ativas', value: `${contas.filter(c => c.ativo).length} conta${contas.filter(c => c.ativo).length !== 1 ? 's' : ''}`, cor: '#2C1A0F' },
+              { label: 'Maior saldo', value: fmt(Math.max(...contas.map(c => c.saldoAtual))), cor: '#3A8580' },
+            ].map((kpi, i) => (
+              <div key={i} style={{ ...CARD, padding: '16px 20px', borderRadius: 16 }}>
+                <p style={{ ...LABEL, marginBottom: 6 }}>{kpi.label}</p>
+                <p style={{ ...DISPLAY, fontSize: 22, color: kpi.cor }}>{kpi.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+            {contas.map(c => (
+              <ContaCard key={c.id} c={c} onEdit={() => openEdit(c)} onDelete={() => setConfirmDelete(c.id!)} />
+            ))}
+          </div>
+        </>
       )}
 
       <AnimatePresence>

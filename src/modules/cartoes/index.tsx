@@ -27,13 +27,10 @@ function isLightColor(hex: string) {
   return (0.299 * r + 0.587 * g + 0.114 * b) > 170
 }
 
-const LABEL: React.CSSProperties = {
-  fontFamily: "'Plus Jakarta Sans',sans-serif",
-  fontSize: 10,
-  fontWeight: 700,
-  letterSpacing: '.09em',
-  textTransform: 'uppercase',
-}
+const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: '#9B7B6A' }
+const BODY: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif" }
+const BTN_PRIMARY = { background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 20px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(196,85,59,0.3)', display: 'flex', alignItems: 'center', gap: 6 } as const
 
 function LancRow({ lanc, isLast }: { lanc: any; isLast: boolean }) {
   const [cat, setCat] = useState<any>(null)
@@ -80,6 +77,7 @@ function FaturaSheet({ cartao, onClose }: { cartao: any; onClose: () => void }) 
   const lancamentos = useLancamentosCartao(cartao.id, viewMes, viewAno)
   const total = lancamentos.reduce((s, l) => s + l.valor, 0)
   const [addingLanc, setAddingLanc] = useState(false)
+  const [faturaTab, setFaturaTab] = useState<'lancamentos' | 'categorias' | 'resumo'>('lancamentos')
   const prevMes = () => { if (viewMes === 1) { setViewMes(12); setViewAno(a => a - 1) } else setViewMes(m => m - 1) }
   const nextMes = () => { if (viewMes === 12) { setViewMes(1); setViewAno(a => a + 1) } else setViewMes(m => m + 1) }
   const mesNome = new Date(viewAno, viewMes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
@@ -90,6 +88,9 @@ function FaturaSheet({ cartao, onClose }: { cartao: any; onClose: () => void }) 
   const subTxt = light ? 'rgba(30,15,0,0.5)' : 'rgba(255,255,255,0.55)'
   const disponivel = cartao.limite - total
   const pct = Math.min(100, (total / Math.max(cartao.limite, 1)) * 100)
+
+  // Categories tab data
+  const cats = useCatsFatura(lancamentos)
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -103,16 +104,14 @@ function FaturaSheet({ cartao, onClose }: { cartao: any; onClose: () => void }) 
         {/* Handle */}
         <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.35)', margin: '12px auto 0', position: 'relative', zIndex: 1, flexShrink: 0 }} />
 
-        {/* Card header */}
-        <div style={{ background: `linear-gradient(135deg, ${lightenHex(cartao.cor, 12)} 0%, ${cartao.cor} 60%, ${darkenHex(cartao.cor, 20)} 100%)`, padding: '14px 22px 22px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-            <div>
-              <p style={{ ...LABEL, color: subTxt, marginBottom: 4 }}>{cartao.bandeira}</p>
-              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: txt, lineHeight: 1 }}>{cartao.nome}</h3>
-            </div>
+        {/* Card header — clean gradient, no blobs */}
+        <div style={{ background: `linear-gradient(135deg, ${lightenHex(cartao.cor, 12)} 0%, ${cartao.cor} 60%, ${darkenHex(cartao.cor, 20)} 100%)`, padding: '14px 22px 20px', flexShrink: 0 }}>
+          {/* Row 1: bandeira + actions */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <p style={{ ...LABEL, color: subTxt }}>{cartao.bandeira}</p>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <motion.button onClick={() => setAddingLanc(true)} whileTap={{ scale: 0.95 }}
-                style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.28)', color: txt, borderRadius: 11, padding: '9px 16px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.28)', color: txt, borderRadius: 11, padding: '8px 14px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                 + Lançar
               </motion.button>
               <button onClick={onClose}
@@ -122,57 +121,187 @@ function FaturaSheet({ cartao, onClose }: { cartao: any; onClose: () => void }) 
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
+          {/* Row 2: card name */}
+          <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700, color: txt, lineHeight: 1, marginBottom: 14 }}>{cartao.nome}</h3>
+
+          {/* Row 3: fatura atual + disponível */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', marginBottom: 12 }}>
             <div>
-              <p style={{ ...LABEL, color: subTxt, marginBottom: 3 }}>Fatura atual</p>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 28, fontWeight: 700, color: txt, letterSpacing: '-1px', lineHeight: 1 }}>{fmt(total)}</p>
+              <p style={{ ...LABEL, color: subTxt, marginBottom: 3 }}>FATURA ATUAL</p>
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: txt, letterSpacing: '-1px', lineHeight: 1 }}>{fmt(total)}</p>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ ...LABEL, color: subTxt, marginBottom: 3 }}>Disponível</p>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: disponivel < 0 ? '#FFB347' : txt }}>{fmt(Math.max(0, disponivel))}</p>
+            <div>
+              <p style={{ ...LABEL, color: subTxt, marginBottom: 3 }}>DISPONÍVEL</p>
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: disponivel < 0 ? '#FFB347' : txt, letterSpacing: '-0.5px', lineHeight: 1 }}>{fmt(Math.max(0, disponivel))}</p>
             </div>
           </div>
 
-          {/* Progress bar */}
+          {/* Row 4: progress bar */}
           <div style={{ background: light ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)', borderRadius: 4, height: 4, overflow: 'hidden' }}>
             <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ type: 'spring', stiffness: 200, damping: 25 }}
               style={{ height: '100%', background: pct > 80 ? '#FFB347' : (light ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.85)'), borderRadius: 4 }} />
           </div>
         </div>
 
-        {/* Month navigator */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 22px 12px', borderBottom: '1px solid #EDE6DC', flexShrink: 0 }}>
-          <button onClick={prevMes}
-            style={{ background: '#F5F0E8', border: 'none', borderRadius: 9, width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconChevronLeft size={16} color="#7A5C4F" stroke={2} />
-          </button>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 4 }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', textTransform: 'capitalize' }}>{mesNome}</p>
-              {isFutura && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, background: '#FDF4E3', color: '#D4A017', padding: '2px 7px', borderRadius: 10, border: '1px solid #F0D8A8' }}>PROJEÇÃO</span>}
-              {isAtual && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, background: '#EBF5F0', color: '#3A8580', padding: '2px 7px', borderRadius: 10, border: '1px solid #C0DED9' }}>ATUAL</span>}
-            </div>
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.5px' }}>{fmt(total)}</p>
-          </div>
-          <button onClick={nextMes}
-            style={{ background: '#F5F0E8', border: 'none', borderRadius: 9, width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconChevronRight size={16} color="#7A5C4F" stroke={2} />
-          </button>
+        {/* Tab switcher */}
+        <div style={{ display: 'flex', background: '#F5F0E8', borderRadius: 12, padding: 3, margin: '14px 22px 0', gap: 3, flexShrink: 0 }}>
+          {([['lancamentos', 'Lançamentos'], ['categorias', 'Categorias'], ['resumo', 'Resumo']] as const).map(([id, label]) => (
+            <button key={id} onClick={() => setFaturaTab(id)}
+              style={{ flex: 1, padding: '8px 0', borderRadius: 9, border: 'none', cursor: 'pointer',
+                background: faturaTab === id ? '#FFFFFF' : 'transparent',
+                color: faturaTab === id ? '#2C1A0F' : '#9B7B6A',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: faturaTab === id ? 700 : 500,
+                boxShadow: faturaTab === id ? '0 1px 4px rgba(44,26,15,0.1)' : 'none', transition: 'all .15s' }}>
+              {label}
+            </button>
+          ))}
         </div>
 
-        {/* Lancamentos */}
-        <div style={{ padding: '4px 22px 48px', overflowY: 'auto', flex: 1 }}>
-          {lancamentos.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0' }}>
-              <IconCreditCard size={40} color="#E8E0D5" stroke={1.2} />
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 600, color: '#C4B4A8', marginTop: 10 }}>Fatura vazia neste mês</p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#C4B4A8', marginTop: 4 }}>Toque em + Lançar para adicionar</p>
-            </div>
-          ) : (
-            <div>
-              {lancamentos.map((l, i) => <LancRow key={l.id} lanc={l} isLast={i === lancamentos.length - 1} />)}
+        {/* Tab content */}
+        <div style={{ overflowY: 'auto', flex: 1, paddingBottom: 48 }}>
+
+          {/* ── LANÇAMENTOS ── */}
+          {faturaTab === 'lancamentos' && (
+            <>
+              {/* Month navigator */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 22px', borderBottom: '1px solid #EDE6DC' }}>
+                <button onClick={prevMes}
+                  style={{ background: '#F5F0E8', border: 'none', borderRadius: 9, width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <IconChevronLeft size={16} color="#7A5C4F" stroke={2} />
+                </button>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 4 }}>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', textTransform: 'capitalize' }}>{mesNome}</p>
+                    {isFutura && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, background: '#FDF4E3', color: '#D4A017', padding: '2px 7px', borderRadius: 10, border: '1px solid #F0D8A8' }}>PROJEÇÃO</span>}
+                    {isAtual && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, background: '#EBF5F0', color: '#3A8580', padding: '2px 7px', borderRadius: 10, border: '1px solid #C0DED9' }}>ATUAL</span>}
+                  </div>
+                  <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.5px' }}>{fmt(total)}</p>
+                </div>
+                <button onClick={nextMes}
+                  style={{ background: '#F5F0E8', border: 'none', borderRadius: 9, width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <IconChevronRight size={16} color="#7A5C4F" stroke={2} />
+                </button>
+              </div>
+
+              <div style={{ padding: '12px 22px 0' }}>
+                {lancamentos.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                    <IconCreditCard size={40} color="#E8E0D5" stroke={1.2} />
+                    <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 600, color: '#C4B4A8', marginTop: 10 }}>Fatura vazia neste mês</p>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#C4B4A8', marginTop: 4 }}>Toque em + Lançar para adicionar</p>
+                  </div>
+                ) : (
+                  <div style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(44,26,15,0.05)' }}>
+                    {lancamentos.map((l, i) => <LancRow key={l.id} lanc={l} isLast={i === lancamentos.length - 1} />)}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ── CATEGORIAS ── */}
+          {faturaTab === 'categorias' && (
+            <div style={{ padding: '16px 22px 0' }}>
+              {cats.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                  <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 600, color: '#C4B4A8', marginTop: 10 }}>Nenhum lançamento neste mês</p>
+                </div>
+              ) : (
+                <div style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(44,26,15,0.05)', padding: '16px' }}>
+                  <p style={{ ...LABEL, marginBottom: 14 }}>Por categoria</p>
+                  {cats.map(cat => {
+                    const pctCat = total > 0 ? (cat.valor / total) * 100 : 0
+                    return (
+                      <div key={cat.id} style={{ marginBottom: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <CategoryIcon nome={cat.nome} cor={cat.cor} size={32} radius={9} />
+                            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F' }}>{cat.nome}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                            <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F' }}>{fmt(cat.valor)}</span>
+                            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A' }}>{pctCat.toFixed(0)}%</span>
+                          </div>
+                        </div>
+                        <div style={{ background: '#F5F0E8', borderRadius: 4, height: 5, overflow: 'hidden' }}>
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pctCat}%` }}
+                            transition={{ type: 'spring', stiffness: 180, damping: 24 }}
+                            style={{ height: '100%', background: cat.cor, borderRadius: 4 }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
+
+          {/* ── RESUMO ── */}
+          {faturaTab === 'resumo' && (
+            <div style={{ padding: '16px 22px 0' }}>
+              {/* Ring + stats */}
+              <div style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(44,26,15,0.05)', padding: '20px 16px' }}>
+                <p style={{ ...LABEL, marginBottom: 16 }}>Uso do limite</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28 }}>
+                  <div style={{ position: 'relative', width: 120, height: 120, flexShrink: 0 }}>
+                    <svg width="120" height="120" viewBox="0 0 120 120">
+                      <circle cx="60" cy="60" r="50" fill="none" stroke="#F5F0E8" strokeWidth="10" />
+                      <motion.circle cx="60" cy="60" r="50" fill="none"
+                        stroke={pct > 80 ? '#C4553B' : pct > 60 ? '#D4A017' : cartao.cor}
+                        strokeWidth="10" strokeLinecap="round"
+                        initial={{ strokeDasharray: `0 ${2 * Math.PI * 50}` }}
+                        animate={{ strokeDasharray: `${pct / 100 * 2 * Math.PI * 50} ${2 * Math.PI * 50}` }}
+                        transition={{ type: 'spring', stiffness: 120, damping: 22 }}
+                        transform="rotate(-90 60 60)" />
+                    </svg>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F' }}>{pct.toFixed(0)}%</p>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, color: '#9B7B6A', fontWeight: 600 }}>USADO</p>
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ marginBottom: 14 }}>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em', marginBottom: 2 }}>FATURA</p>
+                      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F' }}>{fmt(total)}</p>
+                    </div>
+                    <div style={{ marginBottom: 14 }}>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em', marginBottom: 2 }}>DISPONÍVEL</p>
+                      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#3A8580' }}>{fmt(Math.max(0, disponivel))}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em', marginBottom: 2 }}>LIMITE TOTAL</p>
+                      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F' }}>{fmt(cartao.limite)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Datas */}
+              <div style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(44,26,15,0.05)', padding: '16px', marginTop: 12 }}>
+                <p style={{ ...LABEL, marginBottom: 14 }}>Datas do cartão</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ background: '#F9F5F0', borderRadius: 12, padding: '12px 14px' }}>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em', marginBottom: 4 }}>FECHAMENTO</p>
+                    <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F' }}>dia {cartao.diaFechamento}</p>
+                  </div>
+                  <div style={{ background: '#F9F5F0', borderRadius: 12, padding: '12px 14px' }}>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em', marginBottom: 4 }}>VENCIMENTO</p>
+                    <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F' }}>dia {cartao.diaVencimento}</p>
+                  </div>
+                </div>
+                {total > 0 && (
+                  <div style={{ marginTop: 12, background: '#F0F7F6', border: '1px solid #C0DED9', borderRadius: 10, padding: '10px 14px' }}>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#3A8580', fontWeight: 600, lineHeight: 1.4 }}>
+                      Pague no vencimento (dia {cartao.diaVencimento}) para evitar juros rotativos.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
 
         {addingLanc && <AddLancForm cartaoId={cartao.id} mes={viewMes} ano={viewAno} onClose={() => setAddingLanc(false)} />}
@@ -264,6 +393,7 @@ function CartaoCard({ cartao, mes, ano, onClick, onEdit, onDelete }: { cartao: a
         borderRadius: 22,
         padding: '20px 22px 18px',
         cursor: 'default',
+        minHeight: 200,
         boxShadow: `0 6px 24px ${cartao.cor}30, 0 2px 8px rgba(0,0,0,0.05)`,
       }}>
 
@@ -342,11 +472,15 @@ export function Page() {
   }
 
   return (
-    <div style={{ padding: '24px 28px', width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 28, fontWeight: 700, color: '#2C1A0F' }}>Cartões</h1>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={openAdd}
-          style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 14px rgba(196,85,59,0.35)' }}>
+    <div style={{ padding: '32px', width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ ...DISPLAY, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Cartões</h1>
+          <p style={{ ...BODY, fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>
+            {cartoes.length > 0 ? `${cartoes.length} cartão${cartoes.length !== 1 ? 's' : ''}` : 'Gerencie seus cartões de crédito'}
+          </p>
+        </div>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={openAdd} style={BTN_PRIMARY}>
           <IconPlus size={16} stroke={2.5} /> Adicionar
         </motion.button>
       </div>
@@ -358,7 +492,7 @@ export function Page() {
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginTop: 6 }}>Adicione seu cartão de crédito</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16 }}>
           {cartoes.map(c => (
             <CartaoCard key={c.id} cartao={c} mes={mes} ano={ano}
               onClick={() => setSelectedCartao(c)} onEdit={() => openEdit(c)} onDelete={() => setConfirmDelete(c.id!)} />

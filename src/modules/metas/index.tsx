@@ -5,11 +5,15 @@ import { useOrcamentos, addOrcamento, editOrcamento, deleteOrcamento } from '@/d
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useGastosPorCategoria } from '@/db/hooks/useTransacoes'
 import { fmt, mesAnoAtual } from '@/lib/format'
-import { Confetti } from "@/components/ui/Confetti"
-import { sounds, haptic } from "@/lib/sounds"
+import { sounds } from "@/lib/sounds"
 import { Dobrao } from '@/components/mascot/Dobrao'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { IconEdit, IconX, IconTrash, IconTarget, IconChartBar, IconAlertTriangle, IconTrophy } from '@tabler/icons-react'
+import { IconEdit, IconX, IconTrash, IconAlertTriangle, IconTrophy, IconPlus } from '@tabler/icons-react'
+
+const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }
+const SUB: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }
+const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
 
 function CircularProgress({ pct, cor, size = 60 }: { pct: number; cor: string; size?: number }) {
   const stroke = 5
@@ -43,8 +47,12 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
   const aporteMensal = diasRestantes && diasRestantes > 0 ? falta / (diasRestantes / 30) : null
 
   return (
-    <motion.div layout style={{ background: '#FFFDF9', border: `0.5px solid ${atingida ? '#D0E8D8' : '#E8E0D5'}`, borderRadius: 20, padding: '16px 18px' }}>
-      <div style={{ display: 'flex', gap: 14, marginBottom: 10 }}>
+    <motion.div
+      layout
+      whileHover={{ y: -4, boxShadow: '0 4px 12px rgba(44,26,15,0.08), 0 8px 24px rgba(44,26,15,0.07)' }}
+      transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+      style={{ ...CARD, padding: '16px 18px' }}>
+      <div style={{ display: 'flex', gap: 14, marginBottom: 12 }}>
         {/* Circular progress */}
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <CircularProgress pct={pct} cor={meta.cor} size={60} />
@@ -54,30 +62,49 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <div>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F' }}>{meta.nome}</p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: atingida ? '#3A8580' : meta.cor, marginTop: 1 }}>{Math.round(pct)}%</p>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.nome}</p>
+              <p style={{ ...LABEL as object, color: atingida ? '#3A8580' : meta.cor, marginTop: 2 }}>{Math.round(pct)}% concluído</p>
             </div>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div style={{ display: 'flex', gap: 4, flexShrink: 0, marginLeft: 8 }}>
               <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconEdit size={12} stroke={1.8} color="#7A5C4F" /></button>
-              <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26 }}><IconX size={14} stroke={2} color="#C4B4A8" /></button>
+              <button onClick={() => deleteMeta(meta.id)} style={{ background: '#FAF0EE', border: 'none', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26 }}><IconTrash size={12} stroke={2} color="#C4553B" /></button>
             </div>
           </div>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 4 }}>
-            {fmt(meta.valorAtual)} de {fmt(meta.valorAlvo)}
-          </p>
-          {meta.prazo && !atingida && (
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', marginTop: 2 }}>
-              {diasRestantes !== null && diasRestantes > 0 ? `${diasRestantes}d restantes` : 'Prazo atingido'}
-              {aporteMensal && ` · ${fmt(aporteMensal)}/mês`}
+
+          {/* Linear progress bar */}
+          <div style={{ background: '#F0EAE2', borderRadius: 6, height: 5, margin: '8px 0 6px', overflow: 'hidden' }}>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${pct}%` }}
+              transition={{ type: 'spring', stiffness: 180, damping: 24 }}
+              style={{ height: '100%', background: atingida ? '#3A8580' : meta.cor, borderRadius: 6 }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p style={{ ...SUB as object }}>
+              {fmt(meta.valorAtual)} de {fmt(meta.valorAlvo)}
+            </p>
+            {meta.prazo && !atingida && (
+              <p style={{ ...SUB as object, fontSize: 10 }}>
+                {diasRestantes !== null && diasRestantes > 0 ? `${diasRestantes}d` : 'Prazo'}
+                {aporteMensal ? ` · ${fmt(aporteMensal)}/mês` : ''}
+              </p>
+            )}
+          </div>
+
+          {atingida && (
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#3A8580', fontWeight: 700, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <IconTrophy size={12} color="#3A8580" stroke={2} /> Meta atingida!
             </p>
           )}
-          {atingida && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#3A8580', fontWeight: 600, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}><IconTrophy size={12} color="#3A8580" stroke={2} /> Meta atingida!</p>}
         </div>
       </div>
+
       {!atingida && (
         aporting ? (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 10, padding: '8px 12px', gap: 4 }}>
               <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, color: '#C4553B', fontWeight: 700 }}>R$</span>
               <input value={aporte} onChange={e => setAporte(e.target.value)} placeholder="0,00" autoFocus type="tel"
@@ -92,7 +119,7 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
           </motion.div>
         ) : (
           <motion.button whileTap={{ scale: 0.97 }} onClick={() => setAporting(true)}
-            style={{ marginTop: 10, width: '100%', padding: '9px 0', borderRadius: 10, border: `1.5px solid ${meta.cor}`, background: 'transparent', color: meta.cor, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            style={{ marginTop: 4, width: '100%', padding: '9px 0', borderRadius: 10, border: `1.5px solid ${meta.cor}`, background: 'transparent', color: meta.cor, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             + Registrar aporte · faltam {fmt(falta)}
           </motion.button>
         )
@@ -121,19 +148,24 @@ function OrcamentoRow({ orc, gastos, onEdit }: { orc: any; gastos: Map<number, n
 
   return (
     <motion.div
+      layout
       animate={estourado ? { x: [0, -5, 5, -5, 5, -3, 3, 0] } : { x: 0 }}
-      transition={{ duration: 0.45 }}
-      style={{ background: '#FFFDF9', border: `0.5px solid ${estourado ? '#FAD0D0' : '#E8E0D5'}`, borderRadius: 14, padding: '12px 14px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F', display: 'inline-flex', alignItems: 'center', gap: 6 }}><CategoryIcon nome={catNome} cor={catCor} size={22} radius={6} />{catNome}</span>
+      whileHover={{ y: -4, boxShadow: '0 4px 12px rgba(44,26,15,0.08), 0 8px 24px rgba(44,26,15,0.07)' }}
+      transition={{ duration: 0.45, type: 'spring', stiffness: 260, damping: 26 }}
+      style={{ ...CARD, padding: '14px 16px', border: estourado ? '1px solid rgba(196,85,59,0.25)' : '1px solid #EDE6DC' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <CategoryIcon nome={catNome} cor={catCor} size={32} radius={9} />
+          {catNome}
+        </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ textAlign: 'right' }}>
-            <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: estourado ? '#C4553B' : '#2C1A0F' }}>{fmt(gasto)}</span>
-            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}> / {fmt(orc.valorLimite)}</span>
+            <span style={{ ...DISPLAY as object, fontSize: 15, color: estourado ? '#C4553B' : '#2C1A0F' }}>{fmt(gasto)}</span>
+            <span style={{ ...SUB as object }}> / {fmt(orc.valorLimite)}</span>
           </div>
           <div style={{ display: 'flex', gap: 3 }}>
-            <button onClick={e => { e.stopPropagation(); onEdit() }} style={{ background: '#F5F0E8', border: 'none', borderRadius: 7, width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconEdit size={11} stroke={1.8} color="#7A5C4F" /></button>
-            <button onClick={e => { e.stopPropagation(); deleteOrcamento(orc.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}><IconX size={14} stroke={2} color="#C4B4A8" /></button>
+            <button onClick={e => { e.stopPropagation(); onEdit() }} style={{ background: '#F5F0E8', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconEdit size={11} stroke={1.8} color="#7A5C4F" /></button>
+            <button onClick={e => { e.stopPropagation(); deleteOrcamento(orc.id) }} style={{ background: '#FAF0EE', border: 'none', borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26 }}><IconX size={14} stroke={2} color="#C4553B" /></button>
           </div>
         </div>
       </div>
@@ -143,7 +175,7 @@ function OrcamentoRow({ orc, gastos, onEdit }: { orc: any; gastos: Map<number, n
           style={{ height: '100%', background: estourado ? '#C4553B' : pct > 80 ? '#D4A017' : catCor, borderRadius: 6 }} />
       </div>
       {estourado && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6 }}>
           <IconAlertTriangle size={13} color="#C4553B" stroke={2} />
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4553B', fontWeight: 700 }}>
             Estourou em {fmt(gasto - orc.valorLimite)}!
@@ -206,24 +238,47 @@ export function Page() {
     setFormOrc({ categoriaId: null, valorLimite: '' })
   }
 
+  const metasAtivas = metas.filter(m => (m.valorAlvo > 0 ? (m.valorAtual / m.valorAlvo) * 100 : 0) < 100)
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "24px 28px", width: "100%" }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F' }}>Metas & Orçamento</h1>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { if (tab === 'metas') { setEditingMetaId(null); setFormMeta({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' }); setAddingMeta(true) } else { setEditingOrcId(null); setFormOrc({ categoriaId: null, valorLimite: '' }); setAddingOrc(true) } }}
-          style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-          + Adicionar
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '24px 28px', width: '100%' }}>
+
+      {/* Page header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+        <div>
+          <h1 style={{ ...DISPLAY as object, fontSize: 28, color: '#2C1A0F' }}>Metas & Orçamento</h1>
+          <p style={{ ...SUB as object, marginTop: 4 }}>{metasAtivas.length} meta{metasAtivas.length !== 1 ? 's' : ''} ativa{metasAtivas.length !== 1 ? 's' : ''} · mês atual</p>
+        </div>
+        <motion.button whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            if (tab === 'metas') {
+              setEditingMetaId(null)
+              setFormMeta({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' })
+              setAddingMeta(true)
+            } else {
+              setEditingOrcId(null)
+              setFormOrc({ categoriaId: null, valorLimite: '' })
+              setAddingOrc(true)
+            }
+          }}
+          style={{ background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: 'white', border: 'none', borderRadius: 14, padding: '11px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 16px rgba(196,85,59,0.35)', flexShrink: 0 }}>
+          <IconPlus size={16} stroke={2.5} /> Adicionar
         </motion.button>
       </div>
 
-      <div style={{ display: 'flex', background: '#F5F0E8', borderRadius: 12, padding: 4, marginBottom: 20 }}>
+      {/* Tab switcher — pill style */}
+      <div style={{ display: 'flex', background: '#F5F0E8', borderRadius: 12, padding: 3, gap: 3, marginBottom: 20, width: 'fit-content' }}>
         {(['metas', 'orcamento'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', cursor: 'pointer', background: tab === t ? '#C4553B' : 'transparent', color: tab === t ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, transition: 'all .15s' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              {t === 'metas' ? <IconTarget size={14} stroke={1.8} /> : <IconChartBar size={14} stroke={1.8} />}
-              {t === 'metas' ? `Metas (${metas.length})` : `Orçamento (${orcamentos.length})`}
-            </span>
+            style={{
+              padding: '8px 20px', borderRadius: 9, border: 'none', cursor: 'pointer',
+              background: tab === t ? '#C4553B' : 'transparent',
+              color: tab === t ? 'white' : '#7A5C4F',
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+              boxShadow: tab === t ? '0 2px 8px rgba(196,85,59,0.3)' : 'none',
+              transition: 'all .15s'
+            }}>
+            {t === 'metas' ? `Metas (${metas.length})` : `Orçamento (${orcamentos.length})`}
           </button>
         ))}
       </div>
@@ -232,12 +287,16 @@ export function Page() {
         metas.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 0' }}>
             <Dobrao mood="sleeping" size={100} />
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F', marginTop: 12 }}>Nenhuma meta</p>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginTop: 6 }}>Crie sua primeira meta financeira</p>
+            <p style={{ ...DISPLAY as object, fontSize: 18, color: '#2C1A0F', marginTop: 12 }}>Nenhuma meta</p>
+            <p style={{ ...SUB as object, fontSize: 14, marginTop: 6 }}>Crie sua primeira meta financeira</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {metas.map(m => <MetaCard key={m.id} meta={m} onEdit={() => openEditMeta(m)} />)}
+            {metas.map((m, i) => (
+              <motion.div key={m.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.05 }}>
+                <MetaCard meta={m} onEdit={() => openEditMeta(m)} />
+              </motion.div>
+            ))}
           </div>
         )
       )}
@@ -246,12 +305,16 @@ export function Page() {
         orcamentos.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 0' }}>
             <Dobrao mood="sleeping" size={100} />
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F', marginTop: 12 }}>Nenhum orçamento</p>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginTop: 6 }}>Defina limites por categoria</p>
+            <p style={{ ...DISPLAY as object, fontSize: 18, color: '#2C1A0F', marginTop: 12 }}>Nenhum orçamento</p>
+            <p style={{ ...SUB as object, fontSize: 14, marginTop: 6 }}>Defina limites por categoria</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {orcamentos.map(o => <OrcamentoRow key={o.id} orc={o} gastos={gastos} onEdit={() => openEditOrc(o)} />)}
+            {orcamentos.map((o, i) => (
+              <motion.div key={o.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.05 }}>
+                <OrcamentoRow orc={o} gastos={gastos} onEdit={() => openEditOrc(o)} />
+              </motion.div>
+            ))}
           </div>
         )
       )}
@@ -266,8 +329,8 @@ export function Page() {
               onClick={e => e.stopPropagation()}
               style={{ width: '100%', maxWidth: 520, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '20px 20px 48px', maxHeight: '90dvh', overflowY: 'auto' }}>
               <div style={{ width: 40, height: 4, borderRadius: 2, background: '#E8E0D5', margin: '0 auto 16px' }} />
-              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>{editingMetaId ? 'Editar meta' : 'Nova meta'}</h3>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A', marginBottom: 6 }}>ÍCONE</p>
+              <h3 style={{ ...DISPLAY as object, fontSize: 20, color: '#2C1A0F', marginBottom: 14 }}>{editingMetaId ? 'Editar meta' : 'Nova meta'}</h3>
+              <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Ícone</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
                 {ICONS_META.map(ic => (
                   <button key={ic} onClick={() => setFormMeta(f => ({ ...f, icone: ic }))}
@@ -277,36 +340,36 @@ export function Page() {
                 ))}
               </div>
               <input value={formMeta.nome} onChange={e => setFormMeta(f => ({ ...f, nome: e.target.value }))} placeholder="Nome da meta (ex: Viagem para Europa)"
-                style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 14px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, outline: 'none', marginBottom: 10 }} />
+                style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 14px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, outline: 'none', marginBottom: 10, boxSizing: 'border-box', color: '#2C1A0F' }} />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                 <div>
-                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A', marginBottom: 4 }}>VALOR ALVO</p>
+                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 4 }}>Valor Alvo</p>
                   <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '9px 12px', gap: 4 }}>
-                    <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, color: '#C4553B', fontWeight: 700 }}>R$</span>
+                    <span style={{ ...DISPLAY as object, fontSize: 14, color: '#C4553B' }}>R$</span>
                     <input value={formMeta.valorAlvo} onChange={e => setFormMeta(f => ({ ...f, valorAlvo: e.target.value }))} placeholder="0,00" type="tel"
                       style={{ border: 'none', background: 'transparent', fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none' }} />
                   </div>
                 </div>
                 <div>
-                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A', marginBottom: 4 }}>JÁ TENHO</p>
+                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 4 }}>Já tenho</p>
                   <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '9px 12px', gap: 4 }}>
-                    <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, color: '#3A8580', fontWeight: 700 }}>R$</span>
+                    <span style={{ ...DISPLAY as object, fontSize: 14, color: '#3A8580' }}>R$</span>
                     <input value={formMeta.valorAtual} onChange={e => setFormMeta(f => ({ ...f, valorAtual: e.target.value }))} placeholder="0,00" type="tel"
                       style={{ border: 'none', background: 'transparent', fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none' }} />
                   </div>
                 </div>
               </div>
               <div style={{ marginBottom: 12 }}>
-                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A', marginBottom: 4 }}>PRAZO (opcional)</p>
+                <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 4 }}>Prazo <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span></p>
                 <input value={formMeta.prazo} onChange={e => setFormMeta(f => ({ ...f, prazo: e.target.value }))} type="date"
-                  style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 14px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#2C1A0F', outline: 'none' }} />
+                  style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 14px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#2C1A0F', outline: 'none', boxSizing: 'border-box' }} />
               </div>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A', marginBottom: 6 }}>COR</p>
+              <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Cor</p>
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 {CORES_META.map(c => <button key={c} onClick={() => setFormMeta(f => ({ ...f, cor: c }))} style={{ width: 32, height: 32, borderRadius: '50%', background: c, border: formMeta.cor === c ? '3px solid #2C1A0F' : '2px solid transparent', cursor: 'pointer' }} />)}
               </div>
               <motion.button onClick={handleSaveMeta} whileTap={{ scale: 0.97 }} disabled={!formMeta.nome || !formMeta.valorAlvo}
-                style={{ width: '100%', padding: '14px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: formMeta.nome && formMeta.valorAlvo ? '#C4553B' : '#E8E0D5', color: formMeta.nome && formMeta.valorAlvo ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, transition: 'all .2s' }}>
+                style={{ width: '100%', padding: '14px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: formMeta.nome && formMeta.valorAlvo ? 'linear-gradient(135deg, #D4643A, #C4553B)' : '#E8E0D5', color: formMeta.nome && formMeta.valorAlvo ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, transition: 'all .2s', boxShadow: formMeta.nome && formMeta.valorAlvo ? '0 4px 20px rgba(196,85,59,0.35)' : 'none' }}>
                 {editingMetaId ? 'Salvar alterações' : 'Criar meta'}
               </motion.button>
             </motion.div>
@@ -322,8 +385,8 @@ export function Page() {
               onClick={e => e.stopPropagation()}
               style={{ width: '100%', maxWidth: 520, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '20px 20px 48px' }}>
               <div style={{ width: 40, height: 4, borderRadius: 2, background: '#E8E0D5', margin: '0 auto 16px' }} />
-              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>{editingOrcId ? 'Editar orçamento' : 'Novo orçamento mensal'}</h3>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A', marginBottom: 6 }}>CATEGORIA</p>
+              <h3 style={{ ...DISPLAY as object, fontSize: 20, color: '#2C1A0F', marginBottom: 14 }}>{editingOrcId ? 'Editar orçamento' : 'Novo orçamento mensal'}</h3>
+              <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Categoria</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                 {categorias.map(c => (
                   <button key={c.id} onClick={() => !editingOrcId && setFormOrc(f => ({ ...f, categoriaId: c.id! }))}
@@ -333,12 +396,12 @@ export function Page() {
                 ))}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 14px', gap: 6, marginBottom: 16 }}>
-                <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, color: '#C4553B', fontWeight: 700 }}>R$</span>
+                <span style={{ ...DISPLAY as object, fontSize: 16, color: '#C4553B' }}>R$</span>
                 <input value={formOrc.valorLimite} onChange={e => setFormOrc(f => ({ ...f, valorLimite: e.target.value }))} placeholder="Limite mensal" type="tel" autoFocus
                   style={{ border: 'none', background: 'transparent', fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none' }} />
               </div>
               <motion.button onClick={handleSaveOrc} whileTap={{ scale: 0.97 }} disabled={!formOrc.categoriaId || !formOrc.valorLimite}
-                style={{ width: '100%', padding: '14px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: formOrc.categoriaId && formOrc.valorLimite ? '#C4553B' : '#E8E0D5', color: formOrc.categoriaId && formOrc.valorLimite ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, transition: 'all .2s' }}>
+                style={{ width: '100%', padding: '14px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: formOrc.categoriaId && formOrc.valorLimite ? 'linear-gradient(135deg, #D4643A, #C4553B)' : '#E8E0D5', color: formOrc.categoriaId && formOrc.valorLimite ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, transition: 'all .2s', boxShadow: formOrc.categoriaId && formOrc.valorLimite ? '0 4px 20px rgba(196,85,59,0.35)' : 'none' }}>
                 {editingOrcId ? 'Salvar alterações' : 'Criar orçamento'}
               </motion.button>
             </motion.div>

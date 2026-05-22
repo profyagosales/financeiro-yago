@@ -24,6 +24,28 @@
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
 
+  /* Layout tokens */
+  --page-pad: 32px;
+  --page-pad-sm: 20px;
+  --content-gap: 20px;
+  --grid-gap: 16px;
+
+  /* Typography scale */
+  --text-hero: 52px;
+  --text-display: 38px;
+  --text-title: 28px;
+  --text-heading: 20px;
+  --text-subheading: 16px;
+  --text-body: 14px;
+  --text-small: 12px;
+  --text-label: 10px;
+
+  /* Card hierarchy */
+  --card-hero-bg: linear-gradient(148deg, #0D0604 0%, #1C0A06 100%);
+  --card-hero-shadow: 0 24px 64px rgba(13,6,4,0.55), 0 4px 16px rgba(13,6,4,0.3);
+  --card-featured-shadow: 0 8px 32px rgba(44,26,15,0.12), 0 2px 8px rgba(44,26,15,0.06);
+  --card-normal-shadow: 0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06);
+
   /* Colors */
   --terra: #C4553B;
   --terra-light: #FAF0EE;
@@ -114,3 +136,51 @@ html, body, #root {
 
 /* Focus visible */
 :focus-visible { outline: 2px solid rgba(196,85,59,0.5); outline-offset: 2px; border-radius: var(--r-sm); }
+
+/* Page layout */
+.page-root {
+  width: 100%;
+  padding: var(--page-pad);
+  padding-bottom: 48px;
+}
+
+/* Bento grid */
+.bento-grid {
+  display: grid;
+  gap: var(--grid-gap);
+  width: 100%;
+}
+
+/* Grid helpers */
+.col-span-1 { grid-column: span 1; }
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+.col-span-4 { grid-column: span 4; }
+.col-span-full { grid-column: 1 / -1; }
+
+/* KPI block */
+.kpi-block {
+  background: #FFFFFF;
+  border: 1px solid #EDE6DC;
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: var(--card-normal-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kpi-label {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: #9B7B6A;
+}
+.kpi-value {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  color: #2C1A0F;
+}

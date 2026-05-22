@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { BarChart, Bar, ResponsiveContainer, Tooltip } from 'recharts'
 import { useTransacoes, deleteTransacao, editTransacao } from '@/db/hooks/useTransacoes'
 import { useAnexos, addAnexo, deleteAnexo } from '@/db/hooks/useAnexos'
 import { useCategorias } from '@/db/hooks/useCategorias'
@@ -18,6 +19,20 @@ const BODY: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif"
 function hexToRgb(hex: string) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
   return `${r},${g},${b}`
+}
+
+// ── Mini sparkline hook ────────────────────────────────────────────────────
+function useSparklineData(mes: number | null, ano: number, txs: any[]) {
+  if (!mes) return []
+  const diasNoMes = new Date(ano, mes, 0).getDate()
+  const map: Record<number, number> = {}
+  txs
+    .filter(t => t.tipo === 'despesa' && t.data.startsWith(`${ano}-${String(mes).padStart(2,'0')}`))
+    .forEach(t => {
+      const dia = parseInt(t.data.split('-')[2])
+      map[dia] = (map[dia] ?? 0) + t.valor
+    })
+  return Array.from({ length: diasNoMes }, (_, i) => ({ dia: i + 1, valor: map[i + 1] ?? 0 }))
 }
 
 function EditTxModal({ tx, onClose }: { tx: any; onClose: () => void }) {
@@ -121,6 +136,11 @@ function TxRow({ tx, i }: { tx: any; i: number }) {
   const catCor = cat?.cor ?? '#9B8A7A'
   const isReceita = tx.tipo === 'receita'
 
+  // Badge da conta: sigla de 2 letras
+  const contaSigla = conta?.nome
+    ? conta.nome.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+    : ''
+
   return (
     <>
       <motion.div
@@ -140,7 +160,7 @@ function TxRow({ tx, i }: { tx: any; i: number }) {
             ? `1.5px solid rgba(${hexToRgb(catCor)}, 0.35)`
             : '1px solid #EDE6DC',
           boxShadow: '0 1px 3px rgba(44,26,15,0.04)',
-          transition: 'all .18s ease',
+          transition: 'background .12s, border .18s, box-shadow .18s',
         }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 15px' }}>
           <CategoryIcon nome={cat?.nome ?? ''} cor={catCor} size={46} radius={14} />
@@ -151,7 +171,23 @@ function TxRow({ tx, i }: { tx: any; i: number }) {
               <span style={{ color: '#D0C4B8', fontSize: 9 }}>•</span>
               <span style={{ ...BODY, fontSize: 11, color: '#9B7B6A' }}>{fmtDate(tx.data)}</span>
               {conta && (
-                <span style={{ ...BODY, fontSize: 10, background: `rgba(${hexToRgb(conta.cor)},0.10)`, color: conta.cor, padding: '2px 8px', borderRadius: 20, fontWeight: 700, border: `1px solid rgba(${hexToRgb(conta.cor)},0.18)` }}>{conta.nome}</span>
+                <span style={{
+                  ...BODY, fontSize: 10, fontWeight: 700,
+                  background: `rgba(${hexToRgb(conta.cor)},0.10)`,
+                  color: conta.cor,
+                  padding: '2px 8px 2px 5px',
+                  borderRadius: 20,
+                  border: `1px solid rgba(${hexToRgb(conta.cor)},0.18)`,
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                }}>
+                  <span style={{
+                    background: conta.cor, color: 'white',
+                    borderRadius: 20, padding: '0px 4px',
+                    fontSize: 9, fontWeight: 800, lineHeight: '16px',
+                    letterSpacing: '.03em',
+                  }}>{contaSigla}</span>
+                  {conta.nome}
+                </span>
               )}
               {tx.status === 'pendente' && (
                 <span style={{ ...BODY, fontSize: 10, background: '#FDF4E3', color: '#D4A017', padding: '2px 7px', borderRadius: 20, fontWeight: 700, border: '1px solid #F0D8A8', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -304,6 +340,9 @@ export function Page() {
     return okTipo && okBusca && okConta && okStatus && okCat && okMes
   })
 
+  // Sparkline data calculated from all transactions (not just filtered)
+  const sparklineData = useSparklineData(filtroMes, filtroAno, transacoes)
+
   const grupos = groupByDate(filtradas)
   const hoje = new Date().toISOString().split('T')[0]
   const ontem = new Date(Date.now() - 86400000).toISOString().split('T')[0]
@@ -325,7 +364,14 @@ export function Page() {
             </div>
           )}
         </div>
-        <span style={{ ...BODY, fontSize: 12, color: '#9B7B6A', background: '#F5F0E8', padding: '5px 12px', borderRadius: 20, fontWeight: 600 }}>{filtradas.length} itens</span>
+        {/* Quick stats pill */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ background: '#F5F0E8', borderRadius: 20, padding: '5px 12px' }}>
+            <span style={{ ...BODY, fontSize: 12, fontWeight: 600, color: '#7A5C4F' }}>
+              {filtradas.length} item{filtradas.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Search bar with focus transition */}
@@ -407,29 +453,93 @@ export function Page() {
         </div>
       )}
 
+      {/* Mini sparkline chart — shown when a month is selected */}
+      <AnimatePresence>
+        {filtroMes && sparklineData.some(d => d.valor > 0) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 16, padding: '16px 16px 10px', marginBottom: 14, boxShadow: '0 1px 3px rgba(44,26,15,0.05)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans'", fontSize: 11, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.07em', textTransform: 'uppercase', margin: 0 }}>
+                Gastos por dia — {new Date(filtroAno, filtroMes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })}
+              </p>
+              <p style={{ fontFamily: "'Fraunces'", fontSize: 14, fontWeight: 700, color: '#C4553B', margin: 0 }}>
+                {fmt(sparklineData.reduce((s, d) => s + d.valor, 0))}
+              </p>
+            </div>
+            <ResponsiveContainer width="100%" height={70}>
+              <BarChart data={sparklineData} barSize={8}>
+                <Bar dataKey="valor" radius={[3, 3, 0, 0]} fill="#C4553B" opacity={0.75} />
+                <Tooltip
+                  content={({ active, payload, label }) => active && payload?.length ? (
+                    <div style={{ background: '#2C1A0F', borderRadius: 8, padding: '5px 10px' }}>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans'", fontSize: 10, color: 'rgba(255,255,255,0.6)', marginBottom: 2, margin: '0 0 2px' }}>Dia {label}</p>
+                      <p style={{ fontFamily: "'Fraunces'", fontSize: 12, fontWeight: 700, color: 'white', margin: 0 }}>{fmt(payload[0].value as number)}</p>
+                    </div>
+                  ) : null}
+                  cursor={{ fill: 'rgba(196,85,59,0.08)' }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Month KPI bar — shown when a month is selected */}
+      {filtroMes && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
+          {[
+            { label: 'ENTRADAS', val: filtradas.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0), cor: '#3A8580' },
+            { label: 'SAÍDAS', val: filtradas.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0), cor: '#C4553B' },
+            { label: 'SALDO', val: filtradas.reduce((s, t) => s + (t.tipo === 'receita' ? t.valor : -t.valor), 0), cor: '#2C1A0F' },
+          ].map(kpi => (
+            <div key={kpi.label} style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 14, padding: '10px 12px', boxShadow: '0 1px 3px rgba(44,26,15,0.05)' }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans'", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.07em', marginBottom: 3, margin: '0 0 3px', textTransform: 'uppercase' }}>{kpi.label}</p>
+              <p style={{ fontFamily: "'Fraunces'", fontSize: 16, fontWeight: 700, color: kpi.cor, letterSpacing: '-0.5px', margin: 0 }}>{fmt(kpi.val)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {filtradas.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '56px 0' }}>
-          <Dobrao mood="sleeping" size={100} />
-          <p style={{ ...DISPLAY, fontSize: 18, color: '#2C1A0F', marginTop: 14 }}>
+        <div style={{ textAlign: 'center', padding: '48px 28px' }}>
+          <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
+            <Dobrao mood="sleeping" size={80} />
+          </motion.div>
+          <p style={{ fontFamily: "'Fraunces'", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginTop: 14, marginBottom: 6 }}>
             {busca ? 'Nenhum resultado' : 'Sem transações ainda'}
           </p>
-          <p style={{ ...BODY, fontSize: 14, color: '#9B7B6A', marginTop: 6 }}>
-            {busca ? 'Tente outro termo' : 'Toque no + para lançar'}
+          <p style={{ fontFamily: "'Plus Jakarta Sans'", fontSize: 14, color: '#9B7B6A', margin: 0 }}>
+            {busca ? `Nada encontrado para "${busca}"` : 'Toque no + para registrar seu primeiro lançamento'}
           </p>
         </div>
       ) : (
         <div>
-          {grupos.map(([data, txs]) => {
+          {grupos.map(([data, txs], idx) => {
             const saldoDia = txs.reduce((s, t) => s + (t.tipo === 'receita' ? t.valor : -t.valor), 0)
+            const isToday = data === hoje
             return (
               <div key={data} style={{ marginBottom: 22 }}>
-                {/* Date header — clean, saldo subtle on right */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                  <p style={{ ...BODY, fontSize: 11, fontWeight: 700, color: '#9B7B6A', textTransform: 'capitalize', whiteSpace: 'nowrap', letterSpacing: '.02em' }}>{labelData(data)}</p>
-                  <div style={{ height: 1, flex: 1, background: '#EDE6DC' }} />
-                  <p style={{ ...DISPLAY, fontSize: 12, color: saldoDia >= 0 ? '#3A8580' : '#C4553B', opacity: 0.7, flexShrink: 0 }}>
-                    {saldoDia >= 0 ? '+' : ''}{fmt(saldoDia)}
-                  </p>
+                {/* Sophisticated date group header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, marginTop: idx > 0 ? 22 : 0 }}>
+                  <div style={{ background: isToday ? '#C4553B' : '#F5F0E8', borderRadius: 10, padding: '4px 12px', flexShrink: 0 }}>
+                    <p style={{
+                      fontFamily: "'Plus Jakarta Sans'", fontSize: 11, fontWeight: 700,
+                      color: isToday ? 'white' : '#7A5C4F',
+                      textTransform: 'capitalize', margin: 0,
+                    }}>{labelData(data)}</p>
+                  </div>
+                  <div style={{ flex: 1, height: 1, background: '#F0EAE2' }} />
+                  <div style={{ background: saldoDia >= 0 ? '#EBF5F0' : '#FAF0EE', borderRadius: 10, padding: '4px 12px', flexShrink: 0 }}>
+                    <p style={{
+                      fontFamily: "'Fraunces'", fontSize: 12, fontWeight: 700,
+                      color: saldoDia >= 0 ? '#3A8580' : '#C4553B', margin: 0,
+                    }}>
+                      {saldoDia >= 0 ? '+' : ''}{fmt(saldoDia)}
+                    </p>
+                  </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {txs.map((tx, i) => <TxRow key={tx.id} tx={tx} i={i} />)}

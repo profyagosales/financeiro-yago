@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { IconLayoutDashboard, IconArrowsExchange, IconPlus, IconCreditCard, IconDotsCircleHorizontal } from '@tabler/icons-react'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
 import { mesAnoAtual } from '@/lib/format'
+import { sounds, haptic } from '@/lib/sounds'
 
 const NAV = [
   { path: '/', icon: IconLayoutDashboard, label: 'Início' },
@@ -29,7 +30,7 @@ export function BottomNav({ onFab }: { onFab: () => void }) {
         const active = pathname === item.path
         const Icon = item.icon
         return (
-          <button key={item.path} onClick={() => navigate(item.path)}
+          <button key={item.path} onClick={() => { haptic('light'); sounds.navigate(); navigate(item.path) }}
             style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
             <Icon size={22} stroke={active ? 2.2 : 1.6} color={active ? '#C4553B' : '#9B7B6A'} />
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: active ? 700 : 500, color: active ? '#C4553B' : '#9B7B6A' }}>{item.label}</span>
@@ -45,7 +46,7 @@ export function BottomNav({ onFab }: { onFab: () => void }) {
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               style={{ position: 'absolute', inset: -6, borderRadius: '50%', border: '2.5px solid #C4553B', pointerEvents: 'none' }} />
           )}
-          <motion.button onClick={onFab} whileTap={{ scale: 0.88 }} whileHover={{ scale: 1.06 }}
+          <motion.button onClick={() => { haptic('light'); sounds.modal_open(); onFab() }} whileTap={{ scale: 0.88 }} whileHover={{ scale: 1.06 }}
             style={{ width: 52, height: 52, borderRadius: '50%', border: 'none', cursor: 'pointer', background: '#C4553B', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 18px rgba(196,85,59,0.45)' }}>
             <IconPlus size={26} color="white" stroke={2.5} />
           </motion.button>
@@ -61,7 +62,7 @@ export function BottomNav({ onFab }: { onFab: () => void }) {
         const active = pathname === item.path
         const Icon = item.icon
         return (
-          <button key={item.path} onClick={() => navigate(item.path)}
+          <button key={item.path} onClick={() => { haptic('light'); sounds.navigate(); navigate(item.path) }}
             style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
             <Icon size={22} stroke={active ? 2.2 : 1.6} color={active ? '#C4553B' : '#9B7B6A'} />
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: active ? 700 : 500, color: active ? '#C4553B' : '#9B7B6A' }}>{item.label}</span>
