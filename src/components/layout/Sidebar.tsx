@@ -13,19 +13,53 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/schema'
 import { useAuthStore } from '@/store/auth'
 
-// ─── Cores da nova paleta ────────────────────────────────────────
-const SIDEBAR_BG   = '#504E76'
-const ACTIVE_COLOR = '#F1642E'
-const TEXT_NORMAL  = 'rgba(255,255,255,0.6)'
-const TEXT_ACTIVE  = '#ffffff'
-const LABEL_COLOR  = 'rgba(255,255,255,0.35)'
-const DIVIDER      = 'rgba(255,255,255,0.1)'
+// ─── Paleta ──────────────────────────────────────────────────────
+const BG            = '#504E76'
+const ACTIVE        = '#F1642E'
+const TEXT_MUTED    = 'rgba(255,255,255,0.55)'
+const TEXT_ACTIVE   = '#ffffff'
+const GROUP_LABEL   = 'rgba(255,255,255,0.32)'
+const DIVIDER       = 'rgba(255,255,255,0.1)'
+const HOVER_BG      = 'rgba(255,255,255,0.08)'
 
+// ─── Logo animada — moeda estilizada ─────────────────────────────
+function LogoMark({ size = 48 }: { size?: number }) {
+  return (
+    <motion.div
+      animate={{ rotate: [0, -4, 4, -2, 0] }}
+      transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', repeatDelay: 3 }}
+      style={{ width: size, height: size, flexShrink: 0 }}
+    >
+      <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+        {/* Sombra/depth */}
+        <ellipse cx="25" cy="44" rx="14" ry="3" fill="rgba(0,0,0,0.25)" />
+        {/* Corpo da moeda */}
+        <circle cx="24" cy="23" r="18" fill={ACTIVE} />
+        {/* Anel interno */}
+        <circle cx="24" cy="23" r="18" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
+        {/* Brilho topo-esquerdo */}
+        <ellipse cx="18" cy="15" rx="6" ry="4" fill="rgba(255,255,255,0.18)" transform="rotate(-30 18 15)" />
+        {/* Letra F estilizada */}
+        <text x="24" y="28" textAnchor="middle" fontFamily="'Fraunces', Georgia, serif"
+          fontSize="15" fontWeight="700" fill="white" letterSpacing="-0.5">
+          FY
+        </text>
+        {/* Cartola */}
+        <rect x="15" y="5" width="18" height="2.5" rx="1.2" fill="#2D2B3E" />
+        <rect x="17.5" y="0" width="13" height="7" rx="2.5" fill="#2D2B3E" />
+        {/* Faixa da cartola */}
+        <rect x="17.5" y="5.5" width="13" height="1.5" rx="0.7" fill={ACTIVE} opacity="0.8" />
+      </svg>
+    </motion.div>
+  )
+}
+
+// ─── Badges ──────────────────────────────────────────────────────
 function useSidebarBadges() {
   const { mes, ano } = mesAnoAtual()
-  const fixas = useContasFixas()
-  const pags  = usePagamentosFixos(mes, ano)
-  const hoje  = new Date().getDate()
+  const fixas  = useContasFixas()
+  const pags   = usePagamentosFixos(mes, ano)
+  const hoje   = new Date().getDate()
   const fixasPendentes = fixas.filter(
     cf => !pags.find(p => p.contaFixaId === cf.id && p.status === 'pago')
   )
@@ -34,27 +68,26 @@ function useSidebarBadges() {
   const faturasAtivas = useLiveQuery(async () => {
     let count = 0
     for (const c of cartoes) {
-      const items = await db.lancamentosCartao
+      const n = await db.lancamentosCartao
         .where('[cartaoId+mes+ano]').equals([c.id!, mes, ano]).count()
-      if (items > 0) count++
+      if (n > 0) count++
     }
     return count
   }, [cartoes, mes, ano]) ?? 0
 
   return {
-    fixas:   fixasHoje.length > 0 ? { label: `${fixasHoje.length}`, urgent: true }
+    fixas:   fixasHoje.length   > 0 ? { label: `${fixasHoje.length}`, urgent: true }
            : fixasPendentes.length > 0 ? { label: `${fixasPendentes.length}`, urgent: false }
            : null,
     cartoes: faturasAtivas > 0 ? { label: `${faturasAtivas}`, urgent: false } : null,
   }
 }
 
+// ─── Menu ─────────────────────────────────────────────────────────
 const MENU = [
   {
     group: 'Geral',
-    items: [
-      { path: '/', icon: IconLayoutDashboard, label: 'Dashboard', badgeKey: null },
-    ],
+    items: [{ path: '/', icon: IconLayoutDashboard, label: 'Dashboard', badgeKey: null }],
   },
   {
     group: 'Finanças',
@@ -94,323 +127,273 @@ export function Sidebar() {
   const getBadge = (key: string | null) => key ? badges[key as keyof typeof badges] : null
 
   return (
+    // Wrapper com overflow visible para o botão colapso "extrapolar"
     <motion.aside
       animate={{ width: collapsed ? 64 : 232 }}
       transition={{ type: 'spring', stiffness: 340, damping: 34 }}
       style={{
         flexShrink: 0,
-        background: SIDEBAR_BG,
-        height: '100dvh',
         position: 'sticky',
         top: 0,
-        overflowY: 'auto',
-        overflowX: 'hidden',
+        height: '100dvh',
+        // overflow visible = botão pode extrapolar a borda
+        overflow: 'visible',
+        zIndex: 10,
+      }}
+    >
+      {/* ── Corpo da sidebar com cantos arredondados no lado direito ── */}
+      <div style={{
+        width: '100%',
+        height: '100%',
+        background: BG,
+        borderRadius: '0 24px 24px 0',
         display: 'flex',
         flexDirection: 'column',
         padding: collapsed ? '24px 10px' : '24px 14px',
-      }}
-    >
-      {/* ── Logo — centralizada, grande, imponente ── */}
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        marginBottom: 28,
-        paddingBottom: 24,
-        borderBottom: `1px solid ${DIVIDER}`,
-        flexShrink: 0,
-        position: 'relative',
+        overflow: 'hidden',   // clip do conteúdo interno
+        boxShadow: '4px 0 32px rgba(80,78,118,0.3)',
       }}>
-        {/* FY mark — grande */}
+
+        {/* ── Logo ── */}
         <div style={{
-          width: collapsed ? 40 : 52,
-          height: collapsed ? 40 : 52,
-          borderRadius: 16,
-          background: ACTIVE_COLOR,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          paddingBottom: 22,
+          marginBottom: 16,
+          borderBottom: `1px solid ${DIVIDER}`,
+          flexShrink: 0,
+        }}>
+          <LogoMark size={collapsed ? 36 : 48} />
+
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1,  y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+                style={{ marginTop: 10 }}
+              >
+                <p style={{
+                  fontFamily: "'Fraunces',Georgia,serif",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: TEXT_ACTIVE,
+                  letterSpacing: '-0.2px',
+                  lineHeight: 1.2,
+                }}>
+                  Financeiro do Yago
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* ── Nav ── */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {MENU.map((group, gi) => (
+            <div key={gi} style={{ marginBottom: 6 }}>
+              {!collapsed && (
+                <p style={{
+                  fontFamily: "'Plus Jakarta Sans',sans-serif",
+                  fontSize: 9,
+                  fontWeight: 700,
+                  color: GROUP_LABEL,
+                  letterSpacing: '.12em',
+                  textTransform: 'uppercase',
+                  padding: '10px 12px 5px',
+                }}>
+                  {group.group}
+                </p>
+              )}
+              {collapsed && gi > 0 && <div style={{ height: 10 }} />}
+
+              {group.items.map(item => {
+                const active = pathname === item.path
+                const Icon   = item.icon
+                const badge  = getBadge(item.badgeKey)
+                return (
+                  <motion.button
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    title={collapsed ? item.label : undefined}
+                    whileHover={{ background: active ? undefined : HOVER_BG }}
+                    style={{
+                      width: '100%',
+                      padding: collapsed ? '10px 0' : '9px 12px',
+                      borderRadius: 12,
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: active ? ACTIVE : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: collapsed ? 'center' : 'flex-start',
+                      gap: collapsed ? 0 : 10,
+                      marginBottom: 3,
+                      transition: 'background .12s',
+                      position: 'relative',
+                      boxShadow: active ? `0 4px 16px rgba(241,100,46,0.4)` : 'none',
+                    }}
+                  >
+                    <Icon
+                      size={18}
+                      stroke={active ? 2.2 : 1.8}
+                      color={active ? TEXT_ACTIVE : TEXT_MUTED}
+                      style={{ flexShrink: 0 }}
+                    />
+                    {!collapsed && (
+                      <>
+                        <span style={{
+                          fontFamily: "'Plus Jakarta Sans',sans-serif",
+                          fontSize: 13,
+                          fontWeight: active ? 600 : 400,
+                          color: active ? TEXT_ACTIVE : TEXT_MUTED,
+                          flex: 1,
+                          whiteSpace: 'nowrap',
+                          textAlign: 'left',
+                        }}>
+                          {item.label}
+                        </span>
+                        {badge && (
+                          <span style={{
+                            fontFamily: "'Plus Jakarta Sans',sans-serif",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            background: badge.urgent ? '#ef4444' : 'rgba(255,255,255,0.15)',
+                            color: 'white',
+                            padding: '2px 8px',
+                            borderRadius: 20,
+                            flexShrink: 0,
+                          }}>
+                            {badge.label}
+                          </span>
+                        )}
+                      </>
+                    )}
+                    {collapsed && badge?.urgent && (
+                      <div style={{
+                        position: 'absolute', top: 5, right: 8,
+                        width: 6, height: 6, borderRadius: '50%', background: '#ef4444',
+                      }} />
+                    )}
+                  </motion.button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+
+        {/* ── Footer ── */}
+        <div style={{ borderTop: `1px solid ${DIVIDER}`, paddingTop: 10, flexShrink: 0 }}>
+          {[
+            { path: '/configuracoes', icon: IconSettings, label: 'Configurações' },
+          ].map(item => {
+            const active = pathname === item.path
+            const Icon   = item.icon
+            return (
+              <motion.button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                title={collapsed ? item.label : undefined}
+                whileHover={{ background: active ? undefined : HOVER_BG }}
+                style={{
+                  width: '100%',
+                  padding: collapsed ? '10px 0' : '9px 12px',
+                  borderRadius: 12,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: active ? ACTIVE : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  gap: collapsed ? 0 : 10,
+                  marginBottom: 3,
+                  transition: 'background .12s',
+                  boxShadow: active ? `0 4px 16px rgba(241,100,46,0.4)` : 'none',
+                }}
+              >
+                <Icon size={18} stroke={active ? 2.2 : 1.8} color={active ? TEXT_ACTIVE : TEXT_MUTED} />
+                {!collapsed && (
+                  <span style={{
+                    fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    fontSize: 13,
+                    fontWeight: active ? 600 : 400,
+                    color: active ? TEXT_ACTIVE : TEXT_MUTED,
+                    textAlign: 'left',
+                  }}>
+                    {item.label}
+                  </span>
+                )}
+              </motion.button>
+            )
+          })}
+
+          <motion.button
+            onClick={lock}
+            title={collapsed ? 'Bloquear' : undefined}
+            whileHover={{ background: HOVER_BG }}
+            style={{
+              width: '100%',
+              padding: collapsed ? '10px 0' : '9px 12px',
+              borderRadius: 12,
+              border: 'none',
+              cursor: 'pointer',
+              background: 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              gap: collapsed ? 0 : 10,
+              transition: 'background .12s',
+            }}
+          >
+            <IconLogout size={18} stroke={1.8} color="rgba(255,255,255,0.28)" />
+            {!collapsed && (
+              <span style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontSize: 13,
+                color: 'rgba(255,255,255,0.28)',
+                textAlign: 'left',
+              }}>
+                Bloquear
+              </span>
+            )}
+          </motion.button>
+        </div>
+      </div>
+
+      {/* ── Botão colapso — extrapola a borda da sidebar ── */}
+      <motion.button
+        onClick={toggle}
+        whileHover={{ scale: 1.05, x: 2 }}
+        whileTap={{ scale: 0.95 }}
+        animate={{ rotate: collapsed ? 0 : 180 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+        title={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+        style={{
+          position: 'absolute',
+          // Fica exatamente na borda direita, metade dentro metade fora
+          right: -14,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: 28,
+          height: 28,
+          borderRadius: '0 8px 8px 0',
+          background: BG,
+          border: `1px solid ${DIVIDER}`,
+          borderLeft: 'none',
+          cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: `0 4px 20px rgba(241,100,46,0.5)`,
-          marginBottom: collapsed ? 0 : 10,
-          transition: 'width .2s, height .2s',
-        }}>
-          <span style={{
-            fontFamily: "'Fraunces',Georgia,serif",
-            fontSize: collapsed ? 14 : 18,
-            fontWeight: 700,
-            color: 'white',
-            letterSpacing: '-0.5px',
-          }}>
-            FY
-          </span>
-        </div>
-
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1,  y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18 }}
-            >
-              <p style={{
-                fontFamily: "'Fraunces',Georgia,serif",
-                fontSize: 15,
-                fontWeight: 700,
-                color: '#ffffff',
-                lineHeight: 1.2,
-                letterSpacing: '-0.3px',
-              }}>
-                Financeiro do Yago
-              </p>
-              <p style={{
-                fontFamily: "'Plus Jakarta Sans',sans-serif",
-                fontSize: 10,
-                color: LABEL_COLOR,
-                marginTop: 3,
-                letterSpacing: '.04em',
-              }}>
-                Gestão financeira pessoal
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Botão recolher — canto superior direito */}
-        {!collapsed && (
-          <button
-            onClick={toggle}
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              background: 'rgba(255,255,255,0.1)',
-              border: 'none',
-              borderRadius: 8,
-              width: 26,
-              height: 26,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <IconChevronLeft size={13} stroke={2} color={LABEL_COLOR} />
-          </button>
-        )}
-      </div>
-
-      {/* ── Nav ── */}
-      <div style={{ flex: 1 }}>
-        {MENU.map((group, gi) => (
-          <div key={gi} style={{ marginBottom: 8 }}>
-            {/* Label do grupo */}
-            {!collapsed && (
-              <p style={{
-                fontFamily: "'Plus Jakarta Sans',sans-serif",
-                fontSize: 9,
-                fontWeight: 700,
-                color: LABEL_COLOR,
-                letterSpacing: '.12em',
-                textTransform: 'uppercase',
-                padding: '10px 12px 5px',
-              }}>
-                {group.group}
-              </p>
-            )}
-            {collapsed && gi > 0 && <div style={{ height: 12 }} />}
-
-            {group.items.map(item => {
-              const active = pathname === item.path
-              const Icon   = item.icon
-              const badge  = getBadge(item.badgeKey)
-
-              return (
-                <motion.button
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  title={collapsed ? item.label : undefined}
-                  whileHover={{
-                    background: active
-                      ? undefined
-                      : 'rgba(255,255,255,0.08)',
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: collapsed ? '10px 0' : '9px 12px',
-                    borderRadius: 12,
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: active ? ACTIVE_COLOR : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: collapsed ? 'center' : 'flex-start',
-                    gap: collapsed ? 0 : 10,
-                    marginBottom: 3,
-                    transition: 'background .12s',
-                    position: 'relative',
-                    boxShadow: active
-                      ? `0 4px 16px rgba(241,100,46,0.4)`
-                      : 'none',
-                  }}
-                >
-                  <Icon
-                    size={18}
-                    stroke={active ? 2.2 : 1.8}
-                    color={active ? TEXT_ACTIVE : TEXT_NORMAL}
-                    style={{ flexShrink: 0 }}
-                  />
-
-                  {!collapsed && (
-                    <>
-                      <span style={{
-                        fontFamily: "'Plus Jakarta Sans',sans-serif",
-                        fontSize: 13,
-                        fontWeight: active ? 600 : 400,
-                        color: active ? TEXT_ACTIVE : TEXT_NORMAL,
-                        flex: 1,
-                        whiteSpace: 'nowrap',
-                        textAlign: 'left',
-                      }}>
-                        {item.label}
-                      </span>
-
-                      {badge && (
-                        <span style={{
-                          fontFamily: "'Plus Jakarta Sans',sans-serif",
-                          fontSize: 10,
-                          fontWeight: 700,
-                          background: badge.urgent
-                            ? '#ef4444'
-                            : 'rgba(255,255,255,0.15)',
-                          color: 'white',
-                          padding: '2px 8px',
-                          borderRadius: 20,
-                          flexShrink: 0,
-                        }}>
-                          {badge.label}
-                        </span>
-                      )}
-                    </>
-                  )}
-
-                  {collapsed && badge?.urgent && (
-                    <div style={{
-                      position: 'absolute',
-                      top: 5, right: 8,
-                      width: 6, height: 6,
-                      borderRadius: '50%',
-                      background: '#ef4444',
-                    }} />
-                  )}
-                </motion.button>
-              )
-            })}
-          </div>
-        ))}
-      </div>
-
-      {/* ── Footer ── */}
-      <div style={{
-        borderTop: `1px solid ${DIVIDER}`,
-        paddingTop: 10,
-        flexShrink: 0,
-      }}>
-        {/* Configurações */}
-        <motion.button
-          onClick={() => navigate('/configuracoes')}
-          title={collapsed ? 'Configurações' : undefined}
-          whileHover={{ background: pathname === '/configuracoes' ? undefined : 'rgba(255,255,255,0.08)' }}
-          style={{
-            width: '100%',
-            padding: collapsed ? '10px 0' : '9px 12px',
-            borderRadius: 12,
-            border: 'none',
-            cursor: 'pointer',
-            background: pathname === '/configuracoes' ? ACTIVE_COLOR : 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            gap: collapsed ? 0 : 10,
-            marginBottom: 3,
-            transition: 'background .12s',
-            boxShadow: pathname === '/configuracoes' ? `0 4px 16px rgba(241,100,46,0.4)` : 'none',
-          }}
-        >
-          <IconSettings
-            size={18}
-            stroke={pathname === '/configuracoes' ? 2.2 : 1.8}
-            color={pathname === '/configuracoes' ? TEXT_ACTIVE : TEXT_NORMAL}
-          />
-          {!collapsed && (
-            <span style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif",
-              fontSize: 13,
-              fontWeight: pathname === '/configuracoes' ? 600 : 400,
-              color: pathname === '/configuracoes' ? TEXT_ACTIVE : TEXT_NORMAL,
-              textAlign: 'left',
-            }}>
-              Configurações
-            </span>
-          )}
-        </motion.button>
-
-        {/* Bloquear */}
-        <motion.button
-          onClick={lock}
-          title={collapsed ? 'Bloquear' : undefined}
-          whileHover={{ background: 'rgba(255,255,255,0.08)' }}
-          style={{
-            width: '100%',
-            padding: collapsed ? '10px 0' : '9px 12px',
-            borderRadius: 12,
-            border: 'none',
-            cursor: 'pointer',
-            background: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            gap: collapsed ? 0 : 10,
-            transition: 'background .12s',
-          }}
-        >
-          <IconLogout size={18} stroke={1.8} color="rgba(255,255,255,0.3)" />
-          {!collapsed && (
-            <span style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif",
-              fontSize: 13,
-              fontWeight: 400,
-              color: 'rgba(255,255,255,0.3)',
-              textAlign: 'left',
-            }}>
-              Bloquear
-            </span>
-          )}
-        </motion.button>
-
-        {/* Botão expandir (só quando recolhido) */}
-        {collapsed && (
-          <button
-            onClick={toggle}
-            style={{
-              width: '100%',
-              background: 'rgba(255,255,255,0.08)',
-              border: 'none',
-              borderRadius: 10,
-              height: 34,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: 8,
-            }}
-          >
-            <IconChevronRight size={14} color={LABEL_COLOR} stroke={2} />
-          </button>
-        )}
-      </div>
+          boxShadow: '4px 0 12px rgba(80,78,118,0.35)',
+          zIndex: 20,
+        }}
+      >
+        <IconChevronLeft size={13} stroke={2.5} color="rgba(255,255,255,0.7)" />
+      </motion.button>
     </motion.aside>
   )
 }
