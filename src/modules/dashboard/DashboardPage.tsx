@@ -116,54 +116,65 @@ export function DashboardPage() {
       style={{ width: '100%', padding: '32px', paddingBottom: 48 }}>
 
       {/* ─── ROW 1: Greeting ─── */}
-      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, marginBottom: 20 }}>
+      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '4fr 1fr', gap: 14, marginBottom: 20 }}>
 
-        {/* ── Greeting card: fada à esquerda, bubble + texto à direita ── */}
+        {/* ── Greeting card — saudação rica + fada voando livremente ── */}
         <div style={{
           background: '#FFFFFF',
           borderRadius: 24,
           border: '1px solid rgba(44,26,15,0.07)',
           boxShadow: '0 2px 20px rgba(44,26,15,0.06)',
-          display: 'flex',
-          alignItems: 'stretch',
+          position: 'relative',
           overflow: 'hidden',
-          minHeight: 190,
+          minHeight: 200,
+          padding: '32px 38px',
         }}>
-          {/* Fada — panel esquerdo com leve cor de fundo */}
+          {/* Gradiente sutil no canto direito — não corta o card */}
           <div style={{
-            flexShrink: 0,
-            width: 160,
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            background: 'linear-gradient(160deg, rgba(196,195,227,0.13) 0%, rgba(255,180,220,0.08) 100%)',
-            borderRight: '1px solid rgba(196,195,227,0.18)',
-            paddingTop: 8,
-          }}>
-            <DragFairy size={155} />
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            background: 'radial-gradient(ellipse 55% 80% at 85% 50%, rgba(196,195,227,0.1) 0%, transparent 70%)',
+          }} />
+
+          {/* Texto de saudação */}
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontSize: 14, fontWeight: 500, color: '#9B7B6A', marginBottom: 2,
+            }}>{saudacao},</p>
+            <h1 style={{
+              fontFamily: "'Fraunces',Georgia,serif",
+              fontWeight: 700, fontSize: 48, lineHeight: 0.95,
+              letterSpacing: '-2.5px', color: '#2C1A0F', marginBottom: 0,
+            }}>
+              <span style={{ color: '#C4553B' }}>Yago</span>.
+            </h1>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontSize: 15, color: '#7A5C4F', fontWeight: 500,
+              marginTop: 12,
+            }}>
+              {dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}
+            </p>
           </div>
 
-          {/* Texto + bubble — panel direito */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            padding: '22px 26px',
-            gap: 12,
-          }}>
-            <FairyBubble phrase={activePhrase} />
-            <div>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13,
-                color: '#9B7B6A', marginBottom: 4 }}>
-                {saudacao}, Yago
-              </p>
-              <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 26,
-                color: '#2C1A0F', letterSpacing: '-1px', lineHeight: 1.15 }}>
-                {dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}
-              </h1>
+          {/* Fada voando — percurso animado pela metade direita do card */}
+          <motion.div
+            style={{ position: 'absolute', zIndex: 2, pointerEvents: 'none' }}
+            animate={{
+              left: ['40%', '58%', '46%', '64%', '42%', '60%', '40%'],
+              top:  ['8%',  '26%', '5%',  '22%', '32%', '4%',  '8%'],
+            }}
+            transition={{
+              duration: 18, repeat: Infinity, ease: 'easeInOut',
+              times: [0, 0.17, 0.33, 0.5, 0.67, 0.83, 1],
+            }}
+          >
+            {/* Speech bubble acima da fada */}
+            <div style={{ marginBottom: 8 }}>
+              <FairyBubble phrase={activePhrase} />
             </div>
-          </div>
+            <DragFairy />
+          </motion.div>
         </div>
 
         {/* ── Card mês — roxo sólido com anel de progresso ── */}
