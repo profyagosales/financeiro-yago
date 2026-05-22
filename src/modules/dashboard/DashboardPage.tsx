@@ -118,51 +118,77 @@ export function DashboardPage() {
       {/* ─── ROW 1: Greeting ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '4fr 1fr', gap: 14, marginBottom: 20 }}>
 
-        {/* ── Greeting card — saudação rica + fada voando livremente ── */}
+        {/* ── Greeting card — dark, atmosférico, fada voa livremente ── */}
         <div style={{
-          background: '#FFFFFF',
+          background: 'linear-gradient(140deg, #1C1838 0%, #110E2A 55%, #1A0E2C 100%)',
           borderRadius: 24,
-          border: '1px solid rgba(44,26,15,0.07)',
-          boxShadow: '0 2px 20px rgba(44,26,15,0.06)',
+          boxShadow: '0 8px 40px rgba(17,14,42,0.5)',
           position: 'relative',
           overflow: 'hidden',
-          minHeight: 200,
-          padding: '32px 38px',
+          minHeight: 210,
+          padding: '34px 40px',
         }}>
-          {/* Gradiente sutil no canto direito — não corta o card */}
+          {/* Orb laranja — fundo direito */}
           <div style={{
-            position: 'absolute', inset: 0, pointerEvents: 'none',
-            background: 'radial-gradient(ellipse 55% 80% at 85% 50%, rgba(196,195,227,0.1) 0%, transparent 70%)',
+            position: 'absolute', right: '-8%', top: '-30%',
+            width: 340, height: 340, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(241,100,46,0.22) 0%, transparent 65%)',
+            pointerEvents: 'none',
+          }} />
+          {/* Orb roxo — centro-baixo */}
+          <div style={{
+            position: 'absolute', left: '30%', bottom: '-40%',
+            width: 280, height: 280, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 65%)',
+            pointerEvents: 'none',
+          }} />
+          {/* Orb rosa — esquerda */}
+          <div style={{
+            position: 'absolute', left: '-5%', top: '20%',
+            width: 200, height: 200, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,107,157,0.1) 0%, transparent 65%)',
+            pointerEvents: 'none',
           }} />
 
           {/* Texto de saudação */}
           <div style={{ position: 'relative', zIndex: 1 }}>
             <p style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif",
-              fontSize: 14, fontWeight: 500, color: '#9B7B6A', marginBottom: 2,
-            }}>{saudacao},</p>
+              fontSize: 13, fontWeight: 500, letterSpacing: '.04em',
+              color: 'rgba(255,255,255,0.38)', marginBottom: 6,
+              textTransform: 'uppercase',
+            }}>{saudacao}</p>
+
             <h1 style={{
               fontFamily: "'Fraunces',Georgia,serif",
-              fontWeight: 700, fontSize: 48, lineHeight: 0.95,
-              letterSpacing: '-2.5px', color: '#2C1A0F', marginBottom: 0,
+              fontWeight: 700, fontSize: 52, lineHeight: 0.92,
+              letterSpacing: '-2px', color: '#FFFFFF',
             }}>
-              <span style={{ color: '#C4553B' }}>Yago</span>.
+              Yago<span style={{ color: '#F1642E' }}>.</span>
             </h1>
-            <p style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif",
-              fontSize: 15, color: '#7A5C4F', fontWeight: 500,
-              marginTop: 12,
-            }}>
-              {dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}
-            </p>
+
+            <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 28, height: 1.5,
+                background: 'linear-gradient(90deg, rgba(241,100,46,0.8), transparent)',
+              }} />
+              <p style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontSize: 14, fontWeight: 500,
+                color: 'rgba(255,255,255,0.52)',
+                letterSpacing: '.01em',
+              }}>
+                {dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}
+              </p>
+            </div>
           </div>
 
           {/* Fada voando — percurso animado pela metade direita do card */}
           <motion.div
             style={{ position: 'absolute', zIndex: 2, pointerEvents: 'none' }}
             animate={{
-              left: ['40%', '58%', '46%', '64%', '42%', '60%', '40%'],
-              top:  ['8%',  '26%', '5%',  '22%', '32%', '4%',  '8%'],
+              left: ['38%', '56%', '44%', '62%', '40%', '58%', '38%'],
+              top:  ['12%', '28%', '6%',  '22%', '34%', '5%',  '12%'],
             }}
             transition={{
               duration: 18, repeat: Infinity, ease: 'easeInOut',
