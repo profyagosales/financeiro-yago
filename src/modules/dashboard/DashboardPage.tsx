@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { Dobrao } from '@/components/mascot/Dobrao'
+import { DragFairy } from '@/components/mascot/DragFairy'
+import type { Phrase } from '@/components/mascot/DragFairy'
 import { useContas, useSaldoTotal } from '@/db/hooks/useContas'
 import { useTransacoes, useTotaisMes, useGastosPorCategoria } from '@/db/hooks/useTransacoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
@@ -61,7 +62,6 @@ export function DashboardPage() {
   const contasFixas = useContasFixas()
   const pagamentos = usePagamentosFixos(mes, ano)
   const parcelamentos = useAllLancamentosAtivos().filter(l => l.totalParcelas > 1)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _orcamentos = useOrcamentos()
   const cartoes = useCartoes()
 
@@ -100,32 +100,83 @@ export function DashboardPage() {
 
   const poupancaColor = taxaPoupanca > 20 ? '#3A8580' : taxaPoupanca > 0 ? '#D4A017' : '#C4553B'
 
+  const contextPhrase: Phrase | undefined =
+    saldoLivre < 0 ? { text: 'Tá achando que é herdeira?!', emoji: 'flame' }
+    : taxaPoupanca > 30 ? { text: 'AAAA você arrasou! Meta batida!', emoji: 'sparkle' }
+    : receitas === 0 && despesas === 0 ? { text: 'Zero gastos hoje? Diva em modo econômico!', emoji: 'crown' }
+    : undefined
+
   return (
     <motion.div
       variants={STAGGER} initial="hidden" animate="show"
       style={{ width: '100%', padding: '32px', paddingBottom: 48 }}>
 
       {/* ─── ROW 1: Greeting ─── */}
-      <motion.div variants={ITEM} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Dobrao mood={saldoLivre < 0 ? 'sad' : 'happy'} size={56} />
-          <div>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginBottom: 2 }}>
+      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, marginBottom: 20 }}>
+
+        {/* Card principal: fada + texto */}
+        <div style={{
+          background: '#FFFFFF',
+          borderRadius: 24,
+          padding: '24px 28px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 20,
+          border: '1px solid rgba(44,26,15,0.07)',
+          boxShadow: '0 2px 20px rgba(44,26,15,0.06)',
+          position: 'relative',
+          overflow: 'hidden',
+          minHeight: 170,
+        }}>
+          {/* Gradiente decorativo canto superior direito */}
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '45%', height: '100%',
+            background: 'linear-gradient(135deg, rgba(196,195,227,0.14) 0%, rgba(241,100,46,0.07) 100%)',
+            pointerEvents: 'none' }} />
+
+          <DragFairy size={150} contextPhrase={contextPhrase} />
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginBottom: 4 }}>
               {saudacao}, Yago
             </p>
-            <h1 style={{ ...DISPLAY, fontSize: 32, color: '#2C1A0F', letterSpacing: '-1.5px' }}>
+            <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 28,
+              color: '#2C1A0F', letterSpacing: '-1px', lineHeight: 1.15 }}>
               {dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}
             </h1>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 12, padding: '8px 16px', boxShadow: '0 1px 4px rgba(44,26,15,0.06)' }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#7A5C4F', textTransform: 'capitalize' }}>{mesNome} {ano}</p>
+
+        {/* Card mês — roxo sólido */}
+        <div style={{
+          background: '#504E76',
+          borderRadius: 24,
+          padding: '24px 26px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          {/* Decoração fundo */}
+          <div style={{ position: 'absolute', bottom: -20, right: -20, width: 100, height: 100,
+            borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+          <div>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+              letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
+              Período atual
+            </p>
+            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700,
+              color: '#ffffff', marginTop: 4, textTransform: 'capitalize', lineHeight: 1.1 }}>
+              {mesNome}
+            </p>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13,
+              color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{ano}</p>
           </div>
           {hasAlerts && (
-            <div style={{ background: '#FEE2DC', border: '1px solid rgba(196,85,59,0.2)', borderRadius: 12, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <IconAlertCircle size={14} color="#C4553B" stroke={2} />
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#C4553B' }}>
+            <div style={{ background: 'rgba(241,100,46,0.22)', border: '1px solid rgba(241,100,46,0.35)',
+              borderRadius: 12, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 7, marginTop: 14 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#F1642E', flexShrink: 0 }} />
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#F1642E' }}>
                 {proximosVenc.length + cartoesAlerta.length} alerta{(proximosVenc.length + cartoesAlerta.length) !== 1 ? 's' : ''}
               </p>
             </div>
@@ -133,98 +184,97 @@ export function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* ─── ROW 2: 4 KPI blocks — cada um com identidade visual única ─── */}
+      {/* ─── ROW 2: KPIs — cores sólidas, identidade visual forte ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
 
-        {/* SALDO TOTAL — glassmorphism com acento terra forte */}
-        <motion.div whileHover={{ y: -3, boxShadow: '0 12px 36px rgba(196,85,59,0.22)' }}
-          style={{
-            background: 'rgba(255,255,255,0.78)',
-            backdropFilter: 'blur(18px)',
-            WebkitBackdropFilter: 'blur(18px)',
-            borderRadius: 22,
-            padding: '18px 20px',
-            border: '1.5px solid rgba(196,85,59,0.25)',
-            borderTop: '3px solid #C4553B',
-            boxShadow: '0 8px 32px rgba(196,85,59,0.1), 0 2px 8px rgba(44,26,15,0.04)',
-            transition: 'box-shadow .18s',
-          }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(196,85,59,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconWallet size={12} color="#C4553B" stroke={2} />
-            </div>
-            <span style={{ ...LABEL, color: '#C4553B' }}>Saldo total</span>
+        {/* RENDAS — sage green sólido */}
+        <motion.div whileHover={{ y: -3, boxShadow: '0 14px 36px rgba(163,181,101,0.4)' }}
+          style={{ background: '#A3B565', borderRadius: 22, padding: '20px 22px',
+            position: 'relative', overflow: 'hidden', transition: 'box-shadow .18s' }}>
+          <div style={{ position: 'absolute', right: -12, top: -12, opacity: 0.15 }}>
+            <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+              <path d="M60 12 L12 60" stroke="white" strokeWidth="18" strokeLinecap="round"/>
+              <path d="M32 12 L60 12 L60 40" stroke="white" strokeWidth="18" strokeLinejoin="round" fill="none"/>
+            </svg>
           </div>
-          <OdometroSaldo value={saldoTotal} style={{ ...DISPLAY, fontSize: 26, color: '#2C1A0F', display: 'block' }} />
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(255,255,255,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconArrowUpRight size={12} color="white" stroke={2.5}/>
+            </div>
+            <span style={{ ...LABEL, color: 'rgba(255,255,255,0.8)' }}>Rendas</span>
+          </div>
+          <OdometroSaldo value={receitas} style={{ ...DISPLAY, fontSize: 26, color: 'white', display: 'block' }}/>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
+            color: 'rgba(255,255,255,0.65)', marginTop: 6 }}>em {mesNome}</p>
+        </motion.div>
+
+        {/* DESPESAS — laranja sólido */}
+        <motion.div whileHover={{ y: -3, boxShadow: '0 14px 36px rgba(241,100,46,0.4)' }}
+          style={{ background: '#F1642E', borderRadius: 22, padding: '20px 22px',
+            position: 'relative', overflow: 'hidden', transition: 'box-shadow .18s' }}>
+          <div style={{ position: 'absolute', right: -12, bottom: -12, opacity: 0.15 }}>
+            <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+              <path d="M12 12 L60 60" stroke="white" strokeWidth="18" strokeLinecap="round"/>
+              <path d="M40 60 L12 60 L12 32" stroke="white" strokeWidth="18" strokeLinejoin="round" fill="none"/>
+            </svg>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(255,255,255,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconArrowDownRight size={12} color="white" stroke={2.5}/>
+            </div>
+            <span style={{ ...LABEL, color: 'rgba(255,255,255,0.8)' }}>Despesas</span>
+          </div>
+          <OdometroSaldo value={totalComprometido} style={{ ...DISPLAY, fontSize: 26, color: 'white', display: 'block' }}/>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
+            color: 'rgba(255,255,255,0.65)', marginTop: 6 }}>comprometido</p>
+        </motion.div>
+
+        {/* SALDO — roxo sólido */}
+        <motion.div whileHover={{ y: -3, boxShadow: '0 14px 36px rgba(80,78,118,0.45)' }}
+          style={{ background: '#504E76', borderRadius: 22, padding: '20px 22px',
+            position: 'relative', overflow: 'hidden', transition: 'box-shadow .18s' }}>
+          <div style={{ position: 'absolute', left: -16, bottom: -16, width: 80, height: 80,
+            borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(255,255,255,0.18)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconWallet size={12} color="white" stroke={2}/>
+            </div>
+            <span style={{ ...LABEL, color: 'rgba(255,255,255,0.7)' }}>Saldo</span>
+          </div>
+          <OdometroSaldo value={saldoTotal} style={{ ...DISPLAY, fontSize: 26, color: 'white', display: 'block' }}/>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
+            color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>
             {contas.length} conta{contas.length !== 1 ? 's' : ''}
           </p>
         </motion.div>
 
-        {/* ENTRADAS — teal */}
-        <motion.div whileHover={{ y: -3, boxShadow: '0 8px 28px rgba(58,133,128,0.3)' }} style={{
-          background: 'linear-gradient(145deg, rgba(58,133,128,0.28) 0%, rgba(255,255,255,0.65) 100%)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          borderRadius: 22,
-          padding: '18px 20px',
-          border: '1px solid rgba(58,133,128,0.32)',
-          boxShadow: '0 8px 32px rgba(58,133,128,0.2), 0 2px 8px rgba(58,133,128,0.1)',
-          transition: 'box-shadow .18s',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(58,133,128,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconArrowUpRight size={12} color="#3A8580" stroke={2.5} />
-            </div>
-            <span style={{ ...LABEL, color: '#1F5E5A' }}>Entradas</span>
+        {/* POUPANÇA — âmbar sólido (cor dinâmica) */}
+        <motion.div whileHover={{ y: -3, boxShadow: `0 14px 36px ${poupancaColor}55` }}
+          style={{ background: taxaPoupanca > 20 ? '#3A8580' : taxaPoupanca > 0 ? '#D4A017' : '#C4553B',
+            borderRadius: 22, padding: '20px 22px', position: 'relative', overflow: 'hidden',
+            transition: 'box-shadow .18s' }}>
+          <div style={{ position: 'absolute', right: 16, bottom: 16, opacity: 0.12 }}>
+            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+              <circle cx="30" cy="30" r="26" stroke="white" strokeWidth="8" fill="none"/>
+              <path d="M30 10 L30 30 L46 30" stroke="white" strokeWidth="8" strokeLinecap="round" fill="none"/>
+            </svg>
           </div>
-          <OdometroSaldo value={receitas} style={{ ...DISPLAY, fontSize: 26, color: '#3A8580', display: 'block' }} />
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(58,133,128,0.6)', marginTop: 6 }}>em {mesNome}</p>
-        </motion.div>
-
-        {/* SAÍDAS — terra */}
-        <motion.div whileHover={{ y: -3, boxShadow: '0 8px 28px rgba(196,85,59,0.3)' }} style={{
-          background: 'linear-gradient(145deg, rgba(196,85,59,0.25) 0%, rgba(255,255,255,0.65) 100%)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          borderRadius: 22,
-          padding: '18px 20px',
-          border: '1px solid rgba(196,85,59,0.28)',
-          boxShadow: '0 8px 32px rgba(196,85,59,0.2), 0 2px 8px rgba(196,85,59,0.1)',
-          transition: 'box-shadow .18s',
-        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(196,85,59,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconArrowDownRight size={12} color="#C4553B" stroke={2.5} />
+            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(255,255,255,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconPercentage size={12} color="white" stroke={2}/>
             </div>
-            <span style={{ ...LABEL, color: '#C4553B' }}>Saídas</span>
+            <span style={{ ...LABEL, color: 'rgba(255,255,255,0.75)' }}>Poupança</span>
           </div>
-          <OdometroSaldo value={totalComprometido} style={{ ...DISPLAY, fontSize: 26, color: '#C4553B', display: 'block' }} />
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(196,85,59,0.55)', marginTop: 6 }}>comprometido</p>
-        </motion.div>
-
-        {/* TAXA DE POUPANÇA — amber */}
-        <motion.div whileHover={{ y: -3, boxShadow: `0 8px 28px ${poupancaColor}44` }} style={{
-          background: `linear-gradient(145deg, ${poupancaColor}38 0%, rgba(255,255,255,0.65) 100%)`,
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          borderRadius: 22,
-          padding: '18px 20px',
-          border: `1px solid ${poupancaColor}40`,
-          boxShadow: `0 8px 32px ${poupancaColor}28, 0 2px 8px ${poupancaColor}14`,
-          transition: 'box-shadow .18s',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 7, background: `${poupancaColor}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconPercentage size={12} color={poupancaColor} stroke={2} />
-            </div>
-            <span style={{ ...LABEL, color: poupancaColor }}>Poupança</span>
-          </div>
-          <p style={{ ...DISPLAY, fontSize: 26, color: poupancaColor }}>{taxaPoupanca.toFixed(1)}%</p>
-          <div style={{ background: `${poupancaColor}18`, borderRadius: 4, height: 4, overflow: 'hidden', marginTop: 10 }}>
+          <p style={{ ...DISPLAY, fontSize: 26, color: 'white' }}>{taxaPoupanca.toFixed(1)}%</p>
+          <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 4, height: 4,
+            overflow: 'hidden', marginTop: 10 }}>
             <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, taxaPoupanca)}%` }}
               transition={{ type: 'spring', stiffness: 180, damping: 24, delay: 0.3 }}
-              style={{ height: '100%', background: poupancaColor, borderRadius: 4 }} />
+              style={{ height: '100%', background: 'rgba(255,255,255,0.7)', borderRadius: 4 }}/>
           </div>
         </motion.div>
       </motion.div>
@@ -390,7 +440,16 @@ export function DashboardPage() {
           </div>
           {transacoes.length === 0 ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0' }}>
-              <Dobrao mood="sleeping" size={64} />
+              <div style={{ fontSize: 32 }}>
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="22" fill="#F5F0E8" stroke="#EDE6DC" strokeWidth="1.5"/>
+                  <path d="M16 28 Q24 34 32 28" stroke="#C4B4A8" strokeWidth="2" strokeLinecap="round" fill="none"/>
+                  <circle cx="18" cy="22" r="2.5" fill="#C4B4A8"/>
+                  <circle cx="30" cy="22" r="2.5" fill="#C4B4A8"/>
+                  <path d="M12 16 Q14 12 18 14" stroke="#C4B4A8" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                  <path d="M36 16 Q34 12 30 14" stroke="#C4B4A8" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                </svg>
+              </div>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 8 }}>Sem transações · toque no + para lançar</p>
             </div>
           ) : (
