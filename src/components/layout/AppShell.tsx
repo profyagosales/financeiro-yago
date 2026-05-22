@@ -7,12 +7,31 @@ import { PWABanner } from './PWABanner'
 import { useUIStore } from '@/store/ui'
 import { IconPlus } from '@tabler/icons-react'
 
+function BackgroundMesh() {
+  const orbs = [
+    { left: '60%', top: '8%',  color: 'rgba(196,85,59,0.07)',   size: 520, dur: 14, delay: 0 },
+    { left: '80%', top: '55%', color: 'rgba(58,133,128,0.06)',  size: 440, dur: 17, delay: 3 },
+    { left: '40%', top: '75%', color: 'rgba(212,160,23,0.05)',  size: 380, dur: 20, delay: 6 },
+  ]
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+      {orbs.map((orb, i) => (
+        <motion.div key={i}
+          animate={{ x: [0, 40, -25, 0], y: [0, -30, 20, 0] }}
+          transition={{ duration: orb.dur, repeat: Infinity, ease: 'easeInOut', delay: orb.delay }}
+          style={{ position: 'absolute', left: orb.left, top: orb.top, width: orb.size, height: orb.size, borderRadius: '50%', background: orb.color, filter: `blur(${orb.size / 2.8}px)`, transform: 'translate(-50%, -50%)' }} />
+      ))}
+    </div>
+  )
+}
+
 export function AppShell() {
   const { fabOpen, fabDefaultContaId, openFab, closeFab } = useUIStore()
   const location = useLocation()
 
   return (
     <div style={{ display: 'flex', height: '100dvh', background: '#FAF6F0', overflow: 'hidden' }}>
+      <BackgroundMesh />
       {/* Sidebar — desktop only */}
       <div className="sidebar-desktop">
         <Sidebar />
