@@ -3,7 +3,12 @@ import { db } from '../schema'
 
 export function useCategorias(tipo?: 'receita' | 'despesa') {
   return useLiveQuery(
-    () => tipo ? db.categorias.where('tipo').equals(tipo).sortBy('ordem') : db.categorias.orderBy('ordem').toArray(),
+    async () => {
+      const cats = tipo
+        ? await db.categorias.where('tipo').equals(tipo).toArray()
+        : await db.categorias.toArray()
+      return cats.sort((a, b) => a.ordem - b.ordem)
+    },
     [tipo]
   ) ?? []
 }

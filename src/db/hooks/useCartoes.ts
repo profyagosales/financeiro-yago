@@ -32,12 +32,26 @@ export async function addLancamentoCartao(data: {
 }) {
   const { totalParcelas, valor, ...base } = data
   const valorParcela = valor / totalParcelas
+
+  // If today is on or after the card's closing date, first installment
+  // belongs to next month's bill (current cycle already closed).
+  const cartao = await db.cartoes.get(data.cartaoId)
+  let startMes = base.mes
+  let startAno = base.ano
+  if (cartao) {
+    const today = new Date().getDate()
+    if (today >= cartao.diaFechamento) {
+      startMes = base.mes + 1
+      if (startMes > 12) { startMes = 1; startAno = base.ano + 1 }
+    }
+  }
+
   const firstId = await db.lancamentosCartao.add({
-    ...base, valor: valorParcela, parcelaAtual: 1, totalParcelas, mes: base.mes, ano: base.ano,
+    ...base, valor: valorParcela, parcelaAtual: 1, totalParcelas, mes: startMes, ano: startAno,
   })
   for (let p = 2; p <= totalParcelas; p++) {
-    let m = base.mes + p - 1
-    let a = base.ano
+    let m = startMes + p - 1
+    let a = startAno
     while (m > 12) { m -= 12; a += 1 }
     await db.lancamentosCartao.add({
       ...base, valor: valorParcela, parcelaAtual: p, totalParcelas, mes: m, ano: a, parcelaPaiId: firstId as number,

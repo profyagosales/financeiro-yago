@@ -13,7 +13,7 @@ export function usePagamentosFixos(mes: number, ano: number) {
 export async function addContaFixa(data: Omit<ContaFixa, 'id' | 'syncId'>) {
   const id = await db.contasFixas.add(data)
   const now = new Date()
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 12; i++) {
     let m = now.getMonth() + 1 + i
     let a = now.getFullYear()
     while (m > 12) { m -= 12; a += 1 }

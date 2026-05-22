@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMetas, addMeta, editMeta, aportarMeta, deleteMeta } from '@/db/hooks/useMetas'
-import { useOrcamentos, addOrcamento, deleteOrcamento } from '@/db/hooks/useOrcamentos'
+import { useOrcamentos, addOrcamento, editOrcamento, deleteOrcamento } from '@/db/hooks/useOrcamentos'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useGastosPorCategoria } from '@/db/hooks/useTransacoes'
 import { fmt, mesAnoAtual } from '@/lib/format'
@@ -9,7 +9,25 @@ import { Confetti } from "@/components/ui/Confetti"
 import { sounds, haptic } from "@/lib/sounds"
 import { Dobrao } from '@/components/mascot/Dobrao'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { IconEdit, IconX, IconTarget, IconChartBar } from '@tabler/icons-react'
+import { IconEdit, IconX, IconTrash, IconTarget, IconChartBar, IconAlertTriangle, IconTrophy } from '@tabler/icons-react'
+
+function CircularProgress({ pct, cor, size = 60 }: { pct: number; cor: string; size?: number }) {
+  const stroke = 5
+  const r = (size - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const dash = Math.min(100, pct) / 100 * circ
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F0EAE2" strokeWidth={stroke} />
+      <motion.circle cx={size/2} cy={size/2} r={r} fill="none" stroke={pct >= 100 ? '#3A8580' : cor} strokeWidth={stroke}
+        strokeLinecap="round"
+        initial={{ strokeDasharray: `0 ${circ}` }}
+        animate={{ strokeDasharray: `${dash} ${circ}` }}
+        transition={{ type: 'spring', stiffness: 100, damping: 22 }}
+      />
+    </svg>
+  )
+}
 
 const ICONS_META = ['🏠','✈️','🚗','📱','💻','🎓','💍','🏖️','📦','💰','🎯','🌟']
 const CORES_META = ['#C4553B','#3A8580','#D4A017','#8B4BC8','#3D7EB5','#E89527','#D94F8A','#1E7D5A']
@@ -26,36 +44,35 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
 
   return (
     <motion.div layout style={{ background: '#FFFDF9', border: `0.5px solid ${atingida ? '#D0E8D8' : '#E8E0D5'}`, borderRadius: 20, padding: '16px 18px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 16, background: meta.cor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-          {atingida ? '🎉' : meta.icone}
+      <div style={{ display: 'flex', gap: 14, marginBottom: 10 }}>
+        {/* Circular progress */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <CircularProgress pct={pct} cor={meta.cor} size={60} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: atingida ? 18 : 14, lineHeight: 1 }}>{atingida ? '🎉' : meta.icone}</span>
+          </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: '#2C1A0F' }}>{meta.nome}</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F' }}>{meta.nome}</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: atingida ? '#3A8580' : meta.cor, marginTop: 1 }}>{Math.round(pct)}%</p>
+            </div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconEdit size={12} stroke={1.8} color="#7A5C4F" /></button>
+              <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26 }}><IconX size={14} stroke={2} color="#C4B4A8" /></button>
+            </div>
+          </div>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 4 }}>
+            {fmt(meta.valorAtual)} de {fmt(meta.valorAlvo)}
+          </p>
           {meta.prazo && !atingida && (
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>
-              {diasRestantes !== null && diasRestantes > 0 ? `${diasRestantes} dias restantes` : 'Prazo atingido'}
-              {aporteMensal && ` · ${fmt(aporteMensal)}/mês sugerido`}
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', marginTop: 2 }}>
+              {diasRestantes !== null && diasRestantes > 0 ? `${diasRestantes}d restantes` : 'Prazo atingido'}
+              {aporteMensal && ` · ${fmt(aporteMensal)}/mês`}
             </p>
           )}
-          {atingida && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#3A8580', fontWeight: 600, marginTop: 2 }}>Meta atingida! 🎊</p>}
-        </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconEdit size={13} stroke={1.8} color="#7A5C4F" />
-          </button>
-          <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26 }}><IconX size={14} stroke={2} color="#C4B4A8" /></button>
-        </div>
-      </div>
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A' }}>{fmt(meta.valorAtual)} de {fmt(meta.valorAlvo)}</span>
-          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: atingida ? '#3A8580' : meta.cor }}>{Math.round(pct)}%</span>
-        </div>
-        <div style={{ background: '#F0EAE2', borderRadius: 8, height: 10, overflow: 'hidden' }}>
-          <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-            transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-            style={{ height: '100%', background: atingida ? '#3A8580' : meta.cor, borderRadius: 8 }} />
+          {atingida && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#3A8580', fontWeight: 600, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}><IconTrophy size={12} color="#3A8580" stroke={2} /> Meta atingida!</p>}
         </div>
       </div>
       {!atingida && (
@@ -84,9 +101,10 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
   )
 }
 
-function OrcamentoRow({ orc, gastos }: { orc: any; gastos: Map<number, number> }) {
+function OrcamentoRow({ orc, gastos, onEdit }: { orc: any; gastos: Map<number, number>; onEdit: () => void }) {
   const [catNome, setCatNome] = useState('')
   const [catCor, setCatCor] = useState('#9B8A7A')
+  const shook = useRef(false)
   useState(() => {
     import('@/db/schema').then(({ db }) => db.categorias.get(orc.categoriaId).then(c => { if (c) { setCatNome(c.nome); setCatCor(c.cor) } }))
   })
@@ -94,13 +112,29 @@ function OrcamentoRow({ orc, gastos }: { orc: any; gastos: Map<number, number> }
   const pct = Math.min(100, (gasto / orc.valorLimite) * 100)
   const estourado = gasto > orc.valorLimite
 
+  useEffect(() => {
+    if (estourado && !shook.current) {
+      shook.current = true
+      sounds.error()
+    }
+  }, [estourado])
+
   return (
-    <div style={{ background: '#FFFDF9', border: `0.5px solid ${estourado ? '#FAD0D0' : '#E8E0D5'}`, borderRadius: 14, padding: '12px 14px' }}>
+    <motion.div
+      animate={estourado ? { x: [0, -5, 5, -5, 5, -3, 3, 0] } : { x: 0 }}
+      transition={{ duration: 0.45 }}
+      style={{ background: '#FFFDF9', border: `0.5px solid ${estourado ? '#FAD0D0' : '#E8E0D5'}`, borderRadius: 14, padding: '12px 14px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F', display: 'inline-flex', alignItems: 'center', gap: 6 }}><CategoryIcon nome={catNome} cor={catCor} size={22} radius={6} />{catNome}</span>
-        <div style={{ textAlign: 'right' }}>
-          <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: estourado ? '#C4553B' : '#2C1A0F' }}>{fmt(gasto)}</span>
-          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}> / {fmt(orc.valorLimite)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: estourado ? '#C4553B' : '#2C1A0F' }}>{fmt(gasto)}</span>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}> / {fmt(orc.valorLimite)}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 3 }}>
+            <button onClick={e => { e.stopPropagation(); onEdit() }} style={{ background: '#F5F0E8', border: 'none', borderRadius: 7, width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconEdit size={11} stroke={1.8} color="#7A5C4F" /></button>
+            <button onClick={e => { e.stopPropagation(); deleteOrcamento(orc.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}><IconX size={14} stroke={2} color="#C4B4A8" /></button>
+          </div>
         </div>
       </div>
       <div style={{ background: '#F0EAE2', borderRadius: 6, height: 7, overflow: 'hidden' }}>
@@ -108,8 +142,15 @@ function OrcamentoRow({ orc, gastos }: { orc: any; gastos: Map<number, number> }
           transition={{ type: 'spring', stiffness: 200, damping: 25 }}
           style={{ height: '100%', background: estourado ? '#C4553B' : pct > 80 ? '#D4A017' : catCor, borderRadius: 6 }} />
       </div>
-      {estourado && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4553B', fontWeight: 600, marginTop: 4 }}>Estourou em {fmt(gasto - orc.valorLimite)}</p>}
-    </div>
+      {estourado && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
+          <IconAlertTriangle size={13} color="#C4553B" stroke={2} />
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4553B', fontWeight: 700 }}>
+            Estourou em {fmt(gasto - orc.valorLimite)}!
+          </p>
+        </div>
+      )}
+    </motion.div>
   )
 }
 
@@ -123,6 +164,7 @@ export function Page() {
   const [addingMeta, setAddingMeta] = useState(false)
   const [editingMetaId, setEditingMetaId] = useState<number | null>(null)
   const [addingOrc, setAddingOrc] = useState(false)
+  const [editingOrcId, setEditingOrcId] = useState<number | null>(null)
   const [formMeta, setFormMeta] = useState({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' })
   const [formOrc, setFormOrc] = useState({ categoriaId: null as number | null, valorLimite: '' })
 
@@ -145,10 +187,22 @@ export function Page() {
     setFormMeta({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' })
   }
 
-  const handleAddOrc = async () => {
+  const openEditOrc = (orc: any) => {
+    setEditingOrcId(orc.id)
+    setFormOrc({ categoriaId: orc.categoriaId, valorLimite: String(orc.valorLimite) })
+    setAddingOrc(true)
+  }
+
+  const handleSaveOrc = async () => {
     if (!formOrc.categoriaId || !formOrc.valorLimite) return
-    await addOrcamento({ categoriaId: formOrc.categoriaId, valorLimite: parseFloat(formOrc.valorLimite.replace(',','.')), periodo: 'mensal', rollover: false })
+    const valor = parseFloat(formOrc.valorLimite.replace(',','.'))
+    if (editingOrcId !== null) {
+      await editOrcamento(editingOrcId, { valorLimite: valor })
+    } else {
+      await addOrcamento({ categoriaId: formOrc.categoriaId, valorLimite: valor, periodo: 'mensal', rollover: false })
+    }
     setAddingOrc(false)
+    setEditingOrcId(null)
     setFormOrc({ categoriaId: null, valorLimite: '' })
   }
 
@@ -156,7 +210,7 @@ export function Page() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "24px 28px", width: "100%" }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F' }}>Metas & Orçamento</h1>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { if (tab === 'metas') { setEditingMetaId(null); setFormMeta({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' }); setAddingMeta(true) } else setAddingOrc(true) }}
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { if (tab === 'metas') { setEditingMetaId(null); setFormMeta({ nome: '', valorAlvo: '', valorAtual: '0', prazo: '', cor: '#C4553B', icone: '🎯' }); setAddingMeta(true) } else { setEditingOrcId(null); setFormOrc({ categoriaId: null, valorLimite: '' }); setAddingOrc(true) } }}
           style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 12, padding: '10px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
           + Adicionar
         </motion.button>
@@ -166,8 +220,9 @@ export function Page() {
         {(['metas', 'orcamento'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', cursor: 'pointer', background: tab === t ? '#C4553B' : 'transparent', color: tab === t ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, transition: 'all .15s' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
-              {t === 'metas' ? <><IconTarget size={13} stroke={1.8} />Metas ({metas.length})</> : <><IconChartBar size={13} stroke={1.8} />Orçamento ({orcamentos.length})</>}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              {t === 'metas' ? <IconTarget size={14} stroke={1.8} /> : <IconChartBar size={14} stroke={1.8} />}
+              {t === 'metas' ? `Metas (${metas.length})` : `Orçamento (${orcamentos.length})`}
             </span>
           </button>
         ))}
@@ -196,7 +251,7 @@ export function Page() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {orcamentos.map(o => <OrcamentoRow key={o.id} orc={o} gastos={gastos} />)}
+            {orcamentos.map(o => <OrcamentoRow key={o.id} orc={o} gastos={gastos} onEdit={() => openEditOrc(o)} />)}
           </div>
         )
       )}
@@ -267,24 +322,24 @@ export function Page() {
               onClick={e => e.stopPropagation()}
               style={{ width: '100%', maxWidth: 520, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '20px 20px 48px' }}>
               <div style={{ width: 40, height: 4, borderRadius: 2, background: '#E8E0D5', margin: '0 auto 16px' }} />
-              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>Novo orçamento mensal</h3>
+              <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>{editingOrcId ? 'Editar orçamento' : 'Novo orçamento mensal'}</h3>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A', marginBottom: 6 }}>CATEGORIA</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                 {categorias.map(c => (
-                  <button key={c.id} onClick={() => setFormOrc(f => ({ ...f, categoriaId: c.id! }))}
-                    style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: formOrc.categoriaId === c.id ? c.cor : '#F5F0E8', color: formOrc.categoriaId === c.id ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <button key={c.id} onClick={() => !editingOrcId && setFormOrc(f => ({ ...f, categoriaId: c.id! }))}
+                    style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: editingOrcId ? 'default' : 'pointer', background: formOrc.categoriaId === c.id ? c.cor : '#F5F0E8', color: formOrc.categoriaId === c.id ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5, opacity: editingOrcId && formOrc.categoriaId !== c.id ? 0.4 : 1 }}>
                     <CategoryIcon nome={c.nome} cor={formOrc.categoriaId === c.id ? 'white' : c.cor} size={18} radius={5} /> {c.nome}
                   </button>
                 ))}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 14px', gap: 6, marginBottom: 16 }}>
                 <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, color: '#C4553B', fontWeight: 700 }}>R$</span>
-                <input value={formOrc.valorLimite} onChange={e => setFormOrc(f => ({ ...f, valorLimite: e.target.value }))} placeholder="Limite mensal" type="tel"
+                <input value={formOrc.valorLimite} onChange={e => setFormOrc(f => ({ ...f, valorLimite: e.target.value }))} placeholder="Limite mensal" type="tel" autoFocus
                   style={{ border: 'none', background: 'transparent', fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none' }} />
               </div>
-              <motion.button onClick={handleAddOrc} whileTap={{ scale: 0.97 }} disabled={!formOrc.categoriaId || !formOrc.valorLimite}
+              <motion.button onClick={handleSaveOrc} whileTap={{ scale: 0.97 }} disabled={!formOrc.categoriaId || !formOrc.valorLimite}
                 style={{ width: '100%', padding: '14px 0', borderRadius: 14, border: 'none', cursor: 'pointer', background: formOrc.categoriaId && formOrc.valorLimite ? '#C4553B' : '#E8E0D5', color: formOrc.categoriaId && formOrc.valorLimite ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, transition: 'all .2s' }}>
-                Criar orçamento
+                {editingOrcId ? 'Salvar alterações' : 'Criar orçamento'}
               </motion.button>
             </motion.div>
           </motion.div>
