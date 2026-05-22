@@ -38,10 +38,14 @@ class FinanceiroYagoDB extends Dexie {
 
 export const db = new FinanceiroYagoDB()
 
+let _seeding = false
 export async function seedCategories() {
-  const count = await db.categorias.count()
-  if (count > 0) return
-  await db.categorias.bulkAdd([
+  if (_seeding) return
+  _seeding = true
+  try {
+    const count = await db.categorias.count()
+    if (count > 0) { _seeding = false; return }
+    await db.categorias.bulkAdd([
     { nome: 'Alimentação', tipo: 'despesa', icone: '🍜', cor: '#E8622A', ordem: 1 },
     { nome: 'Moradia', tipo: 'despesa', icone: '🏠', cor: '#3D7EB5', ordem: 2 },
     { nome: 'Transporte', tipo: 'despesa', icone: '🚗', cor: '#7C5CBF', ordem: 3 },
@@ -57,6 +61,19 @@ export async function seedCategories() {
     { nome: 'Rendimentos', tipo: 'receita', icone: '📊', cor: '#D4A017', ordem: 13 },
     { nome: 'Outros', tipo: 'receita', icone: '✨', cor: '#7A5C4F', ordem: 14 },
   ])
+  } finally { _seeding = false }
+}
+
+export async function deduplicateCategories() {
+  const all = await db.categorias.orderBy('id').toArray()
+  const seen = new Set<string>()
+  const toDelete: number[] = []
+  for (const cat of all) {
+    const key = `${cat.nome}|${cat.tipo}`
+    if (seen.has(key)) toDelete.push(cat.id!)
+    else seen.add(key)
+  }
+  if (toDelete.length > 0) await db.categorias.bulkDelete(toDelete)
 }
 
 export interface Orcamento { id?: number; categoriaId: number; valorLimite: number; periodo: string; rollover: boolean; inicio?: string; fim?: string; syncId?: string }

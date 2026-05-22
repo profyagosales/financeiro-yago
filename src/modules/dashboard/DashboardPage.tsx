@@ -9,7 +9,7 @@ import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
 import { useCartoes, useAllLancamentosAtivos } from '@/db/hooks/useCartoes'
 import { useOrcamentos } from '@/db/hooks/useOrcamentos'
-import { db, seedCategories } from '@/db/schema'
+import { db } from '@/db/schema'
 import { fmt, fmtDate, mesAnoAtual } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { OdometroSaldo } from '@/components/ui/OdometroSaldo'
@@ -52,7 +52,6 @@ export function DashboardPage() {
   const orcamentos = useOrcamentos()
   const cartoes = useCartoes()
 
-  useEffect(() => { seedCategories() }, [])
 
   const fixasPendentes = contasFixas.filter(cf => !pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
   const fixasPagas = contasFixas.filter(cf => pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago'))

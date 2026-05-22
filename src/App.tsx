@@ -15,14 +15,14 @@ import { Page as MetasPage } from '@/modules/metas'
 import { Page as PatrimonioPage } from '@/modules/patrimonio'
 import { Page as RelatoriosPage } from '@/modules/relatorios'
 import { Page as ConfiguracoesPage } from '@/modules/configuracoes'
-import { seedCategories } from '@/db/schema'
+import { seedCategories, deduplicateCategories } from '@/db/schema'
 
 export default function App() {
   const { isUnlocked, checkSession } = useAuthStore()
 
   useEffect(() => {
     checkSession()
-    seedCategories()
+    seedCategories().then(deduplicateCategories)
   }, [])
 
   return (
