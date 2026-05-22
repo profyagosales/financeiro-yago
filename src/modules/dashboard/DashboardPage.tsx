@@ -273,22 +273,26 @@ export function DashboardPage() {
             </div>
           </div>
 
-          {/* Fada voando — percurso amplo por todo o card */}
+          {/* Speech bubble — fixo no card, não segue a fada */}
+          <div style={{
+            position: 'absolute', zIndex: 3, pointerEvents: 'none',
+            top: 20, right: 28,
+          }}>
+            <FairyBubble phrase={activePhrase} />
+          </div>
+
+          {/* Fada voa livremente por todo o card — 10 pontos, 50s */}
           <motion.div
-            style={{ position: 'absolute', zIndex: 2, pointerEvents: 'none', left: '36%', top: '8%' }}
+            style={{ position: 'absolute', zIndex: 2, pointerEvents: 'none', left: '24%', top: '10%' }}
             animate={{
-              left: ['36%', '60%', '42%', '66%', '32%', '56%', '36%'],
-              top:  ['8%',  '38%', '4%',  '28%', '44%', '3%',  '8%'],
+              left: ['24%', '68%', '38%', '78%', '22%', '62%', '45%', '80%', '28%', '24%'],
+              top:  ['10%', '18%', '58%', '8%',  '50%', '5%',  '52%', '22%', '58%', '10%'],
             }}
             transition={{
-              duration: 22, repeat: Infinity, ease: 'easeInOut',
-              times: [0, 0.17, 0.33, 0.5, 0.67, 0.83, 1],
+              duration: 50, repeat: Infinity, ease: 'easeInOut',
+              times: [0, 0.11, 0.22, 0.33, 0.44, 0.56, 0.67, 0.78, 0.89, 1],
             }}
           >
-            {/* Speech bubble acima da fada */}
-            <div style={{ marginBottom: 8 }}>
-              <FairyBubble phrase={activePhrase} />
-            </div>
             <DragFairy />
           </motion.div>
         </div>

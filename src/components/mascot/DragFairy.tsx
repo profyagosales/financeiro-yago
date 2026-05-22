@@ -75,59 +75,42 @@ const PHRASES: Phrase[] = [
   { text: 'A Lady Gaga aprovaria seus gastos?',           emoji: 'warning' },
 ]
 
-// ─── Hook — sempre rotaciona (contextPhrase entra na lista) ──────
+// ─── Hook — sempre rotaciona a cada 10s ──────────────────────────
 export function useFairyPhrase(contextPhrase?: Phrase): Phrase {
   const [idx, setIdx] = useState(0)
   const allPhrases = contextPhrase ? [contextPhrase, ...PHRASES] : PHRASES
   useEffect(() => {
-    const timer = setInterval(() => setIdx(i => (i + 1) % allPhrases.length), 6000)
+    const timer = setInterval(() => setIdx(i => (i + 1) % allPhrases.length), 10000)
     return () => clearInterval(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextPhrase])
   return allPhrases[idx % allPhrases.length]
 }
 
-// ─── Speech Bubble ────────────────────────────────────────────────
+// ─── Speech Bubble — só texto, fundo quase invisível ─────────────
 export function FairyBubble({ phrase }: { phrase: Phrase }) {
   return (
     <AnimatePresence mode="wait">
-      <motion.div
+      <motion.p
         key={phrase.text}
-        initial={{ opacity: 0, scale: 0.82, y: 14, rotate: -2 }}
-        animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: -8, rotate: 1 }}
-        transition={{ duration: 0.36, ease: [0.34, 1.56, 0.64, 1] }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        transition={{ duration: 0.55, ease: 'easeOut' }}
         style={{
-          background: '#FFFFFF',
-          borderRadius: '16px 16px 4px 16px',
-          padding: '11px 14px 11px 14px',
-          boxShadow: '0 10px 36px rgba(0,0,0,0.38), 0 2px 8px rgba(0,0,0,0.2)',
-          borderLeft: '3.5px solid #F1642E',
-          border: '1px solid rgba(255,255,255,0.95)',
-          borderLeftColor: '#F1642E',
-          maxWidth: 230,
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 8,
+          fontFamily: "'Fraunces',Georgia,serif",
+          fontStyle: 'italic',
+          fontSize: 14,
+          fontWeight: 400,
+          color: 'rgba(255,255,255,0.88)',
+          lineHeight: 1.5,
+          maxWidth: 240,
+          margin: 0,
+          textShadow: '0 2px 18px rgba(0,0,0,0.95), 0 1px 6px rgba(0,0,0,0.8)',
         }}
       >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{
-            fontFamily: "'Fraunces',Georgia,serif",
-            fontStyle: 'italic',
-            fontSize: 13.5,
-            fontWeight: 400,
-            color: '#1A0840',
-            lineHeight: 1.45,
-            margin: 0,
-          }}>
-            {phrase.text}
-          </p>
-        </div>
-        <div style={{ flexShrink: 0, paddingTop: 2 }}>
-          <EmojiIcon type={phrase.emoji} />
-        </div>
-      </motion.div>
+        {phrase.text}
+      </motion.p>
     </AnimatePresence>
   )
 }
@@ -329,11 +312,11 @@ export function DragFairy() {
   return (
     <motion.div
       animate={{
-        y: [0, -5, 2, -7, 1, -4, 0],
-        rotate: [-1.5, 1, -2.5, 1.5, -1, 2, -1.5],
+        y: [0, -4, 2, -5, 1, -3, 0],
+        rotate: [-1, 0.7, -1.6, 1.1, -0.7, 1.4, -1],
       }}
       transition={{
-        duration: 5, ease: 'easeInOut', repeat: Infinity,
+        duration: 14, ease: 'easeInOut', repeat: Infinity,
         times: [0, 0.17, 0.33, 0.5, 0.67, 0.83, 1],
       }}
       style={{
