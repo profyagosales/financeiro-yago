@@ -13,47 +13,57 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/schema'
 import { useAuthStore } from '@/store/auth'
 
+// ─── Cores da nova paleta ────────────────────────────────────────
+const SIDEBAR_BG   = '#504E76'
+const ACTIVE_COLOR = '#F1642E'
+const TEXT_NORMAL  = 'rgba(255,255,255,0.6)'
+const TEXT_ACTIVE  = '#ffffff'
+const LABEL_COLOR  = 'rgba(255,255,255,0.35)'
+const DIVIDER      = 'rgba(255,255,255,0.1)'
+
 function useSidebarBadges() {
   const { mes, ano } = mesAnoAtual()
   const fixas = useContasFixas()
-  const pags = usePagamentosFixos(mes, ano)
-  const hoje = new Date().getDate()
-  const fixasPendentes = fixas.filter(cf => !pags.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
+  const pags  = usePagamentosFixos(mes, ano)
+  const hoje  = new Date().getDate()
+  const fixasPendentes = fixas.filter(
+    cf => !pags.find(p => p.contaFixaId === cf.id && p.status === 'pago')
+  )
   const fixasHoje = fixasPendentes.filter(cf => cf.diaVencimento === hoje)
-  const cartoes = useCartoes()
+  const cartoes   = useCartoes()
   const faturasAtivas = useLiveQuery(async () => {
     let count = 0
     for (const c of cartoes) {
-      const items = await db.lancamentosCartao.where('[cartaoId+mes+ano]').equals([c.id!, mes, ano]).count()
+      const items = await db.lancamentosCartao
+        .where('[cartaoId+mes+ano]').equals([c.id!, mes, ano]).count()
       if (items > 0) count++
     }
     return count
   }, [cartoes, mes, ano]) ?? 0
 
-  const badgeFixas = fixasHoje.length > 0
-    ? { label: `${fixasHoje.length}`, urgent: true }
-    : fixasPendentes.length > 0
-    ? { label: `${fixasPendentes.length}`, urgent: false }
-    : null
-  const badgeCartoes = faturasAtivas > 0 ? { label: `${faturasAtivas}`, urgent: false } : null
-  return { fixas: badgeFixas, cartoes: badgeCartoes }
+  return {
+    fixas:   fixasHoje.length > 0 ? { label: `${fixasHoje.length}`, urgent: true }
+           : fixasPendentes.length > 0 ? { label: `${fixasPendentes.length}`, urgent: false }
+           : null,
+    cartoes: faturasAtivas > 0 ? { label: `${faturasAtivas}`, urgent: false } : null,
+  }
 }
 
 const MENU = [
   {
     group: 'Geral',
     items: [
-      { path: '/',             icon: IconLayoutDashboard, label: 'Dashboard',      badgeKey: null },
+      { path: '/', icon: IconLayoutDashboard, label: 'Dashboard', badgeKey: null },
     ],
   },
   {
     group: 'Finanças',
     items: [
-      { path: '/contas',        icon: IconBuildingBank,   label: 'Contas',         badgeKey: null },
-      { path: '/cartoes',       icon: IconCreditCard,     label: 'Cartões',        badgeKey: 'cartoes' },
-      { path: '/transacoes',    icon: IconArrowsExchange, label: 'Transações',     badgeKey: null },
-      { path: '/contas-fixas',  icon: IconRepeat,         label: 'Contas Fixas',   badgeKey: 'fixas' },
-      { path: '/parcelamentos', icon: IconCalendarStats,  label: 'Parcelamentos',  badgeKey: null },
+      { path: '/contas',        icon: IconBuildingBank,   label: 'Contas',        badgeKey: null },
+      { path: '/cartoes',       icon: IconCreditCard,     label: 'Cartões',       badgeKey: 'cartoes' },
+      { path: '/transacoes',    icon: IconArrowsExchange, label: 'Transações',    badgeKey: null },
+      { path: '/contas-fixas',  icon: IconRepeat,         label: 'Contas Fixas',  badgeKey: 'fixas' },
+      { path: '/parcelamentos', icon: IconCalendarStats,  label: 'Parcelamentos', badgeKey: null },
     ],
   },
   {
@@ -75,21 +85,21 @@ function setCollapsedPref(v: boolean) {
 
 export function Sidebar() {
   const { pathname } = useLocation()
-  const navigate = useNavigate()
-  const badges = useSidebarBadges()
-  const { lock } = useAuthStore()
+  const navigate     = useNavigate()
+  const badges       = useSidebarBadges()
+  const { lock }     = useAuthStore()
   const [collapsed, setCollapsed] = useState(getCollapsed)
 
-  const toggle = () => setCollapsed(v => { setCollapsedPref(!v); return !v })
+  const toggle   = () => setCollapsed(v => { setCollapsedPref(!v); return !v })
   const getBadge = (key: string | null) => key ? badges[key as keyof typeof badges] : null
 
   return (
     <motion.aside
-      animate={{ width: collapsed ? 60 : 220 }}
-      transition={{ type: 'spring', stiffness: 360, damping: 36 }}
+      animate={{ width: collapsed ? 64 : 232 }}
+      transition={{ type: 'spring', stiffness: 340, damping: 34 }}
       style={{
         flexShrink: 0,
-        background: '#111111',
+        background: SIDEBAR_BG,
         height: '100dvh',
         position: 'sticky',
         top: 0,
@@ -97,55 +107,97 @@ export function Sidebar() {
         overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        padding: collapsed ? '18px 8px' : '18px 10px',
-        borderRight: '1px solid rgba(255,255,255,0.05)',
+        padding: collapsed ? '24px 10px' : '24px 14px',
       }}
     >
-      {/* ── Logo ── */}
+      {/* ── Logo — centralizada, grande, imponente ── */}
       <div style={{
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        gap: 10,
+        justifyContent: 'center',
+        textAlign: 'center',
         marginBottom: 28,
-        paddingBottom: 18,
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        overflow: 'hidden',
+        paddingBottom: 24,
+        borderBottom: `1px solid ${DIVIDER}`,
         flexShrink: 0,
-        justifyContent: collapsed ? 'center' : 'space-between',
+        position: 'relative',
       }}>
-        {/* FY mark */}
+        {/* FY mark — grande */}
         <div style={{
-          width: 32, height: 32, borderRadius: 9,
-          background: '#C4553B',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
-          boxShadow: '0 2px 8px rgba(196,85,59,0.4)',
+          width: collapsed ? 40 : 52,
+          height: collapsed ? 40 : 52,
+          borderRadius: 16,
+          background: ACTIVE_COLOR,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: `0 4px 20px rgba(241,100,46,0.5)`,
+          marginBottom: collapsed ? 0 : 10,
+          transition: 'width .2s, height .2s',
         }}>
-          <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 12, fontWeight: 700, color: 'white', letterSpacing: '-0.5px' }}>FY</span>
+          <span style={{
+            fontFamily: "'Fraunces',Georgia,serif",
+            fontSize: collapsed ? 14 : 18,
+            fontWeight: 700,
+            color: 'white',
+            letterSpacing: '-0.5px',
+          }}>
+            FY
+          </span>
         </div>
 
         <AnimatePresence>
           {!collapsed && (
             <motion.div
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.15 }}
-              style={{ flex: 1, minWidth: 0 }}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1,  y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18 }}
             >
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                Financeiro
+              <p style={{
+                fontFamily: "'Fraunces',Georgia,serif",
+                fontSize: 15,
+                fontWeight: 700,
+                color: '#ffffff',
+                lineHeight: 1.2,
+                letterSpacing: '-0.3px',
+              }}>
+                Financeiro do Yago
               </p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>
-                do Yago
+              <p style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontSize: 10,
+                color: LABEL_COLOR,
+                marginTop: 3,
+                letterSpacing: '.04em',
+              }}>
+                Gestão financeira pessoal
               </p>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Botão recolher — canto superior direito */}
         {!collapsed && (
-          <button onClick={toggle} style={{ background: 'rgba(255,255,255,0.07)', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <IconChevronLeft size={13} stroke={2} color="rgba(255,255,255,0.4)" />
+          <button
+            onClick={toggle}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              background: 'rgba(255,255,255,0.1)',
+              border: 'none',
+              borderRadius: 8,
+              width: 26,
+              height: 26,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <IconChevronLeft size={13} stroke={2} color={LABEL_COLOR} />
           </button>
         )}
       </div>
@@ -153,93 +205,105 @@ export function Sidebar() {
       {/* ── Nav ── */}
       <div style={{ flex: 1 }}>
         {MENU.map((group, gi) => (
-          <div key={gi} style={{ marginBottom: 6 }}>
-            {/* Group label */}
+          <div key={gi} style={{ marginBottom: 8 }}>
+            {/* Label do grupo */}
             {!collapsed && (
               <p style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif",
                 fontSize: 9,
                 fontWeight: 700,
-                color: 'rgba(255,255,255,0.28)',
-                letterSpacing: '.1em',
+                color: LABEL_COLOR,
+                letterSpacing: '.12em',
                 textTransform: 'uppercase',
-                padding: '10px 10px 5px',
+                padding: '10px 12px 5px',
               }}>
                 {group.group}
               </p>
             )}
-            {collapsed && gi > 0 && <div style={{ height: 16 }} />}
+            {collapsed && gi > 0 && <div style={{ height: 12 }} />}
 
             {group.items.map(item => {
               const active = pathname === item.path
-              const Icon = item.icon
-              const badge = getBadge(item.badgeKey)
+              const Icon   = item.icon
+              const badge  = getBadge(item.badgeKey)
 
               return (
                 <motion.button
                   key={item.path}
                   onClick={() => navigate(item.path)}
                   title={collapsed ? item.label : undefined}
-                  whileHover={{ background: active ? undefined : 'rgba(255,255,255,0.06)' }}
+                  whileHover={{
+                    background: active
+                      ? undefined
+                      : 'rgba(255,255,255,0.08)',
+                  }}
                   style={{
                     width: '100%',
-                    padding: collapsed ? '9px 0' : '8px 10px',
-                    borderRadius: 9,
+                    padding: collapsed ? '10px 0' : '9px 12px',
+                    borderRadius: 12,
                     border: 'none',
                     cursor: 'pointer',
-                    background: active ? '#C4553B' : 'transparent',
+                    background: active ? ACTIVE_COLOR : 'transparent',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: collapsed ? 'center' : 'flex-start',
-                    gap: collapsed ? 0 : 9,
-                    marginBottom: 2,
+                    gap: collapsed ? 0 : 10,
+                    marginBottom: 3,
                     transition: 'background .12s',
                     position: 'relative',
-                    boxShadow: active ? '0 4px 14px rgba(196,85,59,0.35)' : 'none',
+                    boxShadow: active
+                      ? `0 4px 16px rgba(241,100,46,0.4)`
+                      : 'none',
                   }}
                 >
                   <Icon
-                    size={17}
+                    size={18}
                     stroke={active ? 2.2 : 1.8}
-                    color={active ? 'white' : 'rgba(255,255,255,0.45)'}
+                    color={active ? TEXT_ACTIVE : TEXT_NORMAL}
                     style={{ flexShrink: 0 }}
                   />
+
                   {!collapsed && (
                     <>
                       <span style={{
                         fontFamily: "'Plus Jakarta Sans',sans-serif",
                         fontSize: 13,
                         fontWeight: active ? 600 : 400,
-                        color: active ? 'white' : 'rgba(255,255,255,0.55)',
+                        color: active ? TEXT_ACTIVE : TEXT_NORMAL,
                         flex: 1,
                         whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
                         textAlign: 'left',
                       }}>
                         {item.label}
                       </span>
+
                       {badge && (
                         <span style={{
                           fontFamily: "'Plus Jakarta Sans',sans-serif",
                           fontSize: 10,
                           fontWeight: 700,
-                          background: badge.urgent ? '#ef4444' : 'rgba(255,255,255,0.12)',
+                          background: badge.urgent
+                            ? '#ef4444'
+                            : 'rgba(255,255,255,0.15)',
                           color: 'white',
-                          padding: '1px 7px',
+                          padding: '2px 8px',
                           borderRadius: 20,
                           flexShrink: 0,
-                          minWidth: 20,
-                          textAlign: 'center',
                         }}>
                           {badge.label}
                         </span>
                       )}
                     </>
                   )}
-                  {/* Dot badge when collapsed */}
+
                   {collapsed && badge?.urgent && (
-                    <div style={{ position: 'absolute', top: 5, right: 8, width: 6, height: 6, borderRadius: '50%', background: '#ef4444' }} />
+                    <div style={{
+                      position: 'absolute',
+                      top: 5, right: 8,
+                      width: 6, height: 6,
+                      borderRadius: '50%',
+                      background: '#ef4444',
+                    }} />
                   )}
                 </motion.button>
               )
@@ -248,78 +312,102 @@ export function Sidebar() {
         ))}
       </div>
 
-      {/* ── Footer: Configurações + Lock ── */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 10, flexShrink: 0 }}>
-        {[
-          { path: '/configuracoes', icon: IconSettings, label: 'Configurações' },
-        ].map(item => {
-          const active = pathname === item.path
-          const Icon = item.icon
-          return (
-            <motion.button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              title={collapsed ? item.label : undefined}
-              whileHover={{ background: active ? undefined : 'rgba(255,255,255,0.06)' }}
-              style={{
-                width: '100%',
-                padding: collapsed ? '9px 0' : '8px 10px',
-                borderRadius: 9,
-                border: 'none',
-                cursor: 'pointer',
-                background: active ? '#C4553B' : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                gap: collapsed ? 0 : 9,
-                marginBottom: 2,
-                transition: 'background .12s',
-                boxShadow: active ? '0 4px 14px rgba(196,85,59,0.35)' : 'none',
-              }}
-            >
-              <Icon size={17} stroke={active ? 2.2 : 1.8} color={active ? 'white' : 'rgba(255,255,255,0.45)'} />
-              {!collapsed && (
-                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: active ? 600 : 400, color: active ? 'white' : 'rgba(255,255,255,0.55)', flex: 1, textAlign: 'left' }}>
-                  {item.label}
-                </span>
-              )}
-            </motion.button>
-          )
-        })}
+      {/* ── Footer ── */}
+      <div style={{
+        borderTop: `1px solid ${DIVIDER}`,
+        paddingTop: 10,
+        flexShrink: 0,
+      }}>
+        {/* Configurações */}
+        <motion.button
+          onClick={() => navigate('/configuracoes')}
+          title={collapsed ? 'Configurações' : undefined}
+          whileHover={{ background: pathname === '/configuracoes' ? undefined : 'rgba(255,255,255,0.08)' }}
+          style={{
+            width: '100%',
+            padding: collapsed ? '10px 0' : '9px 12px',
+            borderRadius: 12,
+            border: 'none',
+            cursor: 'pointer',
+            background: pathname === '/configuracoes' ? ACTIVE_COLOR : 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            gap: collapsed ? 0 : 10,
+            marginBottom: 3,
+            transition: 'background .12s',
+            boxShadow: pathname === '/configuracoes' ? `0 4px 16px rgba(241,100,46,0.4)` : 'none',
+          }}
+        >
+          <IconSettings
+            size={18}
+            stroke={pathname === '/configuracoes' ? 2.2 : 1.8}
+            color={pathname === '/configuracoes' ? TEXT_ACTIVE : TEXT_NORMAL}
+          />
+          {!collapsed && (
+            <span style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontSize: 13,
+              fontWeight: pathname === '/configuracoes' ? 600 : 400,
+              color: pathname === '/configuracoes' ? TEXT_ACTIVE : TEXT_NORMAL,
+              textAlign: 'left',
+            }}>
+              Configurações
+            </span>
+          )}
+        </motion.button>
 
+        {/* Bloquear */}
         <motion.button
           onClick={lock}
           title={collapsed ? 'Bloquear' : undefined}
-          whileHover={{ background: 'rgba(255,255,255,0.06)' }}
+          whileHover={{ background: 'rgba(255,255,255,0.08)' }}
           style={{
             width: '100%',
-            padding: collapsed ? '9px 0' : '8px 10px',
-            borderRadius: 9,
+            padding: collapsed ? '10px 0' : '9px 12px',
+            borderRadius: 12,
             border: 'none',
             cursor: 'pointer',
             background: 'transparent',
             display: 'flex',
             alignItems: 'center',
             justifyContent: collapsed ? 'center' : 'flex-start',
-            gap: collapsed ? 0 : 9,
+            gap: collapsed ? 0 : 10,
             transition: 'background .12s',
           }}
         >
-          <IconLogout size={17} stroke={1.8} color="rgba(255,255,255,0.35)" />
+          <IconLogout size={18} stroke={1.8} color="rgba(255,255,255,0.3)" />
           {!collapsed && (
-            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.35)', textAlign: 'left' }}>
+            <span style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontSize: 13,
+              fontWeight: 400,
+              color: 'rgba(255,255,255,0.3)',
+              textAlign: 'left',
+            }}>
               Bloquear
             </span>
           )}
         </motion.button>
 
-        {/* Expand when collapsed */}
+        {/* Botão expandir (só quando recolhido) */}
         {collapsed && (
           <button
             onClick={toggle}
-            style={{ width: '100%', background: 'rgba(255,255,255,0.07)', border: 'none', borderRadius: 8, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 8 }}
+            style={{
+              width: '100%',
+              background: 'rgba(255,255,255,0.08)',
+              border: 'none',
+              borderRadius: 10,
+              height: 34,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: 8,
+            }}
           >
-            <IconChevronRight size={13} color="rgba(255,255,255,0.4)" stroke={2} />
+            <IconChevronRight size={14} color={LABEL_COLOR} stroke={2} />
           </button>
         )}
       </div>
