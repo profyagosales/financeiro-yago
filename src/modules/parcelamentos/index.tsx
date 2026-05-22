@@ -150,22 +150,20 @@ export function Page() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ width: '100%', paddingBottom: 32 }}>
 
       {/* Header */}
-      <div style={{ padding: '24px 28px 0', marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ ...DISPLAY, fontSize: 28, color: '#2C1A0F' }}>Parcelamentos</h1>
-            {parcelamentos.length > 0 && (
-              <p style={{ ...BODY, fontSize: 13, color: '#9B7B6A', marginTop: 3 }}>
-                {parcelamentos.length} parcela{parcelamentos.length !== 1 ? 's' : ''} ativa{parcelamentos.length !== 1 ? 's' : ''} &middot; {fmt(totalMensal)}/mês total
-              </p>
-            )}
-          </div>
+      <div style={{ padding: '32px 32px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, borderBottom: '1px solid #EDE6DC' }}>
+        <div>
+          <h1 style={{ ...DISPLAY, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Parcelamentos</h1>
+          <p style={{ ...BODY, fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>
+            {parcelamentos.length > 0
+              ? `${parcelamentos.length} parcela${parcelamentos.length !== 1 ? 's' : ''} ativa${parcelamentos.length !== 1 ? 's' : ''} · ${fmt(totalMensal)}/mês total`
+              : 'Acompanhe seus parcelamentos de cartão'}
+          </p>
         </div>
       </div>
 
       {/* Summary card */}
       {parcelamentos.length > 0 && (
-        <div style={{ ...CARD, margin: '0 28px 24px', padding: '18px 20px' }}>
+        <div style={{ ...CARD, margin: '0 32px 24px', padding: '18px 20px' }}>
           <p style={{ ...LABEL, marginBottom: 14 }}>Resumo</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
             <div>
@@ -208,13 +206,13 @@ export function Page() {
 
       {/* Empty state */}
       {parcelamentos.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '56px 28px' }}>
+        <div style={{ textAlign: 'center', padding: '56px 32px' }}>
           <Dobrao mood="happy" size={100} />
           <p style={{ ...DISPLAY, fontSize: 20, color: '#2C1A0F', marginTop: 14 }}>Nenhum parcelamento ativo</p>
           <p style={{ ...BODY, fontSize: 14, color: '#9B7B6A', marginTop: 6 }}>Seus parcelamentos de cartão aparecem aqui</p>
         </div>
       ) : (
-        <div style={{ padding: '0 28px' }}>
+        <div style={{ padding: '0 32px' }}>
           {byCartao.map(({ cartao, lancamentos: lcs }) => (
             <CartaoGroup key={cartao.id} cartao={cartao} lancamentos={lcs} />
           ))}

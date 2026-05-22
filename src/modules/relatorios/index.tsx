@@ -13,7 +13,7 @@ import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 
 // ─── Design tokens ───────────────────────────────────────────────────────────
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
-const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B7B6A' }
+const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: '#9B7B6A' }
 const BODY: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif" }
 const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
 
@@ -163,36 +163,12 @@ function TabVisaoGeral({
         ))}
       </div>
 
-      {/* Taxa de poupança */}
-      {receitas > 0 && (
-        <div style={{ ...CARD, padding: '16px 18px', marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div>
-              <p style={{ ...LABEL, marginBottom: 3 }}>TAXA DE POUPANÇA</p>
-              <p style={{ ...DISPLAY, fontSize: 28, color: savingsColor }}>{savingsRate.toFixed(1)}%</p>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ ...LABEL, marginBottom: 3 }}>ECONOMIZADO</p>
-              <p style={{ ...DISPLAY, fontSize: 18, color: '#2C1A0F' }}>{fmt(receitas - despesas)}</p>
-            </div>
-          </div>
-          <div style={{ background: '#F5F0E8', borderRadius: 6, height: 8, overflow: 'hidden' }}>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.max(0, Math.min(100, savingsRate))}%` }}
-              transition={{ type: 'spring', stiffness: 180, damping: 24 }}
-              style={{ height: '100%', background: savingsColor, borderRadius: 6 }}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Receitas vs Despesas 6 meses */}
       {historico.length > 0 && (
         <div style={{ ...CARD, padding: '18px 20px', marginBottom: 16 }}>
           <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Últimos 6 meses</h2>
           <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 14 }}>Receitas e despesas mensais</p>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={260}>
             <BarChart data={historico} barGap={6} barCategoryGap="30%">
               <defs>
                 <linearGradient id="recGrad" x1="0" y1="0" x2="0" y2="1">
@@ -227,14 +203,41 @@ function TabVisaoGeral({
         </div>
       )}
 
-      {/* Comparativo vs mês anterior */}
-      {(recAnt > 0 || despAnt > 0) && (
-        <div style={{ ...CARD, padding: '18px 20px', marginBottom: 16 }}>
-          <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Comparativo</h2>
-          <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 8 }}>vs mês anterior</p>
-          <Comparativo atual={receitas} anterior={recAnt} label="Receitas" cor="#3A8580" />
-          <Comparativo atual={despesas} anterior={despAnt} label="Despesas" cor="#C4553B" />
-          <Comparativo atual={saldo} anterior={recAnt - despAnt} label="Saldo" cor="#D4A017" />
+      {/* Comparativo vs mês anterior + Taxa de poupança — grid 2-col */}
+      {(recAnt > 0 || despAnt > 0 || receitas > 0) && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+          {(recAnt > 0 || despAnt > 0) && (
+            <div style={{ ...CARD, padding: '18px 20px' }}>
+              <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Comparativo</h2>
+              <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 8 }}>vs mês anterior</p>
+              <Comparativo atual={receitas} anterior={recAnt} label="Receitas" cor="#3A8580" />
+              <Comparativo atual={despesas} anterior={despAnt} label="Despesas" cor="#C4553B" />
+              <Comparativo atual={saldo} anterior={recAnt - despAnt} label="Saldo" cor="#D4A017" />
+            </div>
+          )}
+
+          {receitas > 0 && (
+            <div style={{ ...CARD, padding: '18px 20px' }}>
+              <p style={{ ...LABEL, marginBottom: 3 }}>TAXA DE POUPANÇA</p>
+              <p style={{ ...DISPLAY, fontSize: 28, color: savingsColor, marginBottom: 8 }}>{savingsRate.toFixed(1)}%</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <p style={{ ...BODY, fontSize: 12, color: '#9B7B6A' }}>Economizado</p>
+                <p style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F' }}>{fmt(receitas - despesas)}</p>
+              </div>
+              <div style={{ background: '#F5F0E8', borderRadius: 6, height: 8, overflow: 'hidden' }}>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.max(0, Math.min(100, savingsRate))}%` }}
+                  transition={{ type: 'spring', stiffness: 180, damping: 24 }}
+                  style={{ height: '100%', background: savingsColor, borderRadius: 6 }}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A' }}>Receitas: {fmt(receitas)}</p>
+                <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A' }}>Despesas: {fmt(despesas)}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -257,84 +260,86 @@ function TabCategorias({ mes, ano, despesas, pieData }: {
 
   return (
     <div>
-      {/* Donut + lista */}
       {pieData.length > 0 ? (
-        <div style={{ ...CARD, padding: '18px 20px', marginBottom: 16 }}>
-          <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Gastos por categoria</h2>
-          <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 16 }}>Distribuição das despesas</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {/* Donut + barras */}
+          <div style={{ ...CARD, padding: '18px 20px' }}>
+            <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Gastos por categoria</h2>
+            <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 16 }}>Distribuição das despesas</p>
 
-          {/* Donut com total no centro */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <div style={{ position: 'relative', width: 180, height: 180, flexShrink: 0 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={58} outerRadius={84}
-                    paddingAngle={2} dataKey="value" strokeWidth={0}>
-                    {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip content={<DarkTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                <p style={{ ...LABEL, fontSize: 9, marginBottom: 2 }}>TOTAL</p>
-                <p style={{ ...DISPLAY, fontSize: 18, color: '#2C1A0F' }}>{fmt(despesas)}</p>
+            {/* Donut com total no centro */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+              <div style={{ position: 'relative', width: 180, height: 180, flexShrink: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={58} outerRadius={84}
+                      paddingAngle={2} dataKey="value" strokeWidth={0}>
+                      {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip content={<DarkTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                  <p style={{ ...LABEL, fontSize: 9, marginBottom: 2 }}>TOTAL</p>
+                  <p style={{ ...DISPLAY, fontSize: 18, color: '#2C1A0F' }}>{fmt(despesas)}</p>
+                </div>
               </div>
+            </div>
+
+            {/* Barras horizontais */}
+            <div>
+              {pieData.map((d, i) => {
+                const pct = despesas > 0 ? (d.value / despesas) * 100 : 0
+                return (
+                  <div key={d.name} style={{ marginBottom: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
+                      <span style={{ ...BODY, fontSize: 13, color: '#2C1A0F', flex: 1 }}>{d.name}</span>
+                      <span style={{ ...BODY, fontSize: 11, fontWeight: 700, color: d.color, width: 36, textAlign: 'right' }}>{pct.toFixed(0)}%</span>
+                      <span style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F', width: 80, textAlign: 'right' }}>{fmt(d.value)}</span>
+                    </div>
+                    <div style={{ background: '#F5F0E8', borderRadius: 4, height: 6, overflow: 'hidden' }}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ type: 'spring', stiffness: 180, damping: 24, delay: i * 0.06 }}
+                        style={{ height: '100%', background: d.color, borderRadius: 4 }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
-          {/* Barras horizontais */}
-          <div>
-            {pieData.map((d, i) => {
-              const pct = despesas > 0 ? (d.value / despesas) * 100 : 0
-              return (
-                <div key={d.name} style={{ marginBottom: 14 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
-                    <span style={{ ...BODY, fontSize: 13, color: '#2C1A0F', flex: 1 }}>{d.name}</span>
-                    <span style={{ ...BODY, fontSize: 11, fontWeight: 700, color: d.color, width: 36, textAlign: 'right' }}>{pct.toFixed(0)}%</span>
-                    <span style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F', width: 80, textAlign: 'right' }}>{fmt(d.value)}</span>
-                  </div>
-                  <div style={{ background: '#F5F0E8', borderRadius: 4, height: 6, overflow: 'hidden' }}>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ type: 'spring', stiffness: 180, damping: 24, delay: i * 0.06 }}
-                      style={{ height: '100%', background: d.color, borderRadius: 4 }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          {/* Top despesas */}
+          {topDespesas.length > 0 && (
+            <div style={{ ...CARD, padding: '18px 20px' }}>
+              <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Top despesas do mês</h2>
+              <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 14 }}>Maiores gastos individuais</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {topDespesas.map((tx, i) => {
+                  const cat = catMap.get(tx.categoriaId)
+                  return (
+                    <div key={tx.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < topDespesas.length - 1 ? '1px solid #F5F0E8' : 'none' }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: cat ? `${cat.cor}18` : '#F5F0E8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
+                        {cat?.icone ?? '💸'}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ ...BODY, fontSize: 13, color: '#2C1A0F', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.descricao}</p>
+                        <p style={{ ...BODY, fontSize: 10, color: '#9B7B6A', marginTop: 1 }}>{cat?.nome ?? '—'} · {new Date(tx.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
+                      </div>
+                      <p style={{ ...DISPLAY, fontSize: 14, color: '#C4553B', flexShrink: 0 }}>{fmt(tx.valor)}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div style={{ textAlign: 'center', padding: '32px 0' }}>
           <p style={{ ...BODY, fontSize: 14, color: '#9B7B6A' }}>Sem despesas neste mês</p>
-        </div>
-      )}
-
-      {/* Top despesas */}
-      {topDespesas.length > 0 && (
-        <div style={{ ...CARD, padding: '18px 20px', marginBottom: 16 }}>
-          <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Top despesas do mês</h2>
-          <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 14 }}>Maiores gastos individuais</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {topDespesas.map((tx, i) => {
-              const cat = catMap.get(tx.categoriaId)
-              return (
-                <div key={tx.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < topDespesas.length - 1 ? '1px solid #F5F0E8' : 'none' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: cat ? `${cat.cor}18` : '#F5F0E8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
-                    {cat?.icone ?? '💸'}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ ...BODY, fontSize: 13, color: '#2C1A0F', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.descricao}</p>
-                    <p style={{ ...BODY, fontSize: 10, color: '#9B7B6A', marginTop: 1 }}>{cat?.nome ?? '—'} · {new Date(tx.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
-                  </div>
-                  <p style={{ ...DISPLAY, fontSize: 14, color: '#C4553B', flexShrink: 0 }}>{fmt(tx.valor)}</p>
-                </div>
-              )
-            })}
-          </div>
         </div>
       )}
     </div>
@@ -352,61 +357,66 @@ function TabTendencias({ mes, ano, historico }: { mes: number; ano: number; hist
 
   return (
     <div>
-      {/* Fluxo de caixa — AreaChart */}
-      {historico.length > 0 && (
-        <div style={{ ...CARD, padding: '18px 20px', marginBottom: 16 }}>
-          <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Fluxo de caixa</h2>
-          <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 14 }}>Receitas e despesas nos últimos 6 meses</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={historico}>
-              <defs>
-                <linearGradient id="recAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3A8580" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3A8580" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="despAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#C4553B" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#C4553B" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} stroke="#F5F0E8" strokeDasharray="0" />
-              <XAxis dataKey="mes" tick={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fill: '#9B7B6A' }} axisLine={false} tickLine={false} />
-              <YAxis hide />
-              <Tooltip content={<DarkTooltip />} />
-              <Area type="monotone" dataKey="receitas" name="Receitas" stroke="#3A8580" strokeWidth={2.5} fill="url(#recAreaGrad)" dot={{ fill: '#3A8580', r: 4, strokeWidth: 0 }} />
-              <Area type="monotone" dataKey="despesas" name="Despesas" stroke="#C4553B" strokeWidth={2.5} fill="url(#despAreaGrad)" dot={{ fill: '#C4553B', r: 4, strokeWidth: 0 }} />
-            </AreaChart>
-          </ResponsiveContainer>
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#3A8580' }} />
-              <span style={{ ...BODY, fontSize: 11, color: '#9B7B6A' }}>Receitas</span>
+      {/* Fluxo de caixa + Gastos por dia — grid 2-col */}
+      {(historico.length > 0 || gastosDia.some(d => d.valor > 0)) && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          {/* Fluxo de caixa — AreaChart */}
+          {historico.length > 0 && (
+            <div style={{ ...CARD, padding: '18px 20px' }}>
+              <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Fluxo de caixa</h2>
+              <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 14 }}>Receitas e despesas nos últimos 6 meses</p>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={historico}>
+                  <defs>
+                    <linearGradient id="recAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3A8580" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#3A8580" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="despAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#C4553B" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#C4553B" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} stroke="#F5F0E8" strokeDasharray="0" />
+                  <XAxis dataKey="mes" tick={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fill: '#9B7B6A' }} axisLine={false} tickLine={false} />
+                  <YAxis hide />
+                  <Tooltip content={<DarkTooltip />} />
+                  <Area type="monotone" dataKey="receitas" name="Receitas" stroke="#3A8580" strokeWidth={2.5} fill="url(#recAreaGrad)" dot={{ fill: '#3A8580', r: 4, strokeWidth: 0 }} />
+                  <Area type="monotone" dataKey="despesas" name="Despesas" stroke="#C4553B" strokeWidth={2.5} fill="url(#despAreaGrad)" dot={{ fill: '#C4553B', r: 4, strokeWidth: 0 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#3A8580' }} />
+                  <span style={{ ...BODY, fontSize: 11, color: '#9B7B6A' }}>Receitas</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#C4553B' }} />
+                  <span style={{ ...BODY, fontSize: 11, color: '#9B7B6A' }}>Despesas</span>
+                </div>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#C4553B' }} />
-              <span style={{ ...BODY, fontSize: 11, color: '#9B7B6A' }}>Despesas</span>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* Gastos por dia */}
-      {gastosDia.some(d => d.valor > 0) && (
-        <div style={{ ...CARD, padding: '18px 20px', marginBottom: 16 }}>
-          <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Gastos por dia</h2>
-          <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 14 }}>Distribuição das despesas no mês</p>
-          <ResponsiveContainer width="100%" height={120}>
-            <BarChart data={gastosDia} barCategoryGap="20%">
-              <XAxis dataKey="dia" tick={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fill: '#9B7B6A' }} axisLine={false} tickLine={false} interval={4} />
-              <YAxis hide />
-              <Tooltip content={<DayTooltip />} cursor={{ fill: 'rgba(44,26,15,0.03)' }} />
-              <Bar dataKey="valor" name="Gastos" radius={[3, 3, 0, 0]}>
-                {gastosDia.map((entry, i) => (
-                  <Cell key={i} fill={entry.valor > 0 ? '#C4553B' : '#EDE6DC'} fillOpacity={entry.valor > 0 ? 0.85 : 1} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {/* Gastos por dia */}
+          {gastosDia.some(d => d.valor > 0) && (
+            <div style={{ ...CARD, padding: '18px 20px' }}>
+              <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Gastos por dia</h2>
+              <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 14 }}>Distribuição das despesas no mês</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={gastosDia} barCategoryGap="20%">
+                  <XAxis dataKey="dia" tick={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fill: '#9B7B6A' }} axisLine={false} tickLine={false} interval={4} />
+                  <YAxis hide />
+                  <Tooltip content={<DayTooltip />} cursor={{ fill: 'rgba(44,26,15,0.03)' }} />
+                  <Bar dataKey="valor" name="Gastos" radius={[3, 3, 0, 0]}>
+                    {gastosDia.map((entry, i) => (
+                      <Cell key={i} fill={entry.valor > 0 ? '#C4553B' : '#EDE6DC'} fillOpacity={entry.valor > 0 ? 0.85 : 1} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       )}
 
@@ -415,7 +425,7 @@ function TabTendencias({ mes, ano, historico }: { mes: number; ano: number; hist
         <div style={{ ...CARD, padding: '18px 20px', marginBottom: 16 }}>
           <h2 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', marginBottom: 2 }}>Saldo acumulado</h2>
           <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 14 }}>Evolução patrimonial nos últimos 6 meses</p>
-          <ResponsiveContainer width="100%" height={160}>
+          <ResponsiveContainer width="100%" height={180}>
             <LineChart data={saldoAcum}>
               <defs>
                 <linearGradient id="saldoAcumGrad" x1="0" y1="0" x2="0" y2="1">
@@ -480,15 +490,15 @@ export function Page() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ width: '100%', paddingBottom: 32 }}>
 
       {/* Header */}
-      <div style={{ padding: '24px 28px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{ padding: '32px 32px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, borderBottom: '1px solid #EDE6DC' }}>
         <div>
-          <h1 style={{ ...DISPLAY, fontSize: 28, color: '#2C1A0F' }}>Relatórios</h1>
-          <p style={{ ...BODY, fontSize: 13, color: '#9B7B6A', marginTop: 2 }}>Análise financeira detalhada</p>
+          <h1 style={{ ...DISPLAY, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Relatórios</h1>
+          <p style={{ ...BODY, fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>Análise financeira detalhada do período</p>
         </div>
       </div>
 
       {/* Month navigator */}
-      <div style={{ display: 'flex', alignItems: 'center', background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 16, padding: '10px 16px', margin: '0 28px 16px', boxShadow: '0 1px 3px rgba(44,26,15,0.05)', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 16, padding: '10px 16px', margin: '0 32px 20px', boxShadow: '0 1px 3px rgba(44,26,15,0.05)', justifyContent: 'space-between' }}>
         <button onClick={prevMes} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 10, color: '#C4553B', transition: 'background .15s' }}>
           <IconChevronLeft size={18} stroke={2.5} />
         </button>
@@ -499,7 +509,7 @@ export function Page() {
       </div>
 
       {/* Tab switcher */}
-      <div style={{ padding: '0 28px', marginBottom: 20 }}>
+      <div style={{ margin: '0 32px 20px' }}>
         <div style={{ display: 'flex', background: '#F5F0E8', borderRadius: 14, padding: 4, gap: 3 }}>
           {TABS.map(tab => (
             <motion.button
@@ -522,7 +532,7 @@ export function Page() {
       </div>
 
       {/* Tab content */}
-      <div style={{ padding: '0 28px' }}>
+      <div style={{ padding: '0 32px' }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}

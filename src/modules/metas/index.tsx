@@ -241,13 +241,13 @@ export function Page() {
   const metasAtivas = metas.filter(m => (m.valorAlvo > 0 ? (m.valorAtual / m.valorAlvo) * 100 : 0) < 100)
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '24px 28px', width: '100%' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '32px', width: '100%' }}>
 
       {/* Page header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, paddingBottom: 20, borderBottom: '1px solid #EDE6DC' }}>
         <div>
-          <h1 style={{ ...DISPLAY as object, fontSize: 28, color: '#2C1A0F' }}>Metas & Orçamento</h1>
-          <p style={{ ...SUB as object, marginTop: 4 }}>{metasAtivas.length} meta{metasAtivas.length !== 1 ? 's' : ''} ativa{metasAtivas.length !== 1 ? 's' : ''} · mês atual</p>
+          <h1 style={{ ...DISPLAY as object, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Metas & Orçamento</h1>
+          <p style={{ ...SUB as object, fontSize: 13, marginTop: 4 }}>{metasAtivas.length} meta{metasAtivas.length !== 1 ? 's' : ''} ativa{metasAtivas.length !== 1 ? 's' : ''} · {orcamentos.length} orçamento{orcamentos.length !== 1 ? 's' : ''} definido{orcamentos.length !== 1 ? 's' : ''}</p>
         </div>
         <motion.button whileTap={{ scale: 0.95 }}
           onClick={() => {
@@ -291,7 +291,7 @@ export function Page() {
             <p style={{ ...SUB as object, fontSize: 14, marginTop: 6 }}>Crie sua primeira meta financeira</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
             {metas.map((m, i) => (
               <motion.div key={m.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.05 }}>
                 <MetaCard meta={m} onEdit={() => openEditMeta(m)} />
@@ -309,7 +309,7 @@ export function Page() {
             <p style={{ ...SUB as object, fontSize: 14, marginTop: 6 }}>Defina limites por categoria</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 8 }}>
             {orcamentos.map((o, i) => (
               <motion.div key={o.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.05 }}>
                 <OrcamentoRow orc={o} gastos={gastos} onEdit={() => openEditOrc(o)} />

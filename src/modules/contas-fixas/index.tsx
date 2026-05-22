@@ -140,13 +140,13 @@ export function Page() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '24px 28px', width: '100%' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '32px', width: '100%' }}>
 
       {/* Page header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, paddingBottom: 20, borderBottom: '1px solid #EDE6DC' }}>
         <div>
-          <h1 style={{ ...DISPLAY as object, fontSize: 28, color: '#2C1A0F' }}>Contas Fixas</h1>
-          <p style={{ ...SUB as object, marginTop: 4 }}>{mesCapital} · {contasFixas.length} conta{contasFixas.length !== 1 ? 's' : ''}</p>
+          <h1 style={{ ...DISPLAY as object, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Contas Fixas</h1>
+          <p style={{ ...SUB as object, fontSize: 13, marginTop: 4 }}>{mesCapital} · {contasFixas.length} conta{contasFixas.length !== 1 ? 's' : ''} cadastrada{contasFixas.length !== 1 ? 's' : ''}</p>
         </div>
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setEditingId(null); setForm({ nome: '', valor: '', diaVencimento: 10, categoriaId: null, contaId: null }); setAdding(true) }}
           style={{ background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: 'white', border: 'none', borderRadius: 14, padding: '11px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 16px rgba(196,85,59,0.35)', flexShrink: 0 }}>
@@ -194,33 +194,37 @@ export function Page() {
           <p style={{ ...SUB as object, fontSize: 14, marginTop: 6 }}>Aluguel, internet, streaming, assinaturas...</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div>
           {pendentes.length > 0 && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
                 <span style={{ ...LABEL as object, color: '#9B7B6A' }}>A Pagar</span>
                 <div style={{ flex: 1, height: 1, background: '#EDE6DC' }} />
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#C4553B' }}>{fmt(pendentes.reduce((s, cf) => s + cf.valor, 0))}</span>
               </div>
-              {pendentes.map((cf, i) => (
-                <motion.div key={cf.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.05 }}>
-                  <ContaFixaRow cf={cf} mes={mes} ano={ano} onEdit={() => openEdit(cf)} onDelete={() => setConfirmDelete(cf.id!)} />
-                </motion.div>
-              ))}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12, marginBottom: 20 }}>
+                {pendentes.map((cf, i) => (
+                  <motion.div key={cf.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.05 }}>
+                    <ContaFixaRow cf={cf} mes={mes} ano={ano} onEdit={() => openEdit(cf)} onDelete={() => setConfirmDelete(cf.id!)} />
+                  </motion.div>
+                ))}
+              </div>
             </>
           )}
           {fixasPagas.length > 0 && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
                 <span style={{ ...LABEL as object, color: '#9B7B6A' }}>Pagas</span>
                 <div style={{ flex: 1, height: 1, background: '#EDE6DC' }} />
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#3A8580' }}>{fmt(fixasPagas.reduce((s, cf) => s + cf.valor, 0))}</span>
               </div>
-              {fixasPagas.map((cf, i) => (
-                <motion.div key={cf.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.05 }}>
-                  <ContaFixaRow cf={cf} mes={mes} ano={ano} onEdit={() => openEdit(cf)} onDelete={() => setConfirmDelete(cf.id!)} />
-                </motion.div>
-              ))}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
+                {fixasPagas.map((cf, i) => (
+                  <motion.div key={cf.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.05 }}>
+                    <ContaFixaRow cf={cf} mes={mes} ano={ano} onEdit={() => openEdit(cf)} onDelete={() => setConfirmDelete(cf.id!)} />
+                  </motion.div>
+                ))}
+              </div>
             </>
           )}
         </div>

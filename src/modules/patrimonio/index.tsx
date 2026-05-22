@@ -63,13 +63,13 @@ export function Page() {
   const dividas = passivosItems.filter(i => i.jurosAnual).sort((a, b) => (b.jurosAnual ?? 0) - (a.jurosAnual ?? 0))
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '24px 28px', width: '100%' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '32px', width: '100%' }}>
 
       {/* Page header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, paddingBottom: 20, borderBottom: '1px solid #EDE6DC' }}>
         <div>
-          <h1 style={{ ...DISPLAY as object, fontSize: 28, color: '#2C1A0F' }}>Patrimônio</h1>
-          <p style={{ ...SUB as object, marginTop: 4 }}>Visão geral dos seus ativos e passivos</p>
+          <h1 style={{ ...DISPLAY as object, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Patrimônio</h1>
+          <p style={{ ...SUB as object, fontSize: 13, marginTop: 4 }}>Visão geral dos seus ativos e passivos</p>
         </div>
         <motion.button whileTap={{ scale: 0.95 }}
           onClick={() => { setEditingId(null); setTipo('ativo'); setForm({ nome: '', valor: '', subtipo: 'imovel', jurosAnual: '' }); setAdding(true) }}
@@ -78,22 +78,29 @@ export function Page() {
         </motion.button>
       </div>
 
-      {/* KPI card premium — substitui o teal flat */}
+      {/* KPI card premium — full width, impactante */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-        style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderLeft: '4px solid #3A8580', borderRadius: 20, padding: '20px 24px', marginBottom: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }}>
-        <p style={{ ...LABEL as object, color: '#3A8580', marginBottom: 6 }}>Patrimônio Líquido</p>
-        <p style={{ ...DISPLAY as object, fontSize: 36, color: liquido >= 0 ? '#2C1A0F' : '#C4553B', marginBottom: 16 }}>{fmt(liquido)}</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div style={{ background: '#EBF5F0', borderRadius: 12, padding: '10px 14px' }}>
-            <p style={{ ...LABEL as object, color: '#3A8580', marginBottom: 3 }}>Ativos</p>
-            <p style={{ ...DISPLAY as object, fontSize: 18, color: '#3A8580' }}>{fmt(totalAtivos)}</p>
+        style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderLeft: '4px solid #3A8580', borderRadius: 20, padding: '28px 32px', marginBottom: 24, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)', width: '100%', boxSizing: 'border-box' }}>
+        <p style={{ ...LABEL as object, color: '#3A8580', marginBottom: 8 }}>Patrimônio Líquido</p>
+        <p style={{ ...DISPLAY as object, fontSize: 48, color: liquido >= 0 ? '#2C1A0F' : '#C4553B', letterSpacing: '-2px', marginBottom: 20 }}>{fmt(liquido)}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+          <div style={{ background: '#EBF5F0', borderRadius: 14, padding: '14px 18px' }}>
+            <p style={{ ...LABEL as object, color: '#3A8580', marginBottom: 4 }}>Total em Ativos</p>
+            <p style={{ ...DISPLAY as object, fontSize: 22, color: '#3A8580' }}>{fmt(totalAtivos)}</p>
+            <p style={{ ...SUB as object, fontSize: 11, marginTop: 3 }}>{ativosItems.length} item{ativosItems.length !== 1 ? 's' : ''}</p>
           </div>
-          <div style={{ background: '#FAF0EE', borderRadius: 12, padding: '10px 14px' }}>
-            <p style={{ ...LABEL as object, color: '#C4553B', marginBottom: 3 }}>Passivos</p>
-            <p style={{ ...DISPLAY as object, fontSize: 18, color: '#C4553B' }}>{fmt(totalPassivos)}</p>
+          <div style={{ background: '#FAF0EE', borderRadius: 14, padding: '14px 18px' }}>
+            <p style={{ ...LABEL as object, color: '#C4553B', marginBottom: 4 }}>Total em Passivos</p>
+            <p style={{ ...DISPLAY as object, fontSize: 22, color: '#C4553B' }}>{fmt(totalPassivos)}</p>
+            <p style={{ ...SUB as object, fontSize: 11, marginTop: 3 }}>{passivosItems.length} item{passivosItems.length !== 1 ? 's' : ''}</p>
+          </div>
+          <div style={{ background: '#F5F0E8', borderRadius: 14, padding: '14px 18px' }}>
+            <p style={{ ...LABEL as object, color: '#7A5C4F', marginBottom: 4 }}>Cobertura</p>
+            <p style={{ ...DISPLAY as object, fontSize: 22, color: '#2C1A0F' }}>{totalPassivos > 0 ? (totalAtivos / totalPassivos).toFixed(1) + 'x' : '—'}</p>
+            <p style={{ ...SUB as object, fontSize: 11, marginTop: 3 }}>Ativos / Passivos</p>
           </div>
         </div>
       </motion.div>
@@ -113,7 +120,7 @@ export function Page() {
                 <div style={{ flex: 1, height: 1, background: '#EDE6DC' }} />
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#3A8580' }}>{fmt(totalAtivos)}</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
                 {ativosItems.map((item, i) => {
                   const sub = SUBTIPOS_ATIVO.find(s => s.v === item.subtipo)
                   const SubIcon = sub?.icon ?? IconArchive
@@ -148,7 +155,7 @@ export function Page() {
                 <div style={{ flex: 1, height: 1, background: '#EDE6DC' }} />
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#C4553B' }}>{fmt(totalPassivos)}</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
                 {passivosItems.map((item, i) => {
                   const sub = SUBTIPOS_PASSIVO.find(s => s.v === item.subtipo)
                   const SubIcon = sub?.icon ?? IconListDetails

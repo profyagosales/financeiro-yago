@@ -162,10 +162,10 @@ function TxRow({ tx, i }: { tx: any; i: number }) {
           boxShadow: '0 1px 3px rgba(44,26,15,0.04)',
           transition: 'background .12s, border .18s, box-shadow .18s',
         }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 15px' }}>
-          <CategoryIcon nome={cat?.nome ?? ''} cor={catCor} size={46} radius={14} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 16px' }}>
+          <CategoryIcon nome={cat?.nome ?? ''} cor={catCor} size={38} radius={12} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ ...BODY, fontSize: 14, fontWeight: 700, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.descricao}</p>
+            <p style={{ ...BODY, fontSize: 13, fontWeight: 700, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.descricao}</p>
             <div style={{ display: 'flex', gap: 6, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ ...BODY, fontSize: 11, fontWeight: 600, color: catCor }}>{cat?.nome}</span>
               <span style={{ color: '#D0C4B8', fontSize: 9 }}>•</span>
@@ -289,12 +289,12 @@ function SearchBar({ value, onChange }: { value: string; onChange: (v: string) =
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10,
       background: '#FFFFFF',
-      border: `1.5px solid ${focused ? '#C4553B' : '#E8E0D5'}`,
-      borderRadius: 16,
-      padding: '11px 15px',
-      marginBottom: 14,
-      boxShadow: focused ? '0 0 0 3px rgba(196,85,59,0.08)' : 'none',
-      transition: 'border-color .18s, box-shadow .18s',
+      border: `1.5px solid ${focused || value ? '#C4553B' : '#E8E0D5'}`,
+      borderRadius: 14,
+      padding: '10px 16px',
+      marginBottom: 12,
+      boxShadow: focused || value ? '0 0 0 4px rgba(196,85,59,0.08)' : '0 1px 3px rgba(44,26,15,0.05)',
+      transition: 'all .2s',
     }}>
       <IconSearch size={16} color={focused ? '#C4553B' : '#9B7B6A'} stroke={1.8} style={{ transition: 'color .18s', flexShrink: 0 }} />
       <input
@@ -350,26 +350,29 @@ export function Page() {
   const hasFilter = filtroTipo !== 'todos' || filtroStatus !== 'todos' || filtroCategoria !== null || filtroMes !== null
 
   return (
-    <div style={{ padding: '24px 28px', width: '100%', paddingBottom: 32 }}>
+    <div style={{ padding: '32px', width: '100%', paddingBottom: 32 }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <h1 style={{ ...DISPLAY, fontSize: 28, color: '#2C1A0F' }}>Transações</h1>
+          <h1 style={{ ...DISPLAY, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Transações</h1>
           {contaFiltrada && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-              <div style={{ width: 9, height: 9, borderRadius: '50%', background: contaFiltrada.cor }} />
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: contaFiltrada.cor }} />
               <span style={{ ...BODY, fontSize: 12, fontWeight: 600, color: contaFiltrada.cor }}>{contaFiltrada.nome}</span>
               <button onClick={() => navigate('/transacoes')} style={{ background: 'none', border: 'none', cursor: 'pointer', ...BODY, fontSize: 11, color: '#9B7B6A', padding: 0 }}>× limpar</button>
             </div>
           )}
         </div>
-        {/* Quick stats pill */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ background: '#F5F0E8', borderRadius: 20, padding: '5px 12px' }}>
-            <span style={{ ...BODY, fontSize: 12, fontWeight: 600, color: '#7A5C4F' }}>
-              {filtradas.length} item{filtradas.length !== 1 ? 's' : ''}
-            </span>
+          {hasFilter && (
+            <button onClick={() => { setFiltroTipo('todos'); setFiltroStatus('todos'); setFiltroCategoria(null); setFiltroMes(null) }}
+              style={{ ...BODY, fontSize: 11, fontWeight: 600, color: '#9B7B6A', background: '#F5F0E8', border: 'none', borderRadius: 20, padding: '6px 12px', cursor: 'pointer' }}>
+              Limpar filtros
+            </button>
+          )}
+          <div style={{ ...BODY, fontSize: 12, fontWeight: 600, color: '#7A5C4F', background: '#F5F0E8', padding: '6px 14px', borderRadius: 20 }}>
+            {filtradas.length} item{filtradas.length !== 1 ? 's' : ''}
           </div>
         </div>
       </div>
@@ -378,9 +381,9 @@ export function Page() {
       <SearchBar value={busca} onChange={setBusca} />
 
       {/* Month filter pills */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto', paddingBottom: 4 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 4 }}>
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => setFiltroMes(null)}
-          style={{ padding: '7px 14px', borderRadius: 20, border: filtroMes === null ? 'none' : '1.5px solid #E8E0D5', cursor: 'pointer', ...BODY, fontSize: 11, fontWeight: 700, background: filtroMes === null ? '#2C1A0F' : 'transparent', color: filtroMes === null ? 'white' : '#7A5C4F', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s' }}>
+          style={{ padding: '6px 12px', borderRadius: 20, border: filtroMes === null ? 'none' : '1.5px solid #E8E0D5', cursor: 'pointer', ...BODY, fontSize: 11, fontWeight: 700, background: filtroMes === null ? '#2C1A0F' : 'transparent', color: filtroMes === null ? 'white' : '#7A5C4F', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s' }}>
           Todos
         </motion.button>
         {Array.from({ length: 12 }, (_, idx) => {
@@ -390,7 +393,7 @@ export function Page() {
           const active = filtroMes === m && filtroAno === a
           return (
             <motion.button key={`${a}-${m}`} whileTap={{ scale: 0.95 }} onClick={() => { setFiltroMes(m); setFiltroAno(a) }}
-              style={{ padding: '7px 14px', borderRadius: 20, border: active ? 'none' : '1.5px solid #E8E0D5', cursor: 'pointer', ...BODY, fontSize: 11, fontWeight: active ? 700 : 500, background: active ? '#C4553B' : 'transparent', color: active ? 'white' : '#7A5C4F', whiteSpace: 'nowrap', flexShrink: 0, textTransform: 'capitalize', transition: 'all .15s', boxShadow: active ? '0 2px 8px rgba(196,85,59,0.25)' : 'none' }}>
+              style={{ padding: '6px 12px', borderRadius: 20, border: active ? 'none' : '1.5px solid #E8E0D5', cursor: 'pointer', ...BODY, fontSize: 11, fontWeight: active ? 700 : 500, background: active ? '#C4553B' : 'transparent', color: active ? 'white' : '#7A5C4F', whiteSpace: 'nowrap', flexShrink: 0, textTransform: 'capitalize', transition: 'all .15s', boxShadow: active ? '0 2px 8px rgba(196,85,59,0.25)' : 'none' }}>
               {label}
             </motion.button>
           )
@@ -398,7 +401,7 @@ export function Page() {
       </div>
 
       {/* Tipo + Status filter bar */}
-      <div style={{ display: 'flex', gap: 7, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         {/* Tipo */}
         <div style={{ display: 'flex', background: '#F5F0E8', borderRadius: 12, padding: 3, gap: 3 }}>
           {([['todos', 'Todos', null], ['receita', '+ Receitas', '#3A8580'], ['despesa', '− Despesas', '#C4553B']] as const).map(([val, label, cor]) => (
@@ -522,21 +525,14 @@ export function Page() {
             const isToday = data === hoje
             return (
               <div key={data} style={{ marginBottom: 22 }}>
-                {/* Sophisticated date group header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, marginTop: idx > 0 ? 22 : 0 }}>
-                  <div style={{ background: isToday ? '#C4553B' : '#F5F0E8', borderRadius: 10, padding: '4px 12px', flexShrink: 0 }}>
-                    <p style={{
-                      fontFamily: "'Plus Jakarta Sans'", fontSize: 11, fontWeight: 700,
-                      color: isToday ? 'white' : '#7A5C4F',
-                      textTransform: 'capitalize', margin: 0,
-                    }}>{labelData(data)}</p>
+                {/* Date group header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, marginTop: idx > 0 ? 22 : 0 }}>
+                  <div style={{ background: isToday ? '#C4553B' : '#F5F0E8', borderRadius: 8, padding: '3px 10px', flexShrink: 0 }}>
+                    <p style={{ ...BODY, fontSize: 11, fontWeight: 700, color: isToday ? 'white' : '#7A5C4F', textTransform: 'capitalize', margin: 0 }}>{labelData(data)}</p>
                   </div>
                   <div style={{ flex: 1, height: 1, background: '#F0EAE2' }} />
-                  <div style={{ background: saldoDia >= 0 ? '#EBF5F0' : '#FAF0EE', borderRadius: 10, padding: '4px 12px', flexShrink: 0 }}>
-                    <p style={{
-                      fontFamily: "'Fraunces'", fontSize: 12, fontWeight: 700,
-                      color: saldoDia >= 0 ? '#3A8580' : '#C4553B', margin: 0,
-                    }}>
+                  <div style={{ background: saldoDia >= 0 ? '#EBF5F0' : '#FAF0EE', borderRadius: 8, padding: '3px 10px' }}>
+                    <p style={{ ...DISPLAY, fontSize: 11, color: saldoDia >= 0 ? '#3A8580' : '#C4553B', margin: 0 }}>
                       {saldoDia >= 0 ? '+' : ''}{fmt(saldoDia)}
                     </p>
                   </div>
