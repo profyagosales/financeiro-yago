@@ -59,14 +59,14 @@
   --muted: #9B7B6A;
   --border: #EDE6DC;
   --border-soft: #F5F0E8;
-  --card: #FFFFFF;
-  --bg: #FAF6F0;
+  --card: rgba(255,255,255,0.82);
+  --bg: #FFFFFF;
 }
 
 @theme {
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --color-cream: #FAF6F0;
+  --color-cream: #FFFFFF;
   --color-card: #FFFDF9;
   --color-terra: #C4553B;
   --color-terra-dark: #A8442B;
@@ -92,7 +92,7 @@
 html, body, #root {
   height: 100%;
   font-family: var(--font-body);
-  background-color: var(--color-cream);
+  background-color: #FFFFFF;
   color: var(--color-dark);
   -webkit-font-smoothing: antialiased;
 }
@@ -183,4 +183,74 @@ html, body, #root {
   letter-spacing: -1.5px;
   line-height: 1;
   color: #2C1A0F;
+}
+
+/* ── Glassmorphism ─────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+}
+
+.glass-dark {
+  background: rgba(10, 4, 2, 0.82) !important;
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+/* ── Grain texture overlay ─────────────────────────── */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+/* ── Shimmer hover effect ──────────────────────────── */
+@keyframes shimmer-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: none;
+}
+
+.shimmer-hover:hover::after {
+  animation: shimmer-slide 0.55s ease forwards;
+}
+
+/* ── Glow effects ──────────────────────────────────── */
+.glow-terra {
+  box-shadow: 0 0 0 1px rgba(196,85,59,0.15), 0 8px 32px rgba(196,85,59,0.22), 0 2px 8px rgba(196,85,59,0.12) !important;
+}
+.glow-teal {
+  box-shadow: 0 0 0 1px rgba(58,133,128,0.15), 0 8px 32px rgba(58,133,128,0.2), 0 2px 8px rgba(58,133,128,0.1) !important;
+}
+.glow-amber {
+  box-shadow: 0 0 0 1px rgba(212,160,23,0.15), 0 8px 32px rgba(212,160,23,0.2), 0 2px 8px rgba(212,160,23,0.1) !important;
 }

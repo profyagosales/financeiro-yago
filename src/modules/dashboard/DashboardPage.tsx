@@ -25,7 +25,14 @@ const STAGGER = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { stag
 const ITEM = { hidden: { opacity: 0, y: 18, scale: 0.97 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring' as const, stiffness: 260, damping: 26 } } }
 
 // ─── Design tokens ───────────────────────────────────────────────
-const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
+const CARD: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.72)',
+  backdropFilter: 'blur(18px)',
+  WebkitBackdropFilter: 'blur(18px)',
+  borderRadius: 22,
+  border: '1px solid rgba(255,255,255,0.6)',
+  boxShadow: '0 8px 32px rgba(44,26,15,0.07), 0 1px 4px rgba(44,26,15,0.04)',
+}
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: '#9B7B6A' }
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.1 }
 
@@ -144,19 +151,37 @@ export function DashboardPage() {
         </motion.div>
 
         {/* ENTRADAS — teal */}
-        <motion.div whileHover={{ y: -3, boxShadow: '0 8px 28px rgba(58,133,128,0.2)' }} style={{ background: 'linear-gradient(145deg, #EBF5F0 0%, #FFFFFF 100%)', borderRadius: 20, padding: '18px 20px', border: '1px solid rgba(58,133,128,0.2)', boxShadow: '0 2px 12px rgba(58,133,128,0.08)', transition: 'box-shadow .18s' }}>
+        <motion.div whileHover={{ y: -3, boxShadow: '0 8px 28px rgba(58,133,128,0.3)' }} style={{
+          background: 'linear-gradient(145deg, rgba(58,133,128,0.28) 0%, rgba(255,255,255,0.65) 100%)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          borderRadius: 22,
+          padding: '18px 20px',
+          border: '1px solid rgba(58,133,128,0.32)',
+          boxShadow: '0 8px 32px rgba(58,133,128,0.2), 0 2px 8px rgba(58,133,128,0.1)',
+          transition: 'box-shadow .18s',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
             <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(58,133,128,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <IconArrowUpRight size={12} color="#3A8580" stroke={2.5} />
             </div>
-            <span style={{ ...LABEL, color: '#3A8580' }}>Entradas</span>
+            <span style={{ ...LABEL, color: '#1F5E5A' }}>Entradas</span>
           </div>
           <OdometroSaldo value={receitas} style={{ ...DISPLAY, fontSize: 26, color: '#3A8580', display: 'block' }} />
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(58,133,128,0.6)', marginTop: 6 }}>em {mesNome}</p>
         </motion.div>
 
         {/* SAÍDAS — terra */}
-        <motion.div whileHover={{ y: -3, boxShadow: '0 8px 28px rgba(196,85,59,0.2)' }} style={{ background: 'linear-gradient(145deg, #FAF0EE 0%, #FFFFFF 100%)', borderRadius: 20, padding: '18px 20px', border: '1px solid rgba(196,85,59,0.2)', boxShadow: '0 2px 12px rgba(196,85,59,0.08)', transition: 'box-shadow .18s' }}>
+        <motion.div whileHover={{ y: -3, boxShadow: '0 8px 28px rgba(196,85,59,0.3)' }} style={{
+          background: 'linear-gradient(145deg, rgba(196,85,59,0.25) 0%, rgba(255,255,255,0.65) 100%)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          borderRadius: 22,
+          padding: '18px 20px',
+          border: '1px solid rgba(196,85,59,0.28)',
+          boxShadow: '0 8px 32px rgba(196,85,59,0.2), 0 2px 8px rgba(196,85,59,0.1)',
+          transition: 'box-shadow .18s',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
             <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(196,85,59,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <IconArrowDownRight size={12} color="#C4553B" stroke={2.5} />
@@ -168,7 +193,16 @@ export function DashboardPage() {
         </motion.div>
 
         {/* TAXA DE POUPANÇA — amber */}
-        <motion.div whileHover={{ y: -3, boxShadow: `0 8px 28px ${poupancaColor}22` }} style={{ background: `linear-gradient(145deg, ${poupancaColor}12 0%, #FFFFFF 100%)`, borderRadius: 20, padding: '18px 20px', border: `1px solid ${poupancaColor}28`, boxShadow: `0 2px 12px ${poupancaColor}10`, transition: 'box-shadow .18s' }}>
+        <motion.div whileHover={{ y: -3, boxShadow: `0 8px 28px ${poupancaColor}44` }} style={{
+          background: `linear-gradient(145deg, ${poupancaColor}38 0%, rgba(255,255,255,0.65) 100%)`,
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          borderRadius: 22,
+          padding: '18px 20px',
+          border: `1px solid ${poupancaColor}40`,
+          boxShadow: `0 8px 32px ${poupancaColor}28, 0 2px 8px ${poupancaColor}14`,
+          transition: 'box-shadow .18s',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
             <div style={{ width: 22, height: 22, borderRadius: 7, background: `${poupancaColor}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <IconPercentage size={12} color={poupancaColor} stroke={2} />
@@ -189,7 +223,7 @@ export function DashboardPage() {
 
         {/* Hero dark card — PANORAMA */}
         <div style={{
-          background: 'linear-gradient(148deg, #0D0604 0%, #1C0A06 100%)',
+          background: 'linear-gradient(148deg, #080302 0%, #180804 45%, #0D0402 100%)',
           borderRadius: 22,
           padding: '26px 28px',
           boxShadow: '0 16px 48px rgba(13,6,4,0.5), 0 4px 16px rgba(13,6,4,0.25)',
@@ -247,8 +281,18 @@ export function DashboardPage() {
           )}
         </div>
 
-        {/* Gastos por categoria — fundo creme com accent teal */}
-        <div style={{ background: 'linear-gradient(160deg, #F5FAF9 0%, #FFFFFF 60%)', border: '1px solid rgba(58,133,128,0.15)', borderRadius: 22, padding: '22px', display: 'flex', flexDirection: 'column', boxShadow: '0 2px 16px rgba(58,133,128,0.07)' }}>
+        {/* Gastos por categoria — glassmorphism com accent teal */}
+        <div style={{
+          background: 'linear-gradient(160deg, rgba(58,133,128,0.14) 0%, rgba(255,255,255,0.75) 55%)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+          border: '1px solid rgba(58,133,128,0.22)',
+          borderRadius: 22,
+          padding: '22px',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 8px 32px rgba(58,133,128,0.12), 0 2px 8px rgba(44,26,15,0.04)',
+        }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
             <h2 style={{ ...DISPLAY, fontSize: 17, color: '#2C1A0F' }}>Por categoria</h2>
             <button onClick={() => navigate('/relatorios')}
@@ -444,6 +488,7 @@ function TxRow({ tx, i, last }: { tx: any; i: number; last: boolean }) {
     <motion.div
       initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.1 + i * 0.035, type: 'spring', stiffness: 280, damping: 26 }}
+      whileHover={{ backgroundColor: 'rgba(196,85,59,0.04)' }}
       style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', borderBottom: last ? 'none' : '1px solid #F5F0EA' }}>
       {cat && <CategoryIcon nome={cat.nome} cor={cat.cor} size={40} radius={12} />}
       <div style={{ flex: 1, minWidth: 0 }}>

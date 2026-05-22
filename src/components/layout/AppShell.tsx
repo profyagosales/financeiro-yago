@@ -9,17 +9,33 @@ import { IconPlus } from '@tabler/icons-react'
 
 function BackgroundMesh() {
   const orbs = [
-    { left: '60%', top: '8%',  color: 'rgba(196,85,59,0.07)',   size: 520, dur: 14, delay: 0 },
-    { left: '80%', top: '55%', color: 'rgba(58,133,128,0.06)',  size: 440, dur: 17, delay: 3 },
-    { left: '40%', top: '75%', color: 'rgba(212,160,23,0.05)',  size: 380, dur: 20, delay: 6 },
+    { left: '72%', top: '0%',  color: 'rgba(196,85,59,0.32)',  size: 700, dur: 14, delay: 0 },
+    { left: '90%', top: '50%', color: 'rgba(58,133,128,0.26)', size: 580, dur: 17, delay: 3 },
+    { left: '50%', top: '85%', color: 'rgba(212,160,23,0.22)', size: 500, dur: 20, delay: 6 },
+    { left: '12%', top: '28%', color: 'rgba(196,85,59,0.14)',  size: 440, dur: 24, delay: 9 },
   ]
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
       {orbs.map((orb, i) => (
         <motion.div key={i}
-          animate={{ x: [0, 40, -25, 0], y: [0, -30, 20, 0] }}
+          animate={{
+            x: [0, 50, -32, 0],
+            y: [0, -40, 26, 0],
+            scale: [1, 1.08, 0.94, 1],
+          }}
           transition={{ duration: orb.dur, repeat: Infinity, ease: 'easeInOut', delay: orb.delay }}
-          style={{ position: 'absolute', left: orb.left, top: orb.top, width: orb.size, height: orb.size, borderRadius: '50%', background: orb.color, filter: `blur(${orb.size / 2.8}px)`, transform: 'translate(-50%, -50%)' }} />
+          style={{
+            position: 'absolute',
+            left: orb.left,
+            top: orb.top,
+            width: orb.size,
+            height: orb.size,
+            borderRadius: '50%',
+            background: orb.color,
+            filter: `blur(${orb.size / 2.4}px)`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
       ))}
     </div>
   )
@@ -30,7 +46,7 @@ export function AppShell() {
   const location = useLocation()
 
   return (
-    <div style={{ display: 'flex', height: '100dvh', background: '#FAF6F0', overflow: 'hidden' }}>
+    <div className="grain" style={{ display: 'flex', height: '100dvh', background: '#FFFFFF', overflow: 'hidden' }}>
       <BackgroundMesh />
       {/* Sidebar — desktop only */}
       <div className="sidebar-desktop">
