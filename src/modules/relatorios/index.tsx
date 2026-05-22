@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, CartesianGrid } from 'recharts'
 import { useTransacoesByMes } from '@/db/hooks/useTransacoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { fmt } from '@/lib/format'
 import { db } from '@/db/schema'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
+
+const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B7B6A' }
+const BODY: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif" }
+const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
 
 function useUltimos6Meses() {
   return useLiveQuery(async () => {
@@ -29,10 +35,10 @@ function useUltimos6Meses() {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: '#2C1A0F', borderRadius: 10, padding: '8px 12px' }}>
-      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#C4B4A8', marginBottom: 4 }}>{label}</p>
+    <div style={{ background: '#2C1A0F', borderRadius: 10, padding: '8px 12px', boxShadow: '0 4px 16px rgba(44,26,15,0.25)' }}>
+      <p style={{ ...BODY, fontSize: 11, color: '#C4B4A8', marginBottom: 4 }}>{label}</p>
       {payload.map((p: any) => (
-        <p key={p.name} style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700, color: p.color }}>{fmt(p.value)}</p>
+        <p key={p.name} style={{ ...DISPLAY, fontSize: 13, color: p.color }}>{fmt(p.value)}</p>
       ))}
     </div>
   )
@@ -48,12 +54,12 @@ function Comparativo({ atual, anterior, label, cor }: { atual: number; anterior:
   const diff = anterior > 0 ? ((atual - anterior) / anterior) * 100 : null
   const subiu = diff !== null && diff > 0
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '0.5px solid #F5F0E8' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid #F5F0E8' }}>
       <div style={{ width: 8, height: 8, borderRadius: '50%', background: cor, flexShrink: 0 }} />
-      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', flex: 1 }}>{label}</span>
-      <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F' }}>{fmt(atual)}</span>
+      <span style={{ ...BODY, fontSize: 13, color: '#9B7B6A', flex: 1 }}>{label}</span>
+      <span style={{ ...DISPLAY, fontSize: 14, color: '#2C1A0F' }}>{fmt(atual)}</span>
       {diff !== null && (
-        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, background: Math.abs(diff) < 5 ? '#F5F0E8' : subiu ? '#FAF0EE' : '#EBF5F0', color: Math.abs(diff) < 5 ? '#9B7B6A' : subiu ? '#C4553B' : '#3A8580', padding: '2px 7px', borderRadius: 20 }}>
+        <span style={{ ...BODY, fontSize: 10, fontWeight: 700, background: Math.abs(diff) < 5 ? '#F5F0E8' : subiu ? '#FAF0EE' : '#EBF5F0', color: Math.abs(diff) < 5 ? '#9B7B6A' : subiu ? '#C4553B' : '#3A8580', padding: '2px 8px', borderRadius: 20 }}>
           {subiu ? '↑' : '↓'} {Math.abs(diff).toFixed(0)}%
         </span>
       )}
@@ -78,48 +84,63 @@ export function Page() {
 
   const gastosMap = new Map<number, number>()
   transacoes.filter(t => t.tipo === 'despesa').forEach(t => gastosMap.set(t.categoriaId, (gastosMap.get(t.categoriaId) ?? 0) + t.valor))
-  const pieData = categorias.filter(c => gastosMap.has(c.id!)).map(c => ({ name: c.nome, value: gastosMap.get(c.id!) ?? 0, color: c.cor, icon: c.icone })).sort((a, b) => b.value - a.value)
+  const pieData = categorias.filter(c => gastosMap.has(c.id!)).map(c => ({ name: c.nome, value: gastosMap.get(c.id!) ?? 0, color: c.cor })).sort((a, b) => b.value - a.value)
 
   const mesNome = new Date(ano, mes-1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
   const prevMes = () => { if (mes === 1) { setMes(12); setAno(a => a-1) } else setMes(m => m-1) }
   const nextMes = () => { if (mes === 12) { setMes(1); setAno(a => a+1) } else setMes(m => m+1) }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "24px 28px", width: "100%" }}>
-      <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F', marginBottom: 16 }}>Relatórios</h1>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ width: '100%', paddingBottom: 32 }}>
 
-      {/* Month nav */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFDF9', border: '0.5px solid #E8E0D5', borderRadius: 14, padding: '10px 16px', marginBottom: 20 }}>
-        <button onClick={prevMes} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#C4553B' }}>‹</button>
-        <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', textTransform: 'capitalize' }}>{mesNome}</span>
-        <button onClick={nextMes} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#C4553B' }}>›</button>
+      {/* Inline header */}
+      <div style={{ padding: '24px 28px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div>
+          <h1 style={{ ...DISPLAY, fontSize: 28, color: '#2C1A0F' }}>Relatórios</h1>
+          <p style={{ ...BODY, fontSize: 13, color: '#9B7B6A', marginTop: 2 }}>Análise financeira detalhada</p>
+        </div>
       </div>
 
-      {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 24 }}>
-        {[{ l: 'RECEITAS', v: receitas, c: '#EBF5F0', tc: '#3A8580' }, { l: 'DESPESAS', v: despesas, c: '#FAF0EE', tc: '#C4553B' }, { l: 'SALDO', v: saldo, c: saldo >= 0 ? '#EBF5F0' : '#FAF0EE', tc: saldo >= 0 ? '#3A8580' : '#C4553B' }].map(s => (
-          <div key={s.l} style={{ background: s.c, borderRadius: 14, padding: '12px 14px' }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 600, color: s.tc, marginBottom: 4, letterSpacing: '.05em' }}>{s.l}</p>
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F' }}>{fmt(s.v)}</p>
+      {/* Month navigator */}
+      <div style={{ display: 'flex', alignItems: 'center', background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 16, padding: '10px 16px', margin: '0 28px 20px', boxShadow: '0 1px 3px rgba(44,26,15,0.05)', justifyContent: 'space-between' }}>
+        <button onClick={prevMes} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 10, color: '#C4553B', transition: 'background .15s' }}>
+          <IconChevronLeft size={18} stroke={2.5} />
+        </button>
+        <p style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F', textTransform: 'capitalize' }}>{mesNome}</p>
+        <button onClick={nextMes} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 10, color: '#C4553B', transition: 'background .15s' }}>
+          <IconChevronRight size={18} stroke={2.5} />
+        </button>
+      </div>
+
+      {/* KPI 3-col — white cards, no tints */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, padding: '0 28px', marginBottom: 20 }}>
+        {[
+          { label: 'RECEITAS', value: receitas, color: '#3A8580' },
+          { label: 'DESPESAS', value: despesas, color: '#C4553B' },
+          { label: 'SALDO', value: saldo, color: saldo >= 0 ? '#2C1A0F' : '#C4553B' },
+        ].map(kpi => (
+          <div key={kpi.label} style={{ ...CARD, padding: '14px 16px', borderRadius: 16 }}>
+            <p style={{ ...LABEL, marginBottom: 5 }}>{kpi.label}</p>
+            <p style={{ ...DISPLAY, fontSize: 18, color: kpi.color }}>{fmt(kpi.value)}</p>
           </div>
         ))}
       </div>
 
-      {/* Comparativo mês a mês */}
+      {/* Comparativo mês anterior */}
       {(recAnt > 0 || despAnt > 0) && (
-        <div style={{ background: '#FFFDF9', border: '0.5px solid #E8E0D5', borderRadius: 20, padding: '18px', marginBottom: 20 }}>
-          <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: '#2C1A0F', marginBottom: 4 }}>Comparativo</h2>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginBottom: 12 }}>vs mês anterior</p>
+        <div style={{ ...CARD, margin: '0 28px 20px', padding: '18px 20px' }}>
+          <h2 style={{ ...DISPLAY, fontSize: 17, color: '#2C1A0F', marginBottom: 2 }}>Comparativo</h2>
+          <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginBottom: 12 }}>vs mês anterior</p>
           <Comparativo atual={receitas} anterior={recAnt} label="Receitas" cor="#3A8580" />
           <Comparativo atual={despesas} anterior={despAnt} label="Despesas" cor="#C4553B" />
           <Comparativo atual={saldo} anterior={recAnt - despAnt} label="Saldo" cor="#D4A017" />
         </div>
       )}
 
-      {/* Spending by category */}
+      {/* Gastos por categoria */}
       {pieData.length > 0 && (
-        <div style={{ background: '#FFFDF9', border: '0.5px solid #E8E0D5', borderRadius: 20, padding: '18px', marginBottom: 20 }}>
-          <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>Gastos por categoria</h2>
+        <div style={{ ...CARD, margin: '0 28px 20px', padding: '18px 20px' }}>
+          <h2 style={{ ...DISPLAY, fontSize: 17, color: '#2C1A0F', marginBottom: 16 }}>Gastos por categoria</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <ResponsiveContainer width={140} height={140}>
               <PieChart>
@@ -128,12 +149,12 @@ export function Page() {
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 7 }}>
               {pieData.slice(0, 5).map(d => (
                 <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
-                  <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#2C1A0F', flex: 1 }}>{d.icon} {d.name}</span>
-                  <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F' }}>{fmt(d.value)}</span>
+                  <span style={{ ...BODY, fontSize: 12, color: '#2C1A0F', flex: 1 }}>{d.name}</span>
+                  <span style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F' }}>{fmt(d.value)}</span>
                 </div>
               ))}
             </div>
@@ -141,48 +162,50 @@ export function Page() {
         </div>
       )}
 
-      {/* 6-month bar chart */}
+      {/* Últimos 6 meses */}
       {historico.length > 0 && (
-        <div style={{ background: '#FFFDF9', border: '0.5px solid #E8E0D5', borderRadius: 20, padding: '18px', marginBottom: 20 }}>
-          <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>Últimos 6 meses</h2>
+        <div style={{ ...CARD, margin: '0 28px 20px', padding: '18px 20px' }}>
+          <h2 style={{ ...DISPLAY, fontSize: 17, color: '#2C1A0F', marginBottom: 16 }}>Últimos 6 meses</h2>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={historico} barGap={4}>
+              <CartesianGrid vertical={false} stroke="#F5F0E8" strokeDasharray="0" />
               <XAxis dataKey="mes" tick={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fill: '#9B7B6A' }} axisLine={false} tickLine={false} />
               <YAxis hide />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(44,26,15,0.04)' }} />
-              <Bar dataKey="receitas" fill="#3A8580" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="despesas" fill="#C4553B" radius={[6, 6, 0, 0]} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(44,26,15,0.03)' }} />
+              <Bar dataKey="receitas" name="Receitas" fill="#3A8580" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="despesas" name="Despesas" fill="#C4553B" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 8 }}>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 10, height: 10, borderRadius: 3, background: '#3A8580' }} />
-              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>Receitas</span>
+              <span style={{ ...BODY, fontSize: 11, color: '#9B7B6A' }}>Receitas</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 10, height: 10, borderRadius: 3, background: '#C4553B' }} />
-              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>Despesas</span>
+              <span style={{ ...BODY, fontSize: 11, color: '#9B7B6A' }}>Despesas</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Cash flow area chart */}
+      {/* Fluxo de caixa */}
       {historico.length > 0 && (
-        <div style={{ background: '#FFFDF9', border: '0.5px solid #E8E0D5', borderRadius: 20, padding: '18px' }}>
-          <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>Fluxo de caixa</h2>
+        <div style={{ ...CARD, margin: '0 28px', padding: '18px 20px' }}>
+          <h2 style={{ ...DISPLAY, fontSize: 17, color: '#2C1A0F', marginBottom: 16 }}>Fluxo de caixa</h2>
           <ResponsiveContainer width="100%" height={140}>
             <AreaChart data={historico}>
               <defs>
                 <linearGradient id="saldoGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3A8580" stopOpacity={0.3} />
+                  <stop offset="5%" stopColor="#3A8580" stopOpacity={0.25} />
                   <stop offset="95%" stopColor="#3A8580" stopOpacity={0} />
                 </linearGradient>
               </defs>
+              <CartesianGrid vertical={false} stroke="#F5F0E8" strokeDasharray="0" />
               <XAxis dataKey="mes" tick={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fill: '#9B7B6A' }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="saldo" stroke="#3A8580" strokeWidth={2} fill="url(#saldoGrad)" />
+              <Area type="monotone" dataKey="saldo" name="Saldo" stroke="#3A8580" strokeWidth={2} fill="url(#saldoGrad)" dot={{ fill: '#3A8580', strokeWidth: 0, r: 3 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -190,7 +213,7 @@ export function Page() {
 
       {transacoes.length === 0 && (
         <div style={{ textAlign: 'center', padding: '32px 0' }}>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A' }}>Sem transações neste mês</p>
+          <p style={{ ...BODY, fontSize: 14, color: '#9B7B6A' }}>Sem transações neste mês</p>
         </div>
       )}
     </motion.div>

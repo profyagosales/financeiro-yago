@@ -8,6 +8,7 @@ import { addAnexo } from '@/db/hooks/useAnexos'
 import { todayISO, mesAnoAtual } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { IconX, IconCamera, IconCheck, IconRepeat, IconCreditCard, IconBuildingBank, IconArrowsExchange, IconFile, IconPaperclip } from '@tabler/icons-react'
+import { sounds, haptic } from '@/lib/sounds'
 
 type TipoLanc = 'despesa' | 'receita' | 'transferencia'
 type FontePag = 'conta' | 'cartao'
@@ -85,6 +86,8 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
       if (preview && id) await addAnexo(id as number, preview.file)
     }
 
+    sounds.success()
+    haptic('medium')
     setSaving(false)
     onClose()
   }

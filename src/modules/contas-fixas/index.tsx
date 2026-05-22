@@ -9,16 +9,10 @@ import { Dobrao } from '@/components/mascot/Dobrao'
 import { db } from '@/db/schema'
 import { IconPlus, IconX, IconTrash, IconCheck, IconEdit, IconCalendarDue, IconAlertTriangle, IconCircleCheck } from '@tabler/icons-react'
 
-function lightenHex(hex: string, pct: number) {
-  if (!hex || hex.length < 7) return hex
-  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
-  return `#${Math.min(255,Math.round(r+(255-r)*pct/100)).toString(16).padStart(2,'0')}${Math.min(255,Math.round(g+(255-g)*pct/100)).toString(16).padStart(2,'0')}${Math.min(255,Math.round(b+(255-b)*pct/100)).toString(16).padStart(2,'0')}`
-}
-function darkenHex(hex: string, pct: number) {
-  if (!hex || hex.length < 7) return hex
-  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
-  return `#${Math.max(0,Math.round(r*(1-pct/100))).toString(16).padStart(2,'0')}${Math.max(0,Math.round(g*(1-pct/100))).toString(16).padStart(2,'0')}${Math.max(0,Math.round(b*(1-pct/100))).toString(16).padStart(2,'0')}`
-}
+const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }
+const SUB: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }
+const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
 
 function ContaFixaRow({ cf, mes, ano, onEdit, onDelete }: { cf: any; mes: number; ano: number; onEdit: () => void; onDelete: () => void }) {
   const pagamentos = usePagamentosFixos(mes, ano)
@@ -34,15 +28,20 @@ function ContaFixaRow({ cf, mes, ano, onEdit, onDelete }: { cf: any; mes: number
   const vencida = !pago && diasRestantes < 0
 
   const statusColor = pago ? '#3A8580' : vencida ? '#C4553B' : urgente ? '#D4A017' : '#9B7B6A'
-  const statusBg = pago ? 'rgba(58,133,128,0.08)' : vencida ? 'rgba(196,85,59,0.08)' : urgente ? 'rgba(212,160,23,0.08)' : 'transparent'
+  const statusBg = pago ? 'rgba(58,133,128,0.1)' : vencida ? 'rgba(196,85,59,0.1)' : urgente ? 'rgba(212,160,23,0.1)' : '#F5F0E8'
   const borderColor = pago ? 'rgba(58,133,128,0.2)' : vencida ? 'rgba(196,85,59,0.2)' : urgente ? 'rgba(212,160,23,0.2)' : '#EDE6DC'
 
   return (
-    <motion.div layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-      style={{ background: pago ? '#F8FDF8' : '#FFFDF9', border: `1px solid ${borderColor}`, borderRadius: 18, padding: '14px 16px', position: 'relative', overflow: 'hidden' }}>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: pago ? 0.72 : 1, y: 0 }}
+      whileHover={{ y: -4, boxShadow: '0 4px 12px rgba(44,26,15,0.08), 0 8px 24px rgba(44,26,15,0.07)' }}
+      transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+      style={{ ...CARD, padding: '14px 16px', position: 'relative', overflow: 'hidden', cursor: 'default' }}>
 
       {(urgente || vencida) && !pago && (
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: vencida ? 'linear-gradient(90deg, #C4553B, #E07055)' : 'linear-gradient(90deg, #D4A017, #F0BB30)', borderRadius: '18px 18px 0 0' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: vencida ? 'linear-gradient(90deg, #C4553B, #E07055)' : 'linear-gradient(90deg, #D4A017, #F0BB30)', borderRadius: '20px 20px 0 0' }} />
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -58,18 +57,18 @@ function ContaFixaRow({ cf, mes, ano, onEdit, onDelete }: { cf: any; mes: number
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: pago ? '#9B7B6A' : '#2C1A0F', textDecoration: pago ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cf.nome}</p>
           <div style={{ display: 'flex', gap: 5, marginTop: 4, alignItems: 'center' }}>
-            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, background: statusBg, color: statusColor, padding: '2px 8px', borderRadius: 20, border: `1px solid ${borderColor}`, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            <span style={{ ...LABEL as object, fontSize: 10, background: statusBg, color: statusColor, padding: '2px 8px', borderRadius: 20, border: `1px solid ${borderColor}`, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
               {pago && <IconCircleCheck size={9} stroke={2.5} color="#3A8580" />}
               {vencida && <IconAlertTriangle size={9} stroke={2.5} color="#C4553B" />}
               {!pago && !vencida && <IconCalendarDue size={9} stroke={2} color={urgente ? '#D4A017' : '#9B7B6A'} />}
               {pago ? 'Pago' : vencida ? `Venceu dia ${cf.diaVencimento}` : urgente ? `Vence em ${diasRestantes}d` : `Dia ${cf.diaVencimento}`}
             </span>
-            {cat && <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4B4A8' }}>{cat.nome}</span>}
+            {cat && <span style={{ ...SUB as object, fontSize: 10, color: '#C4B4A8' }}>{cat.nome}</span>}
           </div>
         </div>
 
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: pago ? '#9B7B6A' : '#2C1A0F', letterSpacing: '-0.3px' }}>{fmt(cf.valor)}</p>
+          <p style={{ ...DISPLAY as object, fontSize: 17, color: pago ? '#9B7B6A' : '#2C1A0F' }}>{fmt(cf.valor)}</p>
           <div style={{ display: 'flex', gap: 4, marginTop: 6, justifyContent: 'flex-end' }}>
             <motion.button
               whileTap={{ scale: 0.9 }}
@@ -118,13 +117,14 @@ export function Page() {
     setAdding(true)
   }
 
-  const pagas = contasFixas.filter(cf => pagamentos.find(p => p.contaFixaId === cf.id)?.status === 'pago')
+  const fixasPagas = contasFixas.filter(cf => pagamentos.find(p => p.contaFixaId === cf.id)?.status === 'pago')
   const pendentes = contasFixas.filter(cf => !pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
   const totalMes = contasFixas.reduce((s, cf) => s + cf.valor, 0)
-  const totalPago = pagas.reduce((s, cf) => s + cf.valor, 0)
+  const totalPago = fixasPagas.reduce((s, cf) => s + cf.valor, 0)
   const totalPendente = totalMes - totalPago
-  const pct = totalMes > 0 ? (totalPago / totalMes) * 100 : 0
+  const pctConcluido = totalMes > 0 ? (totalPago / totalMes) * 100 : 0
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
+  const mesCapital = mesNome.charAt(0).toUpperCase() + mesNome.slice(1)
 
   const handleSave = async () => {
     if (!form.nome || !form.valor || !form.categoriaId) return
@@ -142,82 +142,85 @@ export function Page() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '24px 28px', width: '100%' }}>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      {/* Page header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 28, fontWeight: 700, color: '#2C1A0F' }}>Contas Fixas</h1>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 2, textTransform: 'capitalize' }}>{mesNome} · {contasFixas.length} conta{contasFixas.length !== 1 ? 's' : ''}</p>
+          <h1 style={{ ...DISPLAY as object, fontSize: 28, color: '#2C1A0F' }}>Contas Fixas</h1>
+          <p style={{ ...SUB as object, marginTop: 4 }}>{mesCapital} · {contasFixas.length} conta{contasFixas.length !== 1 ? 's' : ''}</p>
         </div>
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setEditingId(null); setForm({ nome: '', valor: '', diaVencimento: 10, categoriaId: null, contaId: null }); setAdding(true) }}
-          style={{ background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: 'white', border: 'none', borderRadius: 14, padding: '11px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 16px rgba(196,85,59,0.35)' }}>
+          style={{ background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: 'white', border: 'none', borderRadius: 14, padding: '11px 18px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 16px rgba(196,85,59,0.35)', flexShrink: 0 }}>
           <IconPlus size={16} stroke={2.5} /> Adicionar
         </motion.button>
       </div>
 
+      {/* KPI Cards — substituem o dark card */}
       {contasFixas.length > 0 && (
-        <div style={{ background: 'linear-gradient(140deg, #1E0C04 0%, #3E1C0C 45%, #2C1208 100%)', borderRadius: 22, padding: '20px 22px', marginBottom: 24, position: 'relative', overflow: 'hidden', boxShadow: '0 8px 32px rgba(20,8,0,0.25)' }}>
-          <div style={{ position: 'absolute', top: -60, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(58,133,128,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: -40, left: -30, width: 150, height: 150, borderRadius: '50%', background: 'radial-gradient(circle, rgba(196,85,59,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, position: 'relative' }}>
-            <div style={{ width: 28, height: 28, borderRadius: 9, background: 'rgba(58,133,128,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconCalendarDue size={15} color="#6FCFCA" stroke={2} />
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 14 }}>
+            <div style={{ background: '#EBF5F0', borderRadius: 16, padding: '14px 16px', border: '1px solid rgba(58,133,128,0.15)' }}>
+              <p style={{ ...LABEL as object, color: '#3A8580', marginBottom: 4 }}>Pago</p>
+              <p style={{ ...DISPLAY as object, fontSize: 20, color: '#3A8580' }}>{fmt(totalPago)}</p>
+              <p style={{ ...SUB as object, marginTop: 3 }}>{fixasPagas.length} de {contasFixas.length}</p>
             </div>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase' }}>Resumo do mês</p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16, position: 'relative' }}>
-            <div style={{ background: 'rgba(58,133,128,0.2)', border: '1px solid rgba(58,133,128,0.25)', borderRadius: 14, padding: '12px 14px' }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#6FCFCA', letterSpacing: '.07em', marginBottom: 4 }}>PAGO</p>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: 'white', letterSpacing: '-0.5px' }}>{fmt(totalPago)}</p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 3 }}>{pagas.length} de {contasFixas.length} contas</p>
+            <div style={{ background: '#FAF0EE', borderRadius: 16, padding: '14px 16px', border: '1px solid rgba(196,85,59,0.15)' }}>
+              <p style={{ ...LABEL as object, color: '#C4553B', marginBottom: 4 }}>Pendente</p>
+              <p style={{ ...DISPLAY as object, fontSize: 20, color: '#C4553B' }}>{fmt(totalPendente)}</p>
+              <p style={{ ...SUB as object, marginTop: 3 }}>{pendentes.length} conta{pendentes.length !== 1 ? 's' : ''}</p>
             </div>
-            <div style={{ background: totalPendente > 0 ? 'rgba(196,85,59,0.18)' : 'rgba(255,255,255,0.06)', border: `1px solid ${totalPendente > 0 ? 'rgba(196,85,59,0.25)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 14, padding: '12px 14px' }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: totalPendente > 0 ? '#F09070' : 'rgba(255,255,255,0.4)', letterSpacing: '.07em', marginBottom: 4 }}>PENDENTE</p>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: totalPendente > 0 ? '#FFB09A' : 'rgba(255,255,255,0.5)', letterSpacing: '-0.5px' }}>{fmt(totalPendente)}</p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 3 }}>{pendentes.length} conta{pendentes.length !== 1 ? 's' : ''}</p>
+            <div style={{ background: '#F5F0E8', borderRadius: 16, padding: '14px 16px', border: '1px solid rgba(44,26,15,0.1)' }}>
+              <p style={{ ...LABEL as object, color: '#7A5C4F', marginBottom: 4 }}>Total</p>
+              <p style={{ ...DISPLAY as object, fontSize: 20, color: '#2C1A0F' }}>{fmt(totalMes)}</p>
+              <p style={{ ...SUB as object, marginTop: 3 }}>{Math.round(pctConcluido)}% pago</p>
             </div>
           </div>
 
-          <div style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>{Math.round(pct)}% concluído</span>
-              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Total: {fmt(totalMes)}</span>
-            </div>
-            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 8, height: 8, overflow: 'hidden' }}>
-              <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-                transition={{ type: 'spring', stiffness: 200, damping: 25, delay: 0.1 }}
-                style={{ height: '100%', background: 'linear-gradient(90deg, #4AAEA8, #3A8580)', borderRadius: 8 }} />
-            </div>
+          {/* Progress bar */}
+          <div style={{ background: '#EDE6DC', borderRadius: 6, height: 6, marginBottom: 24, overflow: 'hidden' }}>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${pctConcluido}%` }}
+              transition={{ type: 'spring', stiffness: 180, damping: 24 }}
+              style={{ height: '100%', background: '#3A8580', borderRadius: 6 }}
+            />
           </div>
-        </div>
+        </>
       )}
 
       {contasFixas.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
           <Dobrao mood="sleeping" size={90} />
-          <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginTop: 16 }}>Nenhuma conta fixa</p>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginTop: 6 }}>Aluguel, internet, streaming, assinaturas...</p>
+          <p style={{ ...DISPLAY as object, fontSize: 20, color: '#2C1A0F', marginTop: 16 }}>Nenhuma conta fixa</p>
+          <p style={{ ...SUB as object, fontSize: 14, marginTop: 6 }}>Aluguel, internet, streaming, assinaturas...</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {pendentes.length > 0 && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 8px' }}>
-                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em' }}>A PAGAR</span>
+                <span style={{ ...LABEL as object, color: '#9B7B6A' }}>A Pagar</span>
                 <div style={{ flex: 1, height: 1, background: '#EDE6DC' }} />
-                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#C4553B' }}>{fmt(pendentes.reduce((s,cf) => s+cf.valor,0))}</span>
+                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#C4553B' }}>{fmt(pendentes.reduce((s, cf) => s + cf.valor, 0))}</span>
               </div>
-              {pendentes.map(cf => <ContaFixaRow key={cf.id} cf={cf} mes={mes} ano={ano} onEdit={() => openEdit(cf)} onDelete={() => setConfirmDelete(cf.id!)} />)}
+              {pendentes.map((cf, i) => (
+                <motion.div key={cf.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.05 }}>
+                  <ContaFixaRow cf={cf} mes={mes} ano={ano} onEdit={() => openEdit(cf)} onDelete={() => setConfirmDelete(cf.id!)} />
+                </motion.div>
+              ))}
             </>
           )}
-          {pagas.length > 0 && (
+          {fixasPagas.length > 0 && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0 8px' }}>
-                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em' }}>PAGAS</span>
+                <span style={{ ...LABEL as object, color: '#9B7B6A' }}>Pagas</span>
                 <div style={{ flex: 1, height: 1, background: '#EDE6DC' }} />
-                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#3A8580' }}>{fmt(pagas.reduce((s,cf) => s+cf.valor,0))}</span>
+                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#3A8580' }}>{fmt(fixasPagas.reduce((s, cf) => s + cf.valor, 0))}</span>
               </div>
-              {pagas.map(cf => <ContaFixaRow key={cf.id} cf={cf} mes={mes} ano={ano} onEdit={() => openEdit(cf)} onDelete={() => setConfirmDelete(cf.id!)} />)}
+              {fixasPagas.map((cf, i) => (
+                <motion.div key={cf.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.05 }}>
+                  <ContaFixaRow cf={cf} mes={mes} ano={ano} onEdit={() => openEdit(cf)} onDelete={() => setConfirmDelete(cf.id!)} />
+                </motion.div>
+              ))}
             </>
           )}
         </div>
@@ -233,8 +236,8 @@ export function Page() {
               <div style={{ width: 52, height: 52, borderRadius: 16, background: '#FAF0EE', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
                 <IconTrash size={24} color="#C4553B" stroke={1.8} />
               </div>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginBottom: 8 }}>Excluir conta fixa?</p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginBottom: 24 }}>Histórico de pagamentos será removido.</p>
+              <p style={{ ...DISPLAY as object, fontSize: 20, color: '#2C1A0F', marginBottom: 8 }}>Excluir conta fixa?</p>
+              <p style={{ ...SUB as object, fontSize: 14, marginBottom: 24 }}>Histórico de pagamentos será removido.</p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #E8E0D5', background: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600, color: '#7A5C4F', cursor: 'pointer' }}>Cancelar</button>
                 <motion.button whileTap={{ scale: 0.97 }} onClick={async () => { await deleteContaFixa(confirmDelete); setConfirmDelete(null) }}
@@ -256,33 +259,33 @@ export function Page() {
               <div style={{ width: 40, height: 4, borderRadius: 2, background: '#E8E0D5', margin: '12px auto 18px' }} />
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F' }}>{editingId ? 'Editar conta fixa' : 'Nova conta fixa'}</h3>
+                <h3 style={{ ...DISPLAY as object, fontSize: 22, color: '#2C1A0F' }}>{editingId ? 'Editar conta fixa' : 'Nova conta fixa'}</h3>
                 <button onClick={() => setAdding(false)} style={{ background: '#F5F0E8', border: 'none', borderRadius: '50%', width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <IconX size={16} color="#9B7B6A" />
                 </button>
               </div>
 
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 6, letterSpacing: '.04em' }}>NOME</p>
+              <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Nome</p>
               <input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Ex: Aluguel, Internet, Spotify..."
                 style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '13px 16px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, outline: 'none', marginBottom: 14, boxSizing: 'border-box', color: '#2C1A0F' }} />
 
               <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 6, letterSpacing: '.04em' }}>VALOR</p>
+                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Valor</p>
                   <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '12px 14px', gap: 6 }}>
-                    <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, color: '#C4553B', fontWeight: 700 }}>R$</span>
+                    <span style={{ ...DISPLAY as object, fontSize: 18, color: '#C4553B' }}>R$</span>
                     <input value={form.valor} onChange={e => setForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" type="tel"
                       style={{ border: 'none', background: 'transparent', fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none', width: '100%' }} />
                   </div>
                 </div>
                 <div style={{ width: 100 }}>
-                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 6, letterSpacing: '.04em' }}>DIA VENCE</p>
+                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Dia Vence</p>
                   <input value={form.diaVencimento} onChange={e => setForm(f => ({ ...f, diaVencimento: parseInt(e.target.value) || 1 }))} type="number" min="1" max="31"
                     style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '12px 0', fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', outline: 'none', textAlign: 'center', boxSizing: 'border-box' }} />
                 </div>
               </div>
 
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 10, letterSpacing: '.04em' }}>CATEGORIA</p>
+              <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 10 }}>Categoria</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: 8, marginBottom: 16 }}>
                 {categorias.map(c => (
                   <motion.button key={c.id} onClick={() => setForm(f => ({ ...f, categoriaId: c.id! }))} whileTap={{ scale: 0.92 }}
@@ -295,7 +298,7 @@ export function Page() {
 
               {contas.length > 0 && (
                 <>
-                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 8, letterSpacing: '.04em' }}>DÉBITA DE <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span></p>
+                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 8 }}>Debita de <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span></p>
                   <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 18 }}>
                     {contas.map(c => (
                       <button key={c.id} onClick={() => setForm(f => ({ ...f, contaId: f.contaId === c.id ? null : c.id! }))}
