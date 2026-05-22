@@ -163,22 +163,22 @@ export function Page() {
         </motion.div>
       )}
 
-      <Section title="🔒 Acesso">
+      <Section title="Acesso">
         <PinSection />
         <Row icon={<IconLock size={18} color="#9B7B6A" stroke={1.8} />} label="Bloquear agora" sub="Requer PIN na próxima abertura" onClick={() => lock()} danger right={<span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A' }}>→</span>} />
       </Section>
 
-      <Section title="📱 Instalação PWA">
+      <Section title="Instalação PWA">
         <PWASection />
       </Section>
 
-      <Section title="💾 Dados">
+      <Section title="Dados">
         <Row icon={<IconDeviceFloppy size={18} color="#C4553B" stroke={1.8} />} label="Exportar backup JSON" sub="Todos os dados do app" onClick={handleExport} />
         <Row icon={<IconDeviceFloppy size={18} color="#3A8580" stroke={1.8} />} label="Exportar transações CSV" sub="Compatível com Excel" onClick={handleCSV} />
         <Row icon={<IconRefresh size={18} color="#9B7B6A" stroke={1.8} />} label="Recriar categorias padrão" sub="Restaura as 14 categorias originais" onClick={() => seedCategories()} />
       </Section>
 
-      <Section title="ℹ️ Sobre">
+      <Section title="Sobre">
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', lineHeight: 1.7 }}>
           Dados armazenados localmente (IndexedDB/Dexie.js).<br/>
           Sync em nuvem via Supabase — São Paulo.<br/>

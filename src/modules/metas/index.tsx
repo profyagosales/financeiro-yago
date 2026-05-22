@@ -8,6 +8,8 @@ import { fmt, mesAnoAtual } from '@/lib/format'
 import { Confetti } from "@/components/ui/Confetti"
 import { sounds, haptic } from "@/lib/sounds"
 import { Dobrao } from '@/components/mascot/Dobrao'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { IconEdit, IconX, IconTarget, IconChartBar } from '@tabler/icons-react'
 
 const ICONS_META = ['🏠','✈️','🚗','📱','💻','🎓','💍','🏖️','📦','💰','🎯','🌟']
 const CORES_META = ['#C4553B','#3A8580','#D4A017','#8B4BC8','#3D7EB5','#E89527','#D94F8A','#1E7D5A']
@@ -40,9 +42,9 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
           <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            ✏️
+            <IconEdit size={13} stroke={1.8} color="#7A5C4F" />
           </button>
-          <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B4A8', fontSize: 18 }}>×</button>
+          <button onClick={() => deleteMeta(meta.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26 }}><IconX size={14} stroke={2} color="#C4B4A8" /></button>
         </div>
       </div>
       <div style={{ marginBottom: 8 }}>
@@ -69,7 +71,7 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
               style={{ background: meta.cor, color: 'white', border: 'none', borderRadius: 10, padding: '8px 16px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
               Aportar
             </motion.button>
-            <button onClick={() => setAporting(false)} style={{ background: '#F5F0E8', border: 'none', borderRadius: 10, padding: '8px 12px', cursor: 'pointer', fontSize: 16, color: '#9B7B6A' }}>×</button>
+            <button onClick={() => setAporting(false)} style={{ background: '#F5F0E8', border: 'none', borderRadius: 10, padding: '0', cursor: 'pointer', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconX size={15} stroke={2} color="#9B7B6A" /></button>
           </motion.div>
         ) : (
           <motion.button whileTap={{ scale: 0.97 }} onClick={() => setAporting(true)}
@@ -85,9 +87,8 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
 function OrcamentoRow({ orc, gastos }: { orc: any; gastos: Map<number, number> }) {
   const [catNome, setCatNome] = useState('')
   const [catCor, setCatCor] = useState('#9B8A7A')
-  const [catIcon, setCatIcon] = useState('💸')
   useState(() => {
-    import('@/db/schema').then(({ db }) => db.categorias.get(orc.categoriaId).then(c => { if (c) { setCatNome(c.nome); setCatCor(c.cor); setCatIcon(c.icone) } }))
+    import('@/db/schema').then(({ db }) => db.categorias.get(orc.categoriaId).then(c => { if (c) { setCatNome(c.nome); setCatCor(c.cor) } }))
   })
   const gasto = gastos.get(orc.categoriaId) ?? 0
   const pct = Math.min(100, (gasto / orc.valorLimite) * 100)
@@ -96,7 +97,7 @@ function OrcamentoRow({ orc, gastos }: { orc: any; gastos: Map<number, number> }
   return (
     <div style={{ background: '#FFFDF9', border: `0.5px solid ${estourado ? '#FAD0D0' : '#E8E0D5'}`, borderRadius: 14, padding: '12px 14px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F' }}>{catIcon} {catNome}</span>
+        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F', display: 'inline-flex', alignItems: 'center', gap: 6 }}><CategoryIcon nome={catNome} cor={catCor} size={22} radius={6} />{catNome}</span>
         <div style={{ textAlign: 'right' }}>
           <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: estourado ? '#C4553B' : '#2C1A0F' }}>{fmt(gasto)}</span>
           <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}> / {fmt(orc.valorLimite)}</span>
@@ -165,7 +166,9 @@ export function Page() {
         {(['metas', 'orcamento'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', cursor: 'pointer', background: tab === t ? '#C4553B' : 'transparent', color: tab === t ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, transition: 'all .15s' }}>
-            {t === 'metas' ? `🎯 Metas (${metas.length})` : `📊 Orçamento (${orcamentos.length})`}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
+              {t === 'metas' ? <><IconTarget size={13} stroke={1.8} />Metas ({metas.length})</> : <><IconChartBar size={13} stroke={1.8} />Orçamento ({orcamentos.length})</>}
+            </span>
           </button>
         ))}
       </div>
@@ -269,8 +272,8 @@ export function Page() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                 {categorias.map(c => (
                   <button key={c.id} onClick={() => setFormOrc(f => ({ ...f, categoriaId: c.id! }))}
-                    style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: formOrc.categoriaId === c.id ? c.cor : '#F5F0E8', color: formOrc.categoriaId === c.id ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    {c.icone} {c.nome}
+                    style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: formOrc.categoriaId === c.id ? c.cor : '#F5F0E8', color: formOrc.categoriaId === c.id ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <CategoryIcon nome={c.nome} cor={formOrc.categoriaId === c.id ? 'white' : c.cor} size={18} radius={5} /> {c.nome}
                   </button>
                 ))}
               </div>
