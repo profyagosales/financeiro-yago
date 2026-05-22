@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { DragFairy } from '@/components/mascot/DragFairy'
+import { DragFairy, FairyBubble, useFairyPhrase } from '@/components/mascot/DragFairy'
 import type { Phrase } from '@/components/mascot/DragFairy'
 import { useContas, useSaldoTotal } from '@/db/hooks/useContas'
 import { useTransacoes, useTotaisMes, useGastosPorCategoria } from '@/db/hooks/useTransacoes'
@@ -101,10 +101,14 @@ export function DashboardPage() {
   const poupancaColor = taxaPoupanca > 20 ? '#3A8580' : taxaPoupanca > 0 ? '#D4A017' : '#C4553B'
 
   const contextPhrase: Phrase | undefined =
-    saldoLivre < 0 ? { text: 'Tá achando que é herdeira?!', emoji: 'flame' }
-    : taxaPoupanca > 30 ? { text: 'AAAA você arrasou! Meta batida!', emoji: 'sparkle' }
+    saldoLivre < 0          ? { text: 'Tá achando que é herdeira?!',          emoji: 'flame'   }
+    : taxaPoupanca > 30     ? { text: 'AAAA você arrasou! Meta batida!',        emoji: 'sparkle' }
     : receitas === 0 && despesas === 0 ? { text: 'Zero gastos hoje? Diva em modo econômico!', emoji: 'crown' }
     : undefined
+
+  const activePhrase = useFairyPhrase(contextPhrase)
+  const ringR = 30
+  const ringCirc = 2 * Math.PI * ringR
 
   return (
     <motion.div
@@ -114,69 +118,139 @@ export function DashboardPage() {
       {/* ─── ROW 1: Greeting ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, marginBottom: 20 }}>
 
-        {/* Card principal: fada + texto */}
+        {/* ── Greeting card: fada à esquerda, bubble + texto à direita ── */}
         <div style={{
           background: '#FFFFFF',
           borderRadius: 24,
-          padding: '24px 28px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 20,
           border: '1px solid rgba(44,26,15,0.07)',
           boxShadow: '0 2px 20px rgba(44,26,15,0.06)',
-          position: 'relative',
+          display: 'flex',
+          alignItems: 'stretch',
           overflow: 'hidden',
-          minHeight: 170,
+          minHeight: 190,
         }}>
-          {/* Gradiente decorativo canto superior direito */}
-          <div style={{ position: 'absolute', top: 0, right: 0, width: '45%', height: '100%',
-            background: 'linear-gradient(135deg, rgba(196,195,227,0.14) 0%, rgba(241,100,46,0.07) 100%)',
-            pointerEvents: 'none' }} />
+          {/* Fada — panel esquerdo com leve cor de fundo */}
+          <div style={{
+            flexShrink: 0,
+            width: 160,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            background: 'linear-gradient(160deg, rgba(196,195,227,0.13) 0%, rgba(255,180,220,0.08) 100%)',
+            borderRight: '1px solid rgba(196,195,227,0.18)',
+            paddingTop: 8,
+          }}>
+            <DragFairy size={155} />
+          </div>
 
-          <DragFairy size={150} contextPhrase={contextPhrase} />
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginBottom: 4 }}>
-              {saudacao}, Yago
-            </p>
-            <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 28,
-              color: '#2C1A0F', letterSpacing: '-1px', lineHeight: 1.15 }}>
-              {dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}
-            </h1>
+          {/* Texto + bubble — panel direito */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            padding: '22px 26px',
+            gap: 12,
+          }}>
+            <FairyBubble phrase={activePhrase} />
+            <div>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13,
+                color: '#9B7B6A', marginBottom: 4 }}>
+                {saudacao}, Yago
+              </p>
+              <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 26,
+                color: '#2C1A0F', letterSpacing: '-1px', lineHeight: 1.15 }}>
+                {dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}
+              </h1>
+            </div>
           </div>
         </div>
 
-        {/* Card mês — roxo sólido */}
+        {/* ── Card mês — roxo sólido com anel de progresso ── */}
         <div style={{
           background: '#504E76',
           borderRadius: 24,
-          padding: '24px 26px',
+          padding: '22px',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
+          gap: 14,
           position: 'relative',
           overflow: 'hidden',
         }}>
           {/* Decoração fundo */}
-          <div style={{ position: 'absolute', bottom: -20, right: -20, width: 100, height: 100,
-            borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+          <div style={{ position: 'absolute', top: -32, right: -32, width: 110, height: 110,
+            borderRadius: '50%', background: 'rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: -18, left: -18, width: 72, height: 72,
+            borderRadius: '50%', background: 'rgba(241,100,46,0.08)', pointerEvents: 'none' }} />
+
+          {/* Header */}
           <div>
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
               letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
               Período atual
             </p>
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700,
-              color: '#ffffff', marginTop: 4, textTransform: 'capitalize', lineHeight: 1.1 }}>
+            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700,
+              color: '#ffffff', marginTop: 3, textTransform: 'capitalize', lineHeight: 1.1 }}>
               {mesNome}
             </p>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13,
-              color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{ano}</p>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12,
+              color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>{ano}</p>
           </div>
+
+          {/* Anel progresso + stats */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            {/* SVG ring */}
+            <svg width="76" height="76" viewBox="0 0 76 76" style={{ flexShrink: 0 }}>
+              {/* Track */}
+              <circle cx="38" cy="38" r={ringR} fill="none"
+                stroke="rgba(255,255,255,0.12)" strokeWidth="6"/>
+              {/* Progress arc */}
+              <motion.circle cx="38" cy="38" r={ringR} fill="none"
+                stroke="rgba(196,195,227,0.78)" strokeWidth="6"
+                strokeLinecap="round"
+                strokeDasharray={ringCirc}
+                initial={{ strokeDashoffset: ringCirc }}
+                animate={{ strokeDashoffset: ringCirc * (1 - hoje / diasNoMes) }}
+                transition={{ duration: 1.3, ease: [0.34,1.56,0.64,1], delay: 0.4 }}
+                style={{ transform:'rotate(-90deg)', transformOrigin:'38px 38px' }}
+              />
+              {/* Day number */}
+              <text x="38" y="34" textAnchor="middle" fill="white"
+                fontSize="15" fontFamily="Fraunces, Georgia, serif" fontWeight="700">{hoje}</text>
+              <text x="38" y="47" textAnchor="middle" fill="rgba(255,255,255,0.38)"
+                fontSize="7.5" fontFamily="Plus Jakarta Sans, sans-serif">DE {diasNoMes}</text>
+            </svg>
+
+            {/* Stats */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12,
+                color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
+                <span style={{ color: 'white', fontWeight: 700, fontSize: 14 }}>{diasRestantes}</span>
+                {' '}dias restantes
+              </p>
+              {contasFixas.length > 0 && (
+                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
+                  color: 'rgba(255,255,255,0.4)' }}>
+                  <span style={{ color: 'rgba(163,181,101,0.95)', fontWeight: 700 }}>{fixasPagas.length}</span>
+                  /{contasFixas.length} fixas pagas
+                </p>
+              )}
+              {transacoes.length > 0 && (
+                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
+                  color: 'rgba(255,255,255,0.4)' }}>
+                  <span style={{ color: 'rgba(196,195,227,0.95)', fontWeight: 700 }}>{transacoes.length}</span>
+                  {' '}transações
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Alert badge */}
           {hasAlerts && (
             <div style={{ background: 'rgba(241,100,46,0.22)', border: '1px solid rgba(241,100,46,0.35)',
-              borderRadius: 12, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 7, marginTop: 14 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#F1642E', flexShrink: 0 }} />
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#F1642E' }}>
+              borderRadius: 10, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F1642E', flexShrink: 0 }} />
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#F1642E' }}>
                 {proximosVenc.length + cartoesAlerta.length} alerta{(proximosVenc.length + cartoesAlerta.length) !== 1 ? 's' : ''}
               </p>
             </div>
