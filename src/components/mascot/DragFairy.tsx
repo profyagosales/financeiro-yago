@@ -130,8 +130,7 @@ export function FairyBubble({ phrase }: { phrase: Phrase }) {
   )
 }
 
-// ─── CSS keyframes para as animações do SVG ───────────────────────
-// CSS animations são mais confiáveis que Framer Motion em SVG
+// ─── CSS keyframes para animações do SVG ─────────────────────────
 const FAIRY_CSS = `
   @keyframes dfFlapL {
     0%,100% { transform: scaleY(1);    }
@@ -141,25 +140,33 @@ const FAIRY_CSS = `
     0%,100% { transform: scaleY(1);    }
     40%,60% { transform: scaleY(0.06); }
   }
+  /* Varinha: lento, multi-step, y+rotate natural — 5.5s */
   @keyframes dfWand {
-    0%,100% { transform: rotate(-9deg); }
-    50%     { transform: rotate(9deg);  }
+    0%   { transform: rotate(-5deg) translateY(0px); }
+    18%  { transform: rotate(4deg)  translateY(-3px); }
+    35%  { transform: rotate(-3deg) translateY(2px);  }
+    52%  { transform: rotate(7deg)  translateY(-4px); }
+    70%  { transform: rotate(-4deg) translateY(1px);  }
+    85%  { transform: rotate(5deg)  translateY(-2px); }
+    100% { transform: rotate(-5deg) translateY(0px);  }
   }
-  @keyframes dfDust1 { 0%{opacity:0;transform:translate(0,0) scale(0)} 30%{opacity:1} 100%{opacity:0;transform:translate(14px,10px) scale(0)} }
-  @keyframes dfDust2 { 0%{opacity:0;transform:translate(0,0) scale(0)} 30%{opacity:1} 100%{opacity:0;transform:translate(-9px,12px) scale(0)} }
-  @keyframes dfDust3 { 0%{opacity:0;transform:translate(0,0) scale(0)} 30%{opacity:1} 100%{opacity:0;transform:translate(16px,-5px) scale(0)} }
-  @keyframes dfDust4 { 0%{opacity:0;transform:translate(0,0) scale(0)} 30%{opacity:1} 100%{opacity:0;transform:translate(-12px,7px) scale(0)} }
-  @keyframes dfDust5 { 0%{opacity:0;transform:translate(0,0) scale(0)} 30%{opacity:1} 100%{opacity:0;transform:translate(7px,15px) scale(0)} }
-  @keyframes dfDust6 { 0%{opacity:0;transform:translate(0,0) scale(0)} 30%{opacity:1} 100%{opacity:0;transform:translate(-5px,-11px) scale(0)} }
-  .df-wing-l  { transform-box:fill-box; transform-origin:right center; animation:dfFlapL 0.42s ease-in-out infinite; }
-  .df-wing-r  { transform-box:fill-box; transform-origin:left center;  animation:dfFlapR 0.42s ease-in-out infinite 0.02s; }
-  .df-wand-g  { transform-box:fill-box; transform-origin:73px 46px;    animation:dfWand  2.4s ease-in-out infinite; }
-  .df-dust-1  { animation:dfDust1 1.3s ease-out infinite; }
-  .df-dust-2  { animation:dfDust2 1.5s ease-out infinite 0.28s; }
-  .df-dust-3  { animation:dfDust3 1.2s ease-out infinite 0.55s; }
-  .df-dust-4  { animation:dfDust4 1.6s ease-out infinite 0.82s; }
-  .df-dust-5  { animation:dfDust5 1.4s ease-out infinite 1.1s; }
-  .df-dust-6  { animation:dfDust6 1.1s ease-out infinite 0.4s; }
+  /* Pó mágico: opacity+translate (sem scale que causava bug de interpolação) */
+  @keyframes dfDust1 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.9;transform:translate(6px,4px)}   100%{opacity:0;transform:translate(16px,12px)} }
+  @keyframes dfDust2 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.85;transform:translate(-4px,5px)} 100%{opacity:0;transform:translate(-11px,14px)} }
+  @keyframes dfDust3 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.9;transform:translate(7px,-2px)}  100%{opacity:0;transform:translate(18px,-7px)} }
+  @keyframes dfDust4 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.8;transform:translate(-5px,3px)}  100%{opacity:0;transform:translate(-13px,8px)} }
+  @keyframes dfDust5 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.85;transform:translate(3px,6px)}  100%{opacity:0;transform:translate(8px,16px)} }
+  @keyframes dfDust6 { 0%{opacity:0;transform:translate(0,0)}   22%{opacity:.75;transform:translate(-2px,-4px)} 100%{opacity:0;transform:translate(-6px,-12px)} }
+
+  .df-wing-l { transform-box:fill-box; transform-origin:right center; animation:dfFlapL 0.42s ease-in-out infinite; }
+  .df-wing-r { transform-box:fill-box; transform-origin:left center;  animation:dfFlapR 0.42s ease-in-out infinite 0.02s; }
+  .df-wand-g { transform-box:fill-box; transform-origin:73px 46px;    animation:dfWand  5.5s ease-in-out infinite; }
+  .df-dust-1 { animation:dfDust1 1.4s ease-out infinite; }
+  .df-dust-2 { animation:dfDust2 1.6s ease-out infinite 0.3s; }
+  .df-dust-3 { animation:dfDust3 1.3s ease-out infinite 0.6s; }
+  .df-dust-4 { animation:dfDust4 1.7s ease-out infinite 0.9s; }
+  .df-dust-5 { animation:dfDust5 1.5s ease-out infinite 1.2s; }
+  .df-dust-6 { animation:dfDust6 1.2s ease-out infinite 0.45s; }
 `
 
 // ─── Fairy SVG — pose de voo horizontal (viewBox 0 0 110 80) ─────
