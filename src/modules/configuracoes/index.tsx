@@ -7,12 +7,16 @@ import { usePWAInstall } from '@/hooks/usePWAInstall'
 import { addTransacao } from '@/db/hooks/useTransacoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContas } from '@/db/hooks/useContas'
-import { IconLock, IconDeviceFloppy, IconBrandChrome, IconDeviceMobile, IconBrandApple, IconRefresh, IconChevronRight, IconCheck, IconTableImport } from '@tabler/icons-react'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { IconLock, IconDeviceFloppy, IconBrandChrome, IconDeviceMobile, IconBrandApple, IconRefresh, IconChevronRight, IconCheck, IconTableImport, IconShieldLock, IconDeviceMobileMessage, IconDatabase, IconInfoCircle, IconFile } from '@tabler/icons-react'
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div style={{ background: '#FFFDF9', border: '0.5px solid #E8E0D5', borderRadius: 20, padding: '18px 20px', marginBottom: 14 }}>
-      <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: '#2C1A0F', marginBottom: 14 }}>{title}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        {icon && <div style={{ width: 32, height: 32, borderRadius: 10, background: '#F5F0E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>}
+        <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700, color: '#2C1A0F' }}>{title}</h2>
+      </div>
       {children}
     </div>
   )
@@ -108,8 +112,8 @@ function ImportCSVSection() {
                 Datas: DD/MM/AAAA ou AAAA-MM-DD · Valores negativos = despesa
               </p>
               <motion.button whileTap={{ scale: 0.96 }} onClick={() => fileRef.current?.click()}
-                style={{ padding: '10px 0', borderRadius: 12, border: '1.5px dashed #E8E0D5', background: '#FAF6F0', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#7A5C4F', cursor: 'pointer' }}>
-                📄 Escolher arquivo CSV
+                style={{ padding: '10px 0', borderRadius: 12, border: '1.5px dashed #E8E0D5', background: '#FAF6F0', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#7A5C4F', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <IconFile size={15} stroke={2} /> Escolher arquivo CSV
               </motion.button>
               <input ref={fileRef} type="file" accept=".csv,.txt" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) parseFile(f) }} />
 
@@ -137,8 +141,8 @@ function ImportCSVSection() {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                       {categorias.map(c => (
                         <button key={c.id} onClick={() => setCatId(c.id!)}
-                          style={{ padding: '4px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: catId === c.id ? c.cor : '#F5F0E8', color: catId === c.id ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600 }}>
-                          {c.icone} {c.nome}
+                          style={{ padding: '4px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: catId === c.id ? c.cor : '#F5F0E8', color: catId === c.id ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <CategoryIcon nome={c.nome} cor={catId === c.id ? 'white' : c.cor} size={16} radius={4} /> {c.nome}
                         </button>
                       ))}
                     </div>
@@ -304,23 +308,23 @@ export function Page() {
         </motion.div>
       )}
 
-      <Section title="🔒 Acesso">
+      <Section title="Acesso" icon={<IconShieldLock size={18} color="#C4553B" stroke={1.8} />}>
         <PinSection />
         <Row icon={<IconLock size={18} color="#9B7B6A" stroke={1.8} />} label="Bloquear agora" sub="Requer PIN na próxima abertura" onClick={() => lock()} danger right={<span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A' }}>→</span>} />
       </Section>
 
-      <Section title="📱 Instalação PWA">
+      <Section title="Instalação PWA" icon={<IconDeviceMobileMessage size={18} color="#3D7EB5" stroke={1.8} />}>
         <PWASection />
       </Section>
 
-      <Section title="💾 Dados">
+      <Section title="Dados" icon={<IconDatabase size={18} color="#9B7B6A" stroke={1.8} />}>
         <Row icon={<IconDeviceFloppy size={18} color="#C4553B" stroke={1.8} />} label="Exportar backup JSON" sub="Todos os dados do app" onClick={handleExport} />
         <Row icon={<IconDeviceFloppy size={18} color="#3A8580" stroke={1.8} />} label="Exportar transações CSV" sub="Compatível com Excel" onClick={handleCSV} />
         <ImportCSVSection />
         <Row icon={<IconRefresh size={18} color="#9B7B6A" stroke={1.8} />} label="Recriar categorias padrão" sub="Restaura as 14 categorias originais" onClick={() => seedCategories()} />
       </Section>
 
-      <Section title="ℹ️ Sobre">
+      <Section title="Sobre" icon={<IconInfoCircle size={18} color="#9B7B6A" stroke={1.8} />}>
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', lineHeight: 1.7 }}>
           Dados armazenados localmente (IndexedDB/Dexie.js).<br/>
           Sync em nuvem via Supabase — São Paulo.<br/>

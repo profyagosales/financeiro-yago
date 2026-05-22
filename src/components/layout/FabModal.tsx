@@ -7,7 +7,7 @@ import { addTransacao } from '@/db/hooks/useTransacoes'
 import { addAnexo } from '@/db/hooks/useAnexos'
 import { todayISO, mesAnoAtual } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { IconX, IconCamera, IconCheck, IconRepeat, IconCreditCard, IconBuildingBank } from '@tabler/icons-react'
+import { IconX, IconCamera, IconCheck, IconRepeat, IconCreditCard, IconBuildingBank, IconArrowsExchange, IconFile, IconPaperclip } from '@tabler/icons-react'
 
 type TipoLanc = 'despesa' | 'receita' | 'transferencia'
 type FontePag = 'conta' | 'cartao'
@@ -115,7 +115,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
               style={{ flex: 1, padding: '10px 4px', borderRadius: 11, border: 'none', cursor: 'pointer', transition: 'all .15s', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
                 background: tipo === t ? (t==='receita'?'#3A8580':t==='transferencia'?'#7C5CBF':'#C4553B') : 'transparent',
                 color: tipo === t ? 'white' : '#9B7B6A' }}>
-              {t === 'despesa' ? '− Despesa' : t === 'receita' ? '+ Receita' : '⇄ Transfer.'}
+              {t === 'despesa' ? '− Despesa' : t === 'receita' ? '+ Receita' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconArrowsExchange size={13} stroke={2} /> Transfer.</span>}
             </button>
           ))}
         </div>
@@ -142,9 +142,9 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', marginBottom: 10 }}>
               <div style={{ display: 'flex', gap: 8, background: '#FAF6F0', border: '1.5px dashed #E8E0D5', borderRadius: 14, padding: 10 }}>
                 <motion.button whileTap={{ scale: 0.95 }} onClick={() => cameraRef.current?.click()}
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 11, border: 'none', background: '#2C1A0F', color: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>📷 Câmera</motion.button>
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 11, border: 'none', background: '#2C1A0F', color: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><IconCamera size={14} stroke={2} /> Câmera</motion.button>
                 <motion.button whileTap={{ scale: 0.95 }} onClick={() => fileRef.current?.click()}
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 11, border: '1.5px solid #E8E0D5', background: 'white', color: '#2C1A0F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>📁 Arquivo / PDF</motion.button>
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 11, border: '1.5px solid #E8E0D5', background: 'white', color: '#2C1A0F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><IconFile size={14} stroke={2} /> Arquivo / PDF</motion.button>
               </div>
               <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleFile} />
               <input ref={fileRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleFile} />
@@ -153,9 +153,9 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
           {preview && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
               style={{ background: '#EBF5F0', border: '1.5px solid #D0E8D8', borderRadius: 12, padding: '9px 12px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-              {preview.url ? <img src={preview.url} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} /> : <div style={{ width: 40, height: 40, background: '#3D7EB5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>📄</div>}
+              {preview.url ? <img src={preview.url} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} /> : <div style={{ width: 40, height: 40, background: '#3D7EB5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><IconPaperclip size={20} color="white" stroke={2} /></div>}
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#3A8580', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preview.file.name}</p>
-              <button onClick={() => setPreview(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9B7B6A', fontSize: 16 }}>×</button>
+              <button onClick={() => setPreview(null)} style={{ background: '#F5F0E8', border: 'none', cursor: 'pointer', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconX size={12} color="#9B7B6A" /></button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -286,7 +286,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
             {(['confirmado', 'pendente'] as const).map(s => (
               <button key={s} onClick={() => setStatus(s)}
                 style={{ flex: 1, padding: '9px 0', borderRadius: 10, border: `1.5px solid ${status === s ? (s === 'confirmado' ? '#3A8580' : '#D4A017') : '#E8E0D5'}`, background: status === s ? (s === 'confirmado' ? '#EBF5F0' : '#FDF4E3') : 'white', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: status === s ? (s === 'confirmado' ? '#3A8580' : '#D4A017') : '#9B7B6A', transition: 'all .15s' }}>
-                {s === 'confirmado' ? '✓ Confirmado' : '⏳ Pendente'}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{s === 'confirmado' ? <><IconCheck size={12} stroke={2.5} />Confirmado</> : <><IconRepeat size={12} stroke={2} />Pendente</>}</span>
               </button>
             ))}
           </div>

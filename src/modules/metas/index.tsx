@@ -8,6 +8,7 @@ import { fmt, mesAnoAtual } from '@/lib/format'
 import { Confetti } from "@/components/ui/Confetti"
 import { sounds, haptic } from "@/lib/sounds"
 import { Dobrao } from '@/components/mascot/Dobrao'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { IconEdit, IconX, IconTrash, IconTarget, IconChartBar, IconAlertTriangle, IconTrophy } from '@tabler/icons-react'
 
 function CircularProgress({ pct, cor, size = 60 }: { pct: number; cor: string; size?: number }) {
@@ -103,10 +104,9 @@ function MetaCard({ meta, onEdit }: { meta: any; onEdit: () => void }) {
 function OrcamentoRow({ orc, gastos, onEdit }: { orc: any; gastos: Map<number, number>; onEdit: () => void }) {
   const [catNome, setCatNome] = useState('')
   const [catCor, setCatCor] = useState('#9B8A7A')
-  const [catIcon, setCatIcon] = useState('💸')
   const shook = useRef(false)
   useState(() => {
-    import('@/db/schema').then(({ db }) => db.categorias.get(orc.categoriaId).then(c => { if (c) { setCatNome(c.nome); setCatCor(c.cor); setCatIcon(c.icone) } }))
+    import('@/db/schema').then(({ db }) => db.categorias.get(orc.categoriaId).then(c => { if (c) { setCatNome(c.nome); setCatCor(c.cor) } }))
   })
   const gasto = gastos.get(orc.categoriaId) ?? 0
   const pct = Math.min(100, (gasto / orc.valorLimite) * 100)
@@ -125,7 +125,7 @@ function OrcamentoRow({ orc, gastos, onEdit }: { orc: any; gastos: Map<number, n
       transition={{ duration: 0.45 }}
       style={{ background: '#FFFDF9', border: `0.5px solid ${estourado ? '#FAD0D0' : '#E8E0D5'}`, borderRadius: 14, padding: '12px 14px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F' }}>{catIcon} {catNome}</span>
+        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F', display: 'inline-flex', alignItems: 'center', gap: 6 }}><CategoryIcon nome={catNome} cor={catCor} size={22} radius={6} />{catNome}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: estourado ? '#C4553B' : '#2C1A0F' }}>{fmt(gasto)}</span>
@@ -327,8 +327,8 @@ export function Page() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                 {categorias.map(c => (
                   <button key={c.id} onClick={() => !editingOrcId && setFormOrc(f => ({ ...f, categoriaId: c.id! }))}
-                    style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: editingOrcId ? 'default' : 'pointer', background: formOrc.categoriaId === c.id ? c.cor : '#F5F0E8', color: formOrc.categoriaId === c.id ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 4, opacity: editingOrcId && formOrc.categoriaId !== c.id ? 0.4 : 1 }}>
-                    {c.icone} {c.nome}
+                    style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: editingOrcId ? 'default' : 'pointer', background: formOrc.categoriaId === c.id ? c.cor : '#F5F0E8', color: formOrc.categoriaId === c.id ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5, opacity: editingOrcId && formOrc.categoriaId !== c.id ? 0.4 : 1 }}>
+                    <CategoryIcon nome={c.nome} cor={formOrc.categoriaId === c.id ? 'white' : c.cor} size={18} radius={5} /> {c.nome}
                   </button>
                 ))}
               </div>
