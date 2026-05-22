@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCartoes, addCartao, editCartao, deleteCartao, useTotalFatura, useLancamentosCartao, addLancamentoCartao } from '@/db/hooks/useCartoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
@@ -35,12 +35,12 @@ const LABEL: React.CSSProperties = {
   textTransform: 'uppercase',
 }
 
-function LancRow({ lanc }: { lanc: any }) {
+function LancRow({ lanc, isLast }: { lanc: any; isLast: boolean }) {
   const [cat, setCat] = useState<any>(null)
-  useState(() => { db.categorias.get(lanc.categoriaId).then(setCat) })
+  useEffect(() => { db.categorias.get(lanc.categoriaId).then(setCat) }, [lanc.categoriaId])
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid #F5F0EA' }}>
-      {cat && <CategoryIcon nome={cat.nome} cor={cat.cor} size={40} radius={12} />}
+    <div style={{ borderBottom: isLast ? 'none' : '1px solid #F5F0E8', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+      {cat ? <CategoryIcon nome={cat.nome} cor={cat.cor} size={40} radius={12} /> : <div style={{ width: 40, height: 40, borderRadius: 12, background: '#F5F0E8' }} />}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lanc.descricao}</p>
         <div style={{ display: 'flex', gap: 5, marginTop: 3, alignItems: 'center' }}>
@@ -51,6 +51,26 @@ function LancRow({ lanc }: { lanc: any }) {
       <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: '#C4553B', flexShrink: 0 }}>{fmt(lanc.valor)}</p>
     </div>
   )
+}
+
+type CatStat = { id: number; nome: string; cor: string; valor: number; icone: string }
+
+function useCatsFatura(lancamentos: any[]): CatStat[] {
+  const [cats, setCats] = useState<CatStat[]>([])
+  useEffect(() => {
+    if (lancamentos.length === 0) { setCats([]); return }
+    Promise.all(lancamentos.map(l => db.categorias.get(l.categoriaId))).then(categories => {
+      const map = new Map<number, CatStat>()
+      lancamentos.forEach((l, i) => {
+        const cat = categories[i]
+        if (!cat || cat.id == null) return
+        const existing = map.get(cat.id) ?? { id: cat.id, nome: cat.nome, cor: cat.cor, valor: 0, icone: cat.icone ?? '' }
+        map.set(cat.id, { ...existing, valor: existing.valor + l.valor })
+      })
+      setCats(Array.from(map.values()).sort((a, b) => b.valor - a.valor))
+    })
+  }, [lancamentos])
+  return cats
 }
 
 function FaturaSheet({ cartao, onClose }: { cartao: any; onClose: () => void }) {
@@ -150,7 +170,7 @@ function FaturaSheet({ cartao, onClose }: { cartao: any; onClose: () => void }) 
             </div>
           ) : (
             <div>
-              {lancamentos.map(l => <LancRow key={l.id} lanc={l} />)}
+              {lancamentos.map((l, i) => <LancRow key={l.id} lanc={l} isLast={i === lancamentos.length - 1} />)}
             </div>
           )}
         </div>

@@ -5,7 +5,12 @@ import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { fmt } from '@/lib/format'
 import { Dobrao } from '@/components/mascot/Dobrao'
 import { db } from '@/db/schema'
-import { IconCreditCard, IconCalendarStats, IconChevronDown, IconChevronUp } from '@tabler/icons-react'
+import { IconCreditCard, IconChevronDown, IconChevronUp } from '@tabler/icons-react'
+
+const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B7B6A' }
+const BODY: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif" }
+const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
 
 function lightenHex(hex: string, pct: number) {
   if (!hex || hex.length < 7) return hex
@@ -27,35 +32,44 @@ function ParcelaRow({ lanc, cor }: { lanc: any; cor: string }) {
   const [cat, setCat] = useState<any>(null)
   const pct = Math.round((lanc.parcelaAtual / lanc.totalParcelas) * 100)
   const restantes = lanc.totalParcelas - lanc.parcelaAtual
-  const total = lanc.valor * lanc.totalParcelas
+  const totalRestante = lanc.valor * restantes
 
   useEffect(() => { db.categorias.get(lanc.categoriaId).then(setCat) }, [lanc.categoriaId])
 
   return (
-    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-      style={{ background: '#FFFDF9', border: '1px solid #EDE6DC', borderRadius: 16, padding: '14px 16px' }}>
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ ...CARD, padding: '14px 16px', borderRadius: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         {cat && <CategoryIcon nome={cat.nome} cor={cat.cor} size={44} radius={13} />}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lanc.descricao}</p>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>
-            {restantes === 0 ? 'Última parcela' : `Ainda ${restantes} parcela${restantes !== 1 ? 's' : ''}`}
+          <p style={{ ...BODY, fontSize: 14, fontWeight: 600, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lanc.descricao}</p>
+          <p style={{ ...BODY, fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>
+            {lanc.parcelaAtual}/{lanc.totalParcelas} parcelas &middot; {restantes === 0 ? 'Última parcela' : `${restantes} restante${restantes !== 1 ? 's' : ''}`}
           </p>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 15, fontWeight: 700, color: '#C4553B' }}>{fmt(lanc.valor)}<span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A' }}>/mês</span></p>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4B4A8', marginTop: 2 }}>{lanc.parcelaAtual}/{lanc.totalParcelas}x · total {fmt(total)}</p>
+          <p style={{ ...DISPLAY, fontSize: 15, color: '#C4553B' }}>
+            {fmt(lanc.valor)}<span style={{ ...BODY, fontSize: 10, fontWeight: 600, color: '#9B7B6A' }}>/mês</span>
+          </p>
+          <p style={{ ...BODY, fontSize: 10, color: '#C4B4A8', marginTop: 2 }}>
+            {totalRestante > 0 ? `${fmt(totalRestante)} restante` : 'Quitado'}
+          </p>
         </div>
       </div>
 
-      <div style={{ background: '#EDE6DC', borderRadius: 6, height: 6, overflow: 'hidden', marginBottom: 5 }}>
-        <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
+      {/* Progress bar */}
+      <div style={{ background: '#F5F0E8', borderRadius: 6, height: 5, overflow: 'hidden', marginBottom: 5 }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
           transition={{ type: 'spring', stiffness: 200, damping: 25, delay: 0.1 }}
           style={{ height: '100%', background: `linear-gradient(90deg, ${lightenHex(cor, 20)}, ${cor})`, borderRadius: 6 }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A' }}>{pct}% concluído</span>
-        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A' }}>{fmt(lanc.valor * lanc.parcelaAtual)} pago</span>
+        <span style={{ ...BODY, fontSize: 10, color: '#9B7B6A' }}>{pct}% concluído</span>
+        <span style={{ ...BODY, fontSize: 10, color: '#9B7B6A' }}>{fmt(lanc.valor * lanc.parcelaAtual)} pago</span>
       </div>
     </motion.div>
   )
@@ -70,9 +84,12 @@ function CartaoGroup({ cartao, lancamentos }: { cartao: any; lancamentos: any[] 
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <motion.button whileTap={{ scale: 0.98 }} onClick={() => setExpanded(e => !e)}
+      <motion.button
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setExpanded(e => !e)}
         style={{
-          width: '100%', border: 'none', cursor: 'pointer', borderRadius: 20, padding: '16px 18px', marginBottom: expanded ? 10 : 0,
+          width: '100%', border: 'none', cursor: 'pointer', borderRadius: 20,
+          padding: '16px 18px', marginBottom: expanded ? 10 : 0,
           background: `linear-gradient(140deg, ${lightenHex(cartao.cor, 22)} 0%, ${cartao.cor} 50%, ${darkenHex(cartao.cor, 30)} 100%)`,
           boxShadow: `0 6px 24px ${cartao.cor}38`,
           position: 'relative', overflow: 'hidden',
@@ -84,14 +101,14 @@ function CartaoGroup({ cartao, lancamentos }: { cartao: any; lancamentos: any[] 
             <IconCreditCard size={18} color={txt} stroke={1.8} />
           </div>
           <div style={{ textAlign: 'left' }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 800, color: txt, letterSpacing: '.04em', textTransform: 'uppercase' }}>{cartao.nome}</p>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: subTxt, marginTop: 1 }}>{lancamentos.length} parcelamento{lancamentos.length !== 1 ? 's' : ''} em aberto</p>
+            <p style={{ ...BODY, fontSize: 12, fontWeight: 800, color: txt, letterSpacing: '.04em', textTransform: 'uppercase' }}>{cartao.nome}</p>
+            <p style={{ ...BODY, fontSize: 10, color: subTxt, marginTop: 1 }}>{lancamentos.length} parcelamento{lancamentos.length !== 1 ? 's' : ''} em aberto</p>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, color: subTxt, letterSpacing: '.06em' }}>POR MÊS</p>
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: txt, letterSpacing: '-0.5px' }}>{fmt(totalMensal)}</p>
+            <p style={{ ...BODY, fontSize: 9, color: subTxt, letterSpacing: '.06em' }}>POR MÊS</p>
+            <p style={{ ...DISPLAY, fontSize: 18, color: txt }}>{fmt(totalMensal)}</p>
           </div>
           {expanded ? <IconChevronUp size={16} color={txt} stroke={2} /> : <IconChevronDown size={16} color={txt} stroke={2} />}
         </div>
@@ -99,7 +116,10 @@ function CartaoGroup({ cartao, lancamentos }: { cartao: any; lancamentos: any[] 
 
       <AnimatePresence>
         {expanded && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
             style={{ overflow: 'hidden' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {lancamentos.map(l => <ParcelaRow key={l.id} lanc={l} cor={cartao.cor} />)}
@@ -124,47 +144,52 @@ export function Page() {
   })).filter(g => g.lancamentos.length > 0)
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '24px 28px', width: '100%' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ width: '100%', paddingBottom: 32 }}>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 28, fontWeight: 700, color: '#2C1A0F' }}>Parcelamentos</h1>
-        {parcelamentos.length > 0 && (
-          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', background: '#F5F0E8', padding: '5px 12px', borderRadius: 20, fontWeight: 600 }}>
-            {parcelamentos.length} em aberto
-          </span>
-        )}
+      {/* Header */}
+      <div style={{ padding: '24px 28px 0', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ ...DISPLAY, fontSize: 28, color: '#2C1A0F' }}>Parcelamentos</h1>
+            {parcelamentos.length > 0 && (
+              <p style={{ ...BODY, fontSize: 13, color: '#9B7B6A', marginTop: 3 }}>
+                {parcelamentos.length} parcela{parcelamentos.length !== 1 ? 's' : ''} ativa{parcelamentos.length !== 1 ? 's' : ''} &middot; {fmt(totalMensal)}/mês total
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
+      {/* Summary card */}
       {parcelamentos.length > 0 && (
-        <div style={{ background: 'linear-gradient(140deg, #1E0C04 0%, #3E1C0C 45%, #2C1208 100%)', borderRadius: 22, padding: '20px 22px', marginBottom: 24, position: 'relative', overflow: 'hidden', boxShadow: '0 8px 32px rgba(20,8,0,0.25)' }}>
-          <div style={{ position: 'absolute', top: -50, right: -50, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(196,85,59,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 9, background: 'rgba(217,79,138,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconCalendarStats size={15} color="#E890C0" stroke={2} />
+        <div style={{ ...CARD, margin: '0 28px 24px', padding: '18px 20px' }}>
+          <p style={{ ...LABEL, marginBottom: 14 }}>Resumo</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            <div>
+              <p style={{ ...LABEL, fontSize: 9, marginBottom: 5 }}>POR MÊS</p>
+              <p style={{ ...DISPLAY, fontSize: 20, color: '#C4553B' }}>{fmt(totalMensal)}</p>
             </div>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: '.08em' }}>COMPROMETIDO</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <div style={{ background: 'rgba(217,79,138,0.18)', border: '1px solid rgba(217,79,138,0.22)', borderRadius: 14, padding: '12px 14px' }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#E890C0', letterSpacing: '.07em', marginBottom: 4 }}>POR MÊS</p>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: 'white', letterSpacing: '-0.5px' }}>{fmt(totalMensal)}</p>
+            <div>
+              <p style={{ ...LABEL, fontSize: 9, marginBottom: 5 }}>TOTAL RESTANTE</p>
+              <p style={{ ...DISPLAY, fontSize: 20, color: '#2C1A0F' }}>{fmt(totalGeral)}</p>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '12px 14px' }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '.07em', marginBottom: 4 }}>TOTAL RESTANTE</p>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: '-0.5px' }}>{fmt(totalGeral)}</p>
+            <div>
+              <p style={{ ...LABEL, fontSize: 9, marginBottom: 5 }}>EM ABERTO</p>
+              <p style={{ ...DISPLAY, fontSize: 20, color: '#2C1A0F' }}>{parcelamentos.length}</p>
             </div>
           </div>
         </div>
       )}
 
+      {/* Empty state */}
       {parcelamentos.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '56px 0' }}>
+        <div style={{ textAlign: 'center', padding: '56px 28px' }}>
           <Dobrao mood="happy" size={100} />
-          <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', marginTop: 14 }}>Nenhum parcelamento</p>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#9B7B6A', marginTop: 6 }}>Lance compras parceladas nos Cartões</p>
+          <p style={{ ...DISPLAY, fontSize: 20, color: '#2C1A0F', marginTop: 14 }}>Nenhum parcelamento ativo</p>
+          <p style={{ ...BODY, fontSize: 14, color: '#9B7B6A', marginTop: 6 }}>Seus parcelamentos de cartão aparecem aqui</p>
         </div>
       ) : (
-        <div>
+        <div style={{ padding: '0 28px' }}>
           {byCartao.map(({ cartao, lancamentos: lcs }) => (
             <CartaoGroup key={cartao.id} cartao={cartao} lancamentos={lcs} />
           ))}
