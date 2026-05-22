@@ -8,8 +8,8 @@ export interface Phrase { text: string; emoji: EmojiType }
 // ─── Custom SVG Emojis ────────────────────────────────────────────
 function SvgCrown() {
   return (
-    <svg width="14" height="11" viewBox="0 0 20 16" fill="none"
-      style={{ display:'inline-block', verticalAlign:'middle', marginLeft:4, flexShrink:0 }}>
+    <svg width="22" height="17" viewBox="0 0 20 16" fill="none"
+      style={{ display:'block', flexShrink:0 }}>
       <path d="M1 13 L4 4 L8.5 8.5 L10 1 L11.5 8.5 L16 4 L19 13 Z" fill="#FFD700"/>
       <rect x="1" y="13" width="18" height="2.2" rx="1" fill="#E8C000"/>
       <circle cx="10" cy="2"  r="2.2" fill="#FF6B9D"/>
@@ -20,8 +20,8 @@ function SvgCrown() {
 }
 function SvgSparkle() {
   return (
-    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"
-      style={{ display:'inline-block', verticalAlign:'middle', marginLeft:4, flexShrink:0 }}>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+      style={{ display:'block', flexShrink:0 }}>
       <path d="M10 1 L11.5 7.5 L18 9 L11.5 10.5 L10 17 L8.5 10.5 L2 9 L8.5 7.5 Z" fill="#FFD700"/>
       <circle cx="3.5"  cy="3"    r="1.5" fill="#FF6B9D" opacity=".85"/>
       <circle cx="16.5" cy="3.5"  r="1.2" fill="#C77DFF" opacity=".8"/>
@@ -31,8 +31,8 @@ function SvgSparkle() {
 }
 function SvgFlame() {
   return (
-    <svg width="12" height="16" viewBox="0 0 14 20" fill="none"
-      style={{ display:'inline-block', verticalAlign:'middle', marginLeft:4, flexShrink:0 }}>
+    <svg width="18" height="22" viewBox="0 0 14 20" fill="none"
+      style={{ display:'block', flexShrink:0 }}>
       <path d="M7 1 C9 5 13 7 13 13 C13 17.5 10.3 20 7 20 C3.7 20 1 17.5 1 13 C1 7 5 5 7 1Z" fill="#FF6B35"/>
       <path d="M7 9 C9 11.5 9.5 15 9 17 C8.3 19 5.7 19 5 17 C4.5 15 5 11.5 7 9Z" fill="#FFD93D"/>
     </svg>
@@ -40,8 +40,8 @@ function SvgFlame() {
 }
 function SvgDiamond() {
   return (
-    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"
-      style={{ display:'inline-block', verticalAlign:'middle', marginLeft:4, flexShrink:0 }}>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+      style={{ display:'block', flexShrink:0 }}>
       <path d="M4 7 L10 2 L16 7 L10 18 Z" fill="#6EC6FF"/>
       <path d="M4 7 L10 7 L10 18 Z" fill="#0090D0" opacity=".5"/>
       <path d="M10 2 L16 7 L10 7 L14 4.5 Z" fill="#A8E4FF"/>
@@ -50,8 +50,8 @@ function SvgDiamond() {
 }
 function SvgWarning() {
   return (
-    <svg width="14" height="13" viewBox="0 0 20 18" fill="none"
-      style={{ display:'inline-block', verticalAlign:'middle', marginLeft:4, flexShrink:0 }}>
+    <svg width="20" height="18" viewBox="0 0 20 18" fill="none"
+      style={{ display:'block', flexShrink:0 }}>
       <path d="M10 1.5 L19 16.5 H1 Z" fill="#FF6B35"/>
       <rect x="9" y="7.5" width="2" height="4.5" rx="1" fill="white"/>
       <circle cx="10" cy="14" r="1" fill="white"/>
@@ -75,16 +75,16 @@ const PHRASES: Phrase[] = [
   { text: 'A Lady Gaga aprovaria seus gastos?',           emoji: 'warning' },
 ]
 
-// ─── Hook ─────────────────────────────────────────────────────────
+// ─── Hook — sempre rotaciona (contextPhrase entra na lista) ──────
 export function useFairyPhrase(contextPhrase?: Phrase): Phrase {
   const [idx, setIdx] = useState(0)
-  const ref = useRef<ReturnType<typeof setInterval> | null>(null)
+  const allPhrases = contextPhrase ? [contextPhrase, ...PHRASES] : PHRASES
   useEffect(() => {
-    if (contextPhrase) return
-    ref.current = setInterval(() => setIdx(i => (i + 1) % PHRASES.length), 6000)
-    return () => { if (ref.current) clearInterval(ref.current) }
+    const timer = setInterval(() => setIdx(i => (i + 1) % allPhrases.length), 6000)
+    return () => clearInterval(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextPhrase])
-  return contextPhrase ?? PHRASES[idx]
+  return allPhrases[idx % allPhrases.length]
 }
 
 // ─── Speech Bubble ────────────────────────────────────────────────
@@ -93,38 +93,40 @@ export function FairyBubble({ phrase }: { phrase: Phrase }) {
     <AnimatePresence mode="wait">
       <motion.div
         key={phrase.text}
-        initial={{ opacity: 0, scale: 0.9, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: -4 }}
-        transition={{ duration: 0.22, ease: 'easeOut' }}
+        initial={{ opacity: 0, scale: 0.82, y: 14, rotate: -2 }}
+        animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: -8, rotate: 1 }}
+        transition={{ duration: 0.36, ease: [0.34, 1.56, 0.64, 1] }}
         style={{
-          background: 'white',
-          borderRadius: '12px 12px 4px 12px',
-          padding: '9px 12px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.22)',
-          border: '1px solid rgba(255,255,255,0.9)',
-          width: 200,
+          background: '#FFFFFF',
+          borderRadius: '16px 16px 4px 16px',
+          padding: '11px 14px 11px 14px',
+          boxShadow: '0 10px 36px rgba(0,0,0,0.38), 0 2px 8px rgba(0,0,0,0.2)',
+          borderLeft: '3.5px solid #F1642E',
+          border: '1px solid rgba(255,255,255,0.95)',
+          borderLeftColor: '#F1642E',
+          maxWidth: 230,
           display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          flexWrap: 'nowrap',
+          alignItems: 'flex-start',
+          gap: 8,
         }}
       >
-        <span style={{
-          fontFamily: "'Plus Jakarta Sans',sans-serif",
-          fontStyle: 'italic',
-          fontSize: 12,
-          fontWeight: 600,
-          color: '#2C1A0F',
-          lineHeight: 1.35,
-          flex: 1,
-          minWidth: 0,
-          wordBreak: 'break-word',
-          whiteSpace: 'normal',
-        }}>
-          {phrase.text}
-        </span>
-        <EmojiIcon type={phrase.emoji} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            fontFamily: "'Fraunces',Georgia,serif",
+            fontStyle: 'italic',
+            fontSize: 13.5,
+            fontWeight: 400,
+            color: '#1A0840',
+            lineHeight: 1.45,
+            margin: 0,
+          }}>
+            {phrase.text}
+          </p>
+        </div>
+        <div style={{ flexShrink: 0, paddingTop: 2 }}>
+          <EmojiIcon type={phrase.emoji} />
+        </div>
       </motion.div>
     </AnimatePresence>
   )

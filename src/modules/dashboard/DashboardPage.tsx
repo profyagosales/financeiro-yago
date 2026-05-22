@@ -38,124 +38,67 @@ const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.1 }
 
 // ─── Cena financeira do card de saudação ─────────────────────────
-function Coin({ x, y, size, delay, opacity = 0.22 }: { x: string; y: string; size: number; delay: number; opacity?: number }) {
-  return (
-    <motion.div
-      style={{
-        position: 'absolute', left: x, top: y, width: size, height: size,
-        borderRadius: '50%',
-        background: `radial-gradient(circle at 35% 35%, rgba(255,220,80,${opacity + 0.08}), rgba(241,100,46,${opacity}))`,
-        border: `1px solid rgba(241,100,46,${opacity + 0.1})`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: `0 0 ${size * 0.6}px rgba(241,100,46,${opacity * 0.5})`,
-        pointerEvents: 'none',
-      }}
-      animate={{ y: [0, -(size * 0.45), 0], opacity: [opacity, opacity + 0.12, opacity] }}
-      transition={{ duration: 5.5 + delay, repeat: Infinity, ease: 'easeInOut', delay }}
-    >
-      <span style={{
-        fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 800,
-        fontSize: size * 0.28, color: `rgba(255,200,80,${opacity * 2.5})`,
-        userSelect: 'none', letterSpacing: '-0.5px',
-      }}>R$</span>
-    </motion.div>
-  )
-}
-
 function FinancialScene() {
+  const sparkles = [
+    { x:'36%', y:'15%', d:0   }, { x:'50%', y:'68%', d:1.5 },
+    { x:'62%', y:'10%', d:2.8 }, { x:'74%', y:'55%', d:0.7 },
+    { x:'86%', y:'22%', d:3.5 }, { x:'92%', y:'72%', d:1.9 },
+  ]
   return (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+    <div style={{ position:'absolute', inset:0, zIndex:0, overflow:'hidden', pointerEvents:'none' }}>
 
-      {/* Linha de tendência SVG — direita do card */}
-      <svg style={{ position: 'absolute', right: 0, bottom: 0, width: '58%', height: '100%' }}
-        viewBox="0 0 260 110" fill="none" preserveAspectRatio="xMaxYMax meet">
-        {/* Grid lines horizontais */}
-        <line x1="0" y1="90" x2="260" y2="90" stroke="rgba(163,181,101,0.08)" strokeWidth="1" strokeDasharray="4 6"/>
-        <line x1="0" y1="65" x2="260" y2="65" stroke="rgba(163,181,101,0.08)" strokeWidth="1" strokeDasharray="4 6"/>
-        <line x1="0" y1="40" x2="260" y2="40" stroke="rgba(163,181,101,0.07)" strokeWidth="1" strokeDasharray="4 6"/>
-        <line x1="0" y1="15" x2="260" y2="15" stroke="rgba(163,181,101,0.06)" strokeWidth="1" strokeDasharray="4 6"/>
-        {/* Barras de gráfico */}
-        {[
-          { x: 20,  h: 35, c: 'rgba(163,181,101,0.14)' },
-          { x: 48,  h: 55, c: 'rgba(163,181,101,0.18)' },
-          { x: 76,  h: 40, c: 'rgba(163,181,101,0.13)' },
-          { x: 104, h: 70, c: 'rgba(163,181,101,0.2)'  },
-          { x: 132, h: 52, c: 'rgba(163,181,101,0.16)' },
-          { x: 160, h: 80, c: 'rgba(163,181,101,0.22)' },
-          { x: 188, h: 65, c: 'rgba(163,181,101,0.18)' },
-          { x: 216, h: 90, c: 'rgba(163,181,101,0.25)' },
-        ].map((b, i) => (
-          <rect key={i} x={b.x} y={110 - b.h} width="20" height={b.h} rx="3" fill={b.c}/>
+      {/* ── Área chart — peça principal, cobre toda a metade direita ── */}
+      <svg style={{ position:'absolute', right:0, bottom:0, width:'70%', height:'115%' }}
+        viewBox="0 0 320 130" fill="none" preserveAspectRatio="xMaxYMax meet">
+        <defs>
+          <linearGradient id="fsArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="rgba(163,181,101,0.2)"/>
+            <stop offset="100%" stopColor="rgba(163,181,101,0.01)"/>
+          </linearGradient>
+          <linearGradient id="fsGlow" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stopColor="rgba(163,181,101,0)"/>
+            <stop offset="100%" stopColor="rgba(163,181,101,0.18)"/>
+          </linearGradient>
+        </defs>
+        {/* Linhas de grid — muito sutis */}
+        {[20,48,76,104].map(y => (
+          <line key={y} x1="0" y1={y} x2="320" y2={y}
+            stroke="rgba(255,255,255,0.03)" strokeWidth="1"/>
         ))}
-        {/* Linha de tendência */}
-        <polyline
-          points="20,75 48,55 76,70 104,40 132,58 160,30 188,45 216,20"
-          stroke="rgba(163,181,101,0.35)" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        {/* Área sob a linha */}
+        {/* Área sob a curva */}
         <path
-          d="M20,75 48,55 76,70 104,40 132,58 160,30 188,45 216,20 V110 H20Z"
-          fill="rgba(163,181,101,0.05)"/>
-        {/* Pontos na linha */}
-        {[{x:104,y:40},{x:160,y:30},{x:216,y:20}].map((p,i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="3.5" fill="rgba(163,181,101,0.45)"
-            stroke="rgba(163,181,101,0.2)" strokeWidth="1"/>
+          d="M0,120 C50,112 80,108 110,90 C140,72 165,82 195,58 C225,34 255,46 285,22 C296,15 308,12 320,6 V130 H0Z"
+          fill="url(#fsArea)"/>
+        {/* Glow lateral */}
+        <rect x="220" y="0" width="100" height="130" fill="url(#fsGlow)"/>
+        {/* Linha principal */}
+        <path
+          d="M0,120 C50,112 80,108 110,90 C140,72 165,82 195,58 C225,34 255,46 285,22 C296,15 308,12 320,6"
+          stroke="rgba(163,181,101,0.45)" strokeWidth="2" fill="none"
+          strokeLinecap="round" strokeLinejoin="round"/>
+        {/* Pontos em destaque */}
+        {[{x:110,y:90},{x:195,y:58},{x:285,y:22}].map((p,i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="6"   fill="rgba(163,181,101,0.12)"/>
+            <circle cx={p.x} cy={p.y} r="3.5" fill="rgba(163,181,101,0.6)"
+              stroke="rgba(163,181,101,0.3)" strokeWidth="1"/>
+          </g>
         ))}
       </svg>
 
-      {/* Moedas flutuantes */}
-      <Coin x="38%" y="10%"  size={38} delay={0}   opacity={0.2} />
-      <Coin x="52%" y="60%"  size={28} delay={2.2}  opacity={0.16} />
-      <Coin x="64%" y="15%"  size={32} delay={1}    opacity={0.18} />
-      <Coin x="75%" y="65%"  size={22} delay={3.5}  opacity={0.14} />
-      <Coin x="88%" y="30%"  size={44} delay={0.7}  opacity={0.22} />
-
-      {/* Símbolos % flutuando */}
-      {[
-        { x:'42%', y:'40%', delay:0,   size:22 },
-        { x:'68%', y:'50%', delay:2.8, size:18 },
-        { x:'82%', y:'12%', delay:1.5, size:26 },
-      ].map((p,i) => (
+      {/* ── Sparkles mágicos — coincidem com a paleta da fada ── */}
+      {sparkles.map((s,i) => (
         <motion.div key={i}
-          style={{ position:'absolute', left:p.x, top:p.y,
-            fontFamily:"'Fraunces',Georgia,serif", fontWeight:700, fontSize:p.size,
-            color:'rgba(196,195,227,0.12)', userSelect:'none', lineHeight:1 }}
-          animate={{ y:[0,-8,0], opacity:[0.6,1,0.6] }}
-          transition={{ duration:6+p.delay, repeat:Infinity, ease:'easeInOut', delay:p.delay }}
-        >%</motion.div>
-      ))}
-
-      {/* Estrelas/sparkles */}
-      {[
-        { x:'46%', y:'20%', delay:0   },
-        { x:'60%', y:'70%', delay:1.8 },
-        { x:'78%', y:'45%', delay:3   },
-        { x:'92%', y:'75%', delay:0.9 },
-      ].map((p,i) => (
-        <motion.div key={i}
-          style={{ position:'absolute', left:p.x, top:p.y, pointerEvents:'none' }}
-          animate={{ opacity:[0.1,0.55,0.1], scale:[0.8,1.25,0.8] }}
-          transition={{ duration:3+p.delay*0.5, repeat:Infinity, ease:'easeInOut', delay:p.delay }}
+          style={{ position:'absolute', left:s.x, top:s.y }}
+          animate={{ opacity:[0.06,0.4,0.06], scale:[0.6,1.2,0.6] }}
+          transition={{ duration:3.2+i*0.35, repeat:Infinity, ease:'easeInOut', delay:s.d }}
         >
-          <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+          <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
             <path d="M10 2 L11.3 8 L17 9 L11.3 10 L10 16 L8.7 10 L3 9 L8.7 8 Z"
-              fill="rgba(255,220,80,0.4)"/>
+              fill="rgba(255,220,80,0.55)"/>
           </svg>
         </motion.div>
       ))}
-
-      {/* Seta de tendência (canto superior direito) */}
-      <motion.div
-        style={{ position:'absolute', right:'3%', top:'8%', pointerEvents:'none' }}
-        animate={{ y:[0,-6,0], opacity:[0.5,0.85,0.5] }}
-        transition={{ duration:4, repeat:Infinity, ease:'easeInOut', delay:1 }}
-      >
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-          <path d="M4 18 L10 12 L14 16 L20 6" stroke="rgba(163,181,101,0.45)" strokeWidth="2"
-            strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M15 6 L20 6 L20 11" stroke="rgba(163,181,101,0.45)" strokeWidth="2"
-            strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </motion.div>
     </div>
   )
 }
@@ -278,46 +221,67 @@ export function DashboardPage() {
 
           {/* Texto de saudação */}
           <div style={{ position: 'relative', zIndex: 1 }}>
+            {/* "Boa tarde," — Fraunces italic, quente */}
             <p style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif",
-              fontSize: 13, fontWeight: 500, letterSpacing: '.04em',
-              color: 'rgba(255,255,255,0.38)', marginBottom: 6,
-              textTransform: 'uppercase',
-            }}>{saudacao}</p>
+              fontFamily: "'Fraunces',Georgia,serif",
+              fontStyle: 'italic',
+              fontSize: 18,
+              fontWeight: 400,
+              color: 'rgba(255,255,255,0.45)',
+              marginBottom: 4,
+              letterSpacing: '-0.3px',
+            }}>{saudacao},</p>
 
+            {/* "Yago." — gradient text, imponente */}
             <h1 style={{
               fontFamily: "'Fraunces',Georgia,serif",
-              fontWeight: 700, fontSize: 52, lineHeight: 0.92,
-              letterSpacing: '-2px', color: '#FFFFFF',
+              fontWeight: 700,
+              fontSize: 54,
+              lineHeight: 0.9,
+              letterSpacing: '-2.5px',
+              background: 'linear-gradient(130deg, #FFFFFF 30%, rgba(196,195,227,0.75) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              margin: 0,
             }}>
-              Yago<span style={{ color: '#F1642E' }}>.</span>
+              Yago<span style={{ WebkitTextFillColor: '#F1642E', color: '#F1642E' }}>.</span>
             </h1>
 
-            <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Data — badge pill elegante */}
+            <div style={{
+              marginTop: 16,
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 30,
+              padding: '5px 12px 5px 8px',
+            }}>
               <div style={{
-                width: 28, height: 1.5,
-                background: 'linear-gradient(90deg, rgba(241,100,46,0.8), transparent)',
+                width: 6, height: 6, borderRadius: '50%',
+                background: '#F1642E',
               }} />
               <p style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif",
-                fontSize: 14, fontWeight: 500,
-                color: 'rgba(255,255,255,0.52)',
-                letterSpacing: '.01em',
+                fontSize: 12.5, fontWeight: 500,
+                color: 'rgba(255,255,255,0.55)',
+                letterSpacing: '.015em',
+                margin: 0,
               }}>
                 {dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}
               </p>
             </div>
           </div>
 
-          {/* Fada voando — percurso animado pela metade direita do card */}
+          {/* Fada voando — percurso amplo por todo o card */}
           <motion.div
-            style={{ position: 'absolute', zIndex: 2, pointerEvents: 'none', left: '38%', top: '12%' }}
+            style={{ position: 'absolute', zIndex: 2, pointerEvents: 'none', left: '36%', top: '8%' }}
             animate={{
-              left: ['38%', '57%', '44%', '63%', '40%', '55%', '38%'],
-              top:  ['12%', '30%', '6%',  '24%', '36%', '5%',  '12%'],
+              left: ['36%', '60%', '42%', '66%', '32%', '56%', '36%'],
+              top:  ['8%',  '38%', '4%',  '28%', '44%', '3%',  '8%'],
             }}
             transition={{
-              duration: 20, repeat: Infinity, ease: 'easeInOut',
+              duration: 22, repeat: Infinity, ease: 'easeInOut',
               times: [0, 0.17, 0.33, 0.5, 0.67, 0.83, 1],
             }}
           >
