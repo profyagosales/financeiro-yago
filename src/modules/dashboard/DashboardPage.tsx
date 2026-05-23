@@ -54,6 +54,7 @@ function DarkTooltip({ active, payload, label }: { active?: boolean; payload?: A
 export function DashboardPage() {
   const { mes, ano } = mesAnoAtual()
   const navigate = useNavigate()
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null)
   const contas = useContas()
   const saldoTotal = useSaldoTotal()
   const transacoes = useTransacoes(8)
@@ -134,6 +135,12 @@ export function DashboardPage() {
     monthEventsList.push({ day: c.diaVencimento, name: c.nome, tipo: 'Vence fatura', cor: '#C4553B' })
   })
   monthEventsList.sort((a, b) => a.day - b.day)
+
+  // Map day -> events for hover tooltip
+  const eventsByDay = new Map<number, MonthEvent[]>()
+  monthEventsList.forEach(ev => {
+    eventsByDay.set(ev.day, [...(eventsByDay.get(ev.day) ?? []), ev])
+  })
 
 
   return (
@@ -276,28 +283,45 @@ export function DashboardPage() {
               </div>
 
               {/* Calendar grid */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:3, marginBottom:16 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:3 }}>
                 {Array.from({ length: Math.ceil(calCells / 7) * 7 }, (_, idx) => {
                   const day = idx - calFirstDow + 1
                   const colIdx = idx % 7
+                  const rowIdx = Math.floor(idx / 7)
                   const isWeekend = colIdx === 0 || colIdx === 6
                   if (day < 1 || day > calDaysInMonth) return <div key={idx}/>
                   const isToday = day === hoje
                   const isPast = day < hoje
                   const events = calendarEvents.get(day) ?? []
+                  const dayEvents = eventsByDay.get(day) ?? []
+                  const hasEvents = dayEvents.length > 0
+                  const isHovered = hoveredDay === day
+                  // Tooltip posicionamento: linhas iniciais → embaixo, demais → em cima
+                  const tooltipAbove = rowIdx >= 2
                   return (
-                    <div key={idx} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, padding:'4px 0' }}>
+                    <div
+                      key={idx}
+                      onMouseEnter={() => hasEvents && setHoveredDay(day)}
+                      onMouseLeave={() => setHoveredDay(prev => prev === day ? null : prev)}
+                      style={{
+                        position:'relative',
+                        display:'flex', flexDirection:'column', alignItems:'center',
+                        gap:3, padding:'4px 0',
+                        cursor: hasEvents ? 'pointer' : 'default',
+                      }}
+                    >
                       <div style={{
                         width:34, height:34, borderRadius:'50%',
-                        background: isToday ? '#504E76' : events.length > 0 ? 'rgba(212,160,23,0.08)' : 'transparent',
-                        border: events.length > 0 && !isToday ? '1.5px solid rgba(212,160,23,0.25)' : 'none',
-                        boxShadow: isToday ? '0 4px 12px rgba(80,78,118,0.35)' : 'none',
+                        background: isToday ? '#504E76' : hasEvents ? (isHovered ? 'rgba(212,160,23,0.18)' : 'rgba(212,160,23,0.08)') : 'transparent',
+                        border: hasEvents && !isToday ? `1.5px solid ${isHovered ? 'rgba(212,160,23,0.55)' : 'rgba(212,160,23,0.25)'}` : 'none',
+                        boxShadow: isToday ? '0 4px 12px rgba(80,78,118,0.35)' : isHovered ? '0 2px 10px rgba(212,160,23,0.25)' : 'none',
                         display:'flex', alignItems:'center', justifyContent:'center',
+                        transition:'all .15s ease',
                       }}>
                         <span style={{
                           fontFamily:"'Plus Jakarta Sans',sans-serif",
                           fontSize:13,
-                          fontWeight: isToday ? 700 : events.length > 0 ? 600 : 400,
+                          fontWeight: isToday ? 700 : hasEvents ? 600 : 400,
                           color: isToday ? 'white' : isPast ? 'rgba(44,26,15,0.3)' : isWeekend ? 'rgba(196,85,59,0.7)' : '#2C1A0F',
                         }}>{day}</span>
                       </div>
@@ -308,40 +332,72 @@ export function DashboardPage() {
                           ))}
                         </div>
                       )}
+
+                      {/* ── Tooltip de eventos ── */}
+                      <AnimatePresence>
+                        {isHovered && hasEvents && (
+                          <motion.div
+                            initial={{ opacity:0, y: tooltipAbove ? 4 : -4, scale:0.96 }}
+                            animate={{ opacity:1, y:0, scale:1 }}
+                            exit={{ opacity:0, y: tooltipAbove ? 4 : -4, scale:0.96 }}
+                            transition={{ duration:0.15, ease:[0.34,1.56,0.64,1] }}
+                            style={{
+                              position:'absolute',
+                              [tooltipAbove ? 'bottom' : 'top']: 'calc(100% + 8px)',
+                              left:'50%', transform:'translateX(-50%)',
+                              minWidth:220, maxWidth:280,
+                              background:'rgba(255,255,255,0.98)',
+                              backdropFilter:'blur(20px)',
+                              WebkitBackdropFilter:'blur(20px)',
+                              border:'1px solid rgba(44,26,15,0.08)',
+                              borderRadius:14,
+                              boxShadow:'0 12px 32px rgba(44,26,15,0.16), 0 4px 12px rgba(44,26,15,0.08)',
+                              padding:'12px 14px',
+                              zIndex:50,
+                              pointerEvents:'none',
+                            }}
+                          >
+                            {/* Cabeçalho do dia */}
+                            <div style={{ display:'flex', alignItems:'baseline', gap:6, marginBottom:10, paddingBottom:8, borderBottom:'1px solid rgba(44,26,15,0.06)' }}>
+                              <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontWeight:700, fontSize:18, color:'#2C1A0F', letterSpacing:'-0.5px', lineHeight:1 }}>{day}</span>
+                              <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:600, color:'#9B7B6A', textTransform:'uppercase', letterSpacing:'.06em' }}>de {mesNome}</span>
+                            </div>
+                            {/* Lista de eventos do dia */}
+                            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                              {dayEvents.map((ev, ei) => (
+                                <div key={ei} style={{ display:'flex', alignItems:'center', gap:9 }}>
+                                  <div style={{ width:8, height:8, borderRadius:'50%', background:ev.cor, flexShrink:0, boxShadow:`0 0 0 3px ${ev.cor}22` }}/>
+                                  <div style={{ flex:1, minWidth:0 }}>
+                                    <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, color:'#2C1A0F', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.name}</p>
+                                    <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, color:'#9B7B6A', margin:0 }}>{ev.tipo}</p>
+                                  </div>
+                                  {ev.valor !== undefined && (
+                                    <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:12, fontWeight:700, color:'#2C1A0F', flexShrink:0 }}>{fmt(ev.valor)}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            {/* Setinha do tooltip */}
+                            <div style={{
+                              position:'absolute',
+                              [tooltipAbove ? 'top' : 'bottom']: '100%',
+                              left:'50%', transform:'translateX(-50%)',
+                              width:0, height:0,
+                              borderLeft:'6px solid transparent',
+                              borderRight:'6px solid transparent',
+                              [tooltipAbove ? 'borderTop' : 'borderBottom']: '6px solid rgba(255,255,255,0.98)',
+                              filter:'drop-shadow(0 2px 4px rgba(44,26,15,0.06))',
+                            }}/>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   )
                 })}
               </div>
 
-              {/* Events list */}
-              {monthEventsList.length > 0 && (
-                <>
-                  <div style={{ height:1, background:'rgba(44,26,15,0.07)', marginBottom:14 }}/>
-                  <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:'#9B7B6A', marginBottom:10, margin:'0 0 10px 0' }}>Eventos do mês</p>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, overflowY:'auto' }}>
-                    {monthEventsList.slice(0, 6).map((ev, i) => (
-                      <div key={i} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                        <div style={{
-                          minWidth:40, height:24, borderRadius:12,
-                          background: ev.cor, opacity: 0.9,
-                          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
-                        }}>
-                          <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, color:'white' }}>dia {ev.day}</span>
-                        </div>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, color:'#2C1A0F', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.name}</p>
-                          <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, color:'#9B7B6A', margin:0 }}>{ev.tipo}</p>
-                        </div>
-                        {ev.valor !== undefined && (
-                          <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:13, fontWeight:700, color:'#2C1A0F', flexShrink:0 }}>{fmt(ev.valor)}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
               {monthEventsList.length === 0 && (
-                <div style={{ textAlign:'center', opacity:0.5, marginTop:8 }}>
+                <div style={{ textAlign:'center', opacity:0.5, marginTop:16 }}>
                   <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:'#9B7B6A' }}>Sem eventos este mês</p>
                 </div>
               )}
