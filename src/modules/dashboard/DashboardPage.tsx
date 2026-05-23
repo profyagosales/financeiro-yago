@@ -232,117 +232,91 @@ export function DashboardPage() {
             }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
           </div>
 
-          {/* ── Fada voa livremente — bubble centralizado acima dela ── */}
-          <motion.div
-            style={{ position:'absolute', zIndex:2, pointerEvents:'none', left:'40%', top:'40%' }}
-            animate={{
-              left: ['40%', '64%', '44%', '68%', '36%', '58%', '46%', '40%'],
-              top:  ['40%', '8%',  '4%',  '34%', '16%', '38%', '6%',  '40%'],
-            }}
-            transition={{
-              duration:28, repeat:Infinity, ease:'easeInOut',
-              times:[0, 0.14, 0.28, 0.43, 0.57, 0.71, 0.85, 1],
-            }}
-          >
+          {/* ── CSS keyframe — mais confiável que Framer Motion para left/top ── */}
+          <style>{`
+            @keyframes fairyFly {
+              0%,100% { left:40%; top:38%; }
+              14%     { left:63%; top: 6%; }
+              28%     { left:44%; top: 3%; }
+              43%     { left:67%; top:32%; }
+              57%     { left:37%; top:14%; }
+              71%     { left:57%; top:36%; }
+              85%     { left:45%; top: 5%; }
+            }
+            .fairy-container {
+              position:absolute; z-index:2; pointer-events:none;
+              animation: fairyFly 28s ease-in-out infinite;
+            }
+          `}</style>
+
+          <div className="fairy-container">
             <div style={{
               position:'absolute', bottom:'84px', left:'50%',
-              transform:'translateX(-50%)', zIndex:1, width:'max-content', maxWidth:220,
+              transform:'translateX(-50%)', zIndex:1, width:210,
             }}>
               <FairyBubble phrase={activePhrase} />
             </div>
             <DragFairy />
-          </motion.div>
+          </div>
         </div>
 
-        {/* ── Card mês — roxo sólido com anel de progresso ── */}
+        {/* ── Card mês — centralizado, limpo ── */}
         <div style={{
           background: '#504E76',
           borderRadius: 24,
-          padding: '22px',
+          padding: '20px 16px',
           display: 'flex',
           flexDirection: 'column',
-          gap: 14,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
           position: 'relative',
           overflow: 'hidden',
+          minHeight: 172,
         }}>
-          {/* Decoração fundo */}
-          <div style={{ position: 'absolute', top: -32, right: -32, width: 110, height: 110,
-            borderRadius: '50%', background: 'rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: -18, left: -18, width: 72, height: 72,
-            borderRadius: '50%', background: 'rgba(241,100,46,0.08)', pointerEvents: 'none' }} />
+          {/* Orbs decorativos */}
+          <div style={{ position:'absolute', top:-28, right:-28, width:90, height:90,
+            borderRadius:'50%', background:'rgba(255,255,255,0.05)', pointerEvents:'none' }}/>
+          <div style={{ position:'absolute', bottom:-16, left:-16, width:64, height:64,
+            borderRadius:'50%', background:'rgba(241,100,46,0.1)', pointerEvents:'none' }}/>
 
-          {/* Header */}
-          <div>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
-              letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
-              Período atual
-            </p>
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700,
-              color: '#ffffff', marginTop: 3, textTransform: 'capitalize', lineHeight: 1.1 }}>
+          {/* Mês + ano */}
+          <div style={{ textAlign:'center' }}>
+            <p style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:26, fontWeight:700,
+              color:'#ffffff', textTransform:'capitalize', lineHeight:1.1, margin:0 }}>
               {mesNome}
             </p>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12,
-              color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>{ano}</p>
+            <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12,
+              color:'rgba(255,255,255,0.38)', marginTop:2 }}>{ano}</p>
           </div>
 
-          {/* Anel progresso + stats */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            {/* SVG ring */}
-            <svg width="76" height="76" viewBox="0 0 76 76" style={{ flexShrink: 0 }}>
-              {/* Track */}
-              <circle cx="38" cy="38" r={ringR} fill="none"
-                stroke="rgba(255,255,255,0.12)" strokeWidth="6"/>
-              {/* Progress arc */}
-              <motion.circle cx="38" cy="38" r={ringR} fill="none"
-                stroke="rgba(196,195,227,0.78)" strokeWidth="6"
-                strokeLinecap="round"
-                strokeDasharray={ringCirc}
-                initial={{ strokeDashoffset: ringCirc }}
-                animate={{ strokeDashoffset: ringCirc * (1 - hoje / diasNoMes) }}
-                transition={{ duration: 1.3, ease: [0.34,1.56,0.64,1], delay: 0.4 }}
-                style={{ transform:'rotate(-90deg)', transformOrigin:'38px 38px' }}
-              />
-              {/* Day number */}
-              <text x="38" y="34" textAnchor="middle" fill="white"
-                fontSize="15" fontFamily="Fraunces, Georgia, serif" fontWeight="700">{hoje}</text>
-              <text x="38" y="47" textAnchor="middle" fill="rgba(255,255,255,0.38)"
-                fontSize="7.5" fontFamily="Plus Jakarta Sans, sans-serif">DE {diasNoMes}</text>
-            </svg>
+          {/* Anel de dias */}
+          <svg width="80" height="80" viewBox="0 0 76 76">
+            <circle cx="38" cy="38" r={ringR} fill="none"
+              stroke="rgba(255,255,255,0.12)" strokeWidth="6"/>
+            <motion.circle cx="38" cy="38" r={ringR} fill="none"
+              stroke="rgba(196,195,227,0.82)" strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={ringCirc}
+              initial={{ strokeDashoffset: ringCirc }}
+              animate={{ strokeDashoffset: ringCirc * (1 - hoje / diasNoMes) }}
+              transition={{ duration:1.4, ease:[0.34,1.56,0.64,1], delay:0.4 }}
+              style={{ transform:'rotate(-90deg)', transformOrigin:'38px 38px' }}
+            />
+            <text x="38" y="35" textAnchor="middle" fill="white"
+              fontSize="15" fontFamily="Fraunces, Georgia, serif" fontWeight="700">{hoje}</text>
+            <text x="38" y="47" textAnchor="middle" fill="rgba(255,255,255,0.38)"
+              fontSize="7" fontFamily="Plus Jakarta Sans, sans-serif">DE {diasNoMes}</text>
+          </svg>
 
-            {/* Stats */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12,
-                color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
-                <span style={{ color: 'white', fontWeight: 700, fontSize: 14 }}>{diasRestantes}</span>
-                {' '}dias restantes
-              </p>
-              {contasFixas.length > 0 && (
-                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
-                  color: 'rgba(255,255,255,0.4)' }}>
-                  <span style={{ color: 'rgba(163,181,101,0.95)', fontWeight: 700 }}>{fixasPagas.length}</span>
-                  /{contasFixas.length} fixas pagas
-                </p>
-              )}
-              {transacoes.length > 0 && (
-                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
-                  color: 'rgba(255,255,255,0.4)' }}>
-                  <span style={{ color: 'rgba(196,195,227,0.95)', fontWeight: 700 }}>{transacoes.length}</span>
-                  {' '}transações
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Alert badge */}
-          {hasAlerts && (
-            <div style={{ background: 'rgba(241,100,46,0.22)', border: '1px solid rgba(241,100,46,0.35)',
-              borderRadius: 10, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F1642E', flexShrink: 0 }} />
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#F1642E' }}>
-                {proximosVenc.length + cartoesAlerta.length} alerta{(proximosVenc.length + cartoesAlerta.length) !== 1 ? 's' : ''}
-              </p>
-            </div>
-          )}
+          {/* Dias restantes */}
+          <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12,
+            color:'rgba(255,255,255,0.55)', textAlign:'center', lineHeight:1.4, margin:0 }}>
+            <span style={{ color:'white', fontWeight:700, fontSize:15, display:'block' }}>
+              {diasRestantes}
+            </span>
+            dias restantes
+          </p>
         </div>
       </motion.div>
 
