@@ -40,8 +40,10 @@ export function Page() {
   }, [cartoes, selectedId])
 
   // Total de fatura do mês corrente (todos cartões somados)
+  // Note: `[mes+ano]` não está indexado no schema. Usa o índice `mes`
+  // e filtra `ano` em JS — simples e suficiente.
   const todasLancsMes = useLiveQuery(
-    () => db.lancamentosCartao.where('[mes+ano]').equals([mes, ano]).toArray(),
+    () => db.lancamentosCartao.where('mes').equals(mes).and(l => l.ano === ano).toArray(),
     [mes, ano],
   ) ?? []
   const faturaTotalMes = todasLancsMes.reduce((s, l) => s + l.valor, 0)
