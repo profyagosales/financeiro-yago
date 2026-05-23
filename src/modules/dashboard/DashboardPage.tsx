@@ -153,6 +153,88 @@ export function DashboardPage() {
         const saldoMes = receitas - totalComprometido
         const saldoColor  = saldoMes >= 0 ? '#3A8580' : '#C4553B'
         const saldoShadow = saldoMes >= 0 ? 'rgba(58,133,128,0.4)' : 'rgba(196,85,59,0.4)'
+
+        // ── Trends: comparação com mês anterior + sparkline últimos 6 meses ──
+        const prev = mesesData[mes - 2] // mes é 1-indexed
+        const receitasAnt = prev?.Receitas ?? 0
+        const despesasAnt = prev?.Despesas ?? 0
+        const saldoAnt = receitasAnt - despesasAnt
+        const calcTrend = (cur: number, ant: number) => {
+          if (ant === 0) return cur === 0 ? 0 : 100
+          return ((cur - ant) / Math.abs(ant)) * 100
+        }
+        const trendReceitas  = calcTrend(receitas, receitasAnt)
+        const trendDespesas  = calcTrend(totalComprometido, despesasAnt)
+        const trendSaldo     = calcTrend(saldoMes, saldoAnt)
+        // Últimos 6 meses (ou disponíveis) — fallback pra placeholder se sem dados
+        const startIdx = Math.max(0, mes - 6)
+        const last6 = mesesData.slice(startIdx, mes)
+        const sparkReceitas = last6.map(m => m.Receitas)
+        const sparkDespesas = last6.map(m => m.Despesas)
+        const sparkSaldo    = last6.map(m => m.Receitas - m.Despesas)
+        const sparkAcumulado = (() => {
+          // Acumulado cresce mês a mês: soma dos saldos passados
+          let acc = 0
+          return last6.map(m => { acc += (m.Receitas - m.Despesas); return acc })
+        })()
+
+        // Sparkline helper inline
+        const renderSpark = (data: number[], color: string) => {
+          const valid = data.length >= 2 && data.some(v => v !== 0)
+          if (!valid) {
+            // linha plana sutil para placeholder
+            return (
+              <svg viewBox="0 0 100 24" preserveAspectRatio="none" style={{ width:'100%', height:22, opacity:0.3 }}>
+                <line x1="0" y1="18" x2="100" y2="18" stroke={color} strokeWidth="1.2" strokeDasharray="3 3" strokeLinecap="round"/>
+              </svg>
+            )
+          }
+          const max = Math.max(...data)
+          const min = Math.min(...data)
+          const range = max - min || 1
+          const pts = data.map((v, i) => {
+            const x = (i / (data.length - 1)) * 100
+            const y = 22 - ((v - min) / range) * 20 - 1
+            return [x, y] as [number, number]
+          })
+          const polyStr = pts.map(p => p.join(',')).join(' ')
+          const lastPt = pts[pts.length - 1]
+          // Área sob a curva
+          const areaStr = `${polyStr} 100,22 0,22`
+          return (
+            <svg viewBox="0 0 100 24" preserveAspectRatio="none" style={{ width:'100%', height:22 }}>
+              <polygon points={areaStr} fill={color} opacity="0.12"/>
+              <polyline points={polyStr} fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.85"/>
+              <circle cx={lastPt[0]} cy={lastPt[1]} r="2.2" fill={color}/>
+            </svg>
+          )
+        }
+
+        // Trend badge helper
+        const renderTrend = (value: number, invertColor = false) => {
+          if (!isFinite(value)) return null
+          const isUp = value >= 0
+          // Para Despesas: aumento = ruim (vermelho), redução = bom (verde claro)
+          const positive = invertColor ? !isUp : isUp
+          const color = positive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.95)'
+          const bg = positive ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'
+          const arrow = isUp ? '↑' : '↓'
+          const sign = isUp ? '+' : ''
+          return (
+            <span style={{
+              fontFamily:"'Plus Jakarta Sans',sans-serif",
+              fontSize:10, fontWeight:700,
+              color, background:bg,
+              padding:'2px 7px', borderRadius:10,
+              letterSpacing:'.02em',
+              display:'inline-flex', alignItems:'center', gap:3,
+              whiteSpace:'nowrap',
+            }}>
+              <span style={{ fontSize:11, lineHeight:1 }}>{arrow}</span>
+              {sign}{Math.abs(value).toFixed(0)}%
+            </span>
+          )
+        }
         const KPI_TITLE: React.CSSProperties = {
           fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: 10,
@@ -195,54 +277,48 @@ export function DashboardPage() {
               {/* ── RECEITAS ── */}
               <motion.div whileHover={{ y:-2, boxShadow:'0 14px 36px rgba(163,181,101,0.42)' }}
                 style={{ ...KPI_CARD, background:'#A3B565' }}>
-                <svg style={{position:'absolute',right:0,bottom:0,opacity:0.14}} width="90" height="56" viewBox="0 0 90 56" fill="none">
-                  <path d="M0,52 Q22,16 44,30 Q66,44 90,6" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-                  <path d="M0,52 Q22,16 44,30 Q66,44 90,6 L90,56 L0,56Z" fill="white" opacity="0.07"/>
-                  <circle cx="90" cy="6" r="4" fill="white" opacity="0.6"/>
-                </svg>
-                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
-                <p style={KPI_TITLE}>Receitas</p>
+                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)',pointerEvents:'none'}}/>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%' }}>
+                  <p style={KPI_TITLE}>Receitas</p>
+                  {renderTrend(trendReceitas)}
+                </div>
+                <div style={{ width:'100%', marginTop:6, marginBottom:6 }}>{renderSpark(sparkReceitas, '#ffffff')}</div>
                 <OdometroSaldo value={receitas} style={KPI_VALUE}/>
               </motion.div>
 
               {/* ── DESPESAS ── */}
               <motion.div whileHover={{ y:-2, boxShadow:'0 14px 36px rgba(241,100,46,0.42)' }}
                 style={{ ...KPI_CARD, background:'#F1642E' }}>
-                <svg style={{position:'absolute',right:0,bottom:0,opacity:0.14}} width="90" height="56" viewBox="0 0 90 56" fill="none">
-                  <path d="M0,6 Q22,42 44,26 Q66,11 90,50" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-                  <path d="M0,6 Q22,42 44,26 Q66,11 90,50 L90,56 L0,56Z" fill="white" opacity="0.07"/>
-                  <circle cx="90" cy="50" r="4" fill="white" opacity="0.6"/>
-                </svg>
-                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
-                <p style={KPI_TITLE}>Despesas</p>
+                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)',pointerEvents:'none'}}/>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%' }}>
+                  <p style={KPI_TITLE}>Despesas</p>
+                  {renderTrend(trendDespesas, true)}
+                </div>
+                <div style={{ width:'100%', marginTop:6, marginBottom:6 }}>{renderSpark(sparkDespesas, '#ffffff')}</div>
                 <OdometroSaldo value={totalComprometido} style={KPI_VALUE}/>
               </motion.div>
 
               {/* ── SALDO (receitas − despesas, cor dinâmica) ── */}
               <motion.div whileHover={{ y:-2, boxShadow:`0 14px 36px ${saldoShadow}` }}
                 style={{ ...KPI_CARD, background:saldoColor }}>
-                <svg style={{position:'absolute',right:0,bottom:0,opacity:0.18}} width="90" height="56" viewBox="0 0 90 56" fill="none">
-                  <line x1="4"  y1="28" x2="86" y2="28" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                  <line x1="4"  y1="36" x2="86" y2="36" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
-                  <circle cx="86" cy="28" r="4" fill="white" opacity="0.7"/>
-                </svg>
-                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
-                <p style={KPI_TITLE}>Saldo</p>
+                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)',pointerEvents:'none'}}/>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%' }}>
+                  <p style={KPI_TITLE}>Saldo</p>
+                  {renderTrend(trendSaldo)}
+                </div>
+                <div style={{ width:'100%', marginTop:6, marginBottom:6 }}>{renderSpark(sparkSaldo, '#ffffff')}</div>
                 <OdometroSaldo value={saldoMes} style={KPI_VALUE}/>
               </motion.div>
 
               {/* ── ACUMULADO (total em contas) ── */}
               <motion.div whileHover={{ y:-2, boxShadow:'0 14px 36px rgba(80,78,118,0.45)' }}
                 style={{ ...KPI_CARD, background:'#504E76' }}>
-                <svg style={{position:'absolute',right:0,bottom:0,opacity:0.18}} width="90" height="56" viewBox="0 0 90 56" fill="none">
-                  <rect x="10" y="38" width="10" height="18" rx="3" fill="white"/>
-                  <rect x="26" y="27" width="10" height="29" rx="3" fill="white"/>
-                  <rect x="42" y="16" width="10" height="40" rx="3" fill="white"/>
-                  <rect x="58" y="6"  width="10" height="50" rx="3" fill="white"/>
-                  <rect x="74" y="14" width="10" height="42" rx="3" fill="white" opacity="0.55"/>
-                </svg>
-                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
-                <p style={KPI_TITLE}>Acumulado</p>
+                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)',pointerEvents:'none'}}/>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%' }}>
+                  <p style={KPI_TITLE}>Acumulado</p>
+                  <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:9, fontWeight:700, color:'rgba(255,255,255,0.55)', letterSpacing:'.1em', textTransform:'uppercase' }}>Total</span>
+                </div>
+                <div style={{ width:'100%', marginTop:6, marginBottom:6 }}>{renderSpark(sparkAcumulado, '#D4A017')}</div>
                 <OdometroSaldo value={saldoTotal} style={KPI_VALUE}/>
               </motion.div>
 
