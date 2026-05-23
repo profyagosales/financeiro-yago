@@ -303,12 +303,12 @@ export function DashboardPage() {
         const saldoShadow  = saldoMes >= 0 ? 'rgba(58,133,128,0.4)' : 'rgba(196,85,59,0.4)'
         const KPI_TITLE: React.CSSProperties = {
           fontFamily: "'Fraunces',Georgia,serif",
-          fontStyle: 'italic',
-          fontSize: 13,
-          fontWeight: 400,
-          color: 'rgba(255,255,255,0.75)',
+          fontSize: 11,
+          fontWeight: 700,
+          color: 'rgba(255,255,255,0.72)',
           marginBottom: 10,
-          letterSpacing: '-0.2px',
+          letterSpacing: '.08em',
+          textTransform: 'uppercase',
         }
         const KPI_VALUE: React.CSSProperties = {
           fontFamily: "'Fraunces',Georgia,serif",
