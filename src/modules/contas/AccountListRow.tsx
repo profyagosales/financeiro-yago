@@ -88,10 +88,10 @@ export function AccountListRow({ conta, active, spark = [], onClick }: Props) {
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
         <span style={{
-          fontFamily: "'Fraunces',Georgia,serif",
+          fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: 14, fontWeight: 700,
           color: negativo ? '#C4553B' : '#2C1A0F',
-          letterSpacing: '-0.4px', lineHeight: 1,
+          letterSpacing: '-0.3px', lineHeight: 1,
         }}>{fmt(conta.saldoAtual)}</span>
         {renderSpark()}
       </div>

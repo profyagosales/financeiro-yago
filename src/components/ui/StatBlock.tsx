@@ -71,11 +71,11 @@ export function StatBlock({
       </div>
       <p
         style={{
-          fontFamily: "'Fraunces',Georgia,serif",
+          fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize,
           fontWeight: 700,
           color,
-          letterSpacing: '-1px',
+          letterSpacing: '-0.3px',
           lineHeight: 1.1,
           marginBottom: sub ? 4 : 0,
         }}

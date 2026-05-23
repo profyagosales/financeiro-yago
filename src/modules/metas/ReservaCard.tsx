@@ -70,7 +70,7 @@ export function ReservaCard({ reserva, onEdit, onAporte }: Props) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 44, fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-1.8px', lineHeight: 1 }}>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 44, fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-0.3px', lineHeight: 1 }}>
               {fmt(reserva.valorAtualTotal)}
             </p>
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: 'rgba(167,224,220,0.65)', margin: 0 }}>
@@ -190,7 +190,7 @@ function ItemRow({ label, sub, valor, icon }: { label: string; sub?: string; val
           </p>
         )}
       </div>
-      <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700, color: '#FFFFFF', flexShrink: 0 }}>
+      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#FFFFFF', flexShrink: 0 }}>
         {fmt(valor)}
       </span>
     </div>

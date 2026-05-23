@@ -154,10 +154,10 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
                 color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
               }}>Saldo atual</p>
               <p style={{
-                fontFamily: "'Fraunces',Georgia,serif",
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
                 fontSize: 48, fontWeight: 700,
                 color: corSaldo,
-                letterSpacing: '-2px', lineHeight: 1,
+                letterSpacing: '-0.3px', lineHeight: 1,
                 margin: '4px 0 0',
               }}>{fmt(conta.saldoAtual)}</p>
             </div>
@@ -258,7 +258,7 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
                   content={({ active, payload }) => active && payload?.[0] ? (
                     <div style={{ background: '#1A0A05', borderRadius: 10, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '.06em', textTransform: 'uppercase', margin: 0 }}>{payload[0].payload.dia}</p>
-                      <p style={{ fontFamily: 'Fraunces, serif', fontSize: 14, fontWeight: 700, color: '#fff', margin: '4px 0 0' }}>{fmt(payload[0].value as number)}</p>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#fff', margin: '4px 0 0' }}>{fmt(payload[0].value as number)}</p>
                     </div>
                   ) : null}
                 />
@@ -322,8 +322,8 @@ function QuickStat({ icon, label, value, cor }: { icon: React.ReactNode; label: 
         }}>{label}</p>
       </div>
       <p style={{
-        fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700,
-        color: cor, margin: 0, letterSpacing: '-0.5px', lineHeight: 1,
+        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 17, fontWeight: 700,
+        color: cor, margin: 0, letterSpacing: '-0.3px', lineHeight: 1,
       }}>{value}</p>
     </div>
   )
@@ -364,9 +364,9 @@ function TransactionRow({ tx, cat }: { tx: Transacao; cat?: Categoria }) {
         }}>{cat?.nome ?? '—'} · {dataFmt}</p>
       </div>
       <span style={{
-        fontFamily: "'Fraunces',Georgia,serif", fontSize: 15, fontWeight: 700,
+        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700,
         color: isReceita ? '#1E7D5A' : '#2C1A0F',
-        letterSpacing: '-0.4px', flexShrink: 0,
+        letterSpacing: '-0.3px', flexShrink: 0,
       }}>
         {isReceita ? '+' : '−'}{fmt(tx.valor)}
       </span>

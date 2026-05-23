@@ -111,8 +111,8 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete }: Props) {
         {/* Valores */}
         <div style={{ textAlign: 'right' }}>
           <p style={{
-            fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700,
-            color: '#2C1A0F', letterSpacing: '-0.5px', margin: 0,
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700,
+            color: '#2C1A0F', letterSpacing: '-0.3px', margin: 0,
           }}>{fmt(invest.valorAtual)}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginTop: 2 }}>
             <span style={{

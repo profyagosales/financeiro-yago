@@ -147,8 +147,8 @@ export function OrcamentoSection() {
                       width: '100%', boxSizing: 'border-box',
                       background: '#FBF8F3', border: '1.5px solid #EDE6DC',
                       borderRadius: 12, padding: '12px 14px',
-                      fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700,
-                      color: '#2C1A0F', outline: 'none', letterSpacing: '-0.5px',
+                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, fontWeight: 700,
+                      color: '#2C1A0F', outline: 'none', letterSpacing: '-0.3px',
                     }}/>
                 </div>
               </div>
@@ -213,7 +213,7 @@ function OrcamentoRow({ orc, gastos, onEdit }: { orc: { id?: number; categoriaId
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ textAlign: 'right' }}>
-            <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: estourado ? '#C4553B' : '#2C1A0F', letterSpacing: '-0.4px' }}>{fmt(gasto)}</span>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: estourado ? '#C4553B' : '#2C1A0F', letterSpacing: '-0.3px' }}>{fmt(gasto)}</span>
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}> / {fmt(orc.valorLimite)}</span>
           </div>
           <div style={{ display: 'flex', gap: 3 }}>

@@ -125,8 +125,8 @@ export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
                     width: '100%', boxSizing: 'border-box', marginTop: 8,
                     background: '#FBF8F3', border: '1.5px solid #EDE6DC',
                     borderRadius: 12, padding: '14px 16px',
-                    fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700,
-                    color: '#2C1A0F', outline: 'none', letterSpacing: '-0.5px',
+                    fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, fontWeight: 700,
+                    color: '#2C1A0F', outline: 'none', letterSpacing: '-0.3px',
                   }}
                 />
               </div>

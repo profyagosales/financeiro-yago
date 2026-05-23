@@ -9,6 +9,7 @@ import { db } from '@/db/schema'
 import { fmt } from '@/lib/format'
 
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const NUM: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1 }
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: '#9B7B6A' }
 const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
 
@@ -119,7 +120,7 @@ export function TabPatrimonio() {
                 content={({ active, payload }) => active && payload?.[0] ? (
                   <div style={{ background: '#1A0A05', borderRadius: 10, padding: '8px 12px' }}>
                     <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '.06em', textTransform: 'uppercase', margin: 0 }}>{payload[0].payload.mes}</p>
-                    <p style={{ ...DISPLAY, fontSize: 14, color: '#A7E0DC', margin: '4px 0 0' }}>{fmt(payload[0].value as number)}</p>
+                    <p style={{ ...NUM, fontSize: 14, color: '#A7E0DC', margin: '4px 0 0' }}>{fmt(payload[0].value as number)}</p>
                   </div>
                 ) : null}
               />
@@ -195,7 +196,7 @@ function StatCard({ label, value, sub, cor, icon }: { label: string; value: stri
   return (
     <div style={{ ...CARD, padding: '16px 18px', borderLeft: `3px solid ${cor}` }}>
       <p style={{ ...LABEL, color: '#7A5C4F' }}>{label}</p>
-      <p style={{ ...DISPLAY, fontSize: 22, color: '#2C1A0F', margin: '6px 0 0', letterSpacing: '-0.7px' }}>{value}</p>
+      <p style={{ ...NUM, fontSize: 22, color: '#2C1A0F', margin: '6px 0 0', letterSpacing: '-0.3px' }}>{value}</p>
       {sub && (
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: cor, margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
           {icon}{sub}
@@ -213,7 +214,7 @@ function CompRow({ label, valor, total, cor, sub }: { label: string; valor: numb
         <span style={{ width: 8, height: 8, borderRadius: 2, background: cor }}/>
         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#2C1A0F', flex: 1 }}>{label}</span>
         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', fontWeight: 600 }}>{pct.toFixed(0)}%</span>
-        <span style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F', minWidth: 80, textAlign: 'right' }}>{fmt(valor)}</span>
+        <span style={{ ...NUM, fontSize: 13, color: '#2C1A0F', minWidth: 80, textAlign: 'right' }}>{fmt(valor)}</span>
       </div>
       <div style={{ height: 4, borderRadius: 2, background: 'rgba(44,26,15,0.06)', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: cor, borderRadius: 2 }}/>

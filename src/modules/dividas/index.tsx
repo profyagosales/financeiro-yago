@@ -92,7 +92,7 @@ export function Page() {
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: 'rgba(255,212,200,0.7)', letterSpacing: '.18em', textTransform: 'uppercase', margin: 0 }}>
               Saldo devedor total
             </p>
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 44, fontWeight: 700, color: '#FFFFFF', margin: '6px 0 0', letterSpacing: '-1.8px', lineHeight: 1 }}>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 44, fontWeight: 700, color: '#FFFFFF', margin: '6px 0 0', letterSpacing: '-0.3px', lineHeight: 1 }}>
               {fmt(totalDevido)}
             </p>
             <div style={{ height: 1, background: 'linear-gradient(90deg, rgba(255,200,140,0.4) 0%, rgba(255,255,255,0.08) 60%, transparent 100%)', marginTop: 14 }}/>
@@ -175,7 +175,7 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: 'rgba(255,212,200,0.6)', letterSpacing: '.1em', textTransform: 'uppercase', margin: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
         {icon}{label}
       </p>
-      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '4px 0 0', letterSpacing: '-0.5px', lineHeight: 1 }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: '4px 0 0', letterSpacing: '-0.3px', lineHeight: 1 }}>
         {value}
       </p>
     </div>

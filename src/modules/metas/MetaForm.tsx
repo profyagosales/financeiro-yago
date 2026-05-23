@@ -177,7 +177,7 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
                         borderRadius: 12, padding: '10px 8px', cursor: 'pointer',
                         textAlign: 'center', transition: 'all .15s',
                       }}>
-                      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: active ? '#FFFFFF' : '#2C1A0F', margin: 0, letterSpacing: '-0.4px' }}>{opt.label}</p>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: active ? '#FFFFFF' : '#2C1A0F', margin: 0, letterSpacing: '-0.3px' }}>{opt.label}</p>
                       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 600, color: active ? 'rgba(255,255,255,0.85)' : '#7A5C4F', margin: '2px 0 0', letterSpacing: '.04em', textTransform: 'uppercase' }}>{opt.descricao}</p>
                     </button>
                   )

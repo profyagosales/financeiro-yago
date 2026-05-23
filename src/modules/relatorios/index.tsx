@@ -17,6 +17,7 @@ import { TabDesejos } from './TabDesejos'
 
 // ─── Design tokens ───────────────────────────────────────────────────────────
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const NUM: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1 }
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: '#9B7B6A' }
 const BODY: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif" }
 const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
@@ -83,7 +84,7 @@ const DarkTooltip = ({ active, payload, label }: any) => {
         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: i < payload.length - 1 ? 4 : 0 }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: p.color ?? p.fill, flexShrink: 0 }} />
           <span style={{ fontFamily: "'Plus Jakarta Sans'", fontSize: 11, color: 'rgba(255,255,255,0.65)', flex: 1 }}>{p.name}</span>
-          <span style={{ fontFamily: "'Fraunces'", fontSize: 13, fontWeight: 700, color: 'white' }}>{fmt(p.value)}</span>
+          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: 'white' }}>{fmt(p.value)}</span>
         </div>
       ))}
     </div>
@@ -96,7 +97,7 @@ const DayTooltip = ({ active, payload }: any) => {
   return (
     <div style={{ background: '#1A0A05', borderRadius: 10, padding: '8px 12px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <p style={{ fontFamily: "'Plus Jakarta Sans'", fontSize: 10, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Dia {dia}</p>
-      <span style={{ fontFamily: "'Fraunces'", fontSize: 13, fontWeight: 700, color: 'white' }}>{fmt(payload[0].value)}</span>
+      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: 'white' }}>{fmt(payload[0].value)}</span>
     </div>
   )
 }
@@ -109,7 +110,7 @@ function Comparativo({ atual, anterior, label, cor }: { atual: number; anterior:
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid #F5F0E8' }}>
       <div style={{ width: 8, height: 8, borderRadius: '50%', background: cor, flexShrink: 0 }} />
       <span style={{ ...BODY, fontSize: 13, color: '#9B7B6A', flex: 1 }}>{label}</span>
-      <span style={{ ...DISPLAY, fontSize: 14, color: '#2C1A0F' }}>{fmt(atual)}</span>
+      <span style={{ ...NUM, fontSize: 14, color: '#2C1A0F' }}>{fmt(atual)}</span>
       {diff !== null && (
         <span style={{
           ...BODY, fontSize: 10, fontWeight: 700,
@@ -150,7 +151,7 @@ function TabVisaoGeral({
         {kpis.map(kpi => (
           <div key={kpi.label} style={{ ...CARD, padding: '14px 14px 12px', borderRadius: 16, borderLeft: `4px solid ${kpi.borderColor}` }}>
             <p style={{ ...LABEL, marginBottom: 4 }}>{kpi.label}</p>
-            <p style={{ ...DISPLAY, fontSize: 17, color: kpi.color }}>{fmt(kpi.value)}</p>
+            <p style={{ ...NUM, fontSize: 17, color: kpi.color }}>{fmt(kpi.value)}</p>
             {kpi.delta !== null && (
               <div style={{ marginTop: 6 }}>
                 <span style={{
@@ -223,10 +224,10 @@ function TabVisaoGeral({
           {receitas > 0 && (
             <div style={{ ...CARD, padding: '18px 20px' }}>
               <p style={{ ...LABEL, marginBottom: 3 }}>TAXA DE POUPANÇA</p>
-              <p style={{ ...DISPLAY, fontSize: 28, color: savingsColor, marginBottom: 8 }}>{savingsRate.toFixed(1)}%</p>
+              <p style={{ ...NUM, fontSize: 28, color: savingsColor, marginBottom: 8 }}>{savingsRate.toFixed(1)}%</p>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <p style={{ ...BODY, fontSize: 12, color: '#9B7B6A' }}>Economizado</p>
-                <p style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F' }}>{fmt(receitas - despesas)}</p>
+                <p style={{ ...NUM, fontSize: 16, color: '#2C1A0F' }}>{fmt(receitas - despesas)}</p>
               </div>
               <div style={{ background: '#F5F0E8', borderRadius: 6, height: 8, overflow: 'hidden' }}>
                 <motion.div
@@ -285,7 +286,7 @@ function TabCategorias({ mes, ano, despesas, pieData }: {
                 </ResponsiveContainer>
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <p style={{ ...LABEL, fontSize: 9, marginBottom: 2 }}>TOTAL</p>
-                  <p style={{ ...DISPLAY, fontSize: 18, color: '#2C1A0F' }}>{fmt(despesas)}</p>
+                  <p style={{ ...NUM, fontSize: 18, color: '#2C1A0F' }}>{fmt(despesas)}</p>
                 </div>
               </div>
             </div>
@@ -300,7 +301,7 @@ function TabCategorias({ mes, ano, despesas, pieData }: {
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
                       <span style={{ ...BODY, fontSize: 13, color: '#2C1A0F', flex: 1 }}>{d.name}</span>
                       <span style={{ ...BODY, fontSize: 11, fontWeight: 700, color: d.color, width: 36, textAlign: 'right' }}>{pct.toFixed(0)}%</span>
-                      <span style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F', width: 80, textAlign: 'right' }}>{fmt(d.value)}</span>
+                      <span style={{ ...NUM, fontSize: 13, color: '#2C1A0F', width: 80, textAlign: 'right' }}>{fmt(d.value)}</span>
                     </div>
                     <div style={{ background: '#F5F0E8', borderRadius: 4, height: 6, overflow: 'hidden' }}>
                       <motion.div
@@ -333,7 +334,7 @@ function TabCategorias({ mes, ano, despesas, pieData }: {
                         <p style={{ ...BODY, fontSize: 13, color: '#2C1A0F', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.descricao}</p>
                         <p style={{ ...BODY, fontSize: 10, color: '#9B7B6A', marginTop: 1 }}>{cat?.nome ?? '—'} · {new Date(tx.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
                       </div>
-                      <p style={{ ...DISPLAY, fontSize: 14, color: '#C4553B', flexShrink: 0 }}>{fmt(tx.valor)}</p>
+                      <p style={{ ...NUM, fontSize: 14, color: '#C4553B', flexShrink: 0 }}>{fmt(tx.valor)}</p>
                     </div>
                   )
                 })}

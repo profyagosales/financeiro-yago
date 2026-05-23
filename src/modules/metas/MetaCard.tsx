@@ -88,7 +88,7 @@ export function MetaCard({ meta, onEdit, onAporte }: Props) {
       {/* Progresso */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-          <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.5px' }}>
+          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.3px' }}>
             {fmt(meta.valorAtualTotal)}
           </span>
           <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F' }}>
@@ -177,7 +177,7 @@ function Row({ label, valor, icon }: { label: string; valor: number; icon?: Reac
       <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#2C1A0F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {label}
       </span>
-      <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 12, fontWeight: 700, color: '#2C1A0F' }}>
+      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#2C1A0F' }}>
         {fmt(valor)}
       </span>
     </div>

@@ -96,7 +96,7 @@ export function LancamentoForm({ open, cartao, lancamento, mes, ano, onClose }: 
                 placeholder="0,00" inputMode="decimal"
                 style={{
                   ...INPUT_STYLE, flex: 1,
-                  fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px',
+                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px',
                 }}
               />
               {!isEditing && (

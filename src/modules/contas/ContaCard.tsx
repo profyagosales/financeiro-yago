@@ -79,8 +79,8 @@ export function ContaCard({
         }}>Saldo atual</p>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
           <p style={{
-            fontFamily: "'Fraunces',Georgia,serif", fontSize: 30, fontWeight: 700,
-            color: corSaldo, letterSpacing: '-1.2px', lineHeight: 1, margin: 0,
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 30, fontWeight: 700,
+            color: corSaldo, letterSpacing: '-0.3px', lineHeight: 1, margin: 0,
           }}>{fmt(conta.saldoAtual)}</p>
           {variacaoPct !== null && variacaoPct !== undefined && Math.abs(variacaoPct) > 0.5 && (
             <span style={{

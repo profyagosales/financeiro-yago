@@ -178,11 +178,11 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
             transition: 'all .15s',
             boxShadow: valorNum ? `0 0 0 4px ${tipoMeta.cor}10` : 'none',
           }}>
-            <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, color: tipoMeta.cor, fontWeight: 700 }}>R$</span>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, color: tipoMeta.cor, fontWeight: 700 }}>R$</span>
             <input value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" type="tel" autoFocus inputMode="decimal"
               style={{
                 border: 'none', background: 'transparent',
-                fontFamily: "'Fraunces',Georgia,serif", fontSize: 32, fontWeight: 700,
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 32, fontWeight: 700,
                 color: '#2C1A0F', flex: 1, outline: 'none', width: '100%',
               }}/>
           </div>
@@ -366,7 +366,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                         <IconMinus size={14} stroke={2.2} color="#7A5C4F"/>
                       </button>
                       <div style={{ flex: 1, textAlign: 'center' }}>
-                        <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.5px' }}>{parcelas}×</p>
+                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.3px' }}>{parcelas}×</p>
                         {parcelas > 1 && valorNum > 0 && (
                           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '2px 0 0' }}>
                             {fmt(valorNum / parcelas)} por mês

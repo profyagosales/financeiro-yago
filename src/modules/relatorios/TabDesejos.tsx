@@ -7,6 +7,7 @@ import { fmt } from '@/lib/format'
 import { PRIORIDADES, PRIORIDADE_BY } from '../desejos/constants'
 
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const NUM: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1 }
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: '#9B7B6A' }
 const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
 
@@ -123,7 +124,7 @@ export function TabDesejos() {
                     content={({ active, payload }) => active && payload?.[0] ? (
                       <div style={{ background: '#1A0A05', borderRadius: 10, padding: '8px 12px' }}>
                         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '.06em', textTransform: 'uppercase', margin: 0 }}>{payload[0].payload.prioridade} · {payload[0].payload.qtd} itens</p>
-                        <p style={{ ...DISPLAY, fontSize: 14, color: '#fff', margin: '4px 0 0' }}>{fmt(payload[0].value as number)}</p>
+                        <p style={{ ...NUM, fontSize: 14, color: '#fff', margin: '4px 0 0' }}>{fmt(payload[0].value as number)}</p>
                       </div>
                     ) : null}
                   />
@@ -153,7 +154,7 @@ export function TabDesejos() {
                       <span style={{ width: 8, height: 8, borderRadius: 2, background: c.cor }}/>
                       <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#2C1A0F', flex: 1 }}>{c.nome}</span>
                       <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', fontWeight: 600 }}>{pct.toFixed(0)}%</span>
-                      <span style={{ ...DISPLAY, fontSize: 12, color: '#2C1A0F', minWidth: 80, textAlign: 'right' }}>{fmt(c.valor)}</span>
+                      <span style={{ ...NUM, fontSize: 12, color: '#2C1A0F', minWidth: 80, textAlign: 'right' }}>{fmt(c.valor)}</span>
                     </div>
                     <div style={{ height: 4, borderRadius: 2, background: 'rgba(44,26,15,0.06)', overflow: 'hidden' }}>
                       <div style={{ width: `${pct}%`, height: '100%', background: c.cor, borderRadius: 2 }}/>
@@ -192,7 +193,7 @@ export function TabDesejos() {
                       menor {fmt(d.valorMenorEncontrado)}
                     </span>
                   )}
-                  <span style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F' }}>{fmt(d.valorEstimado!)}</span>
+                  <span style={{ ...NUM, fontSize: 13, color: '#2C1A0F' }}>{fmt(d.valorEstimado!)}</span>
                 </div>
               )
             })}
@@ -210,7 +211,7 @@ function StatCard({ label, value, sub, cor, icon }: { label: string; value: stri
         {icon}
         <p style={{ ...LABEL, color: '#7A5C4F', margin: 0 }}>{label}</p>
       </div>
-      <p style={{ ...DISPLAY, fontSize: 22, color: '#2C1A0F', margin: '6px 0 0', letterSpacing: '-0.7px' }}>{value}</p>
+      <p style={{ ...NUM, fontSize: 22, color: '#2C1A0F', margin: '6px 0 0', letterSpacing: '-0.3px' }}>{value}</p>
       {sub && (
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '4px 0 0' }}>{sub}</p>
       )}

@@ -10,6 +10,7 @@ import { db } from '@/db/schema'
 import { IconPlus, IconX, IconTrash, IconCheck, IconEdit, IconCalendarDue, IconAlertTriangle, IconCircleCheck } from '@tabler/icons-react'
 
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const NUM: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1 }
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }
 const SUB: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }
 const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
@@ -68,7 +69,7 @@ function ContaFixaRow({ cf, mes, ano, onEdit, onDelete }: { cf: any; mes: number
         </div>
 
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <p style={{ ...DISPLAY as object, fontSize: 17, color: pago ? '#9B7B6A' : '#2C1A0F' }}>{fmt(cf.valor)}</p>
+          <p style={{ ...NUM as object, fontSize: 17, color: pago ? '#9B7B6A' : '#2C1A0F' }}>{fmt(cf.valor)}</p>
           <div style={{ display: 'flex', gap: 4, marginTop: 6, justifyContent: 'flex-end' }}>
             <motion.button
               whileTap={{ scale: 0.9 }}
@@ -160,17 +161,17 @@ export function Page() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 14 }}>
             <div style={{ background: '#EBF5F0', borderRadius: 16, padding: '14px 16px', border: '1px solid rgba(58,133,128,0.15)' }}>
               <p style={{ ...LABEL as object, color: '#3A8580', marginBottom: 4 }}>Pago</p>
-              <p style={{ ...DISPLAY as object, fontSize: 20, color: '#3A8580' }}>{fmt(totalPago)}</p>
+              <p style={{ ...NUM as object, fontSize: 20, color: '#3A8580' }}>{fmt(totalPago)}</p>
               <p style={{ ...SUB as object, marginTop: 3 }}>{fixasPagas.length} de {contasFixas.length}</p>
             </div>
             <div style={{ background: '#FAF0EE', borderRadius: 16, padding: '14px 16px', border: '1px solid rgba(196,85,59,0.15)' }}>
               <p style={{ ...LABEL as object, color: '#C4553B', marginBottom: 4 }}>Pendente</p>
-              <p style={{ ...DISPLAY as object, fontSize: 20, color: '#C4553B' }}>{fmt(totalPendente)}</p>
+              <p style={{ ...NUM as object, fontSize: 20, color: '#C4553B' }}>{fmt(totalPendente)}</p>
               <p style={{ ...SUB as object, marginTop: 3 }}>{pendentes.length} conta{pendentes.length !== 1 ? 's' : ''}</p>
             </div>
             <div style={{ background: '#F5F0E8', borderRadius: 16, padding: '14px 16px', border: '1px solid rgba(44,26,15,0.1)' }}>
               <p style={{ ...LABEL as object, color: '#7A5C4F', marginBottom: 4 }}>Total</p>
-              <p style={{ ...DISPLAY as object, fontSize: 20, color: '#2C1A0F' }}>{fmt(totalMes)}</p>
+              <p style={{ ...NUM as object, fontSize: 20, color: '#2C1A0F' }}>{fmt(totalMes)}</p>
               <p style={{ ...SUB as object, marginTop: 3 }}>{Math.round(pctConcluido)}% pago</p>
             </div>
           </div>
@@ -277,15 +278,15 @@ export function Page() {
                 <div style={{ flex: 1 }}>
                   <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Valor</p>
                   <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '12px 14px', gap: 6 }}>
-                    <span style={{ ...DISPLAY as object, fontSize: 18, color: '#C4553B' }}>R$</span>
+                    <span style={{ ...NUM as object, fontSize: 18, color: '#C4553B' }}>R$</span>
                     <input value={form.valor} onChange={e => setForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" type="tel"
-                      style={{ border: 'none', background: 'transparent', fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none', width: '100%' }} />
+                      style={{ border: 'none', background: 'transparent', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none', width: '100%' }} />
                   </div>
                 </div>
                 <div style={{ width: 100 }}>
                   <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Dia Vence</p>
                   <input value={form.diaVencimento} onChange={e => setForm(f => ({ ...f, diaVencimento: parseInt(e.target.value) || 1 }))} type="number" min="1" max="31"
-                    style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '12px 0', fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', outline: 'none', textAlign: 'center', boxSizing: 'border-box' }} />
+                    style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '12px 0', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', outline: 'none', textAlign: 'center', boxSizing: 'border-box' }} />
                 </div>
               </div>
 

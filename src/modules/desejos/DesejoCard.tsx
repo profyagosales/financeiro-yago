@@ -58,8 +58,8 @@ export function DesejoCard({ desejo, onEdit, onComprar }: Props) {
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
           {desejo.valorEstimado && (
             <span style={{
-              fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700,
-              color: '#2C1A0F', letterSpacing: '-0.4px',
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700,
+              color: '#2C1A0F', letterSpacing: '-0.3px',
             }}>{fmt(desejo.valorEstimado)}</span>
           )}
           {economia && (

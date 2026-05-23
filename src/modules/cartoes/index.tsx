@@ -232,7 +232,7 @@ export function Page() {
               <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase' }}>
                 Cadastrados
               </span>
-              <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.5px' }}>
+              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.3px' }}>
                 {cartoes.length} {cartoes.length === 1 ? 'cartão' : 'cartões'}
               </span>
             </div>
@@ -324,7 +324,7 @@ function TopKpi({ label, value, cor }: { label: string; value: string; cor: stri
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0 }}>
         {label}
       </p>
-      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.6px', lineHeight: 1 }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.3px', lineHeight: 1 }}>
         {value}
       </p>
     </div>

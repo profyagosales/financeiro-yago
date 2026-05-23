@@ -306,8 +306,8 @@ export function Page() {
                 Cadastradas
               </span>
               <span style={{
-                fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700,
-                color: '#2C1A0F', letterSpacing: '-0.5px',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700,
+                color: '#2C1A0F', letterSpacing: '-0.3px',
               }}>
                 {contas.length} {contas.length === 1 ? 'conta' : 'contas'}
               </span>
@@ -392,8 +392,8 @@ function TopKpi({ label, value, cor, icon }: { label: string; value: string; cor
         color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0,
       }}>{label}</p>
       <p style={{
-        fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700,
-        color: cor, margin: '4px 0 0', letterSpacing: '-0.6px', lineHeight: 1,
+        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700,
+        color: cor, margin: '4px 0 0', letterSpacing: '-0.3px', lineHeight: 1,
         display: 'inline-flex', alignItems: 'center', gap: 4,
       }}>
         {icon}{value}

@@ -142,8 +142,8 @@ export function DividaCard({ divida, onEdit, onDelete }: Props) {
             Saldo devedor
           </p>
           <p style={{
-            fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700,
-            color: divida.quitada ? '#3A8580' : '#A8442B', letterSpacing: '-0.5px', margin: '2px 0 0',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700,
+            color: divida.quitada ? '#3A8580' : '#A8442B', letterSpacing: '-0.3px', margin: '2px 0 0',
           }}>{fmt(divida.saldoDevedor)}</p>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '2px 0 0' }}>
             de {fmt(divida.valorTotal)}

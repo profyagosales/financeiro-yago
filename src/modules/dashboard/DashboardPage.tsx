@@ -45,7 +45,7 @@ function DarkTooltip({ active, payload, label }: { active?: boolean; payload?: A
     <div style={{ background: '#1A0A05', borderRadius: 10, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
       {label && <p style={{ fontFamily: "'Plus Jakarta Sans'", fontSize: 10, color: 'rgba(255,255,255,0.45)', marginBottom: 5, letterSpacing: '.06em', textTransform: 'uppercase' }}>{label}</p>}
       {payload.map((p, i) => (
-        <p key={i} style={{ ...DISPLAY, fontSize: 13, color: p.color ?? 'white' }}>{fmt(p.value)}</p>
+        <p key={i} style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1, fontSize: 13, color: p.color ?? 'white' }}>{fmt(p.value)}</p>
       ))}
     </div>
   )
@@ -247,11 +247,11 @@ export function DashboardPage() {
           textTransform: 'uppercase',
         }
         const KPI_VALUE: React.CSSProperties = {
-          fontFamily: "'Fraunces',Georgia,serif",
+          fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontWeight: 700,
           fontSize: 26,
           color: 'white',
-          letterSpacing: '-1.2px',
+          letterSpacing: '-0.3px',
           lineHeight: 1,
           display: 'block',
           width: '100%',
@@ -477,7 +477,7 @@ export function DashboardPage() {
                           >
                             {/* Cabeçalho do dia */}
                             <div style={{ display:'flex', alignItems:'baseline', gap:6, marginBottom:10, paddingBottom:8, borderBottom:'1px solid rgba(44,26,15,0.06)' }}>
-                              <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontWeight:700, fontSize:18, color:'#2C1A0F', letterSpacing:'-0.5px', lineHeight:1 }}>{day}</span>
+                              <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:700, fontSize:18, color:'#2C1A0F', letterSpacing:'-0.3px', lineHeight:1 }}>{day}</span>
                               <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:600, color:'#9B7B6A', textTransform:'uppercase', letterSpacing:'.06em' }}>de {mesNome}</span>
                             </div>
                             {/* Lista de eventos do dia */}
@@ -490,7 +490,7 @@ export function DashboardPage() {
                                     <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, color:'#9B7B6A', margin:0 }}>{ev.tipo}</p>
                                   </div>
                                   {ev.valor !== undefined && (
-                                    <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:12, fontWeight:700, color:'#2C1A0F', flexShrink:0 }}>{fmt(ev.valor)}</span>
+                                    <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:700, color:'#2C1A0F', flexShrink:0 }}>{fmt(ev.valor)}</span>
                                   )}
                                 </div>
                               ))}
@@ -622,7 +622,7 @@ export function DashboardPage() {
                 <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'none' }}>
                   <div style={{ textAlign:'center' }}>
                     <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:8, fontWeight:700, color:'#9B7B6A', letterSpacing:'.18em', textTransform:'uppercase', margin:0 }}>Total</p>
-                    <p style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:700, color:'#2C1A0F', letterSpacing:'-0.7px', margin:'4px 0 0', lineHeight:1 }}>{fmt(despesas)}</p>
+                    <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:20, fontWeight:700, color:'#2C1A0F', letterSpacing:'-0.3px', margin:'4px 0 0', lineHeight:1 }}>{fmt(despesas)}</p>
                     <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, color:'#9B7B6A', margin:'4px 0 0', letterSpacing:'.02em' }}>{pieData.length} categoria{pieData.length !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
@@ -724,12 +724,12 @@ export function DashboardPage() {
                       }}>
                       {/* Número do ranking */}
                       <span style={{
-                        fontFamily:"'Fraunces',Georgia,serif",
+                        fontFamily:"'Plus Jakarta Sans',sans-serif",
                         fontSize: isTop ? 32 : 22,
                         fontWeight:700,
                         color: isTop ? '#A8442B' : 'rgba(168,68,43,0.55)',
                         lineHeight:1, minWidth: isTop ? 30 : 22, textAlign:'center',
-                        letterSpacing:'-1px',
+                        letterSpacing:'-0.3px',
                       }}>{idx+1}</span>
 
                       {/* Ícone categoria */}
@@ -745,7 +745,7 @@ export function DashboardPage() {
 
                       {/* Valor + barra */}
                       <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:5, minWidth:90 }}>
-                        <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize: isTop ? 16 : 13, fontWeight:700, color:'#2C1A0F', letterSpacing:'-0.4px' }}>{fmt(tx.valor)}</span>
+                        <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize: isTop ? 16 : 13, fontWeight:700, color:'#2C1A0F', letterSpacing:'-0.3px' }}>{fmt(tx.valor)}</span>
                         <div style={{ width: isTop ? 90 : 70, height:4, borderRadius:2, background:'rgba(196,85,59,0.15)', overflow:'hidden' }}>
                           <motion.div
                             style={{ height:'100%', borderRadius:2, background: isTop ? '#A8442B' : '#C4553B' }}
@@ -816,7 +816,7 @@ export function DashboardPage() {
               {/* Valor */}
               <div style={{ position:'relative', zIndex:1 }}>
                 <div style={{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap' }}>
-                  <p style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:34, fontWeight:700, color:'#FFFFFF', margin:0, letterSpacing:'-1.4px', lineHeight:1 }}>
+                  <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:34, fontWeight:700, color:'#FFFFFF', margin:0, letterSpacing:'-0.3px', lineHeight:1 }}>
                     {fmt(reserva.valorAtualTotal)}
                   </p>
                   <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, color:'rgba(167,224,220,0.6)', margin:0 }}>
@@ -925,7 +925,7 @@ export function DashboardPage() {
                             transition={{ type:'spring', stiffness:60, damping:16, delay:0.15 + mi*0.06 }}
                             style={{ transform:'rotate(-90deg)', transformOrigin:'23px 23px' }}
                           />
-                          <text x="23" y="27" textAnchor="middle" fontSize="9" fontFamily="Fraunces,serif" fontWeight="700" fill={meta.cor}>{pct.toFixed(0)}%</text>
+                          <text x="23" y="27" textAnchor="middle" fontSize="9" fontFamily="Plus Jakarta Sans,sans-serif" fontWeight="700" fill={meta.cor}>{pct.toFixed(0)}%</text>
                         </svg>
                       </div>
                       <div style={{ flex:1, minWidth:0 }}>
@@ -979,7 +979,7 @@ export function DashboardPage() {
                           transition={{ type:'spring', stiffness:60, damping:16, delay:0.15 + mi*0.08 }}
                           style={{ transform:'rotate(-90deg)', transformOrigin:'26px 26px' }}
                         />
-                        <text x="26" y="30" textAnchor="middle" fontSize="10" fontFamily="Fraunces,serif" fontWeight="700" fill={meta.cor}>{pct.toFixed(0)}%</text>
+                        <text x="26" y="30" textAnchor="middle" fontSize="10" fontFamily="Plus Jakarta Sans,sans-serif" fontWeight="700" fill={meta.cor}>{pct.toFixed(0)}%</text>
                       </svg>
                     </div>
                     <div style={{ flex:1, minWidth:0 }}>
@@ -1087,10 +1087,10 @@ function Top5Row({ tx, rank, last }: { tx: { id?: number; descricao: string; val
   useEffect(() => { db.categorias.get(tx.categoriaId).then(c => setCat(c ?? null)) }, [tx.categoriaId])
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: last ? 'none' : '1px solid rgba(44,26,15,0.06)' }}>
-      <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: '#C4553B', minWidth: 20, textAlign: 'center' }}>{rank}</span>
+      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#C4553B', minWidth: 20, textAlign: 'center' }}>{rank}</span>
       {cat && <CategoryIcon nome={cat.nome} cor={cat.cor} size={34} radius={10} />}
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.descricao}</p>
-      <p style={{ ...DISPLAY, fontSize: 14, color: '#C4553B', flexShrink: 0 }}>{fmt(tx.valor)}</p>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1, fontSize: 14, color: '#C4553B', flexShrink: 0 }}>{fmt(tx.valor)}</p>
     </div>
   )
 }
@@ -1109,7 +1109,7 @@ function TxRow({ tx, i, last }: { tx: any; i: number; last: boolean }) {
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.descricao}</p>
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 1 }}>{cat?.nome} · {fmtDate(tx.data)}</p>
       </div>
-      <p style={{ ...DISPLAY, fontSize: 14, color: tx.tipo === 'receita' ? '#3A8580' : '#C4553B', flexShrink: 0 }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1, fontSize: 14, color: tx.tipo === 'receita' ? '#3A8580' : '#C4553B', flexShrink: 0 }}>
         {tx.tipo === 'receita' ? '+' : '-'}{fmt(tx.valor)}
       </p>
     </motion.div>

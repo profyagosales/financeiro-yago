@@ -463,9 +463,9 @@ export function Page() {
             </span>
             {stats.saldo !== 0 && (
               <span style={{
-                fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700,
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700,
                 color: stats.saldo >= 0 ? '#1E7D5A' : '#C4553B',
-                letterSpacing: '-0.4px',
+                letterSpacing: '-0.3px',
               }}>
                 {stats.saldo >= 0 ? '+' : ''}{fmt(stats.saldo)}
               </span>
@@ -663,7 +663,7 @@ function InlineStat({ icon, label, value, cor }: { icon?: React.ReactNode; label
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
         {icon}{label}
       </p>
-      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.5px', lineHeight: 1 }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.3px', lineHeight: 1 }}>
         {value}
       </p>
     </div>

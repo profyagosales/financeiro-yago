@@ -133,7 +133,7 @@ export function Page() {
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: 'rgba(196,195,227,0.65)', letterSpacing: '.18em', textTransform: 'uppercase', margin: 0 }}>
               Patrimônio investido
             </p>
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 44, fontWeight: 700, color: '#FFFFFF', margin: '6px 0 0', letterSpacing: '-1.8px', lineHeight: 1 }}>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 44, fontWeight: 700, color: '#FFFFFF', margin: '6px 0 0', letterSpacing: '-0.3px', lineHeight: 1 }}>
               {fmt(total)}
             </p>
             <div style={{ height: 1, background: 'linear-gradient(90deg, rgba(212,160,23,0.4) 0%, rgba(255,255,255,0.08) 60%, transparent 100%)', margin: '14px 0 14px 0' }}/>
@@ -177,7 +177,7 @@ export function Page() {
                       <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span style={{ width: 8, height: 8, borderRadius: 2, background: CLASSE_COR[c], flexShrink: 0 }} />
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(255,255,255,0.85)', flex: 1 }}>{CLASSE_LABEL[c]}</span>
-                        <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 12, fontWeight: 700, color: '#FFFFFF' }}>{pct.toFixed(0)}%</span>
+                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#FFFFFF' }}>{pct.toFixed(0)}%</span>
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(196,195,227,0.7)', minWidth: 70, textAlign: 'right' }}>{fmt(v)}</span>
                       </div>
                     )
@@ -233,8 +233,8 @@ export function Page() {
                     }}>{items.length} {items.length === 1 ? 'investimento' : 'investimentos'}</span>
                   </div>
                   <span style={{
-                    fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700,
-                    color: tm?.cor ?? '#2C1A0F', letterSpacing: '-0.4px',
+                    fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700,
+                    color: tm?.cor ?? '#2C1A0F', letterSpacing: '-0.3px',
                   }}>{fmt(subtotal)}</span>
                 </header>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -274,7 +274,7 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: 'rgba(196,195,227,0.55)', letterSpacing: '.1em', textTransform: 'uppercase', margin: 0 }}>
         {label}
       </p>
-      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#FFFFFF', margin: '4px 0 0', letterSpacing: '-0.5px', lineHeight: 1 }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: '#FFFFFF', margin: '4px 0 0', letterSpacing: '-0.3px', lineHeight: 1 }}>
         {value}
       </p>
     </div>

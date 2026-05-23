@@ -280,8 +280,8 @@ export function ContaForm({ open, conta, onClose, onSave }: Props) {
                 color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0,
               }}>Saldo atual</p>
               <p style={{
-                fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700,
-                color: saldoNum < 0 ? '#C4553B' : '#2C1A0F', letterSpacing: '-1px', margin: '4px 0 0', lineHeight: 1,
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 26, fontWeight: 700,
+                color: saldoNum < 0 ? '#C4553B' : '#2C1A0F', letterSpacing: '-0.3px', margin: '4px 0 0', lineHeight: 1,
               }}>{fmt(saldoNum)}</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>

@@ -137,10 +137,10 @@ export function TransactionListRow({ tx, active, bulkSelected, bulkMode, onClick
 
       {/* Valor */}
       <span style={{
-        fontFamily: "'Fraunces',Georgia,serif",
+        fontFamily: "'Plus Jakarta Sans',sans-serif",
         fontSize: 14, fontWeight: 700,
         color: corValor,
-        letterSpacing: '-0.4px', flexShrink: 0,
+        letterSpacing: '-0.3px', flexShrink: 0,
       }}>
         {sign}{fmt(tx.valor).replace(/^-/, '')}
       </span>

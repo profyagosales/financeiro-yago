@@ -236,7 +236,7 @@ function StatCard({ icon, label, value, sub, cor }: { icon: React.ReactNode; lab
           {label}
         </span>
       </div>
-      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.7px', lineHeight: 1 }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 24, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.3px', lineHeight: 1 }}>
         {value}
       </p>
       {sub && (

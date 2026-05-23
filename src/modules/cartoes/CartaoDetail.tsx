@@ -128,9 +128,9 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
           }}>Fatura de {mesNome}</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap', marginTop: 6 }}>
             <p style={{
-              fontFamily: "'Fraunces',Georgia,serif", fontSize: 48, fontWeight: 700,
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 48, fontWeight: 700,
               color: faturaAtual > 0 ? '#2C1A0F' : '#9B7B6A',
-              letterSpacing: '-2px', lineHeight: 1, margin: 0,
+              letterSpacing: '-0.3px', lineHeight: 1, margin: 0,
             }}>{fmt(faturaAtual)}</p>
             <p style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600,
@@ -318,7 +318,7 @@ function LancamentoRow({ lanc, onEdit, isLast }: { lanc: LancamentoCartao; onEdi
       >
         {/* Data column */}
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.7px', lineHeight: 1 }}>{dia}</p>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.3px', lineHeight: 1 }}>{dia}</p>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.1em', textTransform: 'uppercase', margin: '2px 0 0' }}>{mesAbrev}</p>
         </div>
 
@@ -357,8 +357,8 @@ function LancamentoRow({ lanc, onEdit, isLast }: { lanc: LancamentoCartao; onEdi
 
         {/* Valor */}
         <span style={{
-          fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700,
-          color: '#2C1A0F', letterSpacing: '-0.5px',
+          fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700,
+          color: '#2C1A0F', letterSpacing: '-0.3px',
         }}>{fmt(lanc.valor)}</span>
 
         {/* Menu */}
@@ -520,9 +520,9 @@ function CategoriasTab({ lancs, faturaTotal }: { lancs: LancamentoCartao[]; fatu
                 borderBottom: idx === stats.length - 1 ? 'none' : '1px solid #F5F0E8',
               }}>
               <span style={{
-                fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700,
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700,
                 color: idx === 0 ? s.cor : 'rgba(122,92,79,0.55)',
-                letterSpacing: '-0.5px', textAlign: 'center',
+                letterSpacing: '-0.3px', textAlign: 'center',
               }}>{idx + 1}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ width: 8, height: 8, borderRadius: 2, background: s.cor, flexShrink: 0 }}/>
@@ -533,7 +533,7 @@ function CategoriasTab({ lancs, faturaTotal }: { lancs: LancamentoCartao[]; fatu
               <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#7A5C4F', minWidth: 40, textAlign: 'right' }}>
                 {pct.toFixed(0)}%
               </span>
-              <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F', minWidth: 90, textAlign: 'right', letterSpacing: '-0.4px' }}>
+              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F', minWidth: 90, textAlign: 'right', letterSpacing: '-0.3px' }}>
                 {fmt(s.valor)}
               </span>
             </div>
@@ -658,7 +658,7 @@ function InlineStat({ label, value, cor }: { label: string; value: string; cor: 
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0 }}>
         {label}
       </p>
-      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.5px' }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.3px' }}>
         {value}
       </p>
     </div>

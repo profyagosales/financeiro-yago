@@ -8,6 +8,7 @@ import { db } from '@/db/schema'
 import { IconCreditCard, IconChevronDown, IconChevronUp } from '@tabler/icons-react'
 
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const NUM: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1 }
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#9B7B6A' }
 const BODY: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif" }
 const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
@@ -51,7 +52,7 @@ function ParcelaRow({ lanc, cor }: { lanc: any; cor: string }) {
           </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <p style={{ ...DISPLAY, fontSize: 15, color: '#C4553B' }}>
+          <p style={{ ...NUM, fontSize: 15, color: '#C4553B' }}>
             {fmt(lanc.valor)}<span style={{ ...BODY, fontSize: 10, fontWeight: 600, color: '#9B7B6A' }}>/mês</span>
           </p>
           <p style={{ ...BODY, fontSize: 10, color: '#C4B4A8', marginTop: 2 }}>
@@ -109,7 +110,7 @@ function CartaoGroup({ cartao, lancamentos }: { cartao: any; lancamentos: any[] 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ textAlign: 'right' }}>
             <p style={{ ...BODY, fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em' }}>POR MÊS</p>
-            <p style={{ ...DISPLAY, fontSize: 18, color: cartao.cor }}>{fmt(totalMensal)}</p>
+            <p style={{ ...NUM, fontSize: 18, color: cartao.cor }}>{fmt(totalMensal)}</p>
           </div>
           <div style={{ background: `${cartao.cor}15`, borderRadius: 9, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {expanded ? <IconChevronUp size={15} color={cartao.cor} stroke={2.5} /> : <IconChevronDown size={15} color={cartao.cor} stroke={2.5} />}
@@ -168,15 +169,15 @@ export function Page() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
             <div>
               <p style={{ ...LABEL, fontSize: 9, marginBottom: 5 }}>POR MÊS</p>
-              <p style={{ ...DISPLAY, fontSize: 20, color: '#C4553B' }}>{fmt(totalMensal)}</p>
+              <p style={{ ...NUM, fontSize: 20, color: '#C4553B' }}>{fmt(totalMensal)}</p>
             </div>
             <div>
               <p style={{ ...LABEL, fontSize: 9, marginBottom: 5 }}>TOTAL RESTANTE</p>
-              <p style={{ ...DISPLAY, fontSize: 20, color: '#2C1A0F' }}>{fmt(totalGeral)}</p>
+              <p style={{ ...NUM, fontSize: 20, color: '#2C1A0F' }}>{fmt(totalGeral)}</p>
             </div>
             <div>
               <p style={{ ...LABEL, fontSize: 9, marginBottom: 5 }}>EM ABERTO</p>
-              <p style={{ ...DISPLAY, fontSize: 20, color: '#2C1A0F' }}>{parcelamentos.length}</p>
+              <p style={{ ...NUM, fontSize: 20, color: '#2C1A0F' }}>{parcelamentos.length}</p>
             </div>
           </div>
           {/* Mini bar chart */}
@@ -188,7 +189,7 @@ export function Page() {
                 <div key={l.id} style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                     <span style={{ ...BODY, fontSize: 11, color: '#7A5C4F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{l.descricao}</span>
-                    <span style={{ ...DISPLAY, fontSize: 12, color: '#2C1A0F', flexShrink: 0 }}>{fmt(l.valor)}</span>
+                    <span style={{ ...NUM, fontSize: 12, color: '#2C1A0F', flexShrink: 0 }}>{fmt(l.valor)}</span>
                   </div>
                   <div style={{ background: '#F5F0E8', borderRadius: 4, height: 4, overflow: 'hidden' }}>
                     <motion.div

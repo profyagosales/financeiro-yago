@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format'
 import { TIPO_META } from '../dividas/constants'
 
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const NUM: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1 }
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: '#9B7B6A' }
 const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
 
@@ -97,7 +98,7 @@ export function TabDividas() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {avalanche.slice(0, 6).map((d, idx) => (
                 <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ ...DISPLAY, fontSize: 18, color: idx === 0 ? '#C4553B' : 'rgba(122,92,79,0.5)', minWidth: 22, textAlign: 'center' }}>{idx + 1}</span>
+                  <span style={{ ...NUM, fontSize: 18, color: idx === 0 ? '#C4553B' : 'rgba(122,92,79,0.5)', minWidth: 22, textAlign: 'center' }}>{idx + 1}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#2C1A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nome}</p>
                     <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', margin: '2px 0 0' }}>
@@ -112,7 +113,7 @@ export function TabDividas() {
                     ) : (
                       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 500, color: '#9B7B6A', margin: 0 }}>—</p>
                     )}
-                    <p style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F', margin: '2px 0 0' }}>{fmt(d.saldoDevedor)}</p>
+                    <p style={{ ...NUM, fontSize: 13, color: '#2C1A0F', margin: '2px 0 0' }}>{fmt(d.saldoDevedor)}</p>
                   </div>
                 </div>
               ))}
@@ -137,7 +138,7 @@ export function TabDividas() {
                   <Tooltip
                     content={({ active, payload }) => active && payload?.[0] ? (
                       <div style={{ background: '#1A0A05', borderRadius: 10, padding: '8px 12px' }}>
-                        <p style={{ ...DISPLAY, fontSize: 13, color: '#fff' }}>{(payload[0].value as number).toFixed(2)}% a.a.</p>
+                        <p style={{ ...NUM, fontSize: 13, color: '#fff' }}>{(payload[0].value as number).toFixed(2)}% a.a.</p>
                       </div>
                     ) : null}
                   />
@@ -168,7 +169,7 @@ export function TabDividas() {
                       {d.tm && <span style={{ width: 8, height: 8, borderRadius: 2, background: d.tm.cor }}/>}
                       <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#2C1A0F', flex: 1 }}>{d.tm?.label ?? d.tipo}</span>
                       <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', fontWeight: 600 }}>{pct.toFixed(0)}%</span>
-                      <span style={{ ...DISPLAY, fontSize: 12, color: '#2C1A0F', minWidth: 80, textAlign: 'right' }}>{fmt(d.valor)}</span>
+                      <span style={{ ...NUM, fontSize: 12, color: '#2C1A0F', minWidth: 80, textAlign: 'right' }}>{fmt(d.valor)}</span>
                     </div>
                     <div style={{ height: 4, borderRadius: 2, background: 'rgba(196,85,59,0.1)', overflow: 'hidden' }}>
                       <div style={{ width: `${pct}%`, height: '100%', background: d.tm?.cor ?? '#C4553B', borderRadius: 2 }}/>
@@ -199,7 +200,7 @@ export function TabDividas() {
                 <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: '#E8F4F2', borderRadius: 8 }}>
                   <IconCheck size={14} stroke={2.4} color="#1E7D5A" />
                   <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#2C1A0F', margin: 0, flex: 1 }}>{d.nome}</p>
-                  <span style={{ ...DISPLAY, fontSize: 12, color: '#1E7D5A' }}>{fmt(d.valorTotal)}</span>
+                  <span style={{ ...NUM, fontSize: 12, color: '#1E7D5A' }}>{fmt(d.valorTotal)}</span>
                 </div>
               ))}
             </div>
@@ -214,7 +215,7 @@ function StatCard({ label, value, sub, cor }: { label: string; value: string; su
   return (
     <div style={{ ...CARD, padding: '16px 18px', borderLeft: `3px solid ${cor}` }}>
       <p style={{ ...LABEL, color: '#7A5C4F' }}>{label}</p>
-      <p style={{ ...DISPLAY, fontSize: 22, color: '#2C1A0F', margin: '6px 0 0', letterSpacing: '-0.7px' }}>{value}</p>
+      <p style={{ ...NUM, fontSize: 22, color: '#2C1A0F', margin: '6px 0 0', letterSpacing: '-0.3px' }}>{value}</p>
       {sub && (
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '4px 0 0' }}>{sub}</p>
       )}

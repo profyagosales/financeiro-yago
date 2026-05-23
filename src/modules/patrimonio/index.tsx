@@ -117,9 +117,9 @@ export function Page() {
             </p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
               <p style={{
-                fontFamily: "'Fraunces',Georgia,serif", fontSize: 54, fontWeight: 700,
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 54, fontWeight: 700,
                 color: patrimonioLiquido >= 0 ? '#FFFFFF' : '#FFBFAE',
-                margin: 0, letterSpacing: '-2.2px', lineHeight: 1,
+                margin: 0, letterSpacing: '-0.3px', lineHeight: 1,
               }}>{fmt(patrimonioLiquido)}</p>
               {deltaMes !== 0 && (
                 <span style={{
@@ -213,7 +213,7 @@ export function Page() {
               <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.6px' }}>Ativos</h2>
               <div style={{ width: 28, height: 2, background: '#3A8580', borderRadius: 1, marginTop: 6 }}/>
             </div>
-            <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C7470', letterSpacing: '-0.5px' }}>{fmt(totalAtivos)}</span>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700, color: '#2C7470', letterSpacing: '-0.3px' }}>{fmt(totalAtivos)}</span>
           </header>
 
           {/* Contas */}
@@ -263,7 +263,7 @@ export function Page() {
                       <span style={{ width: 7, height: 7, borderRadius: 2, background: CLASSE_COR[c] }}/>
                       <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#2C1A0F', flex: 1 }}>{CLASSE_LABEL[c]}</span>
                       <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', fontWeight: 600 }}>{pct.toFixed(0)}%</span>
-                      <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 11, fontWeight: 700, color: '#2C1A0F', minWidth: 70, textAlign: 'right' }}>{fmt(v)}</span>
+                      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#2C1A0F', minWidth: 70, textAlign: 'right' }}>{fmt(v)}</span>
                     </div>
                   )
                 })}
@@ -286,7 +286,7 @@ export function Page() {
               <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.6px' }}>Passivos</h2>
               <div style={{ width: 28, height: 2, background: '#C4553B', borderRadius: 1, marginTop: 6 }}/>
             </div>
-            <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#A8442B', letterSpacing: '-0.5px' }}>{fmt(totalPassivos)}</span>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700, color: '#A8442B', letterSpacing: '-0.3px' }}>{fmt(totalPassivos)}</span>
           </header>
 
           {totalPassivos === 0 ? (
@@ -336,7 +336,7 @@ export function Page() {
                           {tm && <span style={{ width: 7, height: 7, borderRadius: 2, background: tm.cor }}/>}
                           <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#2C1A0F', flex: 1 }}>{tm?.label ?? tipo}</span>
                           <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', fontWeight: 600 }}>{pct.toFixed(0)}%</span>
-                          <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 11, fontWeight: 700, color: '#2C1A0F', minWidth: 70, textAlign: 'right' }}>{fmt(valor)}</span>
+                          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#2C1A0F', minWidth: 70, textAlign: 'right' }}>{fmt(valor)}</span>
                         </div>
                       )
                     })}
@@ -386,7 +386,7 @@ export function Page() {
                   active && payload?.[0] ? (
                     <div style={{ background: '#1A0A05', borderRadius: 10, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 10, color: 'rgba(255,255,255,0.45)', marginBottom: 5, letterSpacing: '.06em', textTransform: 'uppercase' }}>{payload[0].payload.mes}</p>
-                      <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 14, fontWeight: 700, color: '#A7E0DC' }}>{fmt(payload[0].value as number)}</p>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#A7E0DC' }}>{fmt(payload[0].value as number)}</p>
                     </div>
                   ) : null
                 }
@@ -479,7 +479,7 @@ function HeroStat({ label, value, cor, icon, badge }: {
       }}>
         {icon}{label}
       </p>
-      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.6px', lineHeight: 1 }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.3px', lineHeight: 1 }}>
         {value}
       </p>
       {badge && (
@@ -498,7 +498,7 @@ function LegendItem({ cor, label, valor, total }: { cor: string; label: string; 
         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.92)' }}>{label}</span>
         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(167,224,220,0.55)', marginLeft: 'auto' }}>{pct.toFixed(0)}%</span>
       </div>
-      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '-0.4px' }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#FFFFFF', margin: '2px 0 0', letterSpacing: '-0.3px' }}>
         {fmt(valor)}
       </p>
     </div>
@@ -540,7 +540,7 @@ function RowBig({ icon, corIcon, label, sub, valor, pct, barCor, onClick }: {
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.5px' }}>{fmt(valor)}</span>
+          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.3px' }}>{fmt(valor)}</span>
           {onClick && <IconChevronRight size={14} stroke={2} color="#9B7B6A" />}
         </div>
       </div>

@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format'
 import { TIPOS as INV_TIPOS, TIPO_META, CLASSE_COR, CLASSE_LABEL } from '../investimentos/constants'
 
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
+const NUM: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1 }
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: '#9B7B6A' }
 const CARD: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 20, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06)' }
 
@@ -105,7 +106,7 @@ export function TabInvestimentos() {
                   content={({ active, payload }) => active && payload?.[0] ? (
                     <div style={{ background: '#1A0A05', borderRadius: 10, padding: '8px 12px' }}>
                       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '.06em', textTransform: 'uppercase', margin: 0 }}>{payload[0].payload.name}</p>
-                      <p style={{ ...DISPLAY, fontSize: 14, color: '#fff', margin: '4px 0 0' }}>{fmt(payload[0].value as number)}</p>
+                      <p style={{ ...NUM, fontSize: 14, color: '#fff', margin: '4px 0 0' }}>{fmt(payload[0].value as number)}</p>
                     </div>
                   ) : null}
                 />
@@ -118,7 +119,7 @@ export function TabInvestimentos() {
                 <span style={{ width: 8, height: 8, borderRadius: 2, background: d.cor }}/>
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#2C1A0F', flex: 1 }}>{d.name}</span>
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', fontWeight: 600 }}>{((d.value / total) * 100).toFixed(0)}%</span>
-                <span style={{ ...DISPLAY, fontSize: 12, color: '#2C1A0F', minWidth: 70, textAlign: 'right' }}>{fmt(d.value)}</span>
+                <span style={{ ...NUM, fontSize: 12, color: '#2C1A0F', minWidth: 70, textAlign: 'right' }}>{fmt(d.value)}</span>
               </div>
             ))}
           </div>
@@ -139,7 +140,7 @@ export function TabInvestimentos() {
                 <Tooltip
                   content={({ active, payload }) => active && payload?.[0] ? (
                     <div style={{ background: '#1A0A05', borderRadius: 10, padding: '8px 12px' }}>
-                      <p style={{ ...DISPLAY, fontSize: 13, color: '#fff' }}>{fmt(payload[0].value as number)}</p>
+                      <p style={{ ...NUM, fontSize: 13, color: '#fff' }}>{fmt(payload[0].value as number)}</p>
                     </div>
                   ) : null}
                 />
@@ -164,7 +165,7 @@ export function TabInvestimentos() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {topPerformers.map((p, idx) => (
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ ...DISPLAY, fontSize: 18, color: idx === 0 ? '#D4A017' : 'rgba(122,92,79,0.5)', minWidth: 22, textAlign: 'center' }}>{idx + 1}</span>
+                <span style={{ ...NUM, fontSize: 18, color: idx === 0 ? '#D4A017' : 'rgba(122,92,79,0.5)', minWidth: 22, textAlign: 'center' }}>{idx + 1}</span>
                 {idx === 0 && <IconTrophy size={14} stroke={2} color="#D4A017" />}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#2C1A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nome}</p>
@@ -176,7 +177,7 @@ export function TabInvestimentos() {
                   <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: p.rendPct >= 0 ? '#3A8580' : '#C4553B', margin: 0 }}>
                     {p.rendPct >= 0 ? '+' : ''}{p.rendPct.toFixed(2)}%
                   </p>
-                  <p style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F', margin: '2px 0 0' }}>{fmt(p.valorAtual)}</p>
+                  <p style={{ ...NUM, fontSize: 13, color: '#2C1A0F', margin: '2px 0 0' }}>{fmt(p.valorAtual)}</p>
                 </div>
               </div>
             ))}
@@ -206,7 +207,7 @@ export function TabInvestimentos() {
                         {dias > 0 ? `em ${dias} dias` : 'vencido'}
                       </p>
                     </div>
-                    <span style={{ ...DISPLAY, fontSize: 12, color: '#2C1A0F' }}>{fmt(i.valorAtual)}</span>
+                    <span style={{ ...NUM, fontSize: 12, color: '#2C1A0F' }}>{fmt(i.valorAtual)}</span>
                   </div>
                 )
               })}
@@ -222,7 +223,7 @@ function StatCard({ label, value, sub, cor, icon }: { label: string; value: stri
   return (
     <div style={{ ...CARD, padding: '16px 18px', borderLeft: `3px solid ${cor}` }}>
       <p style={{ ...LABEL, color: '#7A5C4F' }}>{label}</p>
-      <p style={{ ...DISPLAY, fontSize: 22, color: '#2C1A0F', margin: '6px 0 0', letterSpacing: '-0.7px' }}>{value}</p>
+      <p style={{ ...NUM, fontSize: 22, color: '#2C1A0F', margin: '6px 0 0', letterSpacing: '-0.3px' }}>{value}</p>
       {sub && (
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: cor, margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
           {icon}{sub}

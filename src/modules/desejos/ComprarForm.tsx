@@ -149,7 +149,7 @@ export function ComprarForm({ desejo, onClose }: Props) {
                 value={form.valor}
                 onChange={e => setForm(f => ({ ...f, valor: e.target.value }))}
                 placeholder="0,00" inputMode="decimal"
-                style={{ ...INPUT_STYLE, fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700 }}
+                style={{ ...INPUT_STYLE, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700 }}
               />
               {desejo.valorEstimado && parseValor(form.valor) > 0 && parseValor(form.valor) < desejo.valorEstimado && (
                 <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#3A8580', margin: '4px 0 0', fontWeight: 700 }}>

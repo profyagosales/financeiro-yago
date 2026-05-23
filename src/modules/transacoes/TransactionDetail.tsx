@@ -142,9 +142,9 @@ export function TransactionDetail({ tx, onClose }: Props) {
             </span>
           </div>
           <p style={{
-            fontFamily: "'Fraunces',Georgia,serif", fontSize: 36, fontWeight: 700,
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 36, fontWeight: 700,
             color: isReceita ? '#1E7D5A' : '#2C1A0F',
-            letterSpacing: '-1.2px', lineHeight: 1, margin: '6px 0 0',
+            letterSpacing: '-0.3px', lineHeight: 1, margin: '6px 0 0',
           }}>{isReceita ? '+' : isDespesa ? '−' : ''}{fmt(tx.valor).replace(/^-/, '')}</p>
         </div>
         <button onClick={onClose} title="Fechar"
@@ -403,7 +403,7 @@ function EditableValueField({ label, value, onSave }: { label: string; value: nu
       <Label>{label}</Label>
       {editing ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#C4553B' }}>R$</span>
+          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: '#C4553B' }}>R$</span>
           <input autoFocus
             value={val}
             onChange={e => setVal(e.target.value)}
@@ -416,7 +416,7 @@ function EditableValueField({ label, value, onSave }: { label: string; value: nu
             style={{
               flex: 1, background: '#FBF8F3', border: '1.5px solid #C4553B',
               borderRadius: 10, padding: '10px 12px',
-              fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, letterSpacing: '-0.5px',
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, letterSpacing: '-0.3px',
               color: '#2C1A0F', outline: 'none',
             }}/>
         </div>
@@ -426,7 +426,7 @@ function EditableValueField({ label, value, onSave }: { label: string; value: nu
             width: '100%', textAlign: 'left',
             background: 'transparent', border: '1.5px solid transparent',
             borderRadius: 10, padding: '10px 12px', cursor: 'text',
-            fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700, letterSpacing: '-0.3px',
             color: '#2C1A0F',
             transition: 'all .12s',
           }}
