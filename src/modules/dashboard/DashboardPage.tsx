@@ -232,20 +232,22 @@ export function DashboardPage() {
             }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
           </div>
 
-          {/* ── CSS keyframe — mais confiável que Framer Motion para left/top ── */}
+          {/* ── CSS keyframe — cobrindo TODO o card ── */}
           <style>{`
             @keyframes fairyFly {
-              0%,100% { left:40%; top:38%; }
-              14%     { left:63%; top: 6%; }
-              28%     { left:44%; top: 3%; }
-              43%     { left:67%; top:32%; }
-              57%     { left:37%; top:14%; }
-              71%     { left:57%; top:36%; }
-              85%     { left:45%; top: 5%; }
+              0%,100% { left:18%; top:42%; }
+              11%     { left:66%; top: 4%; }
+              22%     { left:28%; top: 2%; }
+              33%     { left:74%; top:28%; }
+              44%     { left:14%; top:12%; }
+              55%     { left:62%; top:40%; }
+              66%     { left:36%; top: 3%; }
+              77%     { left:70%; top:16%; }
+              88%     { left:22%; top:34%; }
             }
             .fairy-container {
               position:absolute; z-index:2; pointer-events:none;
-              animation: fairyFly 28s ease-in-out infinite;
+              animation: fairyFly 32s ease-in-out infinite;
             }
           `}</style>
 
