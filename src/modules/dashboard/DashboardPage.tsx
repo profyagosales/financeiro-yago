@@ -248,15 +248,15 @@ export function DashboardPage() {
         <div style={{
           background: '#504E76',
           borderRadius: 24,
-          padding: '20px 16px',
+          padding: '14px 12px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 10,
+          gap: 7,
           position: 'relative',
           overflow: 'hidden',
-          minHeight: 172,
+          minHeight: 0,
         }}>
           {/* Orbs decorativos */}
           <div style={{ position:'absolute', top:-28, right:-28, width:90, height:90,
