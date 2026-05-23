@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { DragFairy, FairyBubble, useFairyPhrase } from '@/components/mascot/DragFairy'
 import type { Phrase } from '@/components/mascot/DragFairy'
 import { useContas, useSaldoTotal } from '@/db/hooks/useContas'
-import { useTransacoes, useTotaisMes, useGastosPorCategoria } from '@/db/hooks/useTransacoes'
+import { useTransacoes, useTransacoesByMes, useTotaisMes, useGastosPorCategoria } from '@/db/hooks/useTransacoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
 import { useCartoes, useAllLancamentosAtivos } from '@/db/hooks/useCartoes'
 import { useOrcamentos } from '@/db/hooks/useOrcamentos'
+import { useMetas } from '@/db/hooks/useMetas'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/schema'
 import { fmt, fmtDate, mesAnoAtual } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
@@ -100,6 +102,48 @@ export function DashboardPage() {
   const hasAlerts = proximosVenc.length > 0 || cartoesAlerta.length > 0
 
   const poupancaColor = taxaPoupanca > 20 ? '#3A8580' : taxaPoupanca > 0 ? '#D4A017' : '#C4553B'
+
+  const metas = useMetas()
+  const txsMes = useTransacoesByMes(mes, ano)
+  const top5 = [...txsMes].filter(t => t.tipo === 'despesa').sort((a, b) => b.valor - a.valor).slice(0, 5)
+
+  const txsAno = useLiveQuery(() => {
+    const inicio = `${ano}-01-01`
+    const fim    = `${ano}-12-31`
+    return db.transacoes.where('data').between(inicio, fim, true, true).toArray()
+  }, [ano]) ?? []
+
+  const mesesData = Array.from({ length: 12 }, (_, i) => {
+    const m = i + 1
+    const label = new Date(ano, i, 1).toLocaleDateString('pt-BR', { month: 'short' })
+    const txs = txsAno.filter(t => parseInt(t.data.split('-')[1]) === m)
+    return {
+      mes: label.charAt(0).toUpperCase() + label.slice(1),
+      Receitas: txs.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0),
+      Despesas: txs.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0),
+    }
+  })
+
+  const hasYearData = mesesData.some(m => m.Receitas > 0 || m.Despesas > 0)
+
+  // Calendar event map: day -> color[]
+  const calendarEvents = new Map<number, string[]>()
+  contasFixas.forEach(cf => {
+    const day = cf.diaVencimento
+    const isPaid = !!pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago')
+    const color = isPaid ? '#3A8580' : '#D4A017'
+    calendarEvents.set(day, [...(calendarEvents.get(day) ?? []), color])
+  })
+  cartoes.forEach(c => {
+    const fechDay = c.diaFechamento
+    calendarEvents.set(fechDay, [...(calendarEvents.get(fechDay) ?? []), '#504E76'])
+    const vencDay = c.diaVencimento
+    calendarEvents.set(vencDay, [...(calendarEvents.get(vencDay) ?? []), '#C4553B'])
+  })
+
+  const calFirstDow = new Date(ano, mes - 1, 1).getDay() // 0=Sun
+  const calDaysInMonth = new Date(ano, mes, 0).getDate()
+  const calCells = calFirstDow + calDaysInMonth // total cells needed
 
   const contextPhrase: Phrase | undefined =
     saldoLivre < 0          ? { text: 'Tá achando que é herdeira?!',          emoji: 'flame'   }
@@ -397,94 +441,92 @@ export function DashboardPage() {
         )
       })()}
 
-      {/* ─── ROW 3: Hero dark card (2/3) + Gastos por categoria (1/3) ─── */}
-      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, marginBottom: 20 }}>
+      {/* ─── SECTION 3: Mini Calendário + Análise de Gastos ─── */}
+      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
 
-        {/* PANORAMA — glassmorphism limpo, cores vibrantes */}
-        <div style={{
-          background: 'rgba(255,255,255,0.72)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderRadius: 22,
-          padding: '26px 28px',
-          border: '1px solid rgba(255,255,255,0.65)',
-          boxShadow: '0 8px 40px rgba(44,26,15,0.07), 0 2px 8px rgba(44,26,15,0.04)',
-        }}>
-          <p style={{ ...LABEL, color: '#9B7B6A', marginBottom: 18 }}>Panorama · {mesNome}</p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-            <div style={{ background: 'rgba(58,133,128,0.08)', borderRadius: 16, padding: '14px 16px', border: '1px solid rgba(58,133,128,0.15)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
-                <IconArrowUpRight size={11} color="#3A8580" stroke={2.5} />
-                <span style={{ ...LABEL, color: '#3A8580', fontSize: 9 }}>Entradas</span>
-              </div>
-              <OdometroSaldo value={receitas} style={{ ...DISPLAY, fontSize: 24, color: '#3A8580', display: 'block' }} />
-            </div>
-            <div style={{ background: 'rgba(196,85,59,0.08)', borderRadius: 16, padding: '14px 16px', border: '1px solid rgba(196,85,59,0.15)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
-                <IconArrowDownRight size={11} color="#C4553B" stroke={2.5} />
-                <span style={{ ...LABEL, color: '#C4553B', fontSize: 9 }}>Saídas</span>
-              </div>
-              <OdometroSaldo value={totalComprometido} style={{ ...DISPLAY, fontSize: 24, color: '#C4553B', display: 'block' }} />
-            </div>
+        {/* Mini Calendário */}
+        <div style={{ ...CARD, padding: 20 }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 16 }}>
+            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, textTransform: 'capitalize' }}>{mesNome}</h2>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>{ano}</span>
           </div>
 
-          <div style={{ height: 1, background: 'rgba(44,26,15,0.07)', marginBottom: 16 }} />
+          {/* Day headers */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2, marginBottom: 6 }}>
+            {['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d => (
+              <div key={d} style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', textAlign: 'center' }}>{d}</div>
+            ))}
+          </div>
 
-          {[
-            { icon: IconTrendingDown, label: 'Gastos variáveis', valor: despesas, sub: undefined as string | undefined },
-            { icon: IconRepeat, label: `Contas fixas (${contasFixas.length})`, valor: totalFixasMes, sub: `${fixasPagas.length} pagas · ${fixasPendentes.length} pendentes` },
-            { icon: IconCalendarStats, label: `Parcelamentos (${parcelamentos.length})`, valor: totalParcelamentos, sub: undefined as string | undefined },
-          ].filter(item => item.valor > 0).map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <item.icon size={12} color="#C4B4A8" stroke={1.8} />
-              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', flex: 1 }}>
-                {item.label}{item.sub ? <span style={{ opacity: .7 }}> · {item.sub}</span> : ''}
-              </span>
-              <span style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F' }}>{fmt(item.valor)}</span>
-            </div>
-          ))}
+          {/* Calendar grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2 }}>
+            {Array.from({ length: Math.ceil(calCells / 7) * 7 }, (_, idx) => {
+              const day = idx - calFirstDow + 1
+              if (day < 1 || day > calDaysInMonth) {
+                return <div key={idx} />
+              }
+              const isToday = day === hoje
+              const isPast = day < hoje
+              const events = calendarEvents.get(day) ?? []
+              return (
+                <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <div style={{
+                    width: 28, height: 28,
+                    borderRadius: '50%',
+                    background: isToday ? '#504E76' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span style={{
+                      fontFamily: "'Plus Jakarta Sans',sans-serif",
+                      fontSize: 11,
+                      fontWeight: isToday ? 700 : 400,
+                      color: isToday ? 'white' : isPast ? 'rgba(44,26,15,0.35)' : '#2C1A0F',
+                    }}>{day}</span>
+                  </div>
+                  {events.length > 0 && (
+                    <div style={{ display: 'flex', gap: 2 }}>
+                      {events.slice(0, 3).map((color, ci) => (
+                        <div key={ci} style={{ width: 3, height: 3, borderRadius: '50%', background: color }} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
 
-          {receitas > 0 && (
-            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(44,26,15,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ ...LABEL, color: saldoLivre >= 0 ? '#3A8580' : '#C4553B', marginBottom: 5 }}>Saldo livre</p>
-                <OdometroSaldo value={saldoLivre} style={{ ...DISPLAY, fontSize: 22, color: saldoLivre >= 0 ? '#3A8580' : '#C4553B', display: 'block' }} />
+          {/* Legend */}
+          <div style={{ display: 'flex', gap: 14, marginTop: 14, flexWrap: 'wrap' }}>
+            {[
+              { color: '#D4A017', label: 'Conta fixa' },
+              { color: '#504E76', label: 'Fecha cartão' },
+              { color: '#C4553B', label: 'Vence cartão' },
+            ].map(item => (
+              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
+                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A' }}>{item.label}</span>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ ...LABEL, marginBottom: 5 }}>Por dia</p>
-                <OdometroSaldo value={Math.max(0, porDia)} style={{ ...DISPLAY, fontSize: 18, color: '#2C1A0F', display: 'block' }} />
-              </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
-        {/* Gastos por categoria — glassmorphism com accent teal */}
-        <div style={{
-          background: 'linear-gradient(160deg, rgba(58,133,128,0.14) 0%, rgba(255,255,255,0.75) 55%)',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-          border: '1px solid rgba(58,133,128,0.22)',
-          borderRadius: 22,
-          padding: '22px',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 8px 32px rgba(58,133,128,0.12), 0 2px 8px rgba(44,26,15,0.04)',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-            <h2 style={{ ...DISPLAY, fontSize: 17, color: '#2C1A0F' }}>Por categoria</h2>
+        {/* Análise de Gastos — donut + lista */}
+        <div style={{ ...CARD, padding: 20, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Gastos por categoria</h2>
             <button onClick={() => navigate('/relatorios')}
-              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#C4553B', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
-              Ver <IconChevronRight size={13} />
+              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#C4553B', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Ver →
             </button>
           </div>
 
           {pieData.length > 0 ? (
             <>
-              <div style={{ position: 'relative', width: '100%', height: 150, marginBottom: 16 }}>
+              <div style={{ position: 'relative', width: '100%', height: 170, marginBottom: 14 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={44} outerRadius={68} paddingAngle={2} dataKey="value" strokeWidth={0}>
+                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value" strokeWidth={0}>
                       {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
                     <Tooltip content={<DarkTooltip />} />
@@ -492,62 +534,155 @@ export function DashboardPage() {
                 </ResponsiveContainer>
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <div style={{ textAlign: 'center' }}>
-                    <p style={{ ...LABEL, fontSize: 8, marginBottom: 2 }}>Total</p>
-                    <p style={{ ...DISPLAY, fontSize: 15, color: '#2C1A0F' }}>{fmt(despesas)}</p>
+                    <p style={{ ...LABEL, fontSize: 8, marginBottom: 3 }}>Total</p>
+                    <p style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F' }}>{fmt(despesas)}</p>
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1 }}>
-                {pieData.slice(0, 4).map(d => (
-                  <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
-                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#2C1A0F', flex: 1 }}>{d.name}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                {pieData.slice(0, 5).map(d => (
+                  <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
+                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#2C1A0F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
                     <span style={{ ...DISPLAY, fontSize: 12, color: '#2C1A0F' }}>{fmt(d.value)}</span>
+                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', minWidth: 32, textAlign: 'right' }}>
+                      {despesas > 0 ? (d.value / despesas * 100).toFixed(0) : 0}%
+                    </span>
                   </div>
                 ))}
               </div>
             </>
           ) : (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', textAlign: 'center' }}>Sem gastos em {mesNome}</p>
             </div>
           )}
         </div>
       </motion.div>
 
-      {/* ─── ROW 4: Contas scroll ─── */}
-      {contas.length > 0 && (
-        <motion.div variants={ITEM} style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h2 style={{ ...DISPLAY, fontSize: 20, color: '#2C1A0F' }}>Contas</h2>
-            <button onClick={() => navigate('/contas')}
-              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#C4553B', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
-              Ver todas <IconChevronRight size={14} />
+      {/* ─── SECTION 4: Top 5 Despesas + Metas ─── */}
+      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
+
+        {/* Top 5 Despesas */}
+        <div style={{ ...CARD, padding: 20 }}>
+          <div style={{ marginBottom: 4 }}>
+            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Maiores Despesas</h2>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 3 }}>
+              {mesNome.charAt(0).toUpperCase() + mesNome.slice(1)} {ano}
+            </p>
+          </div>
+
+          {top5.length === 0 ? (
+            <div style={{ paddingTop: 24, textAlign: 'center' }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A' }}>Nenhum gasto no mês</p>
+            </div>
+          ) : (
+            <div style={{ marginTop: 14 }}>
+              {top5.map((tx, idx) => (
+                <Top5Row key={tx.id} tx={tx} rank={idx + 1} last={idx === top5.length - 1} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Metas */}
+        <div style={{
+          background: 'linear-gradient(135deg, #F3EEFF 0%, #FFF8F5 100%)',
+          border: '1px solid rgba(196,195,227,0.3)',
+          borderRadius: 22,
+          padding: 20,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Metas</h2>
+            <button onClick={() => navigate('/metas')}
+              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#C4553B', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Ver →
             </button>
           </div>
-          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
-            {contas.map(c => (
-              <motion.div key={c.id} whileHover={{ y: -4, boxShadow: '0 10px 30px rgba(44,26,15,0.12)' }} whileTap={{ scale: 0.97 }}
-                onClick={() => navigate(`/transacoes?conta=${c.id}`)}
-                style={{ minWidth: 160, flexShrink: 0, cursor: 'pointer', background: '#FFFFFF', borderRadius: 18, padding: '16px 18px', border: '1px solid #EDE6DC', borderTop: `3px solid ${c.cor}`, boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 14px rgba(44,26,15,0.05)', transition: 'box-shadow .18s' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 9, background: c.cor, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 2px 8px ${c.cor}45` }}>
-                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 800, color: 'white' }}>{c.icone}</span>
+
+          {metas.length === 0 ? (
+            <div style={{ paddingTop: 16, textAlign: 'center' }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A' }}>Nenhuma meta cadastrada</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {metas.slice(0, 4).map(meta => {
+                const pct = Math.min(100, meta.valorAlvo > 0 ? (meta.valorAtual / meta.valorAlvo) * 100 : 0)
+                return (
+                  <div key={meta.id}>
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', marginBottom: 6 }}>{meta.nome}</p>
+                    <div style={{ height: 8, borderRadius: 4, background: 'rgba(0,0,0,0.06)', overflow: 'hidden', marginBottom: 5 }}>
+                      <motion.div
+                        style={{ height: '100%', borderRadius: 4, background: meta.cor }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ type: 'spring', stiffness: 120, damping: 20, delay: 0.2 }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: meta.cor }}>
+                        {fmt(meta.valorAtual)}
+                        <span style={{ color: '#9B7B6A' }}> / {fmt(meta.valorAlvo)}</span>
+                      </span>
+                      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>{pct.toFixed(0)}%</span>
+                    </div>
                   </div>
-                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#7A5C4F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.nome}</p>
-                </div>
-                <OdometroSaldo value={c.saldoAtual} style={{ ...DISPLAY, fontSize: 20, color: c.saldoAtual < 0 ? '#C4553B' : '#2C1A0F', display: 'block', letterSpacing: '-0.5px' }} />
-                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#C4B4A8', marginTop: 3, textTransform: 'capitalize' }}>{c.tipo}</p>
-              </motion.div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* ─── SECTION 5: Evolução do Ano ─── */}
+      <motion.div variants={ITEM} style={{ marginBottom: 20 }}>
+        <div style={{ ...CARD, padding: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Evolução do Ano</h2>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#504E76', background: 'rgba(80,78,118,0.1)', borderRadius: 20, padding: '3px 10px' }}>{ano}</span>
+          </div>
+
+          {!hasYearData ? (
+            <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A' }}>Sem dados no ano</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={mesesData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradReceitas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#A3B565" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#A3B565" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradDespesas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#F1642E" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#F1642E" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(44,26,15,0.06)" />
+                <XAxis dataKey="mes" tick={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fill: '#9B7B6A' }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} tick={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fill: '#9B7B6A' }} axisLine={false} tickLine={false} width={40} />
+                <Tooltip content={<DarkTooltip />} />
+                <Area type="monotone" dataKey="Receitas" stroke="#A3B565" strokeWidth={2} fill="url(#gradReceitas)" animationDuration={1200} />
+                <Area type="monotone" dataKey="Despesas" stroke="#F1642E" strokeWidth={2} fill="url(#gradDespesas)" animationDuration={1200} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+
+          {/* Custom legend */}
+          <div style={{ display: 'flex', gap: 20, marginTop: 14, justifyContent: 'center' }}>
+            {[{ color: '#A3B565', label: 'Receitas' }, { color: '#F1642E', label: 'Despesas' }].map(item => (
+              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
+                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F' }}>{item.label}</span>
+              </div>
             ))}
           </div>
-        </motion.div>
-      )}
+        </div>
+      </motion.div>
 
-      {/* ─── ROW 5: Transações (3/5) + Alertas (2/5) ─── */}
-      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 14 }}>
-
-        {/* Últimas transações — título dentro do card */}
+      {/* ─── SECTION 6: Últimas Transações ─── */}
+      <motion.div variants={ITEM}>
         <div style={{ ...CARD, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 18px 0' }}>
             <h2 style={{ ...DISPLAY, fontSize: 18, color: '#2C1A0F' }}>Últimas transações</h2>
@@ -558,16 +693,12 @@ export function DashboardPage() {
           </div>
           {transacoes.length === 0 ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0' }}>
-              <div style={{ fontSize: 32 }}>
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                  <circle cx="24" cy="24" r="22" fill="#F5F0E8" stroke="#EDE6DC" strokeWidth="1.5"/>
-                  <path d="M16 28 Q24 34 32 28" stroke="#C4B4A8" strokeWidth="2" strokeLinecap="round" fill="none"/>
-                  <circle cx="18" cy="22" r="2.5" fill="#C4B4A8"/>
-                  <circle cx="30" cy="22" r="2.5" fill="#C4B4A8"/>
-                  <path d="M12 16 Q14 12 18 14" stroke="#C4B4A8" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-                  <path d="M36 16 Q34 12 30 14" stroke="#C4B4A8" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-                </svg>
-              </div>
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="22" fill="#F5F0E8" stroke="#EDE6DC" strokeWidth="1.5"/>
+                <path d="M16 28 Q24 34 32 28" stroke="#C4B4A8" strokeWidth="2" strokeLinecap="round" fill="none"/>
+                <circle cx="18" cy="22" r="2.5" fill="#C4B4A8"/>
+                <circle cx="30" cy="22" r="2.5" fill="#C4B4A8"/>
+              </svg>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 8 }}>Sem transações · toque no + para lançar</p>
             </div>
           ) : (
@@ -576,95 +707,21 @@ export function DashboardPage() {
             </div>
           )}
         </div>
-
-        {/* Alertas e resumo — card único que estica para igualar altura */}
-        <div style={{ ...CARD, padding: '18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-          {/* Vencimentos */}
-          <AnimatePresence>
-            {proximosVenc.length > 0 && (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 9, background: '#FEF3CC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <IconAlertCircle size={14} color="#D4A017" stroke={2} />
-                  </div>
-                  <p style={{ ...LABEL, color: '#B8860B' }}>Vencimentos</p>
-                </div>
-                {proximosVenc.slice(0, 3).map((cf, idx) => {
-                  const dias = cf.diaVencimento - hoje
-                  return (
-                    <div key={cf.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', paddingTop: idx > 0 ? 10 : 0, borderTop: idx > 0 ? '1px solid #F5F0E8' : 'none', marginTop: idx > 0 ? 10 : 0 }}
-                      onClick={() => navigate('/contas-fixas')}>
-                      <div style={{ width: 36, height: 36, borderRadius: 11, background: dias === 0 ? '#FEE2DC' : '#FEF8E6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <IconCalendarEvent size={16} color={dias === 0 ? '#C4553B' : '#D4A017'} stroke={1.8} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cf.nome}</p>
-                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: dias === 0 ? '#C4553B' : '#C49A3C', fontWeight: 600, marginTop: 1 }}>
-                          {dias === 0 ? 'Vence hoje!' : `Em ${dias} dia${dias !== 1 ? 's' : ''}`}
-                        </p>
-                      </div>
-                      <p style={{ ...DISPLAY, fontSize: 13, color: '#2C1A0F', flexShrink: 0 }}>{fmt(cf.valor)}</p>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </AnimatePresence>
-
-          {/* Alertas cartão */}
-          <AnimatePresence>
-            {cartoesAlerta.length > 0 && (
-              <div style={{ borderTop: proximosVenc.length > 0 ? '1px solid #F5F0E8' : 'none', paddingTop: proximosVenc.length > 0 ? 12 : 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 9, background: '#FEE2DC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <IconCreditCard size={14} color="#C4553B" stroke={2} />
-                  </div>
-                  <p style={{ ...LABEL, color: '#A83828' }}>Faturas fechando</p>
-                </div>
-                {cartoesAlerta.map((c, idx) => {
-                  const dias = c.diaFechamento >= hoje ? c.diaFechamento - hoje : 0
-                  return (
-                    <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', paddingTop: idx > 0 ? 10 : 0, borderTop: idx > 0 ? '1px solid #F5F0E8' : 'none', marginTop: idx > 0 ? 10 : 0 }}
-                      onClick={() => navigate('/cartoes')}>
-                      <div style={{ width: 36, height: 36, borderRadius: 11, background: c.cor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <IconCreditCard size={16} color="white" stroke={1.8} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.nome}</p>
-                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: dias === 0 ? '#C4553B' : '#C49A3C', fontWeight: 600, marginTop: 1 }}>
-                          {dias === 0 ? 'Fecha hoje!' : `Fecha em ${dias} dia${dias !== 1 ? 's' : ''}`}
-                        </p>
-                      </div>
-                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', flexShrink: 0 }}>dia {c.diaFechamento}</p>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </AnimatePresence>
-
-          {/* Se não há alertas — resumo rápido */}
-          {!hasAlerts && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h3 style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F' }}>Resumo do mês</h3>
-              {[
-                { label: 'Contas fixas', val: totalFixasMes, sub: `${fixasPagas.length}/${contasFixas.length} pagas`, cor: '#D4A017' },
-                { label: 'Parcelamentos', val: totalParcelamentos, sub: `${parcelamentos.length} ativos`, cor: '#7C5CBF' },
-              ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: i > 0 ? 14 : 0, borderTop: i > 0 ? '1px solid #F5F0E8' : 'none' }}>
-                  <div>
-                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F' }}>{item.label}</p>
-                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>{item.sub}</p>
-                  </div>
-                  <p style={{ ...DISPLAY, fontSize: 16, color: item.cor }}>{fmt(item.val)}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </motion.div>
     </motion.div>
+  )
+}
+
+function Top5Row({ tx, rank, last }: { tx: { id?: number; descricao: string; valor: number; categoriaId: number; tipo: string }; rank: number; last: boolean }) {
+  const [cat, setCat] = useState<{ nome: string; cor: string } | null>(null)
+  useEffect(() => { db.categorias.get(tx.categoriaId).then(c => setCat(c ?? null)) }, [tx.categoriaId])
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: last ? 'none' : '1px solid rgba(44,26,15,0.06)' }}>
+      <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: '#C4553B', minWidth: 20, textAlign: 'center' }}>{rank}</span>
+      {cat && <CategoryIcon nome={cat.nome} cor={cat.cor} size={34} radius={10} />}
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.descricao}</p>
+      <p style={{ ...DISPLAY, fontSize: 14, color: '#C4553B', flexShrink: 0 }}>{fmt(tx.valor)}</p>
+    </div>
   )
 }
 
