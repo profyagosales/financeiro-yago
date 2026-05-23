@@ -105,10 +105,16 @@ export function Page() {
   const contaMaior = contas.find(c => c.saldoAtual === maiorSaldo)
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: 32, width: '100%' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      style={{
+        padding: 32, paddingBottom: 0, width: '100%',
+        height: 'calc(100dvh - 80px)',
+        display: 'flex', flexDirection: 'column',
+      }}>
+
 
       {/* Header — clean editorial */}
-      <div style={{ marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
+      <div style={{ marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
           <div>
             <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>
@@ -178,7 +184,9 @@ export function Page() {
           gridTemplateColumns: '340px 1fr',
           gap: 16,
           alignItems: 'stretch',
-          minHeight: 'calc(100vh - 200px)',
+          flex: 1,
+          minHeight: 0,
+          paddingBottom: 32,
         }}>
           {/* ─── LEFT: list ─── */}
           <div style={{
@@ -188,10 +196,8 @@ export function Page() {
             boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 14px rgba(44,26,15,0.04)',
             display: 'flex', flexDirection: 'column',
             overflow: 'hidden',
-            height: 'fit-content',
-            position: 'sticky',
-            top: 24,
-            maxHeight: 'calc(100vh - 80px)',
+            height: '100%',
+            minHeight: 0,
           }}>
             {/* Search */}
             <div style={{
@@ -277,6 +283,7 @@ export function Page() {
               background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 22,
               padding: 48, textAlign: 'center',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12,
+              height: '100%',
             }}>
               <IconWallet size={48} stroke={1.4} color="#D4C8BC" />
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', margin: 0 }}>
