@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconChevronDown, IconCalendar } from '@tabler/icons-react'
 
@@ -77,7 +78,7 @@ export function PeriodSelector({ period, onChange }: Props) {
   useLayoutEffect(() => {
     if (!open) return
     const r = triggerRef.current?.getBoundingClientRect()
-    if (r) setCoords({ top: r.bottom + window.scrollY + 6, left: r.left + window.scrollX })
+    if (r) setCoords({ top: r.bottom + 6, left: r.left })
   }, [open])
 
   useEffect(() => {
@@ -118,6 +119,7 @@ export function PeriodSelector({ period, onChange }: Props) {
           style={{ transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}/>
       </button>
 
+      {createPortal(
       <AnimatePresence>
         {open && coords && (
           <motion.div
@@ -134,7 +136,7 @@ export function PeriodSelector({ period, onChange }: Props) {
               border: '1px solid #EDE6DC',
               borderRadius: 12,
               boxShadow: '0 12px 32px rgba(28,10,5,0.18)',
-              zIndex: 250,
+              zIndex: 9999,
               overflow: 'hidden',
             }}>
             {!showCustom ? (
@@ -210,7 +212,8 @@ export function PeriodSelector({ period, onChange }: Props) {
             )}
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body)}
     </>
   )
 }
