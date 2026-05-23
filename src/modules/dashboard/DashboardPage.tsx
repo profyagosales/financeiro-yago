@@ -232,26 +232,8 @@ export function DashboardPage() {
             }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
           </div>
 
-          {/* ── CSS keyframe — cobrindo TODO o card ── */}
-          <style>{`
-            @keyframes fairyFly {
-              0%,100% { left:18%; top:42%; }
-              11%     { left:66%; top: 4%; }
-              22%     { left:28%; top: 2%; }
-              33%     { left:74%; top:28%; }
-              44%     { left:14%; top:12%; }
-              55%     { left:62%; top:40%; }
-              66%     { left:36%; top: 3%; }
-              77%     { left:70%; top:16%; }
-              88%     { left:22%; top:34%; }
-            }
-            .fairy-container {
-              position:absolute; z-index:2; pointer-events:none;
-              animation: fairyFly 32s ease-in-out infinite;
-            }
-          `}</style>
-
-          <div className="fairy-container">
+          {/* Fada — classe global de voo definida em index.css */}
+          <div className="fairy-flight-path">
             <div style={{
               position:'absolute', bottom:'84px', left:'50%',
               transform:'translateX(-50%)', zIndex:1, width:210,

@@ -258,3 +258,22 @@ html, body, #root {
 .glow-amber {
   box-shadow: 0 0 0 1px rgba(212,160,23,0.15), 0 8px 32px rgba(212,160,23,0.2), 0 2px 8px rgba(212,160,23,0.1) !important;
 }
+
+/* ── Fairy flight path ───────────────────────────────────────── */
+@keyframes fairyFlight {
+  0%,100% { left:10%; top:44%; }
+  11%     { left:75%; top: 3%; }
+  22%     { left:20%; top: 2%; }
+  33%     { left:78%; top:32%; }
+  44%     { left:12%; top:14%; }
+  55%     { left:68%; top:44%; }
+  66%     { left:28%; top: 2%; }
+  77%     { left:74%; top:18%; }
+  88%     { left:16%; top:36%; }
+}
+.fairy-flight-path {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  animation: fairyFlight 48s ease-in-out infinite;
+}
