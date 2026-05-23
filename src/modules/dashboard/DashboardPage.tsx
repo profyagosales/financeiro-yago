@@ -154,37 +154,37 @@ export function DashboardPage() {
         const saldoColor  = saldoMes >= 0 ? '#3A8580' : '#C4553B'
         const saldoShadow = saldoMes >= 0 ? 'rgba(58,133,128,0.4)' : 'rgba(196,85,59,0.4)'
         const KPI_TITLE: React.CSSProperties = {
-          fontFamily: "'Fraunces',Georgia,serif",
-          fontSize: 11,
+          fontFamily: "'Plus Jakarta Sans',sans-serif",
+          fontSize: 10,
           fontWeight: 700,
-          color: 'rgba(255,255,255,0.72)',
+          color: 'rgba(255,255,255,0.7)',
           marginBottom: 0,
-          letterSpacing: '.08em',
+          letterSpacing: '.14em',
           textTransform: 'uppercase',
         }
         const KPI_VALUE: React.CSSProperties = {
           fontFamily: "'Fraunces',Georgia,serif",
           fontWeight: 700,
-          fontSize: 22,
+          fontSize: 26,
           color: 'white',
-          letterSpacing: '-1px',
+          letterSpacing: '-1.2px',
           lineHeight: 1,
           display: 'block',
-          width: '100%',
-          textAlign: 'center',
-          marginTop: 6,
+          width: 'auto',
+          textAlign: 'left',
+          marginTop: 0,
         }
         const KPI_CARD: React.CSSProperties = {
           flex: 1,
           borderRadius: 18,
-          padding: '12px 16px',
+          padding: '14px 18px',
           position: 'relative',
           overflow: 'hidden',
           transition: 'box-shadow .18s',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
         }
         return (
           <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:14, marginBottom:20, alignItems:'stretch' }}>
