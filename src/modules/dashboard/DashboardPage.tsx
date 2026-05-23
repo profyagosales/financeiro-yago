@@ -444,8 +444,8 @@ export function DashboardPage() {
       {/* ─── SECTION 3: Mini Calendário + Análise de Gastos ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
 
-        {/* Mini Calendário */}
-        <div style={{ ...CARD, padding: 20 }}>
+        {/* Mini Calendário — branco, border suave */}
+        <div style={{ background:'#FFFFFF', border:'1px solid rgba(44,26,15,0.08)', borderRadius:22, boxShadow:'0 2px 16px rgba(44,26,15,0.05)', padding:20 }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 16 }}>
             <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, textTransform: 'capitalize' }}>{mesNome}</h2>
@@ -511,8 +511,8 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* Análise de Gastos — donut + lista */}
-        <div style={{ ...CARD, padding: 20, display: 'flex', flexDirection: 'column' }}>
+        {/* Top Categorias — #F4F0FF lilás clarinho */}
+        <div style={{ background:'#F4F0FF', border:'1px solid rgba(196,195,227,0.35)', borderRadius:22, boxShadow:'0 2px 16px rgba(196,195,227,0.18)', padding:20, display:'flex', flexDirection:'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Gastos por categoria</h2>
             <button onClick={() => navigate('/relatorios')}
@@ -563,68 +563,93 @@ export function DashboardPage() {
       {/* ─── SECTION 4: Top 5 Despesas + Metas ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
 
-        {/* Top 5 Despesas */}
-        <div style={{ ...CARD, padding: 20 }}>
-          <div style={{ marginBottom: 4 }}>
-            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Maiores Despesas</h2>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 3 }}>
+        {/* Top 5 Despesas — branco, barras horizontais animadas */}
+        <div style={{ background:'#FFFFFF', border:'1px solid rgba(44,26,15,0.08)', borderRadius:22, boxShadow:'0 2px 16px rgba(44,26,15,0.05)', padding:20 }}>
+          <div style={{ marginBottom:4 }}>
+            <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, fontWeight:700, color:'#2C1A0F', margin:0 }}>Maiores Despesas</h2>
+            <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, color:'#9B7B6A', marginTop:3 }}>
               {mesNome.charAt(0).toUpperCase() + mesNome.slice(1)} {ano}
             </p>
           </div>
 
           {top5.length === 0 ? (
-            <div style={{ paddingTop: 24, textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A' }}>Nenhum gasto no mês</p>
+            <div style={{ paddingTop:24, textAlign:'center' }}>
+              <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:'#9B7B6A' }}>Nenhum gasto no mês</p>
             </div>
           ) : (
-            <div style={{ marginTop: 14 }}>
-              {top5.map((tx, idx) => (
-                <Top5Row key={tx.id} tx={tx} rank={idx + 1} last={idx === top5.length - 1} />
-              ))}
+            <div style={{ marginTop:16, display:'flex', flexDirection:'column', gap:14 }}>
+              {(() => {
+                const maxVal = top5[0]?.valor ?? 1
+                return top5.map((tx, idx) => {
+                  const pct = (tx.valor / maxVal) * 100
+                  const barColors = ['#C4553B','#D4A017','#3A8580','#504E76','#A3B565']
+                  const color = barColors[idx]
+                  return (
+                    <div key={tx.id}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+                        <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:13, fontWeight:700, color, minWidth:18 }}>{idx+1}</span>
+                        <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, color:'#2C1A0F', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', margin:0 }}>{tx.descricao}</p>
+                        <p style={{ ...DISPLAY, fontSize:13, color:'#2C1A0F', flexShrink:0 }}>{fmt(tx.valor)}</p>
+                      </div>
+                      <div style={{ height:5, borderRadius:3, background:'rgba(44,26,15,0.07)', overflow:'hidden' }}>
+                        <motion.div
+                          style={{ height:'100%', borderRadius:3, background:color }}
+                          initial={{ width:0 }}
+                          animate={{ width:`${pct}%` }}
+                          transition={{ type:'spring', stiffness:80, damping:18, delay:0.1+idx*0.06 }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })
+              })()}
             </div>
           )}
         </div>
 
-        {/* Metas */}
-        <div style={{
-          background: 'linear-gradient(135deg, #F3EEFF 0%, #FFF8F5 100%)',
-          border: '1px solid rgba(196,195,227,0.3)',
-          borderRadius: 22,
-          padding: 20,
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Metas</h2>
+        {/* Metas — #FFF0F5 rosa clarinho, progress rings SVG */}
+        <div style={{ background:'#FFF0F5', border:'1px solid rgba(255,107,157,0.2)', borderRadius:22, boxShadow:'0 2px 16px rgba(255,107,157,0.1)', padding:20 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+            <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, fontWeight:700, color:'#2C1A0F', margin:0 }}>Metas</h2>
             <button onClick={() => navigate('/metas')}
-              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#C4553B', background: 'none', border: 'none', cursor: 'pointer' }}>
+              style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:600, color:'#C4553B', background:'none', border:'none', cursor:'pointer' }}>
               Ver →
             </button>
           </div>
 
           {metas.length === 0 ? (
-            <div style={{ paddingTop: 16, textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A' }}>Nenhuma meta cadastrada</p>
+            <div style={{ paddingTop:16, textAlign:'center' }}>
+              <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:'#9B7B6A' }}>Nenhuma meta cadastrada</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {metas.slice(0, 4).map(meta => {
+            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+              {metas.slice(0, 4).map((meta, mi) => {
                 const pct = Math.min(100, meta.valorAlvo > 0 ? (meta.valorAtual / meta.valorAlvo) * 100 : 0)
+                const r = 20, circ = 2 * Math.PI * r
                 return (
-                  <div key={meta.id}>
-                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', marginBottom: 6 }}>{meta.nome}</p>
-                    <div style={{ height: 8, borderRadius: 4, background: 'rgba(0,0,0,0.06)', overflow: 'hidden', marginBottom: 5 }}>
-                      <motion.div
-                        style={{ height: '100%', borderRadius: 4, background: meta.cor }}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ type: 'spring', stiffness: 120, damping: 20, delay: 0.2 }}
-                      />
+                  <div key={meta.id} style={{ display:'flex', alignItems:'center', gap:14 }}>
+                    {/* SVG ring */}
+                    <div style={{ flexShrink:0, position:'relative' }}>
+                      <svg width="52" height="52" viewBox="0 0 52 52">
+                        <circle cx="26" cy="26" r={r} fill="none" stroke="rgba(0,0,0,0.07)" strokeWidth="5"/>
+                        <motion.circle cx="26" cy="26" r={r} fill="none"
+                          stroke={meta.cor} strokeWidth="5" strokeLinecap="round"
+                          strokeDasharray={circ}
+                          initial={{ strokeDashoffset: circ }}
+                          animate={{ strokeDashoffset: circ * (1 - pct / 100) }}
+                          transition={{ type:'spring', stiffness:60, damping:16, delay:0.15 + mi*0.08 }}
+                          style={{ transform:'rotate(-90deg)', transformOrigin:'26px 26px' }}
+                        />
+                        <text x="26" y="30" textAnchor="middle" fontSize="10" fontFamily="Fraunces,serif" fontWeight="700" fill={meta.cor}>{pct.toFixed(0)}%</text>
+                      </svg>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: meta.cor }}>
-                        {fmt(meta.valorAtual)}
-                        <span style={{ color: '#9B7B6A' }}> / {fmt(meta.valorAlvo)}</span>
-                      </span>
-                      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>{pct.toFixed(0)}%</span>
+                    {/* Info */}
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, fontWeight:700, color:'#2C1A0F', marginBottom:3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{meta.nome}</p>
+                      <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, color:'#9B7B6A', margin:0 }}>
+                        <span style={{ color:meta.cor, fontWeight:600 }}>{fmt(meta.valorAtual)}</span>
+                        {' '}/ {fmt(meta.valorAlvo)}
+                      </p>
                     </div>
                   </div>
                 )
@@ -634,47 +659,54 @@ export function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* ─── SECTION 5: Evolução do Ano ─── */}
+      {/* ─── SECTION 5: Evolução do Ano — #0D0B1F escuro, texto branco ─── */}
       <motion.div variants={ITEM} style={{ marginBottom: 20 }}>
-        <div style={{ ...CARD, padding: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Evolução do Ano</h2>
-            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#504E76', background: 'rgba(80,78,118,0.1)', borderRadius: 20, padding: '3px 10px' }}>{ano}</span>
+        <div style={{ background:'#0D0B1F', borderRadius:22, padding:24, boxShadow:'0 8px 40px rgba(13,11,31,0.4)' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
+            <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, fontWeight:700, color:'#FFFFFF', margin:0 }}>Evolução do Ano</h2>
+            <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, color:'rgba(196,195,227,0.8)', background:'rgba(196,195,227,0.12)', borderRadius:20, padding:'3px 10px' }}>{ano}</span>
           </div>
 
           {!hasYearData ? (
-            <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A' }}>Sem dados no ano</p>
+            <div style={{ height:260, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:'rgba(255,255,255,0.4)' }}>Sem dados no ano</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={mesesData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+              <AreaChart data={mesesData} margin={{ top:8, right:8, left:8, bottom:0 }}>
                 <defs>
                   <linearGradient id="gradReceitas" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#A3B565" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#A3B565" stopOpacity={0} />
+                    <stop offset="0%"   stopColor="#A3B565" stopOpacity={0.55}/>
+                    <stop offset="100%" stopColor="#A3B565" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="gradDespesas" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F1642E" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#F1642E" stopOpacity={0} />
+                    <stop offset="0%"   stopColor="#F1642E" stopOpacity={0.5}/>
+                    <stop offset="100%" stopColor="#F1642E" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(44,26,15,0.06)" />
-                <XAxis dataKey="mes" tick={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fill: '#9B7B6A' }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} tick={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fill: '#9B7B6A' }} axisLine={false} tickLine={false} width={40} />
-                <Tooltip content={<DarkTooltip />} />
-                <Area type="monotone" dataKey="Receitas" stroke="#A3B565" strokeWidth={2} fill="url(#gradReceitas)" animationDuration={1200} />
-                <Area type="monotone" dataKey="Despesas" stroke="#F1642E" strokeWidth={2} fill="url(#gradDespesas)" animationDuration={1200} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)"/>
+                <XAxis dataKey="mes"
+                  tick={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fill:'rgba(255,255,255,0.45)' }}
+                  axisLine={false} tickLine={false}/>
+                <YAxis
+                  tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)}
+                  tick={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fill:'rgba(255,255,255,0.45)' }}
+                  axisLine={false} tickLine={false} width={40}/>
+                <Tooltip content={<DarkTooltip />}/>
+                <Area type="monotone" dataKey="Receitas" stroke="#A3B565" strokeWidth={2.5}
+                  fill="url(#gradReceitas)" animationDuration={1400}/>
+                <Area type="monotone" dataKey="Despesas" stroke="#F1642E" strokeWidth={2.5}
+                  fill="url(#gradDespesas)" animationDuration={1400}/>
               </AreaChart>
             </ResponsiveContainer>
           )}
 
-          {/* Custom legend */}
-          <div style={{ display: 'flex', gap: 20, marginTop: 14, justifyContent: 'center' }}>
-            {[{ color: '#A3B565', label: 'Receitas' }, { color: '#F1642E', label: 'Despesas' }].map(item => (
-              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
-                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F' }}>{item.label}</span>
+          {/* Legend */}
+          <div style={{ display:'flex', gap:24, marginTop:16, justifyContent:'center' }}>
+            {[{ color:'#A3B565', label:'Receitas' }, { color:'#F1642E', label:'Despesas' }].map(item => (
+              <div key={item.label} style={{ display:'flex', alignItems:'center', gap:7 }}>
+                <div style={{ width:9, height:9, borderRadius:'50%', background:item.color }}/>
+                <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, color:'rgba(255,255,255,0.55)' }}>{item.label}</span>
               </div>
             ))}
           </div>
