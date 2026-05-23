@@ -252,28 +252,31 @@ export function DashboardPage() {
             ))}
           </div>
 
-          {/* ── Texto de saudação — 3 linhas limpas ── */}
-          <div style={{ position:'relative', zIndex:1, padding:'26px 32px', minHeight:172 }}>
-            {/* linha 1 */}
-            <p style={{
-              fontFamily:"'Fraunces',Georgia,serif",
-              fontStyle:'italic', fontSize:15, fontWeight:400,
-              color:'#9B7B6A', marginBottom:2, letterSpacing:'-0.2px',
-            }}>{saudacao},</p>
-            {/* linha 2 */}
-            <h1 style={{
-              fontFamily:"'Fraunces',Georgia,serif",
-              fontWeight:700, fontSize:46,
-              lineHeight:0.92, letterSpacing:'-2px',
-              color:'#2C1A0F', margin:0,
-            }}>Yago</h1>
-            {/* linha 3 */}
+          {/* ── Texto de saudação ── */}
+          <div style={{ position:'relative', zIndex:1, padding:'28px 32px', minHeight:172, display:'flex', flexDirection:'column', justifyContent:'center' }}>
+            {/* Saudação — discreta, acima do nome */}
             <p style={{
               fontFamily:"'Plus Jakarta Sans',sans-serif",
-              fontSize:12.5, fontWeight:500,
-              color:'#7A5C4F', marginTop:8,
-              letterSpacing:'.01em',
-            }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
+              fontSize:11, fontWeight:600,
+              color:'#9B7B6A', marginBottom:4,
+              letterSpacing:'.06em', textTransform:'uppercase',
+            }}>{saudacao}</p>
+            {/* Nome — hero */}
+            <h1 style={{
+              fontFamily:"'Fraunces',Georgia,serif",
+              fontWeight:700, fontSize:40,
+              lineHeight:1, letterSpacing:'-1.5px',
+              color:'#2C1A0F', margin:0,
+            }}>Yago</h1>
+            {/* Divider + Data */}
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:12 }}>
+              <div style={{ width:20, height:1.5, background:'#C4553B', borderRadius:1, flexShrink:0 }}/>
+              <p style={{
+                fontFamily:"'Plus Jakarta Sans',sans-serif",
+                fontSize:12, fontWeight:500,
+                color:'#7A5C4F', margin:0,
+              }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
+            </div>
           </div>
 
           {/* Fada — classe global de voo definida em index.css */}
@@ -288,55 +291,52 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Card mês — centralizado, limpo ── */}
+        {/* ── Card mês ── */}
         <div style={{
           background: '#504E76',
           borderRadius: 24,
-          padding: '14px 12px',
+          padding: '20px 14px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 7,
+          gap: 10,
           position: 'relative',
           overflow: 'hidden',
-          minHeight: 0,
         }}>
-          {/* Orbs decorativos */}
-          <div style={{ position:'absolute', top:-28, right:-28, width:90, height:90,
+          <div style={{ position:'absolute', top:-24, right:-24, width:80, height:80,
             borderRadius:'50%', background:'rgba(255,255,255,0.05)', pointerEvents:'none' }}/>
-          <div style={{ position:'absolute', bottom:-16, left:-16, width:64, height:64,
+          <div style={{ position:'absolute', bottom:-14, left:-14, width:56, height:56,
             borderRadius:'50%', background:'rgba(241,100,46,0.1)', pointerEvents:'none' }}/>
 
-          {/* Mês + ano */}
+          {/* Anel — hero visual, maior */}
+          <svg width="76" height="76" viewBox="0 0 76 76" style={{ flexShrink:0 }}>
+            <circle cx="38" cy="38" r="30" fill="none"
+              stroke="rgba(255,255,255,0.12)" strokeWidth="6"/>
+            <motion.circle cx="38" cy="38" r="30" fill="none"
+              stroke="rgba(196,195,227,0.85)" strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 30}
+              initial={{ strokeDashoffset: 2 * Math.PI * 30 }}
+              animate={{ strokeDashoffset: 2 * Math.PI * 30 * (1 - hoje / diasNoMes) }}
+              transition={{ duration:1.4, ease:[0.34,1.56,0.64,1], delay:0.4 }}
+              style={{ transform:'rotate(-90deg)', transformOrigin:'38px 38px' }}
+            />
+            <text x="38" y="34" textAnchor="middle" fill="white"
+              fontSize="15" fontFamily="Fraunces, Georgia, serif" fontWeight="700">{hoje}</text>
+            <text x="38" y="47" textAnchor="middle" fill="rgba(255,255,255,0.4)"
+              fontSize="7" fontFamily="Plus Jakarta Sans, sans-serif">DE {diasNoMes}</text>
+          </svg>
+
+          {/* Mês + Ano abaixo do anel */}
           <div style={{ textAlign:'center' }}>
-            <p style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:700,
+            <p style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, fontWeight:700,
               color:'#ffffff', textTransform:'capitalize', lineHeight:1.1, margin:0 }}>
               {mesNome}
             </p>
             <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10,
               color:'rgba(255,255,255,0.38)', marginTop:2 }}>{ano}</p>
           </div>
-
-          {/* Anel de dias */}
-          <svg width="58" height="58" viewBox="0 0 58 58">
-            <circle cx="29" cy="29" r="24" fill="none"
-              stroke="rgba(255,255,255,0.12)" strokeWidth="5"/>
-            <motion.circle cx="29" cy="29" r="24" fill="none"
-              stroke="rgba(196,195,227,0.82)" strokeWidth="5"
-              strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 24}
-              initial={{ strokeDashoffset: 2 * Math.PI * 24 }}
-              animate={{ strokeDashoffset: 2 * Math.PI * 24 * (1 - hoje / diasNoMes) }}
-              transition={{ duration:1.4, ease:[0.34,1.56,0.64,1], delay:0.4 }}
-              style={{ transform:'rotate(-90deg)', transformOrigin:'29px 29px' }}
-            />
-            <text x="29" y="26" textAnchor="middle" fill="white"
-              fontSize="12" fontFamily="Fraunces, Georgia, serif" fontWeight="700">{hoje}</text>
-            <text x="29" y="36" textAnchor="middle" fill="rgba(255,255,255,0.38)"
-              fontSize="6" fontFamily="Plus Jakarta Sans, sans-serif">DE {diasNoMes}</text>
-          </svg>
-
         </div>
       </motion.div>
 
@@ -523,7 +523,7 @@ export function DashboardPage() {
 
           {pieData.length > 0 ? (
             <>
-              <div style={{ position: 'relative', width: '100%', height: 170, marginBottom: 14 }}>
+              <div style={{ position: 'relative', width: '100%', height: 130, marginBottom: 14 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value" strokeWidth={0}>
@@ -595,7 +595,7 @@ export function DashboardPage() {
                         <motion.div
                           style={{ height:'100%', borderRadius:3, background:color }}
                           initial={{ width:0 }}
-                          animate={{ width:`${pct}%` }}
+                          animate={{ width:`${Math.min(95, pct)}%` }}
                           transition={{ type:'spring', stiffness:80, damping:18, delay:0.1+idx*0.06 }}
                         />
                       </div>
@@ -618,8 +618,14 @@ export function DashboardPage() {
           </div>
 
           {metas.length === 0 ? (
-            <div style={{ paddingTop:16, textAlign:'center' }}>
+            <div style={{ paddingTop:8, textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
               <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:'#9B7B6A' }}>Nenhuma meta cadastrada</p>
+              <button onClick={() => navigate('/metas')}
+                style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:700,
+                  color:'white', background:'#C4553B', border:'none', borderRadius:20,
+                  padding:'7px 18px', cursor:'pointer' }}>
+                Criar primeira meta
+              </button>
             </div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
@@ -689,7 +695,7 @@ export function DashboardPage() {
                   tick={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fill:'rgba(255,255,255,0.45)' }}
                   axisLine={false} tickLine={false}/>
                 <YAxis
-                  tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)}
+                  tickFormatter={v => v >= 1000 ? `R$${(v/1000).toFixed(0)}k` : `R$${v}`}
                   tick={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fill:'rgba(255,255,255,0.45)' }}
                   axisLine={false} tickLine={false} width={40}/>
                 <Tooltip content={<DarkTooltip />}/>
