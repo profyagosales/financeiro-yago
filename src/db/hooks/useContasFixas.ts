@@ -26,10 +26,27 @@ export async function marcarPago(contaFixaId: number, mes: number, ano: number, 
   const today = new Date().toISOString().split('T')[0]
   if (existing) await db.pagamentosFixos.update(existing.id!, { status: 'pago', dataPagamento: today, valor })
   else await db.pagamentosFixos.add({ contaFixaId, mes, ano, status: 'pago', dataPagamento: today, valor })
+  await sincronizarDividaSeVinculada(contaFixaId)
 }
 export async function marcarPendente(contaFixaId: number, mes: number, ano: number) {
   const existing = await db.pagamentosFixos.where({ contaFixaId, mes, ano }).first()
   if (existing) await db.pagamentosFixos.update(existing.id!, { status: 'pendente', dataPagamento: undefined })
+  await sincronizarDividaSeVinculada(contaFixaId)
+}
+
+// ─── Sincronização com Dívida (se a ContaFixa for vinculada) ─────────
+// Usa db direto pra evitar dependência circular com useDividas.
+async function sincronizarDividaSeVinculada(contaFixaId: number) {
+  const divida = await db.dividas.where('contaFixaId').equals(contaFixaId).first()
+  if (!divida?.id) return
+  const pagamentos = await db.pagamentosFixos.where('contaFixaId').equals(contaFixaId).toArray()
+  const pagas = pagamentos.filter(p => p.status === 'pago')
+  const valorPago = pagas.reduce((s, p) => s + (p.valor ?? divida.valorParcela), 0)
+  await db.dividas.update(divida.id, {
+    parcelasPagas: pagas.length,
+    valorPago,
+    updatedAt: Date.now(),
+  })
 }
 export async function editContaFixa(id: number, data: Partial<import('../schema').ContaFixa>) {
   return db.contasFixas.update(id, data)
