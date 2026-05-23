@@ -248,36 +248,81 @@ export function DashboardPage() {
 
             </div>
 
-            {/* RIGHT: Rich Calendar */}
+            {/* RIGHT: Rich Calendar — amber cream agenda */}
             <div style={{
-              background: '#FFFFFF',
-              border: '1px solid rgba(44,26,15,0.08)',
+              position: 'relative',
+              background: '#FDF4E3',
+              border: '1px solid rgba(212,160,23,0.22)',
               borderRadius: 22,
-              boxShadow: '0 2px 16px rgba(44,26,15,0.05)',
-              padding: '22px 24px',
+              boxShadow: '0 2px 18px rgba(212,160,23,0.1), 0 1px 4px rgba(44,26,15,0.04)',
+              padding: '26px 28px 22px',
               display: 'flex',
               flexDirection: 'column',
             }}>
-              {/* Header */}
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
-                <div style={{ display:'flex', alignItems:'baseline', gap:8 }}>
-                  <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:700, color:'#2C1A0F', margin:0, textTransform:'capitalize' }}>{mesNome}</h2>
-                  <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, color:'#9B7B6A' }}>{ano}</span>
+              {/* ── Decoração: asterisco/sol abstrato no canto ── */}
+              <svg
+                style={{ position:'absolute', top:14, right:80, width:54, height:54, opacity:0.55, pointerEvents:'none' }}
+                viewBox="0 0 60 60" fill="none"
+              >
+                {/* Raio vertical */}
+                <path d="M30 4 Q32 18 30 30 Q28 18 30 4 Z" fill="#D4A017"/>
+                <path d="M30 56 Q32 42 30 30 Q28 42 30 56 Z" fill="#D4A017"/>
+                {/* Raio horizontal */}
+                <path d="M4 30 Q18 32 30 30 Q18 28 4 30 Z" fill="#D4A017"/>
+                <path d="M56 30 Q42 32 30 30 Q42 28 56 30 Z" fill="#D4A017"/>
+                {/* Raios diagonais */}
+                <path d="M11.5 11.5 Q22 22 30 30 Q22 22 11.5 11.5 Z" fill="#C4553B" opacity="0.7"/>
+                <path d="M48.5 11.5 Q38 22 30 30 Q38 22 48.5 11.5 Z" fill="#C4553B" opacity="0.7"/>
+                <path d="M11.5 48.5 Q22 38 30 30 Q22 38 11.5 48.5 Z" fill="#C4553B" opacity="0.7"/>
+                <path d="M48.5 48.5 Q38 38 30 30 Q38 38 48.5 48.5 Z" fill="#C4553B" opacity="0.7"/>
+                {/* Núcleo */}
+                <circle cx="30" cy="30" r="5" fill="#C4553B"/>
+              </svg>
+
+              {/* Header — estilo página de agenda */}
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:18, position:'relative', zIndex:1 }}>
+                <div>
+                  <h2 style={{
+                    fontFamily:"'Fraunces',Georgia,serif",
+                    fontSize:34, fontWeight:700, color:'#2C1A0F',
+                    margin:0, textTransform:'capitalize',
+                    letterSpacing:'-1.2px', lineHeight:0.95,
+                  }}>{mesNome}</h2>
+                  <span style={{
+                    fontFamily:"'Plus Jakarta Sans',sans-serif",
+                    fontSize:11, fontWeight:600, color:'#9B7B6A',
+                    letterSpacing:'.16em', textTransform:'uppercase',
+                    marginTop:4, display:'block',
+                  }}>{ano}</span>
                 </div>
                 {monthEventsList.length > 0 && (
-                  <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:600, color:'#7A5C4F', background:'rgba(212,160,23,0.12)', borderRadius:20, padding:'4px 12px' }}>
+                  <span style={{
+                    fontFamily:"'Plus Jakarta Sans',sans-serif",
+                    fontSize:11, fontWeight:700,
+                    color:'#C4553B',
+                    background:'rgba(255,255,255,0.7)',
+                    border:'1px solid rgba(196,85,59,0.3)',
+                    borderRadius:20,
+                    padding:'5px 13px',
+                    letterSpacing:'.04em',
+                  }}>
                     {monthEventsList.length} evento{monthEventsList.length !== 1 ? 's' : ''}
                   </span>
                 )}
               </div>
 
-              {/* Day headers */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:6 }}>
+              {/* Linha divisória sob o header */}
+              <div style={{ height:1, background:'rgba(196,85,59,0.18)', marginBottom:12 }}/>
+
+              {/* Day headers — peso terra, mais editorial */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:8 }}>
                 {['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d, idx) => (
                   <div key={d} style={{
                     fontFamily:"'Plus Jakarta Sans',sans-serif",
                     fontSize:10, fontWeight:700, textAlign:'center',
-                    color: idx === 0 || idx === 6 ? 'rgba(196,85,59,0.55)' : '#9B7B6A',
+                    letterSpacing:'.1em', textTransform:'uppercase',
+                    color: idx === 0 || idx === 6 ? '#C4553B' : '#7A5C4F',
+                    opacity: idx === 0 || idx === 6 ? 0.85 : 1,
                   }}>{d}</div>
                 ))}
               </div>
@@ -312,17 +357,17 @@ export function DashboardPage() {
                     >
                       <div style={{
                         width:34, height:34, borderRadius:'50%',
-                        background: isToday ? '#504E76' : hasEvents ? (isHovered ? 'rgba(212,160,23,0.18)' : 'rgba(212,160,23,0.08)') : 'transparent',
-                        border: hasEvents && !isToday ? `1.5px solid ${isHovered ? 'rgba(212,160,23,0.55)' : 'rgba(212,160,23,0.25)'}` : 'none',
-                        boxShadow: isToday ? '0 4px 12px rgba(80,78,118,0.35)' : isHovered ? '0 2px 10px rgba(212,160,23,0.25)' : 'none',
+                        background: isToday ? '#C4553B' : hasEvents ? (isHovered ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.55)') : 'transparent',
+                        border: hasEvents && !isToday ? `1.5px solid ${isHovered ? 'rgba(196,85,59,0.55)' : 'rgba(196,85,59,0.28)'}` : 'none',
+                        boxShadow: isToday ? '0 4px 14px rgba(196,85,59,0.4)' : isHovered ? '0 2px 10px rgba(196,85,59,0.2)' : 'none',
                         display:'flex', alignItems:'center', justifyContent:'center',
                         transition:'all .15s ease',
                       }}>
                         <span style={{
                           fontFamily:"'Plus Jakarta Sans',sans-serif",
                           fontSize:13,
-                          fontWeight: isToday ? 700 : hasEvents ? 600 : 400,
-                          color: isToday ? 'white' : isPast ? 'rgba(44,26,15,0.3)' : isWeekend ? 'rgba(196,85,59,0.7)' : '#2C1A0F',
+                          fontWeight: isToday ? 700 : hasEvents ? 600 : 500,
+                          color: isToday ? 'white' : isPast ? 'rgba(122,92,79,0.5)' : isWeekend ? 'rgba(196,85,59,0.75)' : '#2C1A0F',
                         }}>{day}</span>
                       </div>
                       {events.length > 0 && (
