@@ -318,6 +318,8 @@ export function DashboardPage() {
           letterSpacing: '-1px',
           lineHeight: 1,
           display: 'block',
+          width: '100%',
+          textAlign: 'center',
         }
         const KPI_CARD: React.CSSProperties = {
           borderRadius: 22,
@@ -327,9 +329,8 @@ export function DashboardPage() {
           transition: 'box-shadow .18s',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
-          textAlign: 'center',
         }
         return (
           <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
