@@ -13,6 +13,7 @@ const FIXED_LAYOUT_ROUTES = new Set([
   '/contas',
   '/cartoes',
   '/transacoes',
+  '/contas-fixas',
 ])
 function isFixedLayoutRoute(pathname: string): boolean {
   return FIXED_LAYOUT_ROUTES.has(pathname)
