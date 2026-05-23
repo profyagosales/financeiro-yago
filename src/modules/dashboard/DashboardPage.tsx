@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts'
-import { DragFairy, FairyBubble, useFairyPhrase } from '@/components/mascot/DragFairy'
-import type { Phrase } from '@/components/mascot/DragFairy'
 import { useContas, useSaldoTotal } from '@/db/hooks/useContas'
 import { useTransacoes, useTransacoesByMes, useTotaisMes, useGastosPorCategoria } from '@/db/hooks/useTransacoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
@@ -158,15 +156,23 @@ export function DashboardPage() {
   })
   monthEventsList.sort((a, b) => a.day - b.day)
 
-  const contextPhrase: Phrase | undefined =
-    saldoLivre < 0          ? { text: 'Tá achando que é herdeira?!',          emoji: 'flame'   }
-    : taxaPoupanca > 30     ? { text: 'AAAA você arrasou! Meta batida!',        emoji: 'sparkle' }
-    : receitas === 0 && despesas === 0 ? { text: 'Zero gastos hoje? Diva em modo econômico!', emoji: 'crown' }
-    : undefined
-
-  const activePhrase = useFairyPhrase(contextPhrase)
-  const ringR = 30
-  const ringCirc = 2 * Math.PI * ringR
+  // ── Greeting insight (data-driven) ──────────────────────────────
+  let greetInsightText = 'Mês correndo bem por aqui.'
+  let greetInsightColor = '#7A5C4F'
+  if (saldoLivre < 0) {
+    greetInsightText = 'Atenção — saldo comprometido este mês.'
+    greetInsightColor = '#C4553B'
+  } else if (taxaPoupanca > 30) {
+    greetInsightText = 'Mês excepcional — você está economizando muito bem.'
+    greetInsightColor = '#3A8580'
+  } else if (proximosVenc.length > 0) {
+    const n = proximosVenc.length
+    greetInsightText = `${n} conta${n > 1 ? 's' : ''} vence${n > 1 ? 'm' : ''} nos próximos 7 dias.`
+    greetInsightColor = '#D4A017'
+  } else if (fixasPagas.length === contasFixas.length && contasFixas.length > 0) {
+    greetInsightText = 'Todas as contas fixas pagas. Arrasou!'
+    greetInsightColor = '#3A8580'
+  }
 
   return (
     <motion.div
@@ -177,139 +183,98 @@ export function DashboardPage() {
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '4fr 1fr', gap: 14, marginBottom: 20 }}>
 
         {/* ══════════════════════════════════════════════════════════
-            GREETING CARD — aurora pastel + cena mágica + fada livre
-            Estrutura: outer sem overflow (fairy pode escapar)
-                        inner com overflow:hidden (bg clipped)
+            GREETING CARD — Editorial Magazine
+            Tipografia hero em Fraunces, insight contextual com dado
+            real, zero personagem, zero doodle. Limpo e premium.
             ══════════════════════════════════════════════════════════ */}
-        <div style={{ position:'relative', minHeight:172, borderRadius:24,
-          boxShadow:'0 4px 28px rgba(80,78,118,0.14), 0 1px 6px rgba(44,26,15,0.06)' }}>
+        <div style={{
+          position: 'relative',
+          minHeight: 160,
+          borderRadius: 24,
+          overflow: 'hidden',
+          background: 'linear-gradient(145deg, #FEFCF8 0%, #F3EFFF 52%, #FFFBF4 100%)',
+          boxShadow: '0 4px 24px rgba(80,78,118,0.11), 0 1px 4px rgba(44,26,15,0.05)',
+          border: '1px solid rgba(255,255,255,0.9)',
+        }}>
 
-          {/* ── Background layer — clipped, rico, aurora pastel ── */}
+          {/* ── Barra vertical esquerda — acento editorial ── */}
           <div style={{
-            position:'absolute', inset:0, borderRadius:24, overflow:'hidden',
-            background:'linear-gradient(145deg, #FFF8F4 0%, #F2ECFF 38%, #FFF6EC 72%, #EDFAF6 100%)',
-            pointerEvents:'none',
+            position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, zIndex: 2,
+            background: 'linear-gradient(180deg, #504E76 0%, #C4553B 100%)',
+          }} />
+
+          {/* ── Marca d'água "R$" — fundo, muito sutil ── */}
+          <div style={{
+            position: 'absolute', right: 20, bottom: -28,
+            fontFamily: "'Fraunces',Georgia,serif",
+            fontSize: 168, fontWeight: 700, letterSpacing: -8,
+            color: 'rgba(80,78,118,0.042)',
+            lineHeight: 1, userSelect: 'none', pointerEvents: 'none',
+            zIndex: 0,
+          }}>R$</div>
+
+          {/* ── Orbe de luz — canto superior direito ── */}
+          <div style={{
+            position: 'absolute', right: -40, top: -40, width: 200, height: 200,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(196,195,227,0.15) 0%, transparent 68%)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
+
+          {/* ── Conteúdo ── */}
+          <div style={{
+            position: 'relative', zIndex: 1,
+            padding: '22px 32px 22px 36px',
+            height: '100%', minHeight: 160,
+            display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>
 
-            {/* Linhas de vento SVG — sutis, cheias de movimento */}
-            <svg style={{position:'absolute',inset:0,width:'100%',height:'100%'}}
-              viewBox="0 0 820 222" fill="none" preserveAspectRatio="xMidYMid meet">
-              <path d="M-10,55 Q220,5 480,75 Q650,120 840,45"
-                stroke="rgba(196,85,59,0.1)" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M-10,100 Q200,45 420,95 Q600,135 840,85"
-                stroke="rgba(196,195,227,0.28)" strokeWidth="1.2" strokeLinecap="round"/>
-              <path d="M-10,155 Q260,110 470,148 Q640,172 840,135"
-                stroke="rgba(58,133,128,0.13)" strokeWidth="1" strokeLinecap="round"/>
-              <path d="M250,222 Q480,190 840,205"
-                stroke="rgba(212,160,23,0.1)" strokeWidth="1" strokeLinecap="round"/>
-              <path d="M-10,185 Q180,160 340,178 Q520,198 700,175"
-                stroke="rgba(196,195,227,0.16)" strokeWidth="0.8" strokeLinecap="round"/>
-            </svg>
+            {/* Linha topo: saudação + data */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <span style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontSize: 10, fontWeight: 700,
+                color: '#9B7B6A', letterSpacing: '.1em', textTransform: 'uppercase',
+              }}>{saudacao}</span>
+              <span style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontSize: 11, fontWeight: 500,
+                color: 'rgba(122,92,79,0.5)',
+              }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</span>
+            </div>
 
-            {/* Constelação — canto direito */}
-            <svg style={{position:'absolute',right:0,top:0,width:'48%',height:'100%'}}
-              viewBox="0 0 390 222" fill="none">
-              {/* Pontos */}
-              <circle cx="100" cy="52"  r="2.8" fill="rgba(196,195,227,0.55)"/>
-              <circle cx="175" cy="30"  r="2.2" fill="rgba(196,195,227,0.48)"/>
-              <circle cx="238" cy="62"  r="3.2" fill="rgba(196,195,227,0.6)"/>
-              <circle cx="218" cy="118" r="2"   fill="rgba(196,195,227,0.42)"/>
-              <circle cx="128" cy="105" r="2.5" fill="rgba(196,195,227,0.5)"/>
-              <circle cx="278" cy="46"  r="2"   fill="rgba(212,160,23,0.4)"/>
-              <circle cx="308" cy="138" r="2.2" fill="rgba(58,133,128,0.32)"/>
-              <circle cx="155" cy="75"  r="1.5" fill="rgba(196,85,59,0.3)"/>
-              <circle cx="262" cy="90"  r="1.8" fill="rgba(196,195,227,0.38)"/>
-              {/* Linhas */}
-              <line x1="100" y1="52"  x2="175" y2="30"  stroke="rgba(196,195,227,0.2)"  strokeWidth="0.9"/>
-              <line x1="175" y1="30"  x2="238" y2="62"  stroke="rgba(196,195,227,0.2)"  strokeWidth="0.9"/>
-              <line x1="238" y1="62"  x2="278" y2="46"  stroke="rgba(196,195,227,0.16)" strokeWidth="0.8"/>
-              <line x1="100" y1="52"  x2="128" y2="105" stroke="rgba(196,195,227,0.16)" strokeWidth="0.8"/>
-              <line x1="128" y1="105" x2="218" y2="118" stroke="rgba(196,195,227,0.16)" strokeWidth="0.8"/>
-              <line x1="238" y1="62"  x2="218" y2="118" stroke="rgba(196,195,227,0.14)" strokeWidth="0.8"/>
-              <line x1="218" y1="118" x2="308" y2="138" stroke="rgba(58,133,128,0.14)"  strokeWidth="0.8"/>
-              <line x1="155" y1="75"  x2="262" y2="90"  stroke="rgba(196,195,227,0.12)" strokeWidth="0.7"/>
-            </svg>
-
-            {/* Moedas douradas flutuando */}
-            {([
-              { l:'68%', t:'14%', s:36, d:0,   o:0.7 },
-              { l:'81%', t:'55%', s:28, d:2.6,  o:0.6 },
-              { l:'57%', t:'64%', s:22, d:4.8,  o:0.55 },
-            ] as {l:string;t:string;s:number;d:number;o:number}[]).map((c,i) => (
-              <motion.div key={i} style={{
-                position:'absolute', left:c.l, top:c.t,
-                width:c.s, height:c.s, borderRadius:'50%',
-                background:'radial-gradient(circle at 35% 30%, rgba(255,224,100,0.55), rgba(212,160,23,0.24))',
-                border:'1.5px solid rgba(212,160,23,0.32)',
-                boxShadow:'0 3px 14px rgba(212,160,23,0.2)',
+            {/* Nome — tipografia herói */}
+            <motion.h1
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+              style={{
+                fontFamily: "'Fraunces',Georgia,serif",
+                fontWeight: 700, fontSize: 58,
+                lineHeight: 1, letterSpacing: '-2.5px',
+                color: '#2C1A0F', margin: 0,
               }}
-                animate={{ y:[0,-9,0], opacity:[c.o,c.o+0.2,c.o] }}
-                transition={{ duration:6+i*0.9, repeat:Infinity, ease:'easeInOut', delay:c.d }}
-              />
-            ))}
+            >Yago.</motion.h1>
 
-            {/* Sparkles mágicos */}
-            {([
-              {l:'44%',t:'16%',d:0  },{l:'60%',t:'70%',d:2.4},
-              {l:'75%',t:'10%',d:1.6},{l:'85%',t:'48%',d:3.8},
-              {l:'52%',t:'82%',d:0.9},{l:'90%',t:'72%',d:5.1},
-            ] as {l:string;t:string;d:number}[]).map((s,i)=>(
-              <motion.div key={i} style={{position:'absolute',left:s.l,top:s.t}}
-                animate={{opacity:[0.08,0.45,0.08],scale:[0.7,1.2,0.7]}}
-                transition={{duration:4+i*0.45,repeat:Infinity,ease:'easeInOut',delay:s.d}}>
-                <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
-                  <path d="M10 2 L11.3 8 L17 9 L11.3 10 L10 16 L8.7 10 L3 9 L8.7 8 Z"
-                    fill="rgba(212,160,23,0.65)"/>
-                </svg>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* ── Conteúdo: flex row — fada esquerda + texto direita ── */}
-          <div style={{
-            position:'relative', zIndex:1,
-            display:'flex', alignItems:'center',
-            padding:'24px 28px', minHeight:172, gap:20,
-          }}>
-
-            {/* Fada — parada, doodle com animações internas */}
-            <div style={{ position:'relative', flexShrink:0 }}>
-              {/* Bubble flutuando acima da fada */}
+            {/* Régua + insight contextual */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 14 }}>
               <div style={{
-                position:'absolute', bottom:'102%', left:'50%',
-                transform:'translateX(-50%)',
-                width:210, marginBottom:6, zIndex:2,
-              }}>
-                <FairyBubble phrase={activePhrase} />
-              </div>
-              <DragFairy scale={1.25} />
+                width: 28, height: 2.5,
+                background: greetInsightColor,
+                borderRadius: 2, flexShrink: 0,
+              }} />
+              <motion.p
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.28, duration: 0.45 }}
+                style={{
+                  fontFamily: "'Plus Jakarta Sans',sans-serif",
+                  fontSize: 13, fontWeight: 500,
+                  color: greetInsightColor, margin: 0, lineHeight: 1.4,
+                }}
+              >{greetInsightText}</motion.p>
             </div>
 
-            {/* Saudação — ao lado direito da fada */}
-            <div style={{ flex:1 }}>
-              <p style={{
-                fontFamily:"'Plus Jakarta Sans',sans-serif",
-                fontSize:11, fontWeight:600,
-                color:'#9B7B6A', marginBottom:4,
-                letterSpacing:'.06em', textTransform:'uppercase',
-              }}>{saudacao}</p>
-
-              <h1 style={{
-                fontFamily:"'Fraunces',Georgia,serif",
-                fontWeight:700, fontSize:40,
-                lineHeight:1, letterSpacing:'-1.5px',
-                color:'#2C1A0F', margin:0,
-              }}>Yago</h1>
-
-              <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:12 }}>
-                <div style={{ width:20, height:1.5, background:'#C4553B', borderRadius:1, flexShrink:0 }}/>
-                <p style={{
-                  fontFamily:"'Plus Jakarta Sans',sans-serif",
-                  fontSize:12, fontWeight:500,
-                  color:'#7A5C4F', margin:0,
-                }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
-              </div>
-            </div>
           </div>
         </div>
 
