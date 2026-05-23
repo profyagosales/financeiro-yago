@@ -1,15 +1,19 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { IconPlus, IconBuildingBank, IconTrash, IconWallet, IconTrendingUp, IconChartLine } from '@tabler/icons-react'
-import { useContas, addConta, deleteConta, editConta, useSaldoTotal } from '@/db/hooks/useContas'
+import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
+import {
+  IconPlus, IconBuildingBank, IconSearch, IconWallet,
+  IconTrash, IconArrowUpRight, IconArrowDownRight,
+} from '@tabler/icons-react'
+import { useContas, addConta, deleteConta, editConta, useSaldoTotal } from '@/db/hooks/useContas'
 import { db } from '@/db/schema'
 import type { Conta } from '@/db/schema'
 import { fmt, mesAnoAtual } from '@/lib/format'
 import { useUIStore } from '@/store/ui'
 import { Modal } from '@/components/ui/Modal'
-import { ContaCard } from './ContaCard'
+import { AccountListRow } from './AccountListRow'
+import { AccountDetail } from './AccountDetail'
 import { ContaForm } from './ContaForm'
 
 export function Page() {
@@ -22,140 +26,267 @@ export function Page() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Conta | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Conta | null>(null)
+  const [search, setSearch] = useState('')
+  const [selectedId, setSelectedId] = useState<number | null>(null)
 
-  // Métricas do mês por conta — pra mostrar nos cards
+  // Auto-seleciona conta com maior saldo na 1ª carga
+  useEffect(() => {
+    if (selectedId === null && contas.length > 0) {
+      const biggest = [...contas].sort((a, b) => b.saldoAtual - a.saldoAtual)[0]
+      if (biggest.id !== undefined) setSelectedId(biggest.id)
+    }
+  }, [contas, selectedId])
+
+  // Filtragem por busca
+  const contasFiltradas = useMemo(() => {
+    if (!search) return contas
+    const q = search.toLowerCase()
+    return contas.filter(c => c.nome.toLowerCase().includes(q) || c.tipo.toLowerCase().includes(q))
+  }, [contas, search])
+
+  // Métricas globais (header)
   const inicioMes = `${ano}-${String(mes).padStart(2, '0')}-01`
   const fimMes = `${ano}-${String(mes).padStart(2, '0')}-31`
   const txsMes = useLiveQuery(
     () => db.transacoes.where('data').between(inicioMes, fimMes, true, true).toArray(),
     [inicioMes, fimMes],
   ) ?? []
+  const recMes = txsMes.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
+  const desMes = txsMes.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
+  const deltaMes = recMes - desMes
 
-  const metricsByConta = useMemo(() => {
-    const map = new Map<number, { count: number; ultimaData?: string; deltaMes: number }>()
+  // Sparklines por conta (últimas 14 datapoints — diário)
+  const ultimas30d = useMemo(() => {
+    const hoje = new Date()
+    const inicio = new Date(hoje)
+    inicio.setDate(hoje.getDate() - 13)
+    return inicio.toISOString().split('T')[0]
+  }, [])
+  const txs14d = useLiveQuery(
+    () => db.transacoes.where('data').aboveOrEqual(ultimas30d).toArray(),
+    [ultimas30d],
+  ) ?? []
+
+  const sparkByConta = useMemo(() => {
+    const map = new Map<number, number[]>()
     contas.forEach(c => {
-      if (c.id !== undefined) map.set(c.id, { count: 0, deltaMes: 0 })
-    })
-    txsMes.forEach(t => {
-      const m = map.get(t.contaId)
-      if (!m) return
-      m.count += 1
-      const delta = t.tipo === 'receita' ? t.valor : -t.valor
-      m.deltaMes += delta
-      if (!m.ultimaData || t.data > m.ultimaData) m.ultimaData = t.data
+      if (c.id === undefined) return
+      const hoje = new Date()
+      const points: number[] = []
+      let acc = c.saldoAtual
+      const deltaByDay = new Map<string, number>()
+      txs14d.filter(t => t.contaId === c.id).forEach(t => {
+        const delta = t.tipo === 'receita' ? t.valor : -t.valor
+        deltaByDay.set(t.data, (deltaByDay.get(t.data) ?? 0) + delta)
+      })
+      for (let i = 0; i < 14; i++) {
+        const d = new Date(hoje)
+        d.setDate(hoje.getDate() - i)
+        const key = d.toISOString().split('T')[0]
+        points.push(acc)
+        acc -= deltaByDay.get(key) ?? 0
+      }
+      map.set(c.id, points.reverse())
     })
     return map
-  }, [contas, txsMes])
+  }, [contas, txs14d])
 
-  const formatRelDate = (data?: string): string | null => {
-    if (!data) return null
-    const d = new Date(data + 'T00:00:00')
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
-    const ontem = new Date(hoje); ontem.setDate(ontem.getDate() - 1)
-    if (d.getTime() === hoje.getTime()) return 'hoje'
-    if (d.getTime() === ontem.getTime()) return 'ontem'
-    const diff = Math.round((hoje.getTime() - d.getTime()) / 86400000)
-    if (diff > 0 && diff < 7) return `há ${diff} dias`
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-  }
-
-  const maiorSaldo = contas.length > 0 ? Math.max(...contas.map(c => c.saldoAtual)) : 0
-  const contasAtivas = contas.filter(c => c.ativo).length
+  const selected = contas.find(c => c.id === selectedId) ?? null
 
   const openAdd = () => { setEditing(null); setFormOpen(true) }
   const openEdit = (c: Conta) => { setEditing(c); setFormOpen(true) }
-
   const handleSave = async (data: Omit<Conta, 'id' | 'syncId' | 'updatedAt'>) => {
-    if (editing?.id) {
-      await editConta(editing.id, data)
-    } else {
-      await addConta(data)
-    }
+    if (editing?.id) await editConta(editing.id, data)
+    else await addConta(data)
   }
+
+  // Stats compactas no topo
+  const maiorSaldo = contas.length > 0 ? Math.max(...contas.map(c => c.saldoAtual)) : 0
+  const contaMaior = contas.find(c => c.saldoAtual === maiorSaldo)
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: 32, width: '100%' }}>
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
-        <div>
-          <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>Contas</h1>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>
-            {contas.length > 0
-              ? `${contas.length} ${contas.length === 1 ? 'conta cadastrada' : 'contas cadastradas'}`
-              : 'Gerencie suas contas bancárias e carteiras'}
-          </p>
+      {/* Header — clean editorial */}
+      <div style={{ marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
+          <div>
+            <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>
+              Contas
+            </h1>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>
+              {contas.length > 0
+                ? `${contas.length} ${contas.length === 1 ? 'conta cadastrada' : 'contas cadastradas'}`
+                : 'Suas contas bancárias e carteiras'}
+            </p>
+          </div>
+
+          {/* Top KPIs inline */}
+          {contas.length > 0 && (
+            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+              <TopKpi label="Saldo total" value={fmt(saldoTotal)} cor={saldoTotal >= 0 ? '#2C1A0F' : '#C4553B'} />
+              <Divider />
+              <TopKpi
+                label="Variação no mês"
+                value={`${deltaMes >= 0 ? '+' : ''}${fmt(deltaMes)}`}
+                cor={deltaMes >= 0 ? '#1E7D5A' : '#C4553B'}
+                icon={deltaMes >= 0
+                  ? <IconArrowUpRight size={16} stroke={2.2} color="#1E7D5A" />
+                  : <IconArrowDownRight size={16} stroke={2.2} color="#C4553B" />}
+              />
+              {contaMaior && (
+                <>
+                  <Divider />
+                  <TopKpi label={`Maior: ${contaMaior.nome}`} value={fmt(maiorSaldo)} cor="#504E76" />
+                </>
+              )}
+
+              <button onClick={openAdd}
+                style={{
+                  background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none',
+                  borderRadius: 12, padding: '11px 18px', cursor: 'pointer',
+                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  boxShadow: '0 4px 16px rgba(196,85,59,0.35)', marginLeft: 8,
+                }}>
+                <IconPlus size={16} stroke={2.5} /> Adicionar
+              </button>
+            </div>
+          )}
+
+          {contas.length === 0 && (
+            <button onClick={openAdd}
+              style={{
+                background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none',
+                borderRadius: 12, padding: '11px 18px', cursor: 'pointer',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+                display: 'flex', alignItems: 'center', gap: 6,
+                boxShadow: '0 4px 16px rgba(196,85,59,0.35)',
+              }}>
+              <IconPlus size={16} stroke={2.5} /> Adicionar
+            </button>
+          )}
         </div>
-        <button onClick={openAdd}
-          style={{
-            background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none',
-            borderRadius: 12, padding: '11px 18px', cursor: 'pointer',
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
-            display: 'flex', alignItems: 'center', gap: 6,
-            boxShadow: '0 4px 16px rgba(196,85,59,0.35)', flexShrink: 0,
-          }}>
-          <IconPlus size={16} stroke={2.5} /> Adicionar
-        </button>
       </div>
 
+      {/* Master-detail layout */}
       {contas.length === 0 ? (
         <EmptyState onAdd={openAdd} />
       ) : (
-        <>
-          {/* KPI strip */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
-            <KpiCard
-              icon={<IconWallet size={18} stroke={1.8} color={saldoTotal >= 0 ? '#3A8580' : '#C4553B'} />}
-              label="Saldo total"
-              value={fmt(saldoTotal)}
-              cor={saldoTotal >= 0 ? '#3A8580' : '#C4553B'}
-            />
-            <KpiCard
-              icon={<IconBuildingBank size={18} stroke={1.8} color="#504E76" />}
-              label="Contas ativas"
-              value={`${contasAtivas} ${contasAtivas === 1 ? 'conta' : 'contas'}`}
-              cor="#504E76"
-            />
-            <KpiCard
-              icon={<IconTrendingUp size={18} stroke={1.8} color="#1E7D5A" />}
-              label="Maior saldo"
-              value={fmt(maiorSaldo)}
-              cor="#1E7D5A"
-            />
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '340px 1fr',
+          gap: 16,
+          alignItems: 'stretch',
+          minHeight: 'calc(100vh - 200px)',
+        }}>
+          {/* ─── LEFT: list ─── */}
+          <div style={{
+            background: '#FFFFFF',
+            border: '1px solid #EDE6DC',
+            borderRadius: 22,
+            boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 14px rgba(44,26,15,0.04)',
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden',
+            height: 'fit-content',
+            position: 'sticky',
+            top: 24,
+            maxHeight: 'calc(100vh - 80px)',
+          }}>
+            {/* Search */}
+            <div style={{
+              padding: '14px 14px 10px',
+              borderBottom: '1px solid #EDE6DC',
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: '#FBF8F3',
+            }}>
+              <IconSearch size={14} stroke={2} color="#9B7B6A" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar conta..."
+                style={{
+                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 500,
+                  color: '#2C1A0F',
+                }}
+              />
+              {search && (
+                <button onClick={() => setSearch('')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9B7B6A', padding: 2, fontSize: 11 }}>
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Account rows */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px 16px' }}>
+              {contasFiltradas.length === 0 ? (
+                <p style={{
+                  padding: '24px 16px', textAlign: 'center',
+                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A',
+                }}>Nenhuma conta encontrada</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {contasFiltradas.map(c => (
+                    <AccountListRow
+                      key={c.id}
+                      conta={c}
+                      active={selectedId === c.id}
+                      spark={c.id !== undefined ? sparkByConta.get(c.id) : []}
+                      onClick={() => c.id !== undefined && setSelectedId(c.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer da lista */}
+            <div style={{
+              padding: '10px 14px',
+              borderTop: '1px solid #EDE6DC',
+              background: '#FBF8F3',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+                color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase',
+              }}>
+                Total
+              </span>
+              <span style={{
+                fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700,
+                color: saldoTotal >= 0 ? '#2C1A0F' : '#C4553B',
+                letterSpacing: '-0.5px',
+              }}>{fmt(saldoTotal)}</span>
+            </div>
           </div>
 
-          {/* Grid de contas */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-            gap: 14,
-            alignItems: 'stretch',
-          }}>
-            {contas.map(c => {
-              const m = c.id !== undefined ? metricsByConta.get(c.id) : undefined
-              const saldoAnterior = c.saldoAtual - (m?.deltaMes ?? 0)
-              const variacao = saldoAnterior !== 0
-                ? (((c.saldoAtual - saldoAnterior) / Math.abs(saldoAnterior)) * 100)
-                : null
-              return (
-                <ContaCard
-                  key={c.id}
-                  conta={c}
-                  variacaoPct={variacao}
-                  ultimaMovimentacao={formatRelDate(m?.ultimaData)}
-                  transacoesMes={m?.count ?? 0}
-                  onEdit={() => openEdit(c)}
-                  onLancar={() => openFab(c.id)}
-                  onHistorico={() => navigate('/transacoes')}
-                  onDelete={() => setConfirmDelete(c)}
-                />
-              )
-            })}
-          </div>
-        </>
+          {/* ─── RIGHT: detail panel ─── */}
+          {selected ? (
+            <AccountDetail
+              conta={selected}
+              onEdit={() => openEdit(selected)}
+              onLancar={() => openFab(selected.id)}
+              onHistorico={() => navigate('/transacoes')}
+              onDelete={() => setConfirmDelete(selected)}
+            />
+          ) : (
+            <div style={{
+              background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 22,
+              padding: 48, textAlign: 'center',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12,
+            }}>
+              <IconWallet size={48} stroke={1.4} color="#D4C8BC" />
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', margin: 0 }}>
+                Selecione uma conta na lista
+              </p>
+            </div>
+          )}
+        </div>
       )}
 
-      {/* ─── Form Modal (wide) ─── */}
+      {/* ─── Form Modal ─── */}
       <ContaForm
         open={formOpen}
         conta={editing}
@@ -184,8 +315,10 @@ export function Page() {
           </button>
           <button onClick={async () => {
             if (confirmDelete?.id !== undefined) {
+              const wasSelected = selectedId === confirmDelete.id
               await deleteConta(confirmDelete.id)
               setConfirmDelete(null)
+              if (wasSelected) setSelectedId(null)
             }
           }}
             style={{ background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none', borderRadius: 12, padding: '11px 22px', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 7, boxShadow: '0 4px 16px rgba(196,85,59,0.35)' }}>
@@ -197,48 +330,50 @@ export function Page() {
   )
 }
 
-function KpiCard({ icon, label, value, cor }: { icon: React.ReactNode; label: string; value: string; cor: string }) {
+// ─── Helpers ─────────────────────────────────────────────────────────
+function TopKpi({ label, value, cor, icon }: { label: string; value: string; cor: string; icon?: React.ReactNode }) {
   return (
-    <div style={{
-      background: '#FFFFFF', border: '1px solid #EDE6DC',
-      borderRadius: 16, padding: '16px 20px',
-      boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 2px 10px rgba(44,26,15,0.04)',
-      display: 'flex', flexDirection: 'column', gap: 6,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-        {icon}
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0 }}>
-          {label}
-        </p>
-      </div>
-      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700, color: cor, margin: 0, letterSpacing: '-0.8px', lineHeight: 1 }}>
-        {value}
+    <div>
+      <p style={{
+        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
+        color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0,
+      }}>{label}</p>
+      <p style={{
+        fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700,
+        color: cor, margin: '4px 0 0', letterSpacing: '-0.6px', lineHeight: 1,
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+      }}>
+        {icon}{value}
       </p>
     </div>
   )
+}
+
+function Divider() {
+  return <div style={{ width: 1, height: 32, background: '#EDE6DC' }} />
 }
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div style={{
       background: '#FFFFFF', border: '1px dashed #D4C8BC', borderRadius: 22,
-      padding: '48px 32px', textAlign: 'center',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
+      padding: '60px 32px', textAlign: 'center',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
     }}>
       <div style={{
-        width: 68, height: 68, borderRadius: 20,
+        width: 72, height: 72, borderRadius: 22,
         background: 'linear-gradient(135deg, #D4643A, #C4553B)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 10px 28px rgba(196,85,59,0.32)',
+        boxShadow: '0 12px 32px rgba(196,85,59,0.35)',
       }}>
-        <IconBuildingBank size={32} stroke={1.6} color="#FFFFFF" />
+        <IconBuildingBank size={36} stroke={1.6} color="#FFFFFF" />
       </div>
       <div>
-        <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.7px' }}>
+        <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.8px' }}>
           Adicione sua primeira conta
         </h3>
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', marginTop: 8, maxWidth: 480 }}>
-          Cadastre suas contas bancárias e carteiras com logo customizado.
+          Cadastre contas bancárias e carteiras com logo customizado.
           Acompanhe saldo, movimentações e tenha controle total das suas finanças.
         </p>
       </div>
