@@ -568,7 +568,7 @@ export function DashboardPage() {
         }
 
         return (
-        <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:20 }}>
+        <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:20, alignItems:'stretch' }}>
 
         {/* ════════════════════════════════════════════════
             GASTOS POR CATEGORIA — lavanda refinado
@@ -583,6 +583,7 @@ export function DashboardPage() {
           padding:22,
           display:'flex', flexDirection:'column',
           overflow:'hidden',
+          height:'100%',
         }}>
           {/* Decoração SVG canto inferior direito */}
           <svg style={{ position:'absolute', right:0, bottom:0, width:160, height:80, opacity:0.55, pointerEvents:'none' }}
@@ -672,6 +673,8 @@ export function DashboardPage() {
           boxShadow:'0 4px 20px rgba(196,85,59,0.13), 0 1px 4px rgba(168,68,43,0.06)',
           padding:22,
           overflow:'hidden',
+          display:'flex', flexDirection:'column',
+          height:'100%',
         }}>
           {/* Decoração SVG canto superior direito */}
           <svg style={{ position:'absolute', right:0, top:0, width:140, height:80, opacity:0.5, pointerEvents:'none' }}
@@ -783,7 +786,7 @@ export function DashboardPage() {
               </button>
             </div>
           ) : (
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, alignItems:'stretch' }}>
               {metas.slice(0, 4).map((meta, mi) => {
                 const pct = Math.min(100, meta.valorAlvo > 0 ? (meta.valorAtual / meta.valorAlvo) * 100 : 0)
                 const r = 20, circ = 2 * Math.PI * r
