@@ -42,7 +42,7 @@ export function Page() {
   }, 0)
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: 32, width: '100%' }}>
+    <div style={{ padding: 32, width: '100%' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
@@ -217,7 +217,7 @@ export function Page() {
           />
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }
 
