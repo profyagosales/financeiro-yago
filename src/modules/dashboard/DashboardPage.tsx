@@ -309,14 +309,6 @@ export function DashboardPage() {
               fontSize="7" fontFamily="Plus Jakarta Sans, sans-serif">DE {diasNoMes}</text>
           </svg>
 
-          {/* Dias restantes */}
-          <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12,
-            color:'rgba(255,255,255,0.55)', textAlign:'center', lineHeight:1.4, margin:0 }}>
-            <span style={{ color:'white', fontWeight:700, fontSize:15, display:'block' }}>
-              {diasRestantes}
-            </span>
-            dias restantes
-          </p>
         </div>
       </motion.div>
 
