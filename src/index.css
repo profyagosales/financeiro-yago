@@ -261,19 +261,18 @@ html, body, #root {
 
 /* ── Fairy flight path ───────────────────────────────────────── */
 @keyframes fairyFlight {
-  0%,100% { left:10%; top:44%; }
-  11%     { left:75%; top: 3%; }
-  22%     { left:20%; top: 2%; }
-  33%     { left:78%; top:32%; }
-  44%     { left:12%; top:14%; }
-  55%     { left:68%; top:44%; }
-  66%     { left:28%; top: 2%; }
-  77%     { left:74%; top:18%; }
-  88%     { left:16%; top:36%; }
+  0%,100% { left:12%; top:46%; }   /* bottom left    */
+  12%     { left:72%; top: 3%; }   /* top right      */
+  25%     { left:18%; top: 3%; }   /* top left       */
+  37%     { left:76%; top:44%; }   /* bottom right   */
+  50%     { left:14%; top:18%; }   /* left middle    */
+  62%     { left:65%; top:46%; }   /* bottom center  */
+  75%     { left:32%; top: 3%; }   /* top center     */
+  87%     { left:68%; top:22%; }   /* right middle   */
 }
 .fairy-flight-path {
   position: absolute;
   z-index: 2;
   pointer-events: none;
-  animation: fairyFlight 48s ease-in-out infinite;
+  animation: fairyFlight 80s ease-in-out infinite;
 }
