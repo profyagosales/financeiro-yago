@@ -248,49 +248,62 @@ export function DashboardPage() {
 
             </div>
 
-            {/* RIGHT: Rich Calendar — amber cream agenda */}
+            {/* RIGHT: Rich Calendar — dark purple anchor */}
             <div style={{
               position: 'relative',
-              background: '#FDF4E3',
-              border: '1px solid rgba(212,160,23,0.22)',
+              background: 'linear-gradient(155deg, #504E76 0%, #2A2150 100%)',
+              border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: 22,
-              boxShadow: '0 2px 18px rgba(212,160,23,0.1), 0 1px 4px rgba(44,26,15,0.04)',
-              padding: '26px 28px 22px',
+              boxShadow: '0 8px 32px rgba(42,33,80,0.28), 0 2px 8px rgba(42,33,80,0.18)',
+              padding: '26px 28px 24px',
               display: 'flex',
               flexDirection: 'column',
+              overflow: 'visible',
             }}>
-              {/* ── Decoração: asterisco/sol abstrato no canto ── */}
+              {/* ── Decoração: ondas brancas SVG (estilo KPIs) ── */}
               <svg
-                style={{ position:'absolute', top:14, right:80, width:54, height:54, opacity:0.55, pointerEvents:'none' }}
-                viewBox="0 0 60 60" fill="none"
+                style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none', borderRadius:22 }}
+                viewBox="0 0 600 400" fill="none" preserveAspectRatio="none"
               >
-                {/* Raio vertical */}
-                <path d="M30 4 Q32 18 30 30 Q28 18 30 4 Z" fill="#D4A017"/>
-                <path d="M30 56 Q32 42 30 30 Q28 42 30 56 Z" fill="#D4A017"/>
-                {/* Raio horizontal */}
-                <path d="M4 30 Q18 32 30 30 Q18 28 4 30 Z" fill="#D4A017"/>
-                <path d="M56 30 Q42 32 30 30 Q42 28 56 30 Z" fill="#D4A017"/>
-                {/* Raios diagonais */}
-                <path d="M11.5 11.5 Q22 22 30 30 Q22 22 11.5 11.5 Z" fill="#C4553B" opacity="0.7"/>
-                <path d="M48.5 11.5 Q38 22 30 30 Q38 22 48.5 11.5 Z" fill="#C4553B" opacity="0.7"/>
-                <path d="M11.5 48.5 Q22 38 30 30 Q22 38 11.5 48.5 Z" fill="#C4553B" opacity="0.7"/>
-                <path d="M48.5 48.5 Q38 38 30 30 Q38 38 48.5 48.5 Z" fill="#C4553B" opacity="0.7"/>
-                {/* Núcleo */}
-                <circle cx="30" cy="30" r="5" fill="#C4553B"/>
+                <defs>
+                  <clipPath id="cal-clip">
+                    <rect x="0" y="0" width="600" height="400" rx="22"/>
+                  </clipPath>
+                </defs>
+                <g clipPath="url(#cal-clip)" opacity="0.06">
+                  <path d="M-50 80 Q150 30 300 90 Q450 150 650 70" stroke="white" strokeWidth="1.5" fill="none"/>
+                  <path d="M-50 360 Q200 310 380 380 Q500 420 650 350" stroke="white" strokeWidth="1.2" fill="none"/>
+                </g>
+                {/* Constelação de pontinhos brilhantes */}
+                <circle cx="540" cy="40" r="2" fill="rgba(212,160,23,0.4)"/>
+                <circle cx="560" cy="60" r="1.5" fill="rgba(255,255,255,0.25)"/>
+                <circle cx="520" cy="70" r="1.2" fill="rgba(255,255,255,0.2)"/>
               </svg>
 
-              {/* Header — estilo página de agenda */}
+              {/* ── Decoração: estrela/sparkle dourado canto direito ── */}
+              <svg
+                style={{ position:'absolute', top:20, right:90, width:40, height:40, pointerEvents:'none', opacity:0.7 }}
+                viewBox="0 0 60 60" fill="none"
+              >
+                <path d="M30 4 Q32 18 30 30 Q28 18 30 4 Z" fill="#D4A017"/>
+                <path d="M30 56 Q32 42 30 30 Q28 42 30 56 Z" fill="#D4A017"/>
+                <path d="M4 30 Q18 32 30 30 Q18 28 4 30 Z" fill="#D4A017"/>
+                <path d="M56 30 Q42 32 30 30 Q42 28 56 30 Z" fill="#D4A017"/>
+                <circle cx="30" cy="30" r="3.5" fill="#D4A017"/>
+              </svg>
+
+              {/* Header — Fraunces branco, vibe editorial */}
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:18, position:'relative', zIndex:1 }}>
                 <div>
                   <h2 style={{
                     fontFamily:"'Fraunces',Georgia,serif",
-                    fontSize:34, fontWeight:700, color:'#2C1A0F',
+                    fontSize:34, fontWeight:700, color:'#FFFFFF',
                     margin:0, textTransform:'capitalize',
                     letterSpacing:'-1.2px', lineHeight:0.95,
                   }}>{mesNome}</h2>
                   <span style={{
                     fontFamily:"'Plus Jakarta Sans',sans-serif",
-                    fontSize:11, fontWeight:600, color:'#9B7B6A',
+                    fontSize:11, fontWeight:600, color:'rgba(196,195,227,0.7)',
                     letterSpacing:'.16em', textTransform:'uppercase',
                     marginTop:4, display:'block',
                   }}>{ano}</span>
@@ -299,9 +312,9 @@ export function DashboardPage() {
                   <span style={{
                     fontFamily:"'Plus Jakarta Sans',sans-serif",
                     fontSize:11, fontWeight:700,
-                    color:'#C4553B',
-                    background:'rgba(255,255,255,0.7)',
-                    border:'1px solid rgba(196,85,59,0.3)',
+                    color:'#D4A017',
+                    background:'rgba(212,160,23,0.12)',
+                    border:'1px solid rgba(212,160,23,0.35)',
                     borderRadius:20,
                     padding:'5px 13px',
                     letterSpacing:'.04em',
@@ -312,23 +325,22 @@ export function DashboardPage() {
               </div>
 
               {/* Linha divisória sob o header */}
-              <div style={{ height:1, background:'rgba(196,85,59,0.18)', marginBottom:12 }}/>
+              <div style={{ height:1, background:'linear-gradient(90deg, rgba(212,160,23,0.4) 0%, rgba(255,255,255,0.08) 50%, transparent 100%)', marginBottom:12, position:'relative', zIndex:1 }}/>
 
-              {/* Day headers — peso terra, mais editorial */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:8 }}>
+              {/* Day headers — branco muted, weekends amber */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:8, position:'relative', zIndex:1 }}>
                 {['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d, idx) => (
                   <div key={d} style={{
                     fontFamily:"'Plus Jakarta Sans',sans-serif",
                     fontSize:10, fontWeight:700, textAlign:'center',
                     letterSpacing:'.1em', textTransform:'uppercase',
-                    color: idx === 0 || idx === 6 ? '#C4553B' : '#7A5C4F',
-                    opacity: idx === 0 || idx === 6 ? 0.85 : 1,
+                    color: idx === 0 || idx === 6 ? 'rgba(212,160,23,0.7)' : 'rgba(255,255,255,0.4)',
                   }}>{d}</div>
                 ))}
               </div>
 
               {/* Calendar grid */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:3 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:3, position:'relative', zIndex:1 }}>
                 {Array.from({ length: Math.ceil(calCells / 7) * 7 }, (_, idx) => {
                   const day = idx - calFirstDow + 1
                   const colIdx = idx % 7
@@ -357,9 +369,17 @@ export function DashboardPage() {
                     >
                       <div style={{
                         width:34, height:34, borderRadius:'50%',
-                        background: isToday ? '#C4553B' : hasEvents ? (isHovered ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.55)') : 'transparent',
-                        border: hasEvents && !isToday ? `1.5px solid ${isHovered ? 'rgba(196,85,59,0.55)' : 'rgba(196,85,59,0.28)'}` : 'none',
-                        boxShadow: isToday ? '0 4px 14px rgba(196,85,59,0.4)' : isHovered ? '0 2px 10px rgba(196,85,59,0.2)' : 'none',
+                        background: isToday
+                          ? 'radial-gradient(circle at 35% 30%, #F2C745 0%, #D4A017 70%)'
+                          : hasEvents
+                            ? (isHovered ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.06)')
+                            : 'transparent',
+                        border: hasEvents && !isToday
+                          ? `1.5px solid ${isHovered ? 'rgba(212,160,23,0.7)' : 'rgba(212,160,23,0.32)'}`
+                          : 'none',
+                        boxShadow: isToday
+                          ? '0 4px 18px rgba(212,160,23,0.55), 0 0 0 4px rgba(212,160,23,0.15)'
+                          : isHovered ? '0 2px 12px rgba(212,160,23,0.25)' : 'none',
                         display:'flex', alignItems:'center', justifyContent:'center',
                         transition:'all .15s ease',
                       }}>
@@ -367,7 +387,13 @@ export function DashboardPage() {
                           fontFamily:"'Plus Jakarta Sans',sans-serif",
                           fontSize:13,
                           fontWeight: isToday ? 700 : hasEvents ? 600 : 500,
-                          color: isToday ? 'white' : isPast ? 'rgba(122,92,79,0.5)' : isWeekend ? 'rgba(196,85,59,0.75)' : '#2C1A0F',
+                          color: isToday
+                            ? '#2C1A0F'
+                            : isPast
+                              ? 'rgba(255,255,255,0.32)'
+                              : isWeekend
+                                ? 'rgba(212,160,23,0.8)'
+                                : 'rgba(255,255,255,0.92)',
                         }}>{day}</span>
                       </div>
                       {events.length > 0 && (
