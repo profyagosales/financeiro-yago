@@ -7,7 +7,6 @@ type EmptyStateType =
   | 'transacoes'
   | 'metas'
   | 'patrimonio'
-  | 'parcelamentos'
   | 'relatorios'
   | 'default'
 
@@ -64,18 +63,6 @@ const ILLUSTRATIONS: Record<EmptyStateType, React.ReactNode> = {
       <rect x="42" y="52" width="8" height="8" rx="2" fill="#C4553B" opacity="0.3" />
       <polygon points="20,42 40,22 60,42" fill="#C4553B" opacity="0.4" />
       <rect x="36" y="28" width="8" height="6" rx="1" fill="white" opacity="0.5" />
-    </svg>
-  ),
-  parcelamentos: (
-    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-      <circle cx="40" cy="40" r="36" fill="#FDF4E3" />
-      <rect x="18" y="28" width="44" height="6" rx="3" fill="#D4A017" opacity="0.3" />
-      <rect x="18" y="38" width="36" height="6" rx="3" fill="#D4A017" opacity="0.4" />
-      <rect x="18" y="48" width="28" height="6" rx="3" fill="#D4A017" opacity="0.5" />
-      <circle cx="58" cy="54" r="10" fill="#D4A017" opacity="0.2" />
-      <text x="58" y="59" textAnchor="middle" fill="#D4A017" fontSize="11" fontWeight="700">
-        %
-      </text>
     </svg>
   ),
   relatorios: (

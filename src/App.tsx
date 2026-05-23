@@ -10,7 +10,6 @@ import { Page as CartoesPage } from '@/modules/cartoes'
 import { Page as MaisPage } from '@/modules/mais'
 import { Page as ContasPage } from '@/modules/contas'
 import { Page as ContasFixasPage } from '@/modules/contas-fixas'
-import { Page as ParcelamentosPage } from '@/modules/parcelamentos'
 import { Page as MetasPage } from '@/modules/metas'
 import { Page as PatrimonioPage } from '@/modules/patrimonio'
 import { Page as InvestimentosPage } from '@/modules/investimentos'
@@ -42,7 +41,6 @@ export default function App() {
               <Route path="mais" element={<MaisPage />} />
               <Route path="contas" element={<ContasPage />} />
               <Route path="contas-fixas" element={<ContasFixasPage />} />
-              <Route path="parcelamentos" element={<ParcelamentosPage />} />
               <Route path="metas" element={<MetasPage />} />
               <Route path="patrimonio" element={<PatrimonioPage />} />
               <Route path="investimentos" element={<InvestimentosPage />} />

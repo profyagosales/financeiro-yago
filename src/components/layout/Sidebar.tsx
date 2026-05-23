@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard, IconBuildingBank, IconCreditCard, IconArrowsExchange,
-  IconRepeat, IconCalendarStats, IconTarget, IconTrendingUp, IconChartBar,
+  IconRepeat, IconTarget, IconTrendingUp, IconChartBar,
   IconSettings, IconChevronLeft, IconChevronRight, IconLogout, IconChartLine, IconCash, IconHeart,
 } from '@tabler/icons-react'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
@@ -135,7 +135,6 @@ const MENU = [
       { path: '/cartoes',       icon: IconCreditCard,     label: 'Cartões',       badgeKey: 'cartoes' },
       { path: '/transacoes',    icon: IconArrowsExchange, label: 'Transações',    badgeKey: null },
       { path: '/contas-fixas',  icon: IconRepeat,         label: 'Contas Fixas',  badgeKey: 'fixas' },
-      { path: '/parcelamentos', icon: IconCalendarStats,  label: 'Parcelamentos', badgeKey: null },
     ],
   },
   {
