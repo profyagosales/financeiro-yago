@@ -71,9 +71,9 @@ export function AppShell() {
           porque elas próprias controlam a altura via 100dvh.            */}
       <AnimatePresence mode="wait" initial={false}>
         <motion.main key={location.pathname}
-          initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, filter: 'blur(2px)' }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
           transition={{ type: 'spring', stiffness: 260, damping: 26, mass: 0.8 }}
           style={{
             flex: 1, overflowY: 'auto', overflowX: 'hidden',

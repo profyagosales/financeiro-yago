@@ -1,9 +1,13 @@
 import { Variants } from 'framer-motion'
 
+// IMPORTANTE: NÃO usar filter:blur em variantes de container/página.
+// CSS spec: qualquer `filter` !== none cria um "containing block",
+// fazendo position:fixed dos modais filhos virar relativo ao container
+// (não à viewport) — modais aparecem fora da tela em páginas com scroll.
 export const pageVariants: Variants = {
-  initial: { opacity: 0, y: 24, filter: 'blur(4px)' },
-  animate: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { type: 'spring', stiffness: 260, damping: 26, mass: 0.8 } },
-  exit: { opacity: 0, y: -12, filter: 'blur(2px)', transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } },
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 26, mass: 0.8 } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } },
 }
 
 export const cardVariants: Variants = {
