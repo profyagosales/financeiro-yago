@@ -114,11 +114,11 @@ export function Page() {
             <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>
               Contas
             </h1>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>
-              {contas.length > 0
-                ? `${contas.length} ${contas.length === 1 ? 'conta cadastrada' : 'contas cadastradas'}`
-                : 'Suas contas bancárias e carteiras'}
-            </p>
+            {contas.length === 0 && (
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>
+                Suas contas bancárias e carteiras
+              </p>
+            )}
           </div>
 
           {/* Top KPIs inline */}
@@ -241,7 +241,7 @@ export function Page() {
               )}
             </div>
 
-            {/* Footer da lista */}
+            {/* Footer da lista — contagem de contas cadastradas */}
             <div style={{
               padding: '10px 14px',
               borderTop: '1px solid #EDE6DC',
@@ -252,13 +252,14 @@ export function Page() {
                 fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
                 color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase',
               }}>
-                Total
+                Cadastradas
               </span>
               <span style={{
                 fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700,
-                color: saldoTotal >= 0 ? '#2C1A0F' : '#C4553B',
-                letterSpacing: '-0.5px',
-              }}>{fmt(saldoTotal)}</span>
+                color: '#2C1A0F', letterSpacing: '-0.5px',
+              }}>
+                {contas.length} {contas.length === 1 ? 'conta' : 'contas'}
+              </span>
             </div>
           </div>
 
