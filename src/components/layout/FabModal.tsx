@@ -64,9 +64,6 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
 
   const tipoMeta = TIPO_META[tipo]
   const valorNum = parseFloat(valor.replace(',', '.')) || 0
-  const contaSelecionada = contas.find(c => c.id === contaId)
-  const contaDestino = contas.find(c => c.id === contaDestinoId)
-  const cartaoSelecionado = cartoes.find(c => c.id === cartaoId)
   const catSelecionada = categorias.find(c => c.id === catId)
 
   const addTagAction = (val: string) => {
@@ -136,18 +133,13 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
     <Modal
       open={true}
       onClose={onClose}
-      size="2xl"
+      size="lg"
       title="Novo lançamento"
       subtitle="Registre uma despesa, receita ou transferência"
     >
-      {/* Body com split layout */}
-      <div style={{
-        flex: 1, overflowY: 'auto',
-        display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 0,
-      }}>
-
-        {/* ─── LEFT: form ─── */}
-        <div style={{ padding: '20px 26px', borderRight: '1px solid #EDE6DC', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Body single column */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ padding: '20px 26px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Tipo tabs com cor semântica */}
           <div style={{
@@ -528,39 +520,10 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
               </div>
             </button>
           )}
-        </div>
-
-        {/* ─── RIGHT: live preview ─── */}
-        <div style={{
-          padding: '20px 26px',
-          background: 'linear-gradient(180deg, #FAF6F0 0%, #FFFFFF 100%)',
-          display: 'flex', flexDirection: 'column', gap: 14,
-        }}>
-          <p style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
-            color: '#9B7B6A', letterSpacing: '.16em', textTransform: 'uppercase', margin: 0,
-          }}>Preview</p>
-
-          {/* Mini row preview */}
-          <LivePreview
-            tipo={tipo}
-            valor={valorNum}
-            descricao={desc || catSelecionada?.nome || ''}
-            categoria={catSelecionada ?? null}
-            conta={fontePag === 'conta' ? contaSelecionada ?? null : null}
-            cartao={fontePag === 'cartao' ? cartaoSelecionado ?? null : null}
-            contaDestino={tipo === 'transferencia' ? contaDestino ?? null : null}
-            data={data}
-            status={status}
-            tags={tags}
-            recorrente={recorrente}
-            parcelas={parcelas}
-            tipoMeta={tipoMeta}
-          />
-
+          {/* Nota explicativa do que vai acontecer */}
           <div style={{
             background: '#FBF8F3', border: '1px solid #EDE6DC',
-            borderRadius: 12, padding: '12px 14px',
+            borderRadius: 12, padding: '10px 14px', marginTop: 4,
           }}>
             <p style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F',
@@ -656,132 +619,3 @@ function ContaSelector({ label, contas, value, onChange, accentCor }: {
   )
 }
 
-// Live preview — mini row + extra info
-type Categoria = ReturnType<typeof useCategorias>[number]
-type Conta = ReturnType<typeof useContas>[number]
-type Cartao = ReturnType<typeof useCartoes>[number]
-
-function LivePreview({
-  tipo, valor, descricao, categoria, conta, cartao, contaDestino,
-  data, status, tags, recorrente, parcelas, tipoMeta,
-}: {
-  tipo: TipoLanc
-  valor: number
-  descricao: string
-  categoria: Categoria | null
-  conta: Conta | null
-  cartao: Cartao | null
-  contaDestino: Conta | null
-  data: string
-  status: 'confirmado' | 'pendente'
-  tags: string[]
-  recorrente: boolean
-  parcelas: number
-  tipoMeta: typeof TIPO_META[TipoLanc]
-}) {
-  const valorDisplay = valor > 0 ? fmt(valor) : 'R$ 0,00'
-  const sign = tipoMeta.sign
-  const corValor = tipo === 'receita' ? '#1E7D5A' : tipo === 'transferencia' ? '#7C5CBF' : '#2C1A0F'
-  const dataFmt = data ? new Date(data + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''
-
-  return (
-    <div style={{
-      background: '#FFFFFF', border: '1px solid #EDE6DC',
-      borderRadius: 14, padding: '12px 14px',
-      boxShadow: '0 4px 18px rgba(44,26,15,0.06)',
-      display: 'flex', flexDirection: 'column', gap: 10,
-    }}>
-      {/* Row preview */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        {tipo === 'transferencia' ? (
-          <div style={{ width: 38, height: 38, borderRadius: 11, background: tipoMeta.cor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <IconArrowsExchange size={20} stroke={2} color="#FFFFFF"/>
-          </div>
-        ) : categoria ? (
-          <CategoryIcon nome={categoria.nome} cor={categoria.cor} size={38} radius={11} />
-        ) : (
-          <div style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(122,92,79,0.12)', flexShrink: 0 }}/>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
-            color: descricao ? '#2C1A0F' : '#9B7B6A', margin: 0,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            {descricao || 'Descrição da transação'}
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, flexWrap: 'nowrap', overflow: 'hidden' }}>
-            {tipo === 'transferencia' ? (
-              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#7A5C4F' }}>
-                {conta?.nome ?? '—'} → {contaDestino?.nome ?? '—'}
-              </span>
-            ) : (
-              <>
-                {categoria && (
-                  <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#7A5C4F' }}>
-                    {categoria.nome}
-                  </span>
-                )}
-                {(conta || cartao) && (
-                  <>
-                    <span style={{ color: '#D4C8BC', fontSize: 9 }}>·</span>
-                    {conta ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <BankLogo logo={conta.logo} nome={conta.nome} cor={conta.cor} size={14} radiusRatio={0.28}/>
-                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A' }}>{conta.nome}</span>
-                      </span>
-                    ) : cartao ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <BankLogo logo={cartao.logo} nome={cartao.nome} cor={cartao.cor} size={14} radiusRatio={0.28}/>
-                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A' }}>{cartao.nome}{parcelas > 1 ? ` ${parcelas}×` : ''}</span>
-                      </span>
-                    ) : null}
-                  </>
-                )}
-                {status === 'pendente' && (
-                  <span style={{
-                    fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
-                    color: '#A8730F', background: 'rgba(212,160,23,0.16)',
-                    padding: '1px 5px', borderRadius: 5, letterSpacing: '.04em',
-                  }}>pendente</span>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-        <span style={{
-          fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700,
-          color: corValor, letterSpacing: '-0.4px',
-        }}>{sign}{valorDisplay}</span>
-      </div>
-
-      {/* Meta info */}
-      <div style={{
-        display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center',
-        padding: '8px 0 0', borderTop: '1px solid #F5F0E8',
-      }}>
-        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.04em' }}>
-          {dataFmt || '— —'}
-        </span>
-        {recorrente && (
-          <>
-            <span style={{ color: '#D4C8BC', fontSize: 9 }}>·</span>
-            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: tipoMeta.cor, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-              <IconRepeat size={10} stroke={2.4} /> Recorrente
-            </span>
-          </>
-        )}
-        {tags.map(t => (
-          <span key={t} style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 600,
-            color: '#7A5C4F', background: '#FBF8F3', border: '1px solid #EDE6DC',
-            padding: '1px 6px', borderRadius: 5,
-            display: 'inline-flex', alignItems: 'center', gap: 2,
-          }}>
-            <IconTag size={9} stroke={2}/>{t}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
