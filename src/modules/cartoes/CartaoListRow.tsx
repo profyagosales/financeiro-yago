@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Cartao } from '@/db/schema'
 import { fmt, mesAnoAtual } from '@/lib/format'
+import { BankLogo } from '@/components/ui/BankLogo'
 import { BandeiraLogo } from '@/components/ui/BandeiraLogo'
 
 interface Props {
@@ -46,16 +47,32 @@ export function CartaoListRow({ cartao, active, onClick }: Props) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {/* Mini bandeira badge */}
-        <div style={{
-          width: 38, height: 28, borderRadius: 7,
-          background: `linear-gradient(135deg, ${cartao.cor}, ${cartao.cor}cc)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
-          boxShadow: `0 2px 6px ${cartao.cor}38`,
-        }}>
-          <BandeiraLogo bandeira={cartao.bandeira} size={24} variant="light" />
-        </div>
+        {/* Logo do banco (uploaded) ou mini badge com bandeira como fallback */}
+        {cartao.logo && (cartao.logo.startsWith('data:') || cartao.logo.startsWith('http')) ? (
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <BankLogo logo={cartao.logo} nome={cartao.nome} cor={cartao.cor} size={36} radiusRatio={0.22} />
+            {/* Mini bandeira no canto inferior direito como acento */}
+            <div style={{
+              position: 'absolute', bottom: -4, right: -4,
+              background: '#FFFFFF', borderRadius: 5, padding: '2px 3px',
+              border: '1px solid #EDE6DC',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              lineHeight: 0,
+            }}>
+              <BandeiraLogo bandeira={cartao.bandeira} size={14} variant="dark" />
+            </div>
+          </div>
+        ) : (
+          <div style={{
+            width: 38, height: 28, borderRadius: 7,
+            background: `linear-gradient(135deg, ${cartao.cor}, ${cartao.cor}cc)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: `0 2px 6px ${cartao.cor}38`,
+          }}>
+            <BandeiraLogo bandeira={cartao.bandeira} size={24} variant="light" />
+          </div>
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
