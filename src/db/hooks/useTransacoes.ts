@@ -48,3 +48,47 @@ export async function deleteTransacao(id: number) {
 export async function editTransacao(id: number, data: Partial<import('../schema').Transacao>) {
   return db.transacoes.update(id, { ...data, updatedAt: Date.now() })
 }
+
+// ─── Edit inteligente que ajusta saldo automaticamente ──────────────
+// Se `valor`, `tipo` ou `contaId` mudarem, reverte o impacto antigo
+// no saldo da conta e aplica o novo. Mantém consistência total.
+export async function editTransacaoComSaldo(id: number, novosDados: Partial<Transacao>) {
+  const original = await db.transacoes.get(id)
+  if (!original) return
+
+  const novoValor   = novosDados.valor   ?? original.valor
+  const novoTipo    = novosDados.tipo    ?? original.tipo
+  const novaContaId = novosDados.contaId ?? original.contaId
+
+  // Houve mudança que afeta saldo?
+  const afetaSaldo = novoValor !== original.valor
+                  || novoTipo !== original.tipo
+                  || novaContaId !== original.contaId
+
+  if (afetaSaldo) {
+    // Reverte impacto antigo na conta original
+    const contaAntiga = await db.contas.get(original.contaId)
+    if (contaAntiga) {
+      const deltaReverter = original.tipo === 'receita' ? -original.valor : original.valor
+      await db.contas.update(original.contaId, {
+        saldoAtual: contaAntiga.saldoAtual + deltaReverter,
+        updatedAt: Date.now(),
+      })
+    }
+    // Aplica novo impacto (na conta nova, que pode ser a mesma)
+    const contaNova = await db.contas.get(novaContaId)
+    if (contaNova) {
+      const deltaAplicar = novoTipo === 'receita' ? novoValor : -novoValor
+      // Se conta é a mesma, o saldo já foi revertido — soma o novo
+      const saldoBase = novaContaId === original.contaId
+        ? (contaNova.saldoAtual + (original.tipo === 'receita' ? -original.valor : original.valor))
+        : contaNova.saldoAtual
+      await db.contas.update(novaContaId, {
+        saldoAtual: saldoBase + deltaAplicar,
+        updatedAt: Date.now(),
+      })
+    }
+  }
+
+  return db.transacoes.update(id, { ...novosDados, updatedAt: Date.now() })
+}

@@ -12,6 +12,7 @@ import { IconPlus } from '@tabler/icons-react'
 const FIXED_LAYOUT_ROUTES = new Set([
   '/contas',
   '/cartoes',
+  '/transacoes',
 ])
 function isFixedLayoutRoute(pathname: string): boolean {
   return FIXED_LAYOUT_ROUTES.has(pathname)
