@@ -10,6 +10,10 @@ import { fmt } from '@/lib/format'
 import { db } from '@/db/schema'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
+import { TabInvestimentos } from './TabInvestimentos'
+import { TabDividas } from './TabDividas'
+import { TabPatrimonio } from './TabPatrimonio'
+import { TabDesejos } from './TabDesejos'
 
 // ─── Design tokens ───────────────────────────────────────────────────────────
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
@@ -454,9 +458,13 @@ function TabTendencias({ mes, ano, historico }: { mes: number; ano: number; hist
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'visao-geral', label: 'Visão Geral' },
-  { id: 'categorias', label: 'Categorias' },
-  { id: 'tendencias', label: 'Tendências' },
+  { id: 'visao-geral',    label: 'Visão Geral' },
+  { id: 'categorias',     label: 'Categorias' },
+  { id: 'tendencias',     label: 'Tendências' },
+  { id: 'investimentos',  label: 'Investimentos' },
+  { id: 'dividas',        label: 'Dívidas' },
+  { id: 'patrimonio',     label: 'Patrimônio' },
+  { id: 'desejos',        label: 'Desejos' },
 ] as const
 
 type TabId = typeof TABS[number]['id']
@@ -555,6 +563,10 @@ export function Page() {
             {activeTab === 'tendencias' && (
               <TabTendencias mes={mes} ano={ano} historico={historico} />
             )}
+            {activeTab === 'investimentos' && <TabInvestimentos />}
+            {activeTab === 'dividas' && <TabDividas />}
+            {activeTab === 'patrimonio' && <TabPatrimonio />}
+            {activeTab === 'desejos' && <TabDesejos />}
           </motion.div>
         </AnimatePresence>
       </div>
