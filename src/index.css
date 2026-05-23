@@ -99,6 +99,19 @@ html, body, #root {
   background-color: #FFFFFF;
   color: var(--color-dark);
   -webkit-font-smoothing: antialiased;
+  /* Normaliza dígitos: lining (altura uniforme) + tabular (largura uniforme)
+     Evita que glifos como "3" pareçam mais decorativos que "1"/"0" */
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: 'lnum' 1, 'tnum' 1;
+}
+
+/* Lock Fraunces num eixo optical-size estável e desativa o eixo "wonky"
+   para que os dígitos não tenham variação entre páginas/tamanhos */
+.font-display,
+[style*="Fraunces"] {
+  font-variation-settings: 'opsz' 14, 'SOFT' 50, 'WONK' 0;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: 'lnum' 1, 'tnum' 1;
 }
 
 ::-webkit-scrollbar { width: 4px; }
