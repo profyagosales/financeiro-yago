@@ -123,7 +123,10 @@ function useSidebarBadges() {
 const MENU = [
   {
     group: 'Geral',
-    items: [{ path: '/', icon: IconLayoutDashboard, label: 'Dashboard', badgeKey: null }],
+    items: [
+      { path: '/',           icon: IconLayoutDashboard, label: 'Dashboard',  badgeKey: null },
+      { path: '/relatorios', icon: IconChartBar,        label: 'Relatórios', badgeKey: null },
+    ],
   },
   {
     group: 'Finanças',
@@ -138,12 +141,16 @@ const MENU = [
   {
     group: 'Planejamento',
     items: [
-      { path: '/metas',          icon: IconTarget,     label: 'Metas & Orçamento', badgeKey: null },
-      { path: '/desejos',        icon: IconHeart,      label: 'Lista de Desejos',  badgeKey: null },
-      { path: '/investimentos',  icon: IconChartLine,  label: 'Investimentos',     badgeKey: null },
-      { path: '/dividas',        icon: IconCash,       label: 'Dívidas',           badgeKey: null },
-      { path: '/patrimonio',     icon: IconTrendingUp, label: 'Patrimônio',        badgeKey: null },
-      { path: '/relatorios',     icon: IconChartBar,   label: 'Relatórios',        badgeKey: null },
+      { path: '/metas',   icon: IconTarget, label: 'Metas & Orçamento', badgeKey: null },
+      { path: '/desejos', icon: IconHeart,  label: 'Lista de Desejos',  badgeKey: null },
+    ],
+  },
+  {
+    group: 'Patrimônio',
+    items: [
+      { path: '/investimentos', icon: IconChartLine,  label: 'Investimentos', badgeKey: null },
+      { path: '/dividas',       icon: IconCash,       label: 'Dívidas',       badgeKey: null },
+      { path: '/patrimonio',    icon: IconTrendingUp, label: 'Visão Geral',   badgeKey: null },
     ],
   },
 ]
