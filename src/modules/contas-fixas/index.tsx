@@ -44,6 +44,8 @@ export function Page() {
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+  const [payingWithFee, setPayingWithFee] = useState<ContaFixa | null>(null)
+  const [feeForm, setFeeForm] = useState({ juros: '', multa: '' })
   const [paymentMethod, setPaymentMethod] = useState<'conta' | 'cartao'>('conta')
   const [form, setForm] = useState({ nome: '', valor: '', diaVencimento: 10, categoriaId: null as number | null, contaId: null as number | null, cartaoId: null as number | null })
 
@@ -320,12 +322,24 @@ export function Page() {
                           conta={contaVinc}
                           cartao={cartaoVinc}
                           pago={pago}
+                          valorPago={pgto?.valor}
                           vencida={vencida}
                           urgente={urgente}
                           dias={dias}
                           isCurrentMonth={isCurrentMonth}
                           highlighted={selectedDay === cf.diaVencimento}
-                          onPagar={() => marcarPago(cf.id!, view.mes, view.ano, cf.valor)}
+                          onPagar={() => {
+                            if (vencida) {
+                              setFeeForm({ juros: '', multa: '' })
+                              setPayingWithFee(cf)
+                            } else {
+                              marcarPago(cf.id!, view.mes, view.ano, cf.valor)
+                            }
+                          }}
+                          onPagarComJuros={() => {
+                            setFeeForm({ juros: '', multa: '' })
+                            setPayingWithFee(cf)
+                          }}
                           onDesfazer={() => marcarPendente(cf.id!, view.mes, view.ano)}
                           onEdit={() => openEdit(cf)}
                           onDelete={() => setConfirmDelete(cf.id!)}
@@ -491,6 +505,106 @@ export function Page() {
           </motion.div>
         )}
 
+        {/* Modal: Pagar com juros/multa */}
+        {payingWithFee && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setPayingWithFee(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,15,0.55)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 16, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              onClick={e => e.stopPropagation()}
+              style={{ width: '100%', maxWidth: 440, background: '#FFFDF9', borderRadius: 22, padding: '24px 26px', boxShadow: '0 24px 64px rgba(13,6,4,0.4)' }}>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 18 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(196,85,59,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <IconAlertTriangle size={22} stroke={2} color="#C4553B" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ ...DISPLAY as object, fontSize: 18, color: '#2C1A0F', margin: 0 }}>Pagar com juros/multa</h3>
+                  <p style={{ ...SUB as object, fontSize: 12, marginTop: 3 }}>{payingWithFee.nome} · venceu dia {payingWithFee.diaVencimento}</p>
+                </div>
+                <button onClick={() => setPayingWithFee(null)} style={{ background: '#F5F0E8', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <IconX size={14} color="#9B7B6A" />
+                </button>
+              </div>
+
+              {/* Valor original (readonly) */}
+              <div style={{ background: '#FAF6F0', border: '1px solid #EDE6DC', borderRadius: 12, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ ...LABEL as object, color: '#9B7B6A' }}>Valor original</span>
+                <span style={{ ...NUM as object, fontSize: 16, color: '#2C1A0F' }}>{fmt(payingWithFee.valor)}</span>
+              </div>
+
+              {/* Juros + Multa lado a lado */}
+              <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Juros</p>
+                  <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 12px', gap: 6 }}>
+                    <span style={{ ...NUM as object, fontSize: 13, color: '#C4553B' }}>R$</span>
+                    <input
+                      autoFocus
+                      value={feeForm.juros}
+                      onChange={e => setFeeForm(f => ({ ...f, juros: e.target.value.replace(/[^0-9.,]/g, '') }))}
+                      placeholder="0,00"
+                      inputMode="decimal"
+                      style={{ border: 'none', background: 'transparent', ...TEXT, fontSize: 18, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none', width: '100%' }} />
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Multa</p>
+                  <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 12px', gap: 6 }}>
+                    <span style={{ ...NUM as object, fontSize: 13, color: '#C4553B' }}>R$</span>
+                    <input
+                      value={feeForm.multa}
+                      onChange={e => setFeeForm(f => ({ ...f, multa: e.target.value.replace(/[^0-9.,]/g, '') }))}
+                      placeholder="0,00"
+                      inputMode="decimal"
+                      style={{ border: 'none', background: 'transparent', ...TEXT, fontSize: 18, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none', width: '100%' }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Total a pagar */}
+              {(() => {
+                const juros = parseFloat(feeForm.juros.replace(',', '.')) || 0
+                const multa = parseFloat(feeForm.multa.replace(',', '.')) || 0
+                const total = payingWithFee.valor + juros + multa
+                const acrescimo = juros + multa
+                return (
+                  <div style={{ background: 'linear-gradient(135deg, #FAF0EE, #FFEEDC)', border: '1px solid rgba(196,85,59,0.2)', borderRadius: 12, padding: '12px 14px', marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <p style={{ ...LABEL as object, color: '#C4553B', marginBottom: 2 }}>Total a pagar</p>
+                      {acrescimo > 0 && (
+                        <p style={{ ...SUB as object, fontSize: 10, color: '#A8730F', margin: 0 }}>
+                          {fmt(payingWithFee.valor)} + {fmt(acrescimo)} acréscimo
+                        </p>
+                      )}
+                    </div>
+                    <span style={{ ...NUM as object, fontSize: 22, color: '#C4553B' }}>{fmt(total)}</span>
+                  </div>
+                )
+              })()}
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setPayingWithFee(null)} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #E8E0D5', background: 'white', ...TEXT, fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <motion.button whileTap={{ scale: 0.97 }}
+                  onClick={async () => {
+                    const juros = parseFloat(feeForm.juros.replace(',', '.')) || 0
+                    const multa = parseFloat(feeForm.multa.replace(',', '.')) || 0
+                    const total = payingWithFee.valor + juros + multa
+                    await marcarPago(payingWithFee.id!, view.mes, view.ano, total)
+                    setPayingWithFee(null)
+                    setFeeForm({ juros: '', multa: '' })
+                  }}
+                  style={{ flex: 2, padding: '12px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #D4643A, #C4553B)', ...TEXT, fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer', boxShadow: '0 4px 16px rgba(196,85,59,0.35)' }}>
+                  Confirmar pagamento
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         {/* Confirm delete */}
         {confirmDelete !== null && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -556,18 +670,21 @@ interface CompactRowProps {
   conta: Conta | undefined
   cartao: Cartao | undefined
   pago: boolean
+  valorPago?: number
   vencida: boolean
   urgente: boolean
   dias: number | null
   isCurrentMonth: boolean
   highlighted: boolean
   onPagar: () => void
+  onPagarComJuros: () => void
   onDesfazer: () => void
   onEdit: () => void
   onDelete: () => void
   refSetter: (el: HTMLDivElement | null) => void
 }
-function CompactRow({ cf, categoria, conta, cartao, pago, vencida, urgente, dias, isCurrentMonth, highlighted, onPagar, onDesfazer, onEdit, onDelete, refSetter }: CompactRowProps) {
+function CompactRow({ cf, categoria, conta, cartao, pago, valorPago, vencida, urgente, dias, isCurrentMonth, highlighted, onPagar, onPagarComJuros, onDesfazer, onEdit, onDelete, refSetter }: CompactRowProps) {
+  const jurosPagos = pago && valorPago != null && valorPago > cf.valor ? valorPago - cf.valor : 0
   const [hover, setHover] = useState(false)
   const [justPaid, setJustPaid] = useState(false)
 
@@ -639,7 +756,16 @@ function CompactRow({ cf, categoria, conta, cartao, pago, vencida, urgente, dias
       </div>
 
       {/* Valor */}
-      <span style={{ ...NUM as object, fontSize: 14, color: pago ? '#9B7B6A' : '#2C1A0F', textAlign: 'right' }}>{fmt(cf.valor)}</span>
+      <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+        <span style={{ ...NUM as object, fontSize: 14, color: pago ? '#9B7B6A' : '#2C1A0F' }}>
+          {pago && valorPago != null ? fmt(valorPago) : fmt(cf.valor)}
+        </span>
+        {jurosPagos > 0 && (
+          <span style={{ ...TEXT, fontSize: 9, fontWeight: 700, color: '#C4553B', background: 'rgba(196,85,59,0.1)', padding: '1px 6px', borderRadius: 4, letterSpacing: '.02em' }}>
+            +{fmt(jurosPagos)} juros
+          </span>
+        )}
+      </div>
 
       {/* Ações */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -649,12 +775,14 @@ function CompactRow({ cf, categoria, conta, cartao, pago, vencida, urgente, dias
               onDesfazer()
             } else {
               onPagar()
-              setJustPaid(true)
-              setTimeout(() => setJustPaid(false), 1200)
+              if (!vencida) {
+                setJustPaid(true)
+                setTimeout(() => setJustPaid(false), 1200)
+              }
             }
           }}
           style={{
-            background: pago ? 'rgba(58,133,128,0.12)' : justPaid ? '#3A8580' : 'linear-gradient(135deg, #D4643A, #C4553B)',
+            background: pago ? 'rgba(58,133,128,0.12)' : justPaid ? '#3A8580' : vencida ? '#C4553B' : 'linear-gradient(135deg, #D4643A, #C4553B)',
             color: pago ? '#3A8580' : 'white',
             border: 'none', borderRadius: 8, padding: '6px 12px',
             ...TEXT, fontSize: 11, fontWeight: 700, cursor: 'pointer',
@@ -662,8 +790,14 @@ function CompactRow({ cf, categoria, conta, cartao, pago, vencida, urgente, dias
             transition: 'all .15s',
           }}>
           {justPaid && <IconCheck size={11} stroke={3} color="white" />}
-          {justPaid ? 'Pago!' : pago ? 'Desfazer' : 'Pagar'}
+          {justPaid ? 'Pago!' : pago ? 'Desfazer' : vencida ? 'Pagar c/ juros' : 'Pagar'}
         </motion.button>
+        {!pago && !vencida && (
+          <button onClick={onPagarComJuros} title="Pagar com juros/multa"
+            style={{ background: '#FAF0EE', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <IconAlertTriangle size={12} color="#C4553B" stroke={2} />
+          </button>
+        )}
         <AnimatePresence>
           {hover && (
             <motion.div initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} style={{ display: 'flex', gap: 4, overflow: 'hidden' }}>
