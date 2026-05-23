@@ -8,10 +8,11 @@ import { TIPOS, BENCHMARKS, LIQUIDEZ_OPTIONS, TIPO_META } from './constants'
 
 interface Props {
   invest?: Investimento | null
+  presetMetaId?: number
   onClose: () => void
 }
 
-export function InvestimentoForm({ invest, onClose }: Props) {
+export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
   const metas = useMetas()
   const today = new Date().toISOString().split('T')[0]
   const isEditing = !!invest
@@ -28,7 +29,9 @@ export function InvestimentoForm({ invest, onClose }: Props) {
     liquidez: invest?.liquidez ?? '' as InvestimentoLiquidez | '',
     dataAplicacao: invest?.dataAplicacao ?? today,
     dataVencimento: invest?.dataVencimento ?? '',
-    metaId: invest?.metaId !== undefined ? String(invest.metaId) : '',
+    metaId: invest?.metaId !== undefined
+      ? String(invest.metaId)
+      : (presetMetaId !== undefined ? String(presetMetaId) : ''),
   })
 
   // Quando valor aplicado muda e ainda não tem valor atual setado, espelha
