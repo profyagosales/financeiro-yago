@@ -119,8 +119,8 @@ export function Page() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       style={{
-        padding: 32, paddingBottom: 0, width: '100%',
-        height: 'calc(100dvh - 80px)',
+        padding: 32, width: '100%',
+        height: '100dvh',
         display: 'flex', flexDirection: 'column',
       }}>
 
@@ -198,7 +198,6 @@ export function Page() {
           alignItems: 'stretch',
           flex: 1,
           minHeight: 0,
-          paddingBottom: 32,
         }}>
           {/* ─── LEFT: list ─── */}
           <div style={{

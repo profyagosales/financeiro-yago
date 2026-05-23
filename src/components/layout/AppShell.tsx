@@ -7,6 +7,15 @@ import { PWABanner } from './PWABanner'
 import { useUIStore } from '@/store/ui'
 import { IconPlus } from '@tabler/icons-react'
 
+// Rotas que controlam a própria altura (master-detail / fixed layout)
+// → main não adiciona paddingBottom: 80 (que é pra clearance do FAB/nav mobile)
+const FIXED_LAYOUT_ROUTES = new Set([
+  '/contas',
+])
+function isFixedLayoutRoute(pathname: string): boolean {
+  return FIXED_LAYOUT_ROUTES.has(pathname)
+}
+
 function BackgroundMesh() {
   const orbs = [
     { left: '72%', top: '0%',  color: 'rgba(196,85,59,0.32)',  size: 700, dur: 14, delay: 0 },
@@ -53,14 +62,21 @@ export function AppShell() {
         <Sidebar />
       </div>
 
-      {/* Main content */}
+      {/* Main content
+          Páginas de layout fixo (master-detail próprio) zeram o
+          paddingBottom: 80 (que existe pra clearance de FAB / nav mobile)
+          porque elas próprias controlam a altura via 100dvh.            */}
       <AnimatePresence mode="wait" initial={false}>
         <motion.main key={location.pathname}
           initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           exit={{ opacity: 0, filter: 'blur(2px)' }}
           transition={{ type: 'spring', stiffness: 260, damping: 26, mass: 0.8 }}
-          style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingBottom: 80, position: 'relative', zIndex: 1 }}
+          style={{
+            flex: 1, overflowY: 'auto', overflowX: 'hidden',
+            paddingBottom: isFixedLayoutRoute(location.pathname) ? 0 : 80,
+            position: 'relative', zIndex: 1,
+          }}
           className="main-content">
           <Outlet />
         </motion.main>
