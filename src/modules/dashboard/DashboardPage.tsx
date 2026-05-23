@@ -246,7 +246,7 @@ export function DashboardPage() {
           >
             <div style={{
               position:'absolute', bottom:'84px', left:'50%',
-              transform:'translateX(-50%)', whiteSpace:'nowrap', zIndex:1,
+              transform:'translateX(-50%)', zIndex:1, width:'max-content', maxWidth:220,
             }}>
               <FairyBubble phrase={activePhrase} />
             </div>

@@ -103,7 +103,7 @@ export function FairyBubble({ phrase }: { phrase: Phrase }) {
           WebkitBackdropFilter: 'blur(14px)',
           borderRadius: 14,
           padding: '8px 16px',
-          maxWidth: 230,
+          width: 210,
           textAlign: 'center',
           boxShadow: '0 4px 18px rgba(80,78,118,0.12)',
           border: '1px solid rgba(255,255,255,0.85)',
@@ -112,11 +112,13 @@ export function FairyBubble({ phrase }: { phrase: Phrase }) {
         <p style={{
           fontFamily: "'Fraunces',Georgia,serif",
           fontStyle: 'italic',
-          fontSize: 13.5,
+          fontSize: 13,
           fontWeight: 400,
           color: '#504E76',
           lineHeight: 1.45,
           margin: 0,
+          wordBreak: 'break-word',
+          whiteSpace: 'normal',
         }}>
           {phrase.text}
         </p>
