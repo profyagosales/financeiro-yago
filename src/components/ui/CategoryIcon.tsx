@@ -22,6 +22,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   'assinaturas': MonitorPlay,
   'investimentos': ChartLineUp,
   'outros gastos': ShoppingCart,
+  'empréstimos': Handshake,
+  'dívidas': Handshake,
   'salário': Wallet,
   'freelance': Laptop,
   'rendimentos': ChartLineUp,
