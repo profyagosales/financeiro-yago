@@ -26,11 +26,48 @@ export async function marcarPago(contaFixaId: number, mes: number, ano: number, 
   const today = new Date().toISOString().split('T')[0]
   if (existing) await db.pagamentosFixos.update(existing.id!, { status: 'pago', dataPagamento: today, valor })
   else await db.pagamentosFixos.add({ contaFixaId, mes, ano, status: 'pago', dataPagamento: today, valor })
+
+  // Se a conta fixa é paga via cartão, criar lançamento na fatura do mês corrente
+  const cf = await db.contasFixas.get(contaFixaId)
+  if (cf?.cartaoId) {
+    // Evita duplicidade: procura lançamento já vinculado a este pagamentoFixo (via descrição padronizada)
+    const tag = `[fixa:${contaFixaId}:${mes}:${ano}]`
+    const existingLanc = await db.lancamentosCartao
+      .where('[cartaoId+mes+ano]').equals([cf.cartaoId, mes, ano])
+      .filter(l => l.descricao.includes(tag))
+      .first()
+    if (!existingLanc) {
+      await db.lancamentosCartao.add({
+        cartaoId: cf.cartaoId,
+        descricao: `${cf.nome} ${tag}`,
+        valor,
+        data: today,
+        categoriaId: cf.categoriaId,
+        parcelaAtual: 1,
+        totalParcelas: 1,
+        mes,
+        ano,
+      })
+    }
+  }
+
   await sincronizarDividaSeVinculada(contaFixaId)
 }
 export async function marcarPendente(contaFixaId: number, mes: number, ano: number) {
   const existing = await db.pagamentosFixos.where({ contaFixaId, mes, ano }).first()
   if (existing) await db.pagamentosFixos.update(existing.id!, { status: 'pendente', dataPagamento: undefined })
+
+  // Se a conta fixa é paga via cartão, remover o lançamento criado automaticamente
+  const cf = await db.contasFixas.get(contaFixaId)
+  if (cf?.cartaoId) {
+    const tag = `[fixa:${contaFixaId}:${mes}:${ano}]`
+    const lanc = await db.lancamentosCartao
+      .where('[cartaoId+mes+ano]').equals([cf.cartaoId, mes, ano])
+      .filter(l => l.descricao.includes(tag))
+      .first()
+    if (lanc?.id) await db.lancamentosCartao.delete(lanc.id)
+  }
+
   await sincronizarDividaSeVinculada(contaFixaId)
 }
 

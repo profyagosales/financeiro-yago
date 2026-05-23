@@ -2,12 +2,14 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useContasFixas, usePagamentosFixos, addContaFixa, editContaFixa, marcarPago, marcarPendente, deleteContaFixa } from '@/db/hooks/useContasFixas'
 import { useContas } from '@/db/hooks/useContas'
+import { useCartoes } from '@/db/hooks/useCartoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { BandeiraLogo } from '@/components/ui/BandeiraLogo'
 import { fmt } from '@/lib/format'
 import { Dobrao } from '@/components/mascot/Dobrao'
-import type { Categoria, Conta, ContaFixa } from '@/db/schema'
-import { IconPlus, IconX, IconTrash, IconCheck, IconEdit, IconChevronLeft, IconChevronRight, IconAlertTriangle, IconCircleCheck, IconCalendarDue, IconTrendingUp, IconCalendar, IconFlame } from '@tabler/icons-react'
+import type { Categoria, Conta, Cartao, ContaFixa } from '@/db/schema'
+import { IconPlus, IconX, IconTrash, IconCheck, IconEdit, IconChevronLeft, IconChevronRight, IconAlertTriangle, IconCircleCheck, IconCalendarDue, IconTrendingUp, IconCalendar, IconFlame, IconBuildingBank, IconCreditCard } from '@tabler/icons-react'
 
 // ─── Typography tokens ───────────────────────────────────────────────
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
@@ -37,11 +39,13 @@ export function Page() {
   const pagamentos = usePagamentosFixos(view.mes, view.ano)
   const categorias = useCategorias('despesa')
   const contas = useContas()
+  const cartoes = useCartoes()
 
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
-  const [form, setForm] = useState({ nome: '', valor: '', diaVencimento: 10, categoriaId: null as number | null, contaId: null as number | null })
+  const [paymentMethod, setPaymentMethod] = useState<'conta' | 'cartao'>('conta')
+  const [form, setForm] = useState({ nome: '', valor: '', diaVencimento: 10, categoriaId: null as number | null, contaId: null as number | null, cartaoId: null as number | null })
 
   // Mapas de apoio
   const catMap = useMemo(() => new Map(categorias.map(c => [c.id!, c])), [categorias])
@@ -102,16 +106,28 @@ export function Page() {
   // Form helpers
   const openEdit = (cf: ContaFixa) => {
     setEditingId(cf.id!)
-    setForm({ nome: cf.nome, valor: String(cf.valor), diaVencimento: cf.diaVencimento, categoriaId: cf.categoriaId, contaId: cf.contaId ?? null })
+    setPaymentMethod(cf.cartaoId ? 'cartao' : 'conta')
+    setForm({ nome: cf.nome, valor: String(cf.valor), diaVencimento: cf.diaVencimento, categoriaId: cf.categoriaId, contaId: cf.contaId ?? null, cartaoId: cf.cartaoId ?? null })
     setAdding(true)
+  }
+  const resetForm = () => {
+    setForm({ nome: '', valor: '', diaVencimento: 10, categoriaId: null, contaId: null, cartaoId: null })
+    setPaymentMethod('conta')
   }
   const handleSave = async () => {
     if (!form.nome || !form.valor || !form.categoriaId) return
-    const data = { nome: form.nome, valor: parseFloat(form.valor.replace(',', '.')), diaVencimento: form.diaVencimento, categoriaId: form.categoriaId, contaId: form.contaId }
+    const data = {
+      nome: form.nome,
+      valor: parseFloat(form.valor.replace(',', '.')),
+      diaVencimento: form.diaVencimento,
+      categoriaId: form.categoriaId,
+      contaId: paymentMethod === 'conta' ? form.contaId : null,
+      cartaoId: paymentMethod === 'cartao' ? (form.cartaoId ?? undefined) : undefined,
+    }
     if (editingId !== null) await editContaFixa(editingId, data)
-    else await addContaFixa({ ...data, cartaoId: undefined, recorrencia: 'mensal', alertaDiasAntes: 3, ativo: true })
+    else await addContaFixa({ ...data, recorrencia: 'mensal', alertaDiasAntes: 3, ativo: true })
     setAdding(false); setEditingId(null)
-    setForm({ nome: '', valor: '', diaVencimento: 10, categoriaId: null, contaId: null })
+    resetForm()
   }
 
   // Scroll to day refs
@@ -159,7 +175,7 @@ export function Page() {
               <IconChevronRight size={16} color="#7A5C4F" stroke={2} />
             </button>
           </div>
-          <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setEditingId(null); setForm({ nome: '', valor: '', diaVencimento: 10, categoriaId: null, contaId: null }); setAdding(true) }}
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setEditingId(null); resetForm(); setAdding(true) }}
             style={{ background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: 'white', border: 'none', borderRadius: 12, padding: '10px 18px', ...TEXT, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 16px rgba(196,85,59,0.35)', flexShrink: 0 }}>
             <IconPlus size={16} stroke={2.5} /> Adicionar
           </motion.button>
@@ -290,6 +306,7 @@ export function Page() {
                       const pgto = pgtoMap.get(cf.id!)
                       const pago = pgto?.status === 'pago'
                       const contaVinc = contas.find(c => c.id === cf.contaId)
+                      const cartaoVinc = cartoes.find(c => c.id === cf.cartaoId)
                       const dias = isCurrentMonth ? cf.diaVencimento - today.getDate() : null
                       const vencida = !pago && isCurrentMonth && (dias ?? 0) < 0
                       const urgente = !pago && isCurrentMonth && (dias ?? 99) >= 0 && (dias ?? 99) <= 3
@@ -301,6 +318,7 @@ export function Page() {
                           cf={cf}
                           categoria={grupo.categoria}
                           conta={contaVinc}
+                          cartao={cartaoVinc}
                           pago={pago}
                           vencida={vencida}
                           urgente={urgente}
@@ -378,17 +396,90 @@ export function Page() {
                 ))}
               </div>
 
-              {contas.length > 0 && (
+              {(contas.length > 0 || cartoes.length > 0) && (
                 <>
-                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 8 }}>Debita de <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span></p>
-                  <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 18 }}>
-                    {contas.map(c => (
-                      <button key={c.id} onClick={() => setForm(f => ({ ...f, contaId: f.contaId === c.id ? null : c.id! }))}
-                        style={{ padding: '7px 14px', borderRadius: 20, border: form.contaId === c.id ? `2px solid ${c.cor}` : '1.5px solid #E8E0D5', cursor: 'pointer', background: form.contaId === c.id ? `${c.cor}18` : 'white', ...TEXT, fontSize: 12, fontWeight: 600, color: form.contaId === c.id ? c.cor : '#7A5C4F', transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: c.cor }} />{c.nome}
-                      </button>
-                    ))}
+                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 8 }}>Forma de pagamento <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span></p>
+
+                  {/* Toggle Débito / Crédito */}
+                  <div style={{ display: 'flex', gap: 6, background: '#F5F0E8', padding: 4, borderRadius: 12, marginBottom: 10 }}>
+                    <button
+                      onClick={() => { setPaymentMethod('conta'); setForm(f => ({ ...f, cartaoId: null })) }}
+                      style={{
+                        flex: 1, padding: '8px 12px', borderRadius: 9,
+                        background: paymentMethod === 'conta' ? '#FFFFFF' : 'transparent',
+                        boxShadow: paymentMethod === 'conta' ? '0 1px 3px rgba(44,26,15,0.08)' : 'none',
+                        border: 'none', cursor: 'pointer',
+                        ...TEXT, fontSize: 12, fontWeight: 700,
+                        color: paymentMethod === 'conta' ? '#2C1A0F' : '#9B7B6A',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        transition: 'all .15s',
+                      }}>
+                      <IconBuildingBank size={14} stroke={2} /> Débito em conta
+                    </button>
+                    <button
+                      onClick={() => { setPaymentMethod('cartao'); setForm(f => ({ ...f, contaId: null })) }}
+                      style={{
+                        flex: 1, padding: '8px 12px', borderRadius: 9,
+                        background: paymentMethod === 'cartao' ? '#FFFFFF' : 'transparent',
+                        boxShadow: paymentMethod === 'cartao' ? '0 1px 3px rgba(44,26,15,0.08)' : 'none',
+                        border: 'none', cursor: 'pointer',
+                        ...TEXT, fontSize: 12, fontWeight: 700,
+                        color: paymentMethod === 'cartao' ? '#2C1A0F' : '#9B7B6A',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        transition: 'all .15s',
+                      }}>
+                      <IconCreditCard size={14} stroke={2} /> Cartão de crédito
+                    </button>
                   </div>
+
+                  {/* Chips: contas OU cartões */}
+                  {paymentMethod === 'conta' ? (
+                    contas.length > 0 ? (
+                      <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 18 }}>
+                        {contas.map(c => (
+                          <button key={c.id} onClick={() => setForm(f => ({ ...f, contaId: f.contaId === c.id ? null : c.id! }))}
+                            style={{ padding: '7px 14px', borderRadius: 20, border: form.contaId === c.id ? `2px solid ${c.cor}` : '1.5px solid #E8E0D5', cursor: 'pointer', background: form.contaId === c.id ? `${c.cor}18` : 'white', ...TEXT, fontSize: 12, fontWeight: 600, color: form.contaId === c.id ? c.cor : '#7A5C4F', transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: c.cor }} />{c.nome}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p style={{ ...SUB as object, fontSize: 12, marginBottom: 18, padding: '10px 14px', background: '#FAF6F0', borderRadius: 10, border: '1px dashed #E8E0D5' }}>
+                        Nenhuma conta cadastrada. Vá em <strong>Contas</strong> para adicionar.
+                      </p>
+                    )
+                  ) : (
+                    cartoes.length > 0 ? (
+                      <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 18 }}>
+                        {cartoes.map(card => (
+                          <button key={card.id} onClick={() => setForm(f => ({ ...f, cartaoId: f.cartaoId === card.id ? null : card.id! }))}
+                            style={{ padding: '7px 12px 7px 8px', borderRadius: 20, border: form.cartaoId === card.id ? `2px solid ${card.cor}` : '1.5px solid #E8E0D5', cursor: 'pointer', background: form.cartaoId === card.id ? `${card.cor}18` : 'white', ...TEXT, fontSize: 12, fontWeight: 600, color: form.cartaoId === card.id ? card.cor : '#7A5C4F', transition: 'all .15s', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{
+                              width: 22, height: 16, borderRadius: 4,
+                              background: `linear-gradient(135deg, ${card.cor}, ${card.cor}cc)`,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                            }}>
+                              <BandeiraLogo bandeira={card.bandeira} size={11} variant="light" />
+                            </div>
+                            {card.nome}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p style={{ ...SUB as object, fontSize: 12, marginBottom: 18, padding: '10px 14px', background: '#FAF6F0', borderRadius: 10, border: '1px dashed #E8E0D5' }}>
+                        Nenhum cartão cadastrado. Vá em <strong>Cartões</strong> para adicionar.
+                      </p>
+                    )
+                  )}
+
+                  {paymentMethod === 'cartao' && form.cartaoId && (
+                    <div style={{ background: 'rgba(80,78,118,0.08)', border: '1px solid rgba(80,78,118,0.18)', borderRadius: 10, padding: '8px 12px', marginBottom: 18, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                      <IconCreditCard size={14} color="#504E76" stroke={2} style={{ marginTop: 2, flexShrink: 0 }} />
+                      <p style={{ ...TEXT, fontSize: 11, color: '#504E76', lineHeight: 1.4, margin: 0 }}>
+                        Ao marcar como pago, será criado um lançamento na fatura do cartão automaticamente.
+                      </p>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -463,6 +554,7 @@ interface CompactRowProps {
   cf: ContaFixa
   categoria: Categoria
   conta: Conta | undefined
+  cartao: Cartao | undefined
   pago: boolean
   vencida: boolean
   urgente: boolean
@@ -475,7 +567,7 @@ interface CompactRowProps {
   onDelete: () => void
   refSetter: (el: HTMLDivElement | null) => void
 }
-function CompactRow({ cf, categoria, conta, pago, vencida, urgente, dias, isCurrentMonth, highlighted, onPagar, onDesfazer, onEdit, onDelete, refSetter }: CompactRowProps) {
+function CompactRow({ cf, categoria, conta, cartao, pago, vencida, urgente, dias, isCurrentMonth, highlighted, onPagar, onDesfazer, onEdit, onDelete, refSetter }: CompactRowProps) {
   const [hover, setHover] = useState(false)
   const [justPaid, setJustPaid] = useState(false)
 
@@ -528,8 +620,18 @@ function CompactRow({ cf, categoria, conta, pago, vencida, urgente, dias, isCurr
             <>
               <span style={{ color: '#D4C8BC', fontSize: 9 }}>·</span>
               <span style={{ ...TEXT, fontSize: 10, fontWeight: 600, color: '#9B7B6A', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <IconBuildingBank size={9} stroke={2} color="#9B7B6A" />
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: conta.cor }} />
                 {conta.nome}
+              </span>
+            </>
+          )}
+          {cartao && (
+            <>
+              <span style={{ color: '#D4C8BC', fontSize: 9 }}>·</span>
+              <span style={{ ...TEXT, fontSize: 10, fontWeight: 600, color: cartao.cor, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <IconCreditCard size={9} stroke={2} color={cartao.cor} />
+                {cartao.nome}
               </span>
             </>
           )}
