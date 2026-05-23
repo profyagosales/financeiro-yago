@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard, IconBuildingBank, IconCreditCard, IconArrowsExchange,
   IconRepeat, IconCalendarStats, IconTarget, IconTrendingUp, IconChartBar,
-  IconSettings, IconChevronLeft, IconChevronRight, IconLogout,
+  IconSettings, IconChevronLeft, IconChevronRight, IconLogout, IconChartLine,
 } from '@tabler/icons-react'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
 import { useCartoes } from '@/db/hooks/useCartoes'
@@ -138,9 +138,10 @@ const MENU = [
   {
     group: 'Planejamento',
     items: [
-      { path: '/metas',      icon: IconTarget,     label: 'Metas & Orçamento', badgeKey: null },
-      { path: '/patrimonio', icon: IconTrendingUp, label: 'Patrimônio',        badgeKey: null },
-      { path: '/relatorios', icon: IconChartBar,   label: 'Relatórios',        badgeKey: null },
+      { path: '/metas',          icon: IconTarget,     label: 'Metas & Orçamento', badgeKey: null },
+      { path: '/investimentos',  icon: IconChartLine,  label: 'Investimentos',     badgeKey: null },
+      { path: '/patrimonio',     icon: IconTrendingUp, label: 'Patrimônio',        badgeKey: null },
+      { path: '/relatorios',     icon: IconChartBar,   label: 'Relatórios',        badgeKey: null },
     ],
   },
 ]
