@@ -63,3 +63,33 @@ export async function addLancamentoCartao(data: {
 export async function editCartao(id: number, data: Partial<import('../schema').Cartao>) {
   return db.cartoes.update(id, data)
 }
+
+// ─── Editar / Excluir lançamentos do cartão ───────────────────────────
+export async function editLancamentoCartao(
+  id: number,
+  data: Partial<Omit<LancamentoCartao, 'id' | 'syncId'>>,
+) {
+  return db.lancamentosCartao.update(id, data)
+}
+
+// Exclui um único lançamento (uma parcela específica)
+export async function deleteLancamentoCartao(id: number) {
+  return db.lancamentosCartao.delete(id)
+}
+
+// Exclui o lançamento e TODAS as parcelas dele (cascata)
+export async function deleteLancamentoComParcelas(id: number) {
+  const lanc = await db.lancamentosCartao.get(id)
+  if (!lanc) return
+  // Se for parcela 1, ID é o pai. Senão, busca o pai.
+  const paiId = lanc.parcelaAtual === 1 ? id : lanc.parcelaPaiId
+  if (paiId === undefined) {
+    return db.lancamentosCartao.delete(id)
+  }
+  // Deleta o pai e todas as parcelas
+  await db.lancamentosCartao.delete(paiId)
+  const filhos = await db.lancamentosCartao.where('parcelaPaiId').equals(paiId).toArray()
+  for (const f of filhos) {
+    if (f.id !== undefined) await db.lancamentosCartao.delete(f.id)
+  }
+}

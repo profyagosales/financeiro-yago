@@ -4,7 +4,7 @@ import Dexie, { type Table } from 'dexie'
 export interface Conta { id?: number; nome: string; tipo: string; saldoInicial: number; saldoAtual: number; cor: string; icone: string; logo?: string; chequeEspecialLimite?: number; ativo: boolean; syncId?: string; updatedAt: number }
 export interface Categoria { id?: number; nome: string; tipo: string; icone: string; cor: string; ordem: number; syncId?: string }
 export interface Transacao { id?: number; data: string; valor: number; tipo: string; contaId: number; categoriaId: number; descricao: string; notas?: string; tags?: string[]; status: string; transferId?: string; recorrencia?: string; syncId?: string; updatedAt: number }
-export interface Cartao { id?: number; nome: string; bandeira: string; limite: number; cor: string; diaFechamento: number; diaVencimento: number; ativo: boolean; syncId?: string }
+export interface Cartao { id?: number; nome: string; bandeira: string; limite: number; cor: string; diaFechamento: number; diaVencimento: number; ativo: boolean; logo?: string; titular?: string; ultimosDigitos?: string; syncId?: string }
 export interface LancamentoCartao { id?: number; cartaoId: number; descricao: string; valor: number; data: string; categoriaId: number; parcelaAtual: number; totalParcelas: number; parcelaPaiId?: number; mes: number; ano: number; syncId?: string }
 export interface ContaFixa { id?: number; nome: string; valor: number; diaVencimento: number; categoriaId: number; contaId?: number | null; cartaoId?: number; recorrencia: string; alertaDiasAntes: number; ativo: boolean; syncId?: string }
 export interface PagamentoFixo { id?: number; contaFixaId: number; mes: number; ano: number; status: string; dataPagamento?: string; valor?: number; syncId?: string }

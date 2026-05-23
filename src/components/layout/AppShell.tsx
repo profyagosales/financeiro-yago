@@ -11,6 +11,7 @@ import { IconPlus } from '@tabler/icons-react'
 // → main não adiciona paddingBottom: 80 (que é pra clearance do FAB/nav mobile)
 const FIXED_LAYOUT_ROUTES = new Set([
   '/contas',
+  '/cartoes',
 ])
 function isFixedLayoutRoute(pathname: string): boolean {
   return FIXED_LAYOUT_ROUTES.has(pathname)
