@@ -145,6 +145,19 @@ export function DashboardPage() {
   const calDaysInMonth = new Date(ano, mes, 0).getDate()
   const calCells = calFirstDow + calDaysInMonth // total cells needed
 
+  // Month events list for the Rich Calendar
+  type MonthEvent = { day: number; name: string; tipo: string; cor: string; valor?: number }
+  const monthEventsList: MonthEvent[] = []
+  contasFixas.forEach(cf => {
+    const isPaid = !!pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago')
+    monthEventsList.push({ day: cf.diaVencimento, name: cf.nome, tipo: isPaid ? 'Conta fixa · paga' : 'Conta fixa · pendente', cor: isPaid ? '#3A8580' : '#D4A017', valor: cf.valor })
+  })
+  cartoes.forEach(c => {
+    monthEventsList.push({ day: c.diaFechamento, name: c.nome, tipo: 'Fecha fatura', cor: '#504E76' })
+    monthEventsList.push({ day: c.diaVencimento, name: c.nome, tipo: 'Vence fatura', cor: '#C4553B' })
+  })
+  monthEventsList.sort((a, b) => a.day - b.day)
+
   const contextPhrase: Phrase | undefined =
     saldoLivre < 0          ? { text: 'Tá achando que é herdeira?!',          emoji: 'flame'   }
     : taxaPoupanca > 30     ? { text: 'AAAA você arrasou! Meta batida!',        emoji: 'sparkle' }
@@ -349,34 +362,36 @@ export function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* ─── ROW 2: KPIs ─── */}
+      {/* ─── ROW 2: KPIs (vertical) + Rich Calendar ─── */}
       {(() => {
         const saldoMes = receitas - totalComprometido
-        const saldoColor   = saldoMes >= 0 ? '#3A8580' : '#C4553B'
-        const saldoShadow  = saldoMes >= 0 ? 'rgba(58,133,128,0.4)' : 'rgba(196,85,59,0.4)'
+        const saldoColor  = saldoMes >= 0 ? '#3A8580' : '#C4553B'
+        const saldoShadow = saldoMes >= 0 ? 'rgba(58,133,128,0.4)' : 'rgba(196,85,59,0.4)'
         const KPI_TITLE: React.CSSProperties = {
           fontFamily: "'Fraunces',Georgia,serif",
           fontSize: 11,
           fontWeight: 700,
           color: 'rgba(255,255,255,0.72)',
-          marginBottom: 10,
+          marginBottom: 0,
           letterSpacing: '.08em',
           textTransform: 'uppercase',
         }
         const KPI_VALUE: React.CSSProperties = {
           fontFamily: "'Fraunces',Georgia,serif",
           fontWeight: 700,
-          fontSize: 26,
+          fontSize: 22,
           color: 'white',
           letterSpacing: '-1px',
           lineHeight: 1,
           display: 'block',
           width: '100%',
           textAlign: 'center',
+          marginTop: 6,
         }
         const KPI_CARD: React.CSSProperties = {
-          borderRadius: 22,
-          padding: '20px 20px',
+          flex: 1,
+          borderRadius: 18,
+          padding: '12px 16px',
           position: 'relative',
           overflow: 'hidden',
           transition: 'box-shadow .18s',
@@ -386,139 +401,179 @@ export function DashboardPage() {
           justifyContent: 'center',
         }
         return (
-          <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
+          <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:14, marginBottom:20, alignItems:'stretch' }}>
 
-            {/* ── RECEITAS ── */}
-            <motion.div whileHover={{ y:-3, boxShadow:'0 14px 36px rgba(163,181,101,0.42)' }}
-              style={{ ...KPI_CARD, background:'#A3B565' }}>
-              {/* Onda ascendente */}
-              <svg style={{position:'absolute',right:0,bottom:0,opacity:0.16}} width="110" height="70" viewBox="0 0 110 70" fill="none">
-                <path d="M0,65 Q28,20 55,38 Q82,55 110,8" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-                <path d="M0,65 Q28,20 55,38 Q82,55 110,8 L110,70 L0,70Z" fill="white" opacity="0.07"/>
-                <circle cx="110" cy="8" r="4.5" fill="white" opacity="0.6"/>
-              </svg>
-              <div style={{position:'absolute',top:-18,right:-18,width:54,height:54,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
-              <p style={KPI_TITLE}>Receitas</p>
-              <OdometroSaldo value={receitas} style={KPI_VALUE}/>
-            </motion.div>
+            {/* LEFT: 4 KPIs stacked vertically */}
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
 
-            {/* ── DESPESAS ── */}
-            <motion.div whileHover={{ y:-3, boxShadow:'0 14px 36px rgba(241,100,46,0.42)' }}
-              style={{ ...KPI_CARD, background:'#F1642E' }}>
-              {/* Onda descendente */}
-              <svg style={{position:'absolute',right:0,bottom:0,opacity:0.16}} width="110" height="70" viewBox="0 0 110 70" fill="none">
-                <path d="M0,8 Q28,52 55,32 Q82,14 110,62" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-                <path d="M0,8 Q28,52 55,32 Q82,14 110,62 L110,70 L0,70Z" fill="white" opacity="0.07"/>
-                <circle cx="110" cy="62" r="4.5" fill="white" opacity="0.6"/>
-              </svg>
-              <div style={{position:'absolute',top:-18,right:-18,width:54,height:54,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
-              <p style={KPI_TITLE}>Despesas</p>
-              <OdometroSaldo value={totalComprometido} style={KPI_VALUE}/>
-            </motion.div>
+              {/* ── RECEITAS ── */}
+              <motion.div whileHover={{ y:-2, boxShadow:'0 14px 36px rgba(163,181,101,0.42)' }}
+                style={{ ...KPI_CARD, background:'#A3B565' }}>
+                <svg style={{position:'absolute',right:0,bottom:0,opacity:0.14}} width="90" height="56" viewBox="0 0 90 56" fill="none">
+                  <path d="M0,52 Q22,16 44,30 Q66,44 90,6" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                  <path d="M0,52 Q22,16 44,30 Q66,44 90,6 L90,56 L0,56Z" fill="white" opacity="0.07"/>
+                  <circle cx="90" cy="6" r="4" fill="white" opacity="0.6"/>
+                </svg>
+                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
+                <p style={KPI_TITLE}>Receitas</p>
+                <OdometroSaldo value={receitas} style={KPI_VALUE}/>
+              </motion.div>
 
-            {/* ── SALDO (receitas − despesas, cor dinâmica) ── */}
-            <motion.div whileHover={{ y:-3, boxShadow:`0 14px 36px ${saldoShadow}` }}
-              style={{ ...KPI_CARD, background:saldoColor }}>
-              {/* Linha de equilíbrio */}
-              <svg style={{position:'absolute',right:0,bottom:0,opacity:0.18}} width="110" height="70" viewBox="0 0 110 70" fill="none">
-                <line x1="4"  y1="35" x2="106" y2="35" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="4"  y1="44" x2="106" y2="44" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
-                <circle cx="106" cy="35" r="4" fill="white" opacity="0.7"/>
-              </svg>
-              <div style={{position:'absolute',top:-18,right:-18,width:54,height:54,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
-              <p style={KPI_TITLE}>Saldo</p>
-              <OdometroSaldo value={saldoMes} style={KPI_VALUE}/>
-            </motion.div>
+              {/* ── DESPESAS ── */}
+              <motion.div whileHover={{ y:-2, boxShadow:'0 14px 36px rgba(241,100,46,0.42)' }}
+                style={{ ...KPI_CARD, background:'#F1642E' }}>
+                <svg style={{position:'absolute',right:0,bottom:0,opacity:0.14}} width="90" height="56" viewBox="0 0 90 56" fill="none">
+                  <path d="M0,6 Q22,42 44,26 Q66,11 90,50" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                  <path d="M0,6 Q22,42 44,26 Q66,11 90,50 L90,56 L0,56Z" fill="white" opacity="0.07"/>
+                  <circle cx="90" cy="50" r="4" fill="white" opacity="0.6"/>
+                </svg>
+                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
+                <p style={KPI_TITLE}>Despesas</p>
+                <OdometroSaldo value={totalComprometido} style={KPI_VALUE}/>
+              </motion.div>
 
-            {/* ── ACUMULADO (total em contas) ── */}
-            <motion.div whileHover={{ y:-3, boxShadow:'0 14px 36px rgba(80,78,118,0.45)' }}
-              style={{ ...KPI_CARD, background:'#504E76' }}>
-              {/* Barras crescentes */}
-              <svg style={{position:'absolute',right:0,bottom:0,opacity:0.18}} width="110" height="70" viewBox="0 0 110 70" fill="none">
-                <rect x="16" y="48" width="12" height="22" rx="3" fill="white"/>
-                <rect x="34" y="34" width="12" height="36" rx="3" fill="white"/>
-                <rect x="52" y="20" width="12" height="50" rx="3" fill="white"/>
-                <rect x="70" y="8"  width="12" height="62" rx="3" fill="white"/>
-                <rect x="88" y="18" width="12" height="52" rx="3" fill="white" opacity="0.55"/>
-              </svg>
-              <div style={{position:'absolute',top:-18,right:-18,width:54,height:54,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
-              <p style={KPI_TITLE}>Acumulado</p>
-              <OdometroSaldo value={saldoTotal} style={KPI_VALUE}/>
-            </motion.div>
+              {/* ── SALDO (receitas − despesas, cor dinâmica) ── */}
+              <motion.div whileHover={{ y:-2, boxShadow:`0 14px 36px ${saldoShadow}` }}
+                style={{ ...KPI_CARD, background:saldoColor }}>
+                <svg style={{position:'absolute',right:0,bottom:0,opacity:0.18}} width="90" height="56" viewBox="0 0 90 56" fill="none">
+                  <line x1="4"  y1="28" x2="86" y2="28" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                  <line x1="4"  y1="36" x2="86" y2="36" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+                  <circle cx="86" cy="28" r="4" fill="white" opacity="0.7"/>
+                </svg>
+                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
+                <p style={KPI_TITLE}>Saldo</p>
+                <OdometroSaldo value={saldoMes} style={KPI_VALUE}/>
+              </motion.div>
+
+              {/* ── ACUMULADO (total em contas) ── */}
+              <motion.div whileHover={{ y:-2, boxShadow:'0 14px 36px rgba(80,78,118,0.45)' }}
+                style={{ ...KPI_CARD, background:'#504E76' }}>
+                <svg style={{position:'absolute',right:0,bottom:0,opacity:0.18}} width="90" height="56" viewBox="0 0 90 56" fill="none">
+                  <rect x="10" y="38" width="10" height="18" rx="3" fill="white"/>
+                  <rect x="26" y="27" width="10" height="29" rx="3" fill="white"/>
+                  <rect x="42" y="16" width="10" height="40" rx="3" fill="white"/>
+                  <rect x="58" y="6"  width="10" height="50" rx="3" fill="white"/>
+                  <rect x="74" y="14" width="10" height="42" rx="3" fill="white" opacity="0.55"/>
+                </svg>
+                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
+                <p style={KPI_TITLE}>Acumulado</p>
+                <OdometroSaldo value={saldoTotal} style={KPI_VALUE}/>
+              </motion.div>
+
+            </div>
+
+            {/* RIGHT: Rich Calendar */}
+            <div style={{
+              background: '#FFFFFF',
+              border: '1px solid rgba(44,26,15,0.08)',
+              borderRadius: 22,
+              boxShadow: '0 2px 16px rgba(44,26,15,0.05)',
+              padding: '22px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+            }}>
+              {/* Header */}
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
+                <div style={{ display:'flex', alignItems:'baseline', gap:8 }}>
+                  <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:700, color:'#2C1A0F', margin:0, textTransform:'capitalize' }}>{mesNome}</h2>
+                  <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, color:'#9B7B6A' }}>{ano}</span>
+                </div>
+                {monthEventsList.length > 0 && (
+                  <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:600, color:'#7A5C4F', background:'rgba(212,160,23,0.12)', borderRadius:20, padding:'4px 12px' }}>
+                    {monthEventsList.length} evento{monthEventsList.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+
+              {/* Day headers */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:6 }}>
+                {['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d, idx) => (
+                  <div key={d} style={{
+                    fontFamily:"'Plus Jakarta Sans',sans-serif",
+                    fontSize:10, fontWeight:700, textAlign:'center',
+                    color: idx === 0 || idx === 6 ? 'rgba(196,85,59,0.55)' : '#9B7B6A',
+                  }}>{d}</div>
+                ))}
+              </div>
+
+              {/* Calendar grid */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:3, marginBottom:16 }}>
+                {Array.from({ length: Math.ceil(calCells / 7) * 7 }, (_, idx) => {
+                  const day = idx - calFirstDow + 1
+                  const colIdx = idx % 7
+                  const isWeekend = colIdx === 0 || colIdx === 6
+                  if (day < 1 || day > calDaysInMonth) return <div key={idx}/>
+                  const isToday = day === hoje
+                  const isPast = day < hoje
+                  const events = calendarEvents.get(day) ?? []
+                  return (
+                    <div key={idx} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3, padding:'4px 0' }}>
+                      <div style={{
+                        width:34, height:34, borderRadius:'50%',
+                        background: isToday ? '#504E76' : events.length > 0 ? 'rgba(212,160,23,0.08)' : 'transparent',
+                        border: events.length > 0 && !isToday ? '1.5px solid rgba(212,160,23,0.25)' : 'none',
+                        boxShadow: isToday ? '0 4px 12px rgba(80,78,118,0.35)' : 'none',
+                        display:'flex', alignItems:'center', justifyContent:'center',
+                      }}>
+                        <span style={{
+                          fontFamily:"'Plus Jakarta Sans',sans-serif",
+                          fontSize:13,
+                          fontWeight: isToday ? 700 : events.length > 0 ? 600 : 400,
+                          color: isToday ? 'white' : isPast ? 'rgba(44,26,15,0.3)' : isWeekend ? 'rgba(196,85,59,0.7)' : '#2C1A0F',
+                        }}>{day}</span>
+                      </div>
+                      {events.length > 0 && (
+                        <div style={{ display:'flex', gap:2 }}>
+                          {events.slice(0, 3).map((color, ci) => (
+                            <div key={ci} style={{ width:5, height:5, borderRadius:'50%', background:color }}/>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Events list */}
+              {monthEventsList.length > 0 && (
+                <>
+                  <div style={{ height:1, background:'rgba(44,26,15,0.07)', marginBottom:14 }}/>
+                  <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:'#9B7B6A', marginBottom:10, margin:'0 0 10px 0' }}>Eventos do mês</p>
+                  <div style={{ display:'flex', flexDirection:'column', gap:8, overflowY:'auto' }}>
+                    {monthEventsList.slice(0, 6).map((ev, i) => (
+                      <div key={i} style={{ display:'flex', alignItems:'center', gap:10 }}>
+                        <div style={{
+                          minWidth:40, height:24, borderRadius:12,
+                          background: ev.cor, opacity: 0.9,
+                          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+                        }}>
+                          <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, color:'white' }}>dia {ev.day}</span>
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, color:'#2C1A0F', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.name}</p>
+                          <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, color:'#9B7B6A', margin:0 }}>{ev.tipo}</p>
+                        </div>
+                        {ev.valor !== undefined && (
+                          <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:13, fontWeight:700, color:'#2C1A0F', flexShrink:0 }}>{fmt(ev.valor)}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              {monthEventsList.length === 0 && (
+                <div style={{ textAlign:'center', opacity:0.5, marginTop:8 }}>
+                  <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:'#9B7B6A' }}>Sem eventos este mês</p>
+                </div>
+              )}
+            </div>
 
           </motion.div>
         )
       })()}
 
-      {/* ─── SECTION 3: Mini Calendário + Análise de Gastos ─── */}
-      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
-
-        {/* Mini Calendário — branco, border suave */}
-        <div style={{ background:'#FFFFFF', border:'1px solid rgba(44,26,15,0.08)', borderRadius:22, boxShadow:'0 2px 16px rgba(44,26,15,0.05)', padding:20 }}>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 16 }}>
-            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, textTransform: 'capitalize' }}>{mesNome}</h2>
-            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>{ano}</span>
-          </div>
-
-          {/* Day headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2, marginBottom: 6 }}>
-            {['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d => (
-              <div key={d} style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', textAlign: 'center' }}>{d}</div>
-            ))}
-          </div>
-
-          {/* Calendar grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2 }}>
-            {Array.from({ length: Math.ceil(calCells / 7) * 7 }, (_, idx) => {
-              const day = idx - calFirstDow + 1
-              if (day < 1 || day > calDaysInMonth) {
-                return <div key={idx} />
-              }
-              const isToday = day === hoje
-              const isPast = day < hoje
-              const events = calendarEvents.get(day) ?? []
-              return (
-                <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                  <div style={{
-                    width: 28, height: 28,
-                    borderRadius: '50%',
-                    background: isToday ? '#504E76' : 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <span style={{
-                      fontFamily: "'Plus Jakarta Sans',sans-serif",
-                      fontSize: 11,
-                      fontWeight: isToday ? 700 : 400,
-                      color: isToday ? 'white' : isPast ? 'rgba(44,26,15,0.35)' : '#2C1A0F',
-                    }}>{day}</span>
-                  </div>
-                  {events.length > 0 && (
-                    <div style={{ display: 'flex', gap: 2 }}>
-                      {events.slice(0, 3).map((color, ci) => (
-                        <div key={ci} style={{ width: 3, height: 3, borderRadius: '50%', background: color }} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Legend */}
-          <div style={{ display: 'flex', gap: 14, marginTop: 14, flexWrap: 'wrap' }}>
-            {[
-              { color: '#D4A017', label: 'Conta fixa' },
-              { color: '#504E76', label: 'Fecha cartão' },
-              { color: '#C4553B', label: 'Vence cartão' },
-            ].map(item => (
-              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 7, height: 7, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
-                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A' }}>{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* ─── Análise de gastos + Top 5 ─── */}
+      <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:20 }}>
 
         {/* Top Categorias — #F4F0FF lilás clarinho */}
         <div style={{ background:'#F4F0FF', border:'1px solid rgba(196,195,227,0.35)', borderRadius:22, boxShadow:'0 2px 16px rgba(196,195,227,0.18)', padding:20, display:'flex', flexDirection:'column' }}>
@@ -567,10 +622,6 @@ export function DashboardPage() {
             </div>
           )}
         </div>
-      </motion.div>
-
-      {/* ─── SECTION 4: Top 5 Despesas + Metas ─── */}
-      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
 
         {/* Top 5 Despesas — branco, barras horizontais animadas */}
         <div style={{ background:'#FFFFFF', border:'1px solid rgba(44,26,15,0.08)', borderRadius:22, boxShadow:'0 2px 16px rgba(44,26,15,0.05)', padding:20 }}>
@@ -615,8 +666,10 @@ export function DashboardPage() {
             </div>
           )}
         </div>
+      </motion.div>
 
-        {/* Metas — #FFF0F5 rosa clarinho, progress rings SVG */}
+      {/* ─── Metas ─── */}
+      <motion.div variants={ITEM} style={{ marginBottom:20 }}>
         <div style={{ background:'#FFF0F5', border:'1px solid rgba(255,107,157,0.2)', borderRadius:22, boxShadow:'0 2px 16px rgba(255,107,157,0.1)', padding:20 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
             <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, fontWeight:700, color:'#2C1A0F', margin:0 }}>Metas</h2>
@@ -637,13 +690,12 @@ export function DashboardPage() {
               </button>
             </div>
           ) : (
-            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
               {metas.slice(0, 4).map((meta, mi) => {
                 const pct = Math.min(100, meta.valorAlvo > 0 ? (meta.valorAtual / meta.valorAlvo) * 100 : 0)
                 const r = 20, circ = 2 * Math.PI * r
                 return (
                   <div key={meta.id} style={{ display:'flex', alignItems:'center', gap:14 }}>
-                    {/* SVG ring */}
                     <div style={{ flexShrink:0, position:'relative' }}>
                       <svg width="52" height="52" viewBox="0 0 52 52">
                         <circle cx="26" cy="26" r={r} fill="none" stroke="rgba(0,0,0,0.07)" strokeWidth="5"/>
@@ -658,7 +710,6 @@ export function DashboardPage() {
                         <text x="26" y="30" textAnchor="middle" fontSize="10" fontFamily="Fraunces,serif" fontWeight="700" fill={meta.cor}>{pct.toFixed(0)}%</text>
                       </svg>
                     </div>
-                    {/* Info */}
                     <div style={{ flex:1, minWidth:0 }}>
                       <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, fontWeight:700, color:'#2C1A0F', marginBottom:3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{meta.nome}</p>
                       <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, color:'#9B7B6A', margin:0 }}>
