@@ -1,13 +1,20 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { IconPlus, IconHeart, IconShoppingCart, IconCircleMinus } from '@tabler/icons-react'
+import { IconPlus, IconHeart, IconShoppingCart, IconCircleMinus, IconTrash, IconPigMoney } from '@tabler/icons-react'
 import { fmt } from '@/lib/format'
-import { useDesejos } from '@/db/hooks/useDesejos'
+import { useDesejos, deleteDesejo } from '@/db/hooks/useDesejos'
 import type { Desejo, DesejoPrioridade, DesejoStatus } from '@/db/schema'
 import { PRIORIDADES } from './constants'
 import { DesejoCard } from './DesejoCard'
 import { DesejoForm } from './DesejoForm'
 import { ComprarForm } from './ComprarForm'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+
+const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }
+const NUM: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1 }
+const SUB: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }
+const TEXT: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif" }
+const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
 
 export function Page() {
   const todos = useDesejos()
@@ -15,7 +22,10 @@ export function Page() {
   const [editingDesejo, setEditingDesejo] = useState<Desejo | null>(null)
   const [creatingPrio, setCreatingPrio] = useState<DesejoPrioridade | null>(null)
   const [comprandoDesejo, setComprandoDesejo] = useState<Desejo | null>(null)
+  const [confirmDeleteDesejo, setConfirmDeleteDesejo] = useState<Desejo | null>(null)
   const [tab, setTab] = useState<DesejoStatus>('aberto')
+
+  useBodyScrollLock(confirmDeleteDesejo !== null)
 
   const abertos = todos.filter(d => d.status === 'aberto')
   const comprados = todos.filter(d => d.status === 'comprado')
@@ -64,30 +74,13 @@ export function Page() {
         </button>
       </div>
 
-      {/* Stats (só mostra se houver dados) */}
+      {/* KPIs (padrão filled — consistente com /metas, /cartoes, /contas-fixas) */}
       {(abertos.length > 0 || comprados.length > 0) && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
-          <StatCard
-            icon={<IconHeart size={18} stroke={1.8} color="#C4553B" />}
-            label="Desejos em aberto"
-            value={String(abertos.length)}
-            sub={totalEstimadoAbertos > 0 ? `${fmt(totalEstimadoAbertos)} estimado` : undefined}
-            cor="#C4553B"
-          />
-          <StatCard
-            icon={<IconShoppingCart size={18} stroke={1.8} color="#3A8580" />}
-            label="Comprados"
-            value={String(comprados.length)}
-            sub={totalGastoComprados > 0 ? `${fmt(totalGastoComprados)} gasto` : undefined}
-            cor="#3A8580"
-          />
-          <StatCard
-            icon={<IconCircleMinus size={18} stroke={1.8} color="#D4A017" />}
-            label="Economia"
-            value={fmt(economiaTotal)}
-            sub="vs estimado nas compras"
-            cor="#D4A017"
-          />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
+          <Kpi icon={<IconHeart size={14} stroke={2} />} label="Em aberto" value={String(abertos.length)} sub={totalEstimadoAbertos > 0 ? `${fmt(totalEstimadoAbertos)} estimado` : 'sem valor estimado'} cor="#C4553B" bg="#FAF0EE" border="rgba(196,85,59,0.18)" />
+          <Kpi icon={<IconShoppingCart size={14} stroke={2} />} label="Comprados" value={String(comprados.length)} sub={totalGastoComprados > 0 ? `${fmt(totalGastoComprados)} gasto` : 'nenhum ainda'} cor="#3A8580" bg="#EBF5F0" border="rgba(58,133,128,0.18)" />
+          <Kpi icon={<IconPigMoney size={14} stroke={2} />} label="Economia" value={fmt(economiaTotal)} sub="vs estimado" cor="#A8730F" bg="#FDF4E3" border="rgba(212,160,23,0.2)" />
+          <Kpi icon={<IconCircleMinus size={14} stroke={2} />} label="Desistidos" value={String(desistidos.length)} sub={desistidos.length === 0 ? 'nenhum' : 'arquivados'} cor="#7A5C4F" bg="#F5F0E8" border="rgba(122,92,79,0.18)" />
         </div>
       )}
 
@@ -176,6 +169,7 @@ export function Page() {
                         desejo={d}
                         onEdit={() => setEditingDesejo(d)}
                         onComprar={() => setComprandoDesejo(d)}
+                        onDelete={() => setConfirmDeleteDesejo(d)}
                       />
                     ))
                   )}
@@ -195,6 +189,7 @@ export function Page() {
                 key={d.id}
                 desejo={d}
                 onEdit={() => setEditingDesejo(d)}
+                onDelete={() => setConfirmDeleteDesejo(d)}
               />
             ))}
           </div>
@@ -216,34 +211,53 @@ export function Page() {
             onClose={() => setComprandoDesejo(null)}
           />
         )}
+
+        {confirmDeleteDesejo && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setConfirmDeleteDesejo(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)', backdropFilter: 'blur(8px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: '#FFFDF9', borderRadius: 22, padding: '28px 24px', maxWidth: 360, width: '100%', textAlign: 'center', boxShadow: '0 24px 64px rgba(13,6,4,0.4)' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: '#FAF0EE', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <IconTrash size={26} color="#C4553B" stroke={1.8} />
+              </div>
+              <p style={{ ...DISPLAY as object, fontSize: 20, color: '#2C1A0F', marginBottom: 8 }}>Excluir "{confirmDeleteDesejo.nome}"?</p>
+              <p style={{ ...SUB as object, fontSize: 13, marginBottom: 22, lineHeight: 1.5 }}>
+                O desejo será removido permanentemente da sua lista.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setConfirmDeleteDesejo(null)}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #E8E0D5', background: 'white', ...TEXT, fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <motion.button whileTap={{ scale: 0.97 }}
+                  onClick={async () => {
+                    if (confirmDeleteDesejo.id !== undefined) await deleteDesejo(confirmDeleteDesejo.id)
+                    setConfirmDeleteDesejo(null)
+                  }}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: '#C4553B', ...TEXT, fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer', boxShadow: '0 4px 12px rgba(196,85,59,0.3)' }}>
+                  Excluir
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   )
 }
 
-function StatCard({ icon, label, value, sub, cor }: { icon: React.ReactNode; label: string; value: string; sub?: string; cor: string }) {
+// ─── KPI (mesmo padrão visual de /metas e /contas-fixas) ─────────────
+function Kpi({ icon, label, value, sub, cor, bg, border }: { icon: React.ReactNode; label: string; value: string; sub: string; cor: string; bg: string; border: string }) {
   return (
-    <div style={{
-      background: '#FFFFFF', border: '1px solid #EDE6DC',
-      borderLeft: `3px solid ${cor}`,
-      borderRadius: 14, padding: '14px 18px',
-      boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 2px 8px rgba(44,26,15,0.04)',
-      display: 'flex', flexDirection: 'column', gap: 4,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {icon}
-        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase' }}>
-          {label}
-        </span>
+    <div style={{ background: bg, borderRadius: 14, padding: '12px 14px', border: `1px solid ${border}`, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <span style={{ color: cor }}>{icon}</span>
+        <p style={{ ...LABEL as object, color: cor, margin: 0 }}>{label}</p>
       </div>
-      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 24, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.3px', lineHeight: 1 }}>
-        {value}
-      </p>
-      {sub && (
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: 0 }}>
-          {sub}
-        </p>
-      )}
+      <p style={{ ...NUM as object, fontSize: 20, color: cor, margin: 0 }}>{value}</p>
+      <p style={{ ...SUB as object, fontSize: 10, marginTop: 3, margin: '3px 0 0' }}>{sub}</p>
     </div>
   )
 }

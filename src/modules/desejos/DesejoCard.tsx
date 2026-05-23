@@ -1,16 +1,19 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { IconEdit, IconTrash, IconExternalLink, IconShoppingCart, IconCircleMinus, IconRotateClockwise, IconCircleCheck } from '@tabler/icons-react'
 import type { Desejo } from '@/db/schema'
 import { fmt } from '@/lib/format'
-import { deleteDesejo, desistirDesejo, reabrirDesejo } from '@/db/hooks/useDesejos'
+import { desistirDesejo, reabrirDesejo } from '@/db/hooks/useDesejos'
 
 interface Props {
   desejo: Desejo
   onEdit: () => void
   onComprar?: () => void
+  onDelete: () => void
 }
 
-export function DesejoCard({ desejo, onEdit, onComprar }: Props) {
+export function DesejoCard({ desejo, onEdit, onComprar, onDelete }: Props) {
+  const [hover, setHover] = useState(false)
   const isAberto = desejo.status === 'aberto'
   const isComprado = desejo.status === 'comprado'
   const isDesistido = desejo.status === 'desistido'
@@ -22,11 +25,13 @@ export function DesejoCard({ desejo, onEdit, onComprar }: Props) {
   return (
     <motion.div
       layout
-      whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(44,26,15,0.1), 0 2px 8px rgba(44,26,15,0.05)' }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      whileHover={{ y: -3, boxShadow: '0 8px 24px rgba(44,26,15,0.1), 0 2px 8px rgba(44,26,15,0.05)' }}
       transition={{ type: 'spring', stiffness: 240, damping: 26 }}
       style={{
         background: '#FFFFFF', border: '1px solid #EDE6DC',
-        borderRadius: 12, padding: 12,
+        borderRadius: 16, padding: 14,
         boxShadow: '0 1px 3px rgba(44,26,15,0.05)',
         display: 'flex', flexDirection: 'column', gap: 8,
         opacity: isDesistido ? 0.55 : 1,
@@ -109,23 +114,18 @@ export function DesejoCard({ desejo, onEdit, onComprar }: Props) {
       )}
 
       {/* Ações */}
-      <div style={{ display: 'flex', gap: 4, marginTop: 'auto', paddingTop: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginTop: 'auto', paddingTop: 4, alignItems: 'center' }}>
+        {/* Botão principal sempre visível */}
         {isAberto && onComprar && (
           <button onClick={onComprar} title="Marcar como comprado"
             style={{
               flex: 1, background: 'rgba(58,133,128,0.12)', color: '#1E7D5A',
               border: '1px solid rgba(58,133,128,0.3)', borderRadius: 8,
-              padding: '6px 8px', cursor: 'pointer',
+              padding: '7px 8px', cursor: 'pointer',
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
             }}>
             <IconShoppingCart size={11} stroke={2.4} /> Comprei
-          </button>
-        )}
-        {isAberto && (
-          <button onClick={() => desejo.id !== undefined && desistirDesejo(desejo.id)} title="Desistir"
-            style={SMALL_BTN}>
-            <IconCircleMinus size={12} stroke={2} color="#9B7B6A" />
           </button>
         )}
         {(isComprado || isDesistido) && (
@@ -135,16 +135,28 @@ export function DesejoCard({ desejo, onEdit, onComprar }: Props) {
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', marginLeft: 4 }}>Reabrir</span>
           </button>
         )}
-        <button onClick={onEdit} title="Editar" style={SMALL_BTN}>
-          <IconEdit size={11} stroke={1.8} color="#7A5C4F" />
-        </button>
-        <button onClick={() => {
-          if (confirm(`Excluir "${desejo.nome}"?`)) {
-            if (desejo.id !== undefined) deleteDesejo(desejo.id)
-          }
-        }} title="Excluir" style={{ ...SMALL_BTN, background: '#FAEAEA' }}>
-          <IconTrash size={11} stroke={2} color="#C4553B" />
-        </button>
+
+        {/* Ações secundárias só no hover (limpa o card visualmente) */}
+        <AnimatePresence>
+          {hover && (
+            <motion.div initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 6 }}
+              transition={{ duration: 0.12 }}
+              style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+              {isAberto && (
+                <button onClick={() => desejo.id !== undefined && desistirDesejo(desejo.id)} title="Desistir"
+                  style={SMALL_BTN}>
+                  <IconCircleMinus size={12} stroke={2} color="#9B7B6A" />
+                </button>
+              )}
+              <button onClick={onEdit} title="Editar" style={SMALL_BTN}>
+                <IconEdit size={11} stroke={1.8} color="#7A5C4F" />
+              </button>
+              <button onClick={onDelete} title="Excluir" style={{ ...SMALL_BTN, background: '#FAEAEA' }}>
+                <IconTrash size={11} stroke={2} color="#C4553B" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   )
