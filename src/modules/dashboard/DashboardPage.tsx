@@ -325,6 +325,11 @@ export function DashboardPage() {
           position: 'relative',
           overflow: 'hidden',
           transition: 'box-shadow .18s',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
         }
         return (
           <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
