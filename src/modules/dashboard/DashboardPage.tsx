@@ -252,42 +252,51 @@ export function DashboardPage() {
             ))}
           </div>
 
-          {/* ── Texto de saudação ── */}
-          <div style={{ position:'relative', zIndex:1, padding:'28px 32px', minHeight:172, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-            {/* Saudação — discreta, acima do nome */}
-            <p style={{
-              fontFamily:"'Plus Jakarta Sans',sans-serif",
-              fontSize:11, fontWeight:600,
-              color:'#9B7B6A', marginBottom:4,
-              letterSpacing:'.06em', textTransform:'uppercase',
-            }}>{saudacao}</p>
-            {/* Nome — hero */}
-            <h1 style={{
-              fontFamily:"'Fraunces',Georgia,serif",
-              fontWeight:700, fontSize:40,
-              lineHeight:1, letterSpacing:'-1.5px',
-              color:'#2C1A0F', margin:0,
-            }}>Yago</h1>
-            {/* Divider + Data */}
-            <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:12 }}>
-              <div style={{ width:20, height:1.5, background:'#C4553B', borderRadius:1, flexShrink:0 }}/>
+          {/* ── Conteúdo: flex row — fada esquerda + texto direita ── */}
+          <div style={{
+            position:'relative', zIndex:1,
+            display:'flex', alignItems:'center',
+            padding:'24px 28px', minHeight:172, gap:20,
+          }}>
+
+            {/* Fada — parada, doodle com animações internas */}
+            <div style={{ position:'relative', flexShrink:0 }}>
+              {/* Bubble flutuando acima da fada */}
+              <div style={{
+                position:'absolute', bottom:'102%', left:'50%',
+                transform:'translateX(-50%)',
+                width:210, marginBottom:6, zIndex:2,
+              }}>
+                <FairyBubble phrase={activePhrase} />
+              </div>
+              <DragFairy scale={1.25} />
+            </div>
+
+            {/* Saudação — ao lado direito da fada */}
+            <div style={{ flex:1 }}>
               <p style={{
                 fontFamily:"'Plus Jakarta Sans',sans-serif",
-                fontSize:12, fontWeight:500,
-                color:'#7A5C4F', margin:0,
-              }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
-            </div>
-          </div>
+                fontSize:11, fontWeight:600,
+                color:'#9B7B6A', marginBottom:4,
+                letterSpacing:'.06em', textTransform:'uppercase',
+              }}>{saudacao}</p>
 
-          {/* Fada — classe global de voo definida em index.css */}
-          <div className="fairy-flight-path">
-            <div style={{
-              position:'absolute', bottom:'84px', left:'50%',
-              transform:'translateX(-50%)', zIndex:1, width:210,
-            }}>
-              <FairyBubble phrase={activePhrase} />
+              <h1 style={{
+                fontFamily:"'Fraunces',Georgia,serif",
+                fontWeight:700, fontSize:40,
+                lineHeight:1, letterSpacing:'-1.5px',
+                color:'#2C1A0F', margin:0,
+              }}>Yago</h1>
+
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:12 }}>
+                <div style={{ width:20, height:1.5, background:'#C4553B', borderRadius:1, flexShrink:0 }}/>
+                <p style={{
+                  fontFamily:"'Plus Jakarta Sans',sans-serif",
+                  fontSize:12, fontWeight:500,
+                  color:'#7A5C4F', margin:0,
+                }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
+              </div>
             </div>
-            <DragFairy />
           </div>
         </div>
 

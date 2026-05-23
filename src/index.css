@@ -259,20 +259,3 @@ html, body, #root {
   box-shadow: 0 0 0 1px rgba(212,160,23,0.15), 0 8px 32px rgba(212,160,23,0.2), 0 2px 8px rgba(212,160,23,0.1) !important;
 }
 
-/* ── Fairy flight path ───────────────────────────────────────── */
-@keyframes fairyFlight {
-  0%,100% { left:38%; top:44%; }   /* centro-baixo       */
-  12%     { left:70%; top: 4%; }   /* topo direita       */
-  25%     { left:40%; top: 4%; }   /* topo centro        */
-  37%     { left:74%; top:42%; }   /* baixo direita      */
-  50%     { left:36%; top:20%; }   /* centro-esq (fora texto) */
-  62%     { left:64%; top:44%; }   /* baixo centro       */
-  75%     { left:44%; top: 4%; }   /* topo centro-dir    */
-  87%     { left:68%; top:24%; }   /* direita média      */
-}
-.fairy-flight-path {
-  position: absolute;
-  z-index: 2;
-  pointer-events: none;
-  animation: fairyFlight 80s ease-in-out infinite;
-}

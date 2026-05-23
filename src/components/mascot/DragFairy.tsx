@@ -319,8 +319,7 @@ function FairySvg() {
 }
 
 // ─── Export principal ─────────────────────────────────────────────
-// Renderize dentro de um motion.div no Dashboard para o percurso de voo
-export function DragFairy() {
+export function DragFairy({ scale = 1 }: { scale?: number }) {
   return (
     <motion.div
       animate={{
@@ -333,7 +332,9 @@ export function DragFairy() {
       }}
       style={{
         display: 'inline-block',
-        filter: 'drop-shadow(0 8px 16px rgba(139,92,246,0.35))',
+        filter: 'drop-shadow(0 8px 18px rgba(139,92,246,0.3))',
+        transform: scale !== 1 ? `scale(${scale})` : undefined,
+        transformOrigin: 'bottom center',
       }}
     >
       <FairySvg />
