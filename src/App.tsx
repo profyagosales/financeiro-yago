@@ -15,6 +15,7 @@ import { Page as MetasPage } from '@/modules/metas'
 import { Page as PatrimonioPage } from '@/modules/patrimonio'
 import { Page as InvestimentosPage } from '@/modules/investimentos'
 import { Page as DividasPage } from '@/modules/dividas'
+import { Page as DesejosPage } from '@/modules/desejos'
 import { Page as RelatoriosPage } from '@/modules/relatorios'
 import { Page as ConfiguracoesPage } from '@/modules/configuracoes'
 import { seedCategories, deduplicateCategories } from '@/db/schema'
@@ -46,6 +47,7 @@ export default function App() {
               <Route path="patrimonio" element={<PatrimonioPage />} />
               <Route path="investimentos" element={<InvestimentosPage />} />
               <Route path="dividas" element={<DividasPage />} />
+              <Route path="desejos" element={<DesejosPage />} />
               <Route path="relatorios" element={<RelatoriosPage />} />
               <Route path="configuracoes" element={<ConfiguracoesPage />} />
             </Route>
