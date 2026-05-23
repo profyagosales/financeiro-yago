@@ -94,14 +94,15 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
         height: '100%',
       }}
     >
-      {/* Header com gradient da cor da conta */}
+      {/* ─── LOCKED HEADER (sticky) — só identificação ─── */}
       <div style={{
         position: 'relative',
         background: `linear-gradient(135deg, ${conta.cor}18 0%, ${conta.cor}05 100%)`,
-        padding: '24px 28px',
+        padding: '22px 28px',
         borderBottom: '1px solid #EDE6DC',
+        flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <BankLogo logo={conta.logo} nome={conta.nome} cor={conta.cor} size={64} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -129,7 +130,6 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
             </p>
           </div>
 
-          {/* Actions */}
           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
             <button onClick={onEdit} title="Editar" style={ICON_BTN}>
               <IconEdit size={14} stroke={1.8} color="#7A5C4F" />
@@ -139,67 +139,69 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
             </button>
           </div>
         </div>
-
-        {/* Saldo + trend */}
-        <div style={{ marginTop: 22, display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
-          <div>
-            <p style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif",
-              fontSize: 10, fontWeight: 700,
-              color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
-            }}>Saldo atual</p>
-            <p style={{
-              fontFamily: "'Fraunces',Georgia,serif",
-              fontSize: 48, fontWeight: 700,
-              color: corSaldo,
-              letterSpacing: '-2px', lineHeight: 1,
-              margin: '4px 0 0',
-            }}>{fmt(conta.saldoAtual)}</p>
-          </div>
-          {trendPct !== null && Math.abs(trendPct) > 0.1 && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
-              color: positivo ? '#1E7D5A' : '#C4553B',
-              background: positivo ? 'rgba(58,133,128,0.14)' : 'rgba(196,85,59,0.14)',
-              border: `1px solid ${positivo ? 'rgba(58,133,128,0.35)' : 'rgba(196,85,59,0.35)'}`,
-              padding: '4px 10px', borderRadius: 16,
-              letterSpacing: '.02em',
-            }}>
-              {positivo ? <IconArrowUpRight size={12} stroke={2.4} /> : <IconArrowDownRight size={12} stroke={2.4} />}
-              {positivo ? '+' : ''}{fmt(delta30d)} ({Math.abs(trendPct).toFixed(1)}%) em 30d
-            </span>
-          )}
-        </div>
-
-        {/* Primary actions */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-          <button onClick={onLancar}
-            style={{
-              background: conta.cor, color: '#FFFFFF', border: 'none',
-              borderRadius: 12, padding: '11px 18px', cursor: 'pointer',
-              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              boxShadow: `0 4px 16px ${conta.cor}50`,
-              letterSpacing: '.02em',
-            }}>
-            <IconPlus size={15} stroke={2.5} /> Nova transação
-          </button>
-          <button onClick={onHistorico}
-            style={{
-              background: '#FFFFFF', color: '#2C1A0F', border: '1px solid #EDE6DC',
-              borderRadius: 12, padding: '11px 16px', cursor: 'pointer',
-              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              letterSpacing: '.02em',
-            }}>
-            <IconHistory size={14} stroke={2} /> Histórico completo
-          </button>
-        </div>
       </div>
 
-      {/* ─── Scrollable body ─── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 28px' }}>
+      {/* ─── SCROLLABLE BODY (saldo + chart + tx) ─── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+
+        {/* Saldo + trend + ações primárias */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
+            <div>
+              <p style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontSize: 10, fontWeight: 700,
+                color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
+              }}>Saldo atual</p>
+              <p style={{
+                fontFamily: "'Fraunces',Georgia,serif",
+                fontSize: 48, fontWeight: 700,
+                color: corSaldo,
+                letterSpacing: '-2px', lineHeight: 1,
+                margin: '4px 0 0',
+              }}>{fmt(conta.saldoAtual)}</p>
+            </div>
+            {trendPct !== null && Math.abs(trendPct) > 0.1 && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+                color: positivo ? '#1E7D5A' : '#C4553B',
+                background: positivo ? 'rgba(58,133,128,0.14)' : 'rgba(196,85,59,0.14)',
+                border: `1px solid ${positivo ? 'rgba(58,133,128,0.35)' : 'rgba(196,85,59,0.35)'}`,
+                padding: '4px 10px', borderRadius: 16,
+                letterSpacing: '.02em',
+              }}>
+                {positivo ? <IconArrowUpRight size={12} stroke={2.4} /> : <IconArrowDownRight size={12} stroke={2.4} />}
+                {positivo ? '+' : ''}{fmt(delta30d)} ({Math.abs(trendPct).toFixed(1)}%) em 30d
+              </span>
+            )}
+          </div>
+
+          {/* Primary actions */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+            <button onClick={onLancar}
+              style={{
+                background: conta.cor, color: '#FFFFFF', border: 'none',
+                borderRadius: 12, padding: '11px 18px', cursor: 'pointer',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                boxShadow: `0 4px 16px ${conta.cor}50`,
+                letterSpacing: '.02em',
+              }}>
+              <IconPlus size={15} stroke={2.5} /> Nova transação
+            </button>
+            <button onClick={onHistorico}
+              style={{
+                background: '#FFFFFF', color: '#2C1A0F', border: '1px solid #EDE6DC',
+                borderRadius: 12, padding: '11px 16px', cursor: 'pointer',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                letterSpacing: '.02em',
+              }}>
+              <IconHistory size={14} stroke={2} /> Histórico completo
+            </button>
+          </div>
+        </div>
 
         {/* 3 quick stats 30d */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 24 }}>

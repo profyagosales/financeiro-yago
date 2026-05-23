@@ -27,6 +27,7 @@ export function Page() {
   const [editing, setEditing] = useState<Conta | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Conta | null>(null)
   const [search, setSearch] = useState('')
+  const [filterTipo, setFilterTipo] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
   // Auto-seleciona conta com maior saldo na 1ª carga
@@ -37,12 +38,23 @@ export function Page() {
     }
   }, [contas, selectedId])
 
-  // Filtragem por busca
+  // Tipos disponíveis com contagem
+  const tiposDisponiveis = useMemo(() => {
+    const map = new Map<string, number>()
+    contas.forEach(c => map.set(c.tipo, (map.get(c.tipo) ?? 0) + 1))
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1])
+  }, [contas])
+
+  // Filtragem por busca + tipo
   const contasFiltradas = useMemo(() => {
-    if (!search) return contas
-    const q = search.toLowerCase()
-    return contas.filter(c => c.nome.toLowerCase().includes(q) || c.tipo.toLowerCase().includes(q))
-  }, [contas, search])
+    let result = contas
+    if (filterTipo) result = result.filter(c => c.tipo === filterTipo)
+    if (search) {
+      const q = search.toLowerCase()
+      result = result.filter(c => c.nome.toLowerCase().includes(q) || c.tipo.toLowerCase().includes(q))
+    }
+    return result
+  }, [contas, search, filterTipo])
 
   // Métricas globais (header)
   const inicioMes = `${ano}-${String(mes).padStart(2, '0')}-01`
@@ -199,30 +211,64 @@ export function Page() {
             height: '100%',
             minHeight: 0,
           }}>
-            {/* Search */}
+            {/* LOCKED HEADER — busca + filtros */}
             <div style={{
-              padding: '14px 14px 10px',
+              padding: '18px 18px 14px',
               borderBottom: '1px solid #EDE6DC',
-              display: 'flex', alignItems: 'center', gap: 8,
               background: '#FBF8F3',
+              flexShrink: 0,
             }}>
-              <IconSearch size={14} stroke={2} color="#9B7B6A" />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Buscar conta..."
-                style={{
-                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 500,
-                  color: '#2C1A0F',
-                }}
-              />
-              {search && (
-                <button onClick={() => setSearch('')}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9B7B6A', padding: 2, fontSize: 11 }}>
-                  ✕
-                </button>
-              )}
+              {/* Search bar */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                background: '#FFFFFF',
+                border: '1px solid #EDE6DC',
+                borderRadius: 10,
+                padding: '9px 12px',
+                marginBottom: 12,
+              }}>
+                <IconSearch size={14} stroke={2} color="#9B7B6A" />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Buscar conta..."
+                  style={{
+                    flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                    fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 500,
+                    color: '#2C1A0F',
+                  }}
+                />
+                {search && (
+                  <button onClick={() => setSearch('')}
+                    title="Limpar busca"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9B7B6A', padding: 2, fontSize: 11 }}>
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Filter chips por tipo */}
+              <div style={{
+                display: 'flex', gap: 5, overflowX: 'auto', overflowY: 'hidden',
+                paddingBottom: 2,
+                scrollbarWidth: 'none',
+              }}>
+                <ChipFilter
+                  label="Todas"
+                  count={contas.length}
+                  active={filterTipo === null}
+                  onClick={() => setFilterTipo(null)}
+                />
+                {tiposDisponiveis.map(([tipo, count]) => (
+                  <ChipFilter
+                    key={tipo}
+                    label={tipo}
+                    count={count}
+                    active={filterTipo === tipo}
+                    onClick={() => setFilterTipo(filterTipo === tipo ? null : tipo)}
+                  />
+                ))}
+              </div>
             </div>
 
             {/* Account rows */}
@@ -359,6 +405,33 @@ function TopKpi({ label, value, cor, icon }: { label: string; value: string; cor
 
 function Divider() {
   return <div style={{ width: 1, height: 32, background: '#EDE6DC' }} />
+}
+
+function ChipFilter({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      style={{
+        background: active ? '#2C1A0F' : '#FFFFFF',
+        color: active ? '#FFFFFF' : '#7A5C4F',
+        border: `1px solid ${active ? '#2C1A0F' : '#EDE6DC'}`,
+        borderRadius: 20,
+        padding: '4px 10px',
+        cursor: 'pointer',
+        fontFamily: "'Plus Jakarta Sans',sans-serif",
+        fontSize: 10, fontWeight: 700,
+        letterSpacing: '.04em',
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        whiteSpace: 'nowrap', flexShrink: 0,
+        textTransform: 'capitalize',
+        transition: 'all .12s',
+      }}>
+      {label}
+      <span style={{
+        background: active ? 'rgba(255,255,255,0.18)' : 'rgba(122,92,79,0.12)',
+        padding: '1px 6px', borderRadius: 8, fontSize: 9,
+      }}>{count}</span>
+    </button>
+  )
 }
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
