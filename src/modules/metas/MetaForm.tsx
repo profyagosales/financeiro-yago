@@ -216,7 +216,7 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
             </div>
             {isReserva && form.alvoAutoCalculado && (
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '6px 0 0', lineHeight: 1.4 }}>
-                Calculamos com base na média das suas despesas dos últimos 6 meses × {form.mesesCobertura} {form.mesesCobertura === 1 ? 'mês' : 'meses'} de cobertura.
+                Calculamos com base na média das suas despesas dos últimos 6 meses × {form.mesesCobertura} meses de cobertura.
                 {calculoAlvo !== null && calculoAlvo > 0 && (
                   <> Alvo atual: <strong style={{ color: '#3A8580' }}>{fmt(calculoAlvo)}</strong>.</>
                 )}
