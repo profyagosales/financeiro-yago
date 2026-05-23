@@ -202,35 +202,35 @@ export function DashboardPage() {
           // Área sob a curva
           const areaStr = `${polyStr} 100,22 0,22`
           return (
-            <svg viewBox="0 0 100 24" preserveAspectRatio="none" style={{ width:'100%', height:22 }}>
+            <svg viewBox="0 0 100 24" preserveAspectRatio="none" style={{ width:'100%', height:22, overflow:'visible' }}>
               <polygon points={areaStr} fill={color} opacity="0.04"/>
-              <polyline points={polyStr} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"/>
-              <circle cx={lastPt[0]} cy={lastPt[1]} r="2.4" fill={color}/>
+              <polyline points={polyStr} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.85"/>
+              {/* halo dourado + dot dourado pra acento unificador */}
+              <circle cx={lastPt[0]} cy={lastPt[1]} r="4.5" fill="#D4A017" opacity="0.25"/>
+              <circle cx={lastPt[0]} cy={lastPt[1]} r="2.6" fill="#F2C745"/>
             </svg>
           )
         }
 
-        // Trend badge helper
-        const renderTrend = (value: number, invertColor = false) => {
+        // Trend badge helper — acento dourado unificador
+        const renderTrend = (value: number, _invertColor = false) => {
           if (!isFinite(value)) return null
           const isUp = value >= 0
-          // Para Despesas: aumento = ruim (vermelho), redução = bom (verde claro)
-          const positive = invertColor ? !isUp : isUp
-          const color = positive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.95)'
-          const bg = positive ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'
           const arrow = isUp ? '↑' : '↓'
           const sign = isUp ? '+' : ''
           return (
             <span style={{
               fontFamily:"'Plus Jakarta Sans',sans-serif",
               fontSize:10, fontWeight:700,
-              color, background:bg,
-              padding:'2px 7px', borderRadius:10,
+              color:'#FFFFFF',
+              background:'rgba(212,160,23,0.22)',
+              border:'1px solid rgba(212,160,23,0.5)',
+              padding:'2px 8px', borderRadius:10,
               letterSpacing:'.02em',
-              display:'inline-flex', alignItems:'center', gap:3,
+              display:'inline-flex', alignItems:'center', gap:4,
               whiteSpace:'nowrap',
             }}>
-              <span style={{ fontSize:11, lineHeight:1 }}>{arrow}</span>
+              <span style={{ fontSize:11, lineHeight:1, color:'#F2C745', fontWeight:800 }}>{arrow}</span>
               {sign}{Math.abs(value).toFixed(0)}%
             </span>
           )
@@ -239,7 +239,7 @@ export function DashboardPage() {
           fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: 10,
           fontWeight: 700,
-          color: 'rgba(255,255,255,0.7)',
+          color: 'rgba(255,255,255,0.55)',
           marginBottom: 0,
           letterSpacing: '.14em',
           textTransform: 'uppercase',
