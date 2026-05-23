@@ -477,17 +477,23 @@ export function Page() {
             {grouped.length === 0 ? (
               <EmptyList hasFilters={hasActiveFilters} onLancar={() => openFab()} />
             ) : (
-              grouped.map(([data, txs]) => {
+              grouped.map(([data, txs], groupIdx) => {
                 const dateInfo = formatGroupDate(data)
                 const totalReceitas = txs.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
                 const totalDespesas = txs.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
                 const liq = totalReceitas - totalDespesas
                 return (
-                  <div key={data} style={{ marginBottom: 14 }}>
-                    {/* Date header */}
+                  <motion.div key={data}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: Math.min(groupIdx * 0.04, 0.2) }}
+                    style={{ marginBottom: 14 }}>
+                    {/* Date header — sticky dentro do scroll */}
                     <div style={{
+                      position: 'sticky', top: -8, zIndex: 5,
+                      background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 80%, rgba(255,255,255,0) 100%)',
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '6px 8px 6px 10px', margin: '4px 0 4px',
+                      padding: '8px 8px 8px 10px', marginBottom: 4,
                     }}>
                       <span style={{
                         fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
@@ -502,24 +508,32 @@ export function Page() {
                         {liq >= 0 ? '+' : ''}{fmt(liq)}
                       </span>
                     </div>
-                    {txs.map(t => (
-                      <TransactionListRow
-                        key={t.id}
-                        tx={t}
-                        active={!bulkMode && selectedId === t.id}
-                        bulkMode={bulkMode}
-                        bulkSelected={t.id !== undefined && bulkSelected.has(t.id)}
-                        onClick={() => {
-                          if (bulkMode) {
-                            if (t.id !== undefined) toggleBulk(t.id)
-                          } else {
-                            if (t.id !== undefined) setSelectedId(t.id)
-                          }
-                        }}
-                        onToggleBulk={() => t.id !== undefined && toggleBulk(t.id)}
-                      />
-                    ))}
-                  </div>
+                    <AnimatePresence initial={false}>
+                      {txs.map((t, rowIdx) => (
+                        <motion.div key={t.id}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -8 }}
+                          transition={{ duration: 0.2, delay: Math.min(rowIdx * 0.02, 0.12) }}
+                        >
+                          <TransactionListRow
+                            tx={t}
+                            active={!bulkMode && selectedId === t.id}
+                            bulkMode={bulkMode}
+                            bulkSelected={t.id !== undefined && bulkSelected.has(t.id)}
+                            onClick={() => {
+                              if (bulkMode) {
+                                if (t.id !== undefined) toggleBulk(t.id)
+                              } else {
+                                if (t.id !== undefined) setSelectedId(t.id)
+                              }
+                            }}
+                            onToggleBulk={() => t.id !== undefined && toggleBulk(t.id)}
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
                 )
               })
             )}
