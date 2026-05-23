@@ -203,9 +203,9 @@ export function DashboardPage() {
           const areaStr = `${polyStr} 100,22 0,22`
           return (
             <svg viewBox="0 0 100 24" preserveAspectRatio="none" style={{ width:'100%', height:22 }}>
-              <polygon points={areaStr} fill={color} opacity="0.12"/>
-              <polyline points={polyStr} fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.85"/>
-              <circle cx={lastPt[0]} cy={lastPt[1]} r="2.2" fill={color}/>
+              <polygon points={areaStr} fill={color} opacity="0.04"/>
+              <polyline points={polyStr} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"/>
+              <circle cx={lastPt[0]} cy={lastPt[1]} r="2.4" fill={color}/>
             </svg>
           )
         }
@@ -277,7 +277,6 @@ export function DashboardPage() {
               {/* ── RECEITAS ── */}
               <motion.div whileHover={{ y:-2, boxShadow:'0 14px 36px rgba(163,181,101,0.42)' }}
                 style={{ ...KPI_CARD, background:'#A3B565' }}>
-                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)',pointerEvents:'none'}}/>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%' }}>
                   <p style={KPI_TITLE}>Receitas</p>
                   {renderTrend(trendReceitas)}
@@ -289,7 +288,6 @@ export function DashboardPage() {
               {/* ── DESPESAS ── */}
               <motion.div whileHover={{ y:-2, boxShadow:'0 14px 36px rgba(241,100,46,0.42)' }}
                 style={{ ...KPI_CARD, background:'#F1642E' }}>
-                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)',pointerEvents:'none'}}/>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%' }}>
                   <p style={KPI_TITLE}>Despesas</p>
                   {renderTrend(trendDespesas, true)}
@@ -301,7 +299,6 @@ export function DashboardPage() {
               {/* ── SALDO (receitas − despesas, cor dinâmica) ── */}
               <motion.div whileHover={{ y:-2, boxShadow:`0 14px 36px ${saldoShadow}` }}
                 style={{ ...KPI_CARD, background:saldoColor }}>
-                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)',pointerEvents:'none'}}/>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%' }}>
                   <p style={KPI_TITLE}>Saldo</p>
                   {renderTrend(trendSaldo)}
@@ -313,7 +310,6 @@ export function DashboardPage() {
               {/* ── ACUMULADO (total em contas) ── */}
               <motion.div whileHover={{ y:-2, boxShadow:'0 14px 36px rgba(80,78,118,0.45)' }}
                 style={{ ...KPI_CARD, background:'#504E76' }}>
-                <div style={{position:'absolute',top:-14,right:-14,width:44,height:44,borderRadius:'50%',background:'rgba(255,255,255,0.09)',pointerEvents:'none'}}/>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%' }}>
                   <p style={KPI_TITLE}>Acumulado</p>
                   <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:9, fontWeight:700, color:'rgba(255,255,255,0.55)', letterSpacing:'.1em', textTransform:'uppercase' }}>Total</span>
