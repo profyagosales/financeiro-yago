@@ -296,100 +296,100 @@ export function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* ─── ROW 2: KPIs — cores sólidas, identidade visual forte ─── */}
-      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
+      {/* ─── ROW 2: KPIs ─── */}
+      {(() => {
+        const saldoMes = receitas - totalComprometido
+        const saldoColor   = saldoMes >= 0 ? '#3A8580' : '#C4553B'
+        const saldoShadow  = saldoMes >= 0 ? 'rgba(58,133,128,0.4)' : 'rgba(196,85,59,0.4)'
+        const KPI_TITLE: React.CSSProperties = {
+          fontFamily: "'Fraunces',Georgia,serif",
+          fontStyle: 'italic',
+          fontSize: 13,
+          fontWeight: 400,
+          color: 'rgba(255,255,255,0.75)',
+          marginBottom: 10,
+          letterSpacing: '-0.2px',
+        }
+        const KPI_VALUE: React.CSSProperties = {
+          fontFamily: "'Fraunces',Georgia,serif",
+          fontWeight: 700,
+          fontSize: 26,
+          color: 'white',
+          letterSpacing: '-1px',
+          lineHeight: 1,
+          display: 'block',
+        }
+        const KPI_CARD: React.CSSProperties = {
+          borderRadius: 22,
+          padding: '20px 20px',
+          position: 'relative',
+          overflow: 'hidden',
+          transition: 'box-shadow .18s',
+        }
+        return (
+          <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
 
-        {/* RENDAS — sage green sólido */}
-        <motion.div whileHover={{ y: -3, boxShadow: '0 14px 36px rgba(163,181,101,0.4)' }}
-          style={{ background: '#A3B565', borderRadius: 22, padding: '20px 22px',
-            position: 'relative', overflow: 'hidden', transition: 'box-shadow .18s' }}>
-          <div style={{ position: 'absolute', right: -12, top: -12, opacity: 0.15 }}>
-            <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
-              <path d="M60 12 L12 60" stroke="white" strokeWidth="18" strokeLinecap="round"/>
-              <path d="M32 12 L60 12 L60 40" stroke="white" strokeWidth="18" strokeLinejoin="round" fill="none"/>
-            </svg>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(255,255,255,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconArrowUpRight size={12} color="white" stroke={2.5}/>
-            </div>
-            <span style={{ ...LABEL, color: 'rgba(255,255,255,0.8)' }}>Rendas</span>
-          </div>
-          <OdometroSaldo value={receitas} style={{ ...DISPLAY, fontSize: 26, color: 'white', display: 'block' }}/>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
-            color: 'rgba(255,255,255,0.65)', marginTop: 6 }}>em {mesNome}</p>
-        </motion.div>
+            {/* ── RECEITAS ── */}
+            <motion.div whileHover={{ y:-3, boxShadow:'0 14px 36px rgba(163,181,101,0.42)' }}
+              style={{ ...KPI_CARD, background:'#A3B565' }}>
+              {/* Onda ascendente */}
+              <svg style={{position:'absolute',right:0,bottom:0,opacity:0.16}} width="110" height="70" viewBox="0 0 110 70" fill="none">
+                <path d="M0,65 Q28,20 55,38 Q82,55 110,8" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                <path d="M0,65 Q28,20 55,38 Q82,55 110,8 L110,70 L0,70Z" fill="white" opacity="0.07"/>
+                <circle cx="110" cy="8" r="4.5" fill="white" opacity="0.6"/>
+              </svg>
+              <div style={{position:'absolute',top:-18,right:-18,width:54,height:54,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
+              <p style={KPI_TITLE}>Receitas</p>
+              <OdometroSaldo value={receitas} style={KPI_VALUE}/>
+            </motion.div>
 
-        {/* DESPESAS — laranja sólido */}
-        <motion.div whileHover={{ y: -3, boxShadow: '0 14px 36px rgba(241,100,46,0.4)' }}
-          style={{ background: '#F1642E', borderRadius: 22, padding: '20px 22px',
-            position: 'relative', overflow: 'hidden', transition: 'box-shadow .18s' }}>
-          <div style={{ position: 'absolute', right: -12, bottom: -12, opacity: 0.15 }}>
-            <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
-              <path d="M12 12 L60 60" stroke="white" strokeWidth="18" strokeLinecap="round"/>
-              <path d="M40 60 L12 60 L12 32" stroke="white" strokeWidth="18" strokeLinejoin="round" fill="none"/>
-            </svg>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(255,255,255,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconArrowDownRight size={12} color="white" stroke={2.5}/>
-            </div>
-            <span style={{ ...LABEL, color: 'rgba(255,255,255,0.8)' }}>Despesas</span>
-          </div>
-          <OdometroSaldo value={totalComprometido} style={{ ...DISPLAY, fontSize: 26, color: 'white', display: 'block' }}/>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
-            color: 'rgba(255,255,255,0.65)', marginTop: 6 }}>comprometido</p>
-        </motion.div>
+            {/* ── DESPESAS ── */}
+            <motion.div whileHover={{ y:-3, boxShadow:'0 14px 36px rgba(241,100,46,0.42)' }}
+              style={{ ...KPI_CARD, background:'#F1642E' }}>
+              {/* Onda descendente */}
+              <svg style={{position:'absolute',right:0,bottom:0,opacity:0.16}} width="110" height="70" viewBox="0 0 110 70" fill="none">
+                <path d="M0,8 Q28,52 55,32 Q82,14 110,62" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                <path d="M0,8 Q28,52 55,32 Q82,14 110,62 L110,70 L0,70Z" fill="white" opacity="0.07"/>
+                <circle cx="110" cy="62" r="4.5" fill="white" opacity="0.6"/>
+              </svg>
+              <div style={{position:'absolute',top:-18,right:-18,width:54,height:54,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
+              <p style={KPI_TITLE}>Despesas</p>
+              <OdometroSaldo value={totalComprometido} style={KPI_VALUE}/>
+            </motion.div>
 
-        {/* SALDO — roxo sólido */}
-        <motion.div whileHover={{ y: -3, boxShadow: '0 14px 36px rgba(80,78,118,0.45)' }}
-          style={{ background: '#504E76', borderRadius: 22, padding: '20px 22px',
-            position: 'relative', overflow: 'hidden', transition: 'box-shadow .18s' }}>
-          <div style={{ position: 'absolute', left: -16, bottom: -16, width: 80, height: 80,
-            borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(255,255,255,0.18)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconWallet size={12} color="white" stroke={2}/>
-            </div>
-            <span style={{ ...LABEL, color: 'rgba(255,255,255,0.7)' }}>Saldo</span>
-          </div>
-          <OdometroSaldo value={saldoTotal} style={{ ...DISPLAY, fontSize: 26, color: 'white', display: 'block' }}/>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
-            color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>
-            {contas.length} conta{contas.length !== 1 ? 's' : ''}
-          </p>
-        </motion.div>
+            {/* ── SALDO (receitas − despesas, cor dinâmica) ── */}
+            <motion.div whileHover={{ y:-3, boxShadow:`0 14px 36px ${saldoShadow}` }}
+              style={{ ...KPI_CARD, background:saldoColor }}>
+              {/* Linha de equilíbrio */}
+              <svg style={{position:'absolute',right:0,bottom:0,opacity:0.18}} width="110" height="70" viewBox="0 0 110 70" fill="none">
+                <line x1="4"  y1="35" x2="106" y2="35" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <line x1="4"  y1="44" x2="106" y2="44" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+                <circle cx="106" cy="35" r="4" fill="white" opacity="0.7"/>
+              </svg>
+              <div style={{position:'absolute',top:-18,right:-18,width:54,height:54,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
+              <p style={KPI_TITLE}>Saldo</p>
+              <OdometroSaldo value={saldoMes} style={KPI_VALUE}/>
+            </motion.div>
 
-        {/* POUPANÇA — âmbar sólido (cor dinâmica) */}
-        <motion.div whileHover={{ y: -3, boxShadow: `0 14px 36px ${poupancaColor}55` }}
-          style={{ background: taxaPoupanca > 20 ? '#3A8580' : taxaPoupanca > 0 ? '#D4A017' : '#C4553B',
-            borderRadius: 22, padding: '20px 22px', position: 'relative', overflow: 'hidden',
-            transition: 'box-shadow .18s' }}>
-          <div style={{ position: 'absolute', right: 16, bottom: 16, opacity: 0.12 }}>
-            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-              <circle cx="30" cy="30" r="26" stroke="white" strokeWidth="8" fill="none"/>
-              <path d="M30 10 L30 30 L46 30" stroke="white" strokeWidth="8" strokeLinecap="round" fill="none"/>
-            </svg>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 7, background: 'rgba(255,255,255,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconPercentage size={12} color="white" stroke={2}/>
-            </div>
-            <span style={{ ...LABEL, color: 'rgba(255,255,255,0.75)' }}>Poupança</span>
-          </div>
-          <p style={{ ...DISPLAY, fontSize: 26, color: 'white' }}>{taxaPoupanca.toFixed(1)}%</p>
-          <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 4, height: 4,
-            overflow: 'hidden', marginTop: 10 }}>
-            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, taxaPoupanca)}%` }}
-              transition={{ type: 'spring', stiffness: 180, damping: 24, delay: 0.3 }}
-              style={{ height: '100%', background: 'rgba(255,255,255,0.7)', borderRadius: 4 }}/>
-          </div>
-        </motion.div>
-      </motion.div>
+            {/* ── ACUMULADO (total em contas) ── */}
+            <motion.div whileHover={{ y:-3, boxShadow:'0 14px 36px rgba(80,78,118,0.45)' }}
+              style={{ ...KPI_CARD, background:'#504E76' }}>
+              {/* Barras crescentes */}
+              <svg style={{position:'absolute',right:0,bottom:0,opacity:0.18}} width="110" height="70" viewBox="0 0 110 70" fill="none">
+                <rect x="16" y="48" width="12" height="22" rx="3" fill="white"/>
+                <rect x="34" y="34" width="12" height="36" rx="3" fill="white"/>
+                <rect x="52" y="20" width="12" height="50" rx="3" fill="white"/>
+                <rect x="70" y="8"  width="12" height="62" rx="3" fill="white"/>
+                <rect x="88" y="18" width="12" height="52" rx="3" fill="white" opacity="0.55"/>
+              </svg>
+              <div style={{position:'absolute',top:-18,right:-18,width:54,height:54,borderRadius:'50%',background:'rgba(255,255,255,0.09)'}}/>
+              <p style={KPI_TITLE}>Acumulado</p>
+              <OdometroSaldo value={saldoTotal} style={KPI_VALUE}/>
+            </motion.div>
+
+          </motion.div>
+        )
+      })()}
 
       {/* ─── ROW 3: Hero dark card (2/3) + Gastos por categoria (1/3) ─── */}
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, marginBottom: 20 }}>
