@@ -124,7 +124,7 @@ export function DashboardPage() {
             Estrutura: outer sem overflow (fairy pode escapar)
                         inner com overflow:hidden (bg clipped)
             ══════════════════════════════════════════════════════════ */}
-        <div style={{ position:'relative', minHeight:222, borderRadius:24,
+        <div style={{ position:'relative', minHeight:172, borderRadius:24,
           boxShadow:'0 4px 28px rgba(80,78,118,0.14), 0 1px 6px rgba(44,26,15,0.06)' }}>
 
           {/* ── Background layer — clipped, rico, aurora pastel ── */}
@@ -209,43 +209,43 @@ export function DashboardPage() {
           </div>
 
           {/* ── Texto de saudação — 3 linhas limpas ── */}
-          <div style={{ position:'relative', zIndex:1, padding:'34px 36px', minHeight:222 }}>
+          <div style={{ position:'relative', zIndex:1, padding:'26px 32px', minHeight:172 }}>
             {/* linha 1 */}
             <p style={{
               fontFamily:"'Fraunces',Georgia,serif",
-              fontStyle:'italic', fontSize:17, fontWeight:400,
+              fontStyle:'italic', fontSize:15, fontWeight:400,
               color:'#9B7B6A', marginBottom:2, letterSpacing:'-0.2px',
             }}>{saudacao},</p>
             {/* linha 2 */}
             <h1 style={{
               fontFamily:"'Fraunces',Georgia,serif",
-              fontWeight:700, fontSize:52,
+              fontWeight:700, fontSize:46,
               lineHeight:0.92, letterSpacing:'-2px',
               color:'#2C1A0F', margin:0,
             }}>Yago</h1>
             {/* linha 3 */}
             <p style={{
               fontFamily:"'Plus Jakarta Sans',sans-serif",
-              fontSize:13, fontWeight:500,
-              color:'#7A5C4F', marginTop:12,
+              fontSize:12.5, fontWeight:500,
+              color:'#7A5C4F', marginTop:8,
               letterSpacing:'.01em',
             }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</p>
           </div>
 
           {/* ── Fada voa livremente — bubble centralizado acima dela ── */}
           <motion.div
-            style={{ position:'absolute', zIndex:2, pointerEvents:'none', left:'22%', top:'48%' }}
+            style={{ position:'absolute', zIndex:2, pointerEvents:'none', left:'40%', top:'40%' }}
             animate={{
-              left: ['22%', '62%', '32%', '68%', '18%', '58%', '40%', '22%'],
-              top:  ['48%', '14%', '5%',  '38%', '24%', '46%', '6%',  '48%'],
+              left: ['40%', '64%', '44%', '68%', '36%', '58%', '46%', '40%'],
+              top:  ['40%', '8%',  '4%',  '34%', '16%', '38%', '6%',  '40%'],
             }}
             transition={{
-              duration:60, repeat:Infinity, ease:'easeInOut',
+              duration:28, repeat:Infinity, ease:'easeInOut',
               times:[0, 0.14, 0.28, 0.43, 0.57, 0.71, 0.85, 1],
             }}
           >
             <div style={{
-              position:'absolute', bottom:'92px', left:'50%',
+              position:'absolute', bottom:'84px', left:'50%',
               transform:'translateX(-50%)', whiteSpace:'nowrap', zIndex:1,
             }}>
               <FairyBubble phrase={activePhrase} />
