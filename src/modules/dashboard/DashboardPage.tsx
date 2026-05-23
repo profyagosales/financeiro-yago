@@ -260,52 +260,24 @@ export function DashboardPage() {
               flexDirection: 'column',
               overflow: 'visible',
             }}>
-              {/* ── Decoração: ondas brancas SVG (estilo KPIs) ── */}
-              <svg
-                style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none', borderRadius:22 }}
-                viewBox="0 0 600 400" fill="none" preserveAspectRatio="none"
-              >
-                <defs>
-                  <clipPath id="cal-clip">
-                    <rect x="0" y="0" width="600" height="400" rx="22"/>
-                  </clipPath>
-                </defs>
-                <g clipPath="url(#cal-clip)" opacity="0.06">
-                  <path d="M-50 80 Q150 30 300 90 Q450 150 650 70" stroke="white" strokeWidth="1.5" fill="none"/>
-                  <path d="M-50 360 Q200 310 380 380 Q500 420 650 350" stroke="white" strokeWidth="1.2" fill="none"/>
-                </g>
-                {/* Constelação de pontinhos brilhantes */}
-                <circle cx="540" cy="40" r="2" fill="rgba(212,160,23,0.4)"/>
-                <circle cx="560" cy="60" r="1.5" fill="rgba(255,255,255,0.25)"/>
-                <circle cx="520" cy="70" r="1.2" fill="rgba(255,255,255,0.2)"/>
-              </svg>
-
-              {/* ── Decoração: estrela/sparkle dourado canto direito ── */}
-              <svg
-                style={{ position:'absolute', top:20, right:90, width:40, height:40, pointerEvents:'none', opacity:0.7 }}
-                viewBox="0 0 60 60" fill="none"
-              >
-                <path d="M30 4 Q32 18 30 30 Q28 18 30 4 Z" fill="#D4A017"/>
-                <path d="M30 56 Q32 42 30 30 Q28 42 30 56 Z" fill="#D4A017"/>
-                <path d="M4 30 Q18 32 30 30 Q18 28 4 30 Z" fill="#D4A017"/>
-                <path d="M56 30 Q42 32 30 30 Q42 28 56 30 Z" fill="#D4A017"/>
-                <circle cx="30" cy="30" r="3.5" fill="#D4A017"/>
-              </svg>
-
-              {/* Header — Fraunces branco, vibe editorial */}
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:18, position:'relative', zIndex:1 }}>
+              {/* Header — Editorial limpo, sem decoração */}
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:22, position:'relative', zIndex:1 }}>
                 <div>
                   <h2 style={{
                     fontFamily:"'Fraunces',Georgia,serif",
-                    fontSize:34, fontWeight:700, color:'#FFFFFF',
+                    fontSize:46, fontWeight:700, color:'#FFFFFF',
                     margin:0, textTransform:'capitalize',
-                    letterSpacing:'-1.2px', lineHeight:0.95,
+                    letterSpacing:'-1.8px', lineHeight:0.9,
                   }}>{mesNome}</h2>
+                  {/* Underline dourado — assinatura editorial */}
+                  <div style={{
+                    width:48, height:3, background:'#D4A017',
+                    borderRadius:2, marginTop:10, marginBottom:6,
+                  }}/>
                   <span style={{
                     fontFamily:"'Plus Jakarta Sans',sans-serif",
-                    fontSize:11, fontWeight:600, color:'rgba(196,195,227,0.7)',
-                    letterSpacing:'.16em', textTransform:'uppercase',
-                    marginTop:4, display:'block',
+                    fontSize:11, fontWeight:600, color:'rgba(196,195,227,0.65)',
+                    letterSpacing:'.2em', textTransform:'uppercase',
                   }}>{ano}</span>
                 </div>
                 {monthEventsList.length > 0 && (
@@ -313,19 +285,20 @@ export function DashboardPage() {
                     fontFamily:"'Plus Jakarta Sans',sans-serif",
                     fontSize:11, fontWeight:700,
                     color:'#D4A017',
-                    background:'rgba(212,160,23,0.12)',
-                    border:'1px solid rgba(212,160,23,0.35)',
+                    background:'rgba(212,160,23,0.1)',
+                    border:'1px solid rgba(212,160,23,0.32)',
                     borderRadius:20,
                     padding:'5px 13px',
                     letterSpacing:'.04em',
+                    marginTop:6,
                   }}>
                     {monthEventsList.length} evento{monthEventsList.length !== 1 ? 's' : ''}
                   </span>
                 )}
               </div>
 
-              {/* Linha divisória sob o header */}
-              <div style={{ height:1, background:'linear-gradient(90deg, rgba(212,160,23,0.4) 0%, rgba(255,255,255,0.08) 50%, transparent 100%)', marginBottom:12, position:'relative', zIndex:1 }}/>
+              {/* Linha divisória sutil */}
+              <div style={{ height:1, background:'rgba(255,255,255,0.08)', marginBottom:14, position:'relative', zIndex:1 }}/>
 
               {/* Day headers — branco muted, weekends amber */}
               <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:8, position:'relative', zIndex:1 }}>
