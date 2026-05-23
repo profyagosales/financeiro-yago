@@ -8,7 +8,7 @@ import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
 import { useCartoes, useAllLancamentosAtivos } from '@/db/hooks/useCartoes'
 import { useOrcamentos } from '@/db/hooks/useOrcamentos'
-import { useMetas } from '@/db/hooks/useMetas'
+import { useMetasComputed, useReservaEmergencia } from '@/db/hooks/useMetas'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/schema'
 import { fmt, fmtDate, mesAnoAtual } from '@/lib/format'
@@ -18,7 +18,7 @@ import {
   IconAlertCircle, IconChevronRight, IconCalendarEvent,
   IconCreditCard, IconRepeat, IconCalendarStats,
   IconArrowUpRight, IconArrowDownRight, IconTrendingDown,
-  IconWallet, IconPercentage,
+  IconWallet, IconPercentage, IconShieldCheck, IconPlus,
 } from '@tabler/icons-react'
 
 // ─── Animation system ────────────────────────────────────────────
@@ -81,7 +81,9 @@ export function DashboardPage() {
 
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
 
-  const metas = useMetas()
+  const metas = useMetasComputed()
+  const reserva = useReservaEmergencia()
+  const outrasMetas = metas.filter(m => m.tipo !== 'reserva_emergencia')
   const txsMes = useTransacoesByMes(mes, ano)
   const top5 = [...txsMes].filter(t => t.tipo === 'despesa').sort((a, b) => b.valor - a.valor).slice(0, 5)
 
@@ -764,31 +766,205 @@ export function DashboardPage() {
         )
       })()}
 
-      {/* ─── Metas ─── */}
-      <motion.div variants={ITEM} style={{ marginBottom:20 }}>
-        <div style={{ background:'#FFF0F5', border:'1px solid rgba(255,107,157,0.2)', borderRadius:22, boxShadow:'0 2px 16px rgba(255,107,157,0.1)', padding:20 }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-            <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, fontWeight:700, color:'#2C1A0F', margin:0 }}>Metas</h2>
-            <button onClick={() => navigate('/metas')}
-              style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:600, color:'#C4553B', background:'none', border:'none', cursor:'pointer' }}>
-              Ver →
-            </button>
-          </div>
+      {/* ─── Reserva de Emergência + Outras Metas ─── */}
+      <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns: reserva ? '1.3fr 1fr' : '1fr', gap:14, marginBottom:20, alignItems:'stretch' }}>
 
-          {metas.length === 0 ? (
-            <div style={{ paddingTop:8, textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
-              <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:'#9B7B6A' }}>Nenhuma meta cadastrada</p>
+        {/* RESERVA DE EMERGÊNCIA — card especial ou CTA */}
+        {reserva ? (() => {
+          const resStatusCor = reserva.progressoPct >= 100 ? '#3A8580' : reserva.progressoPct >= 50 ? '#D4A017' : '#C4553B'
+          const resStatusLabel = reserva.progressoPct >= 100 ? 'Completa' : reserva.progressoPct >= 50 ? 'Construindo' : 'Atenção'
+          const meses = reserva.mesesCobertura ?? 6
+          const mesesCobertos = reserva.valorAlvo > 0 ? (reserva.valorAtualTotal / reserva.valorAlvo) * meses : 0
+          return (
+            <div style={{
+              position:'relative',
+              background:'linear-gradient(155deg, #1E5E5A 0%, #143E3B 100%)',
+              borderRadius:22, padding:'22px 24px',
+              boxShadow:'0 8px 32px rgba(20,62,59,0.32), 0 2px 8px rgba(20,62,59,0.16)',
+              overflow:'hidden', height:'100%',
+              display:'flex', flexDirection:'column',
+            }}>
+              <svg style={{ position:'absolute', right:-20, top:-30, width:180, height:180, opacity:0.06, pointerEvents:'none' }} viewBox="0 0 200 200" fill="none">
+                <circle cx="100" cy="100" r="90" stroke="white" strokeWidth="1"/>
+                <circle cx="100" cy="100" r="62" stroke="white" strokeWidth="1"/>
+                <circle cx="100" cy="100" r="35" stroke="white" strokeWidth="1"/>
+              </svg>
+
+              {/* Header */}
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14, position:'relative', zIndex:1 }}>
+                <div style={{
+                  width:34, height:34, borderRadius:10,
+                  background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.18)',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                }}>
+                  <IconShieldCheck size={18} stroke={1.8} color="#A7E0DC" />
+                </div>
+                <div style={{ flex:1 }}>
+                  <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:9, fontWeight:700, color:'rgba(167,224,220,0.65)', letterSpacing:'.18em', textTransform:'uppercase', margin:0 }}>
+                    Reserva de Emergência
+                  </p>
+                  <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, fontWeight:700, color:'#FFFFFF', margin:'2px 0 0', letterSpacing:'-0.5px', lineHeight:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    {reserva.nome}
+                  </h2>
+                </div>
+                <button onClick={() => navigate('/metas')}
+                  style={{ background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, padding:'4px 10px', cursor:'pointer', fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, color:'#A7E0DC', letterSpacing:'.04em' }}>
+                  Ver →
+                </button>
+              </div>
+
+              {/* Valor */}
+              <div style={{ position:'relative', zIndex:1 }}>
+                <div style={{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap' }}>
+                  <p style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:34, fontWeight:700, color:'#FFFFFF', margin:0, letterSpacing:'-1.4px', lineHeight:1 }}>
+                    {fmt(reserva.valorAtualTotal)}
+                  </p>
+                  <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, color:'rgba(167,224,220,0.6)', margin:0 }}>
+                    de {fmt(reserva.valorAlvo)}
+                  </p>
+                </div>
+
+                {/* Progress */}
+                <div style={{ marginTop:12 }}>
+                  <div style={{ height:7, borderRadius:4, background:'rgba(255,255,255,0.08)', overflow:'hidden' }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, reserva.progressoPct)}%` }}
+                      transition={{ type:'spring', stiffness:100, damping:22 }}
+                      style={{ height:'100%', background: resStatusCor, borderRadius:4 }}
+                    />
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:8 }}>
+                    <span style={{
+                      fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700,
+                      color: resStatusCor, letterSpacing:'.04em',
+                    }}>{resStatusLabel} · {reserva.progressoPct.toFixed(0)}%</span>
+                    <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, color:'rgba(167,224,220,0.6)' }}>
+                      {mesesCobertos.toFixed(1)} de {meses} meses cobertos
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })() : (
+          <button onClick={() => navigate('/metas')}
+            style={{
+              position:'relative',
+              background:'linear-gradient(155deg, #FFF8F0 0%, #FFF1E6 100%)',
+              border:'1.5px dashed rgba(58,133,128,0.45)',
+              borderRadius:22, padding:'22px 24px',
+              display:'flex', gap:16, alignItems:'center',
+              cursor:'pointer', textAlign:'left', height:'100%',
+            }}>
+            <div style={{
+              width:50, height:50, borderRadius:14,
+              background:'linear-gradient(135deg, #3A8580, #2C7470)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              boxShadow:'0 6px 18px rgba(58,133,128,0.3)', flexShrink:0,
+            }}>
+              <IconShieldCheck size={24} stroke={1.8} color="#FFFFFF" />
+            </div>
+            <div style={{ flex:1 }}>
+              <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:9, fontWeight:700, color:'#3A8580', letterSpacing:'.16em', textTransform:'uppercase', margin:0 }}>
+                Comece pelo essencial
+              </p>
+              <h3 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, fontWeight:700, color:'#2C1A0F', margin:'3px 0 4px', letterSpacing:'-0.5px' }}>
+                Crie sua Reserva de Emergência
+              </h3>
+              <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, color:'#7A5C4F', margin:0, lineHeight:1.4 }}>
+                Primeiro passo da segurança financeira — alvo calculado automaticamente.
+              </p>
+            </div>
+            <IconChevronRight size={20} stroke={2} color="#3A8580" />
+          </button>
+        )}
+
+        {/* OUTRAS METAS — só renderiza se houver reserva (ocupa coluna direita) ou se não houver metas */}
+        {reserva && (
+          <div style={{
+            background:'#FFF0F5', border:'1px solid rgba(255,107,157,0.2)',
+            borderRadius:22, boxShadow:'0 2px 16px rgba(255,107,157,0.1)',
+            padding:'18px 20px', height:'100%',
+            display:'flex', flexDirection:'column',
+          }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+              <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, fontWeight:700, color:'#2C1A0F', margin:0 }}>Outras Metas</h2>
               <button onClick={() => navigate('/metas')}
-                style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:700,
-                  color:'white', background:'#C4553B', border:'none', borderRadius:20,
-                  padding:'7px 18px', cursor:'pointer' }}>
-                Criar primeira meta
+                style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:600, color:'#C4553B', background:'none', border:'none', cursor:'pointer' }}>
+                Ver →
               </button>
             </div>
-          ) : (
+
+            {outrasMetas.length === 0 ? (
+              <button onClick={() => navigate('/metas')}
+                style={{
+                  flex:1, background:'transparent', border:'1px dashed rgba(196,85,59,0.3)',
+                  borderRadius:14, cursor:'pointer', padding:14,
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+                  fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:700,
+                  color:'#C4553B',
+                }}>
+                <IconPlus size={14} stroke={2.4} /> Criar uma meta
+              </button>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:10, flex:1, justifyContent:'flex-start' }}>
+                {outrasMetas.slice(0, 3).map((meta, mi) => {
+                  const pct = Math.min(100, meta.progressoPct)
+                  const r = 18, circ = 2 * Math.PI * r
+                  return (
+                    <div key={meta.id} style={{ display:'flex', alignItems:'center', gap:11 }}>
+                      <div style={{ flexShrink:0, position:'relative' }}>
+                        <svg width="46" height="46" viewBox="0 0 46 46">
+                          <circle cx="23" cy="23" r={r} fill="none" stroke="rgba(0,0,0,0.07)" strokeWidth="4"/>
+                          <motion.circle cx="23" cy="23" r={r} fill="none"
+                            stroke={meta.cor} strokeWidth="4" strokeLinecap="round"
+                            strokeDasharray={circ}
+                            initial={{ strokeDashoffset: circ }}
+                            animate={{ strokeDashoffset: circ * (1 - pct / 100) }}
+                            transition={{ type:'spring', stiffness:60, damping:16, delay:0.15 + mi*0.06 }}
+                            style={{ transform:'rotate(-90deg)', transformOrigin:'23px 23px' }}
+                          />
+                          <text x="23" y="27" textAnchor="middle" fontSize="9" fontFamily="Fraunces,serif" fontWeight="700" fill={meta.cor}>{pct.toFixed(0)}%</text>
+                        </svg>
+                      </div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:700, color:'#2C1A0F', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{meta.nome}</p>
+                        <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, color:'#9B7B6A', margin:'2px 0 0' }}>
+                          <span style={{ color:meta.cor, fontWeight:700 }}>{fmt(meta.valorAtualTotal)}</span>
+                          {' '}/ {fmt(meta.valorAlvo)}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+                {outrasMetas.length > 3 && (
+                  <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:600, color:'#9B7B6A', margin:'2px 0 0', textAlign:'center' }}>
+                    + {outrasMetas.length - 3} {outrasMetas.length - 3 === 1 ? 'outra meta' : 'outras metas'}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quando NÃO há reserva mas há outras metas — grid 4 cols full width abaixo */}
+      </motion.div>
+
+      {/* Se NÃO há reserva mas há outras metas, mostra elas em grid full width */}
+      {!reserva && outrasMetas.length > 0 && (
+        <motion.div variants={ITEM} style={{ marginBottom:20 }}>
+          <div style={{ background:'#FFF0F5', border:'1px solid rgba(255,107,157,0.2)', borderRadius:22, boxShadow:'0 2px 16px rgba(255,107,157,0.1)', padding:20 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+              <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, fontWeight:700, color:'#2C1A0F', margin:0 }}>Metas</h2>
+              <button onClick={() => navigate('/metas')}
+                style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:600, color:'#C4553B', background:'none', border:'none', cursor:'pointer' }}>
+                Ver →
+              </button>
+            </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, alignItems:'stretch' }}>
-              {metas.slice(0, 4).map((meta, mi) => {
-                const pct = Math.min(100, meta.valorAlvo > 0 ? (meta.valorAtual / meta.valorAlvo) * 100 : 0)
+              {outrasMetas.slice(0, 4).map((meta, mi) => {
+                const pct = Math.min(100, meta.progressoPct)
                 const r = 20, circ = 2 * Math.PI * r
                 return (
                   <div key={meta.id} style={{ display:'flex', alignItems:'center', gap:14 }}>
@@ -809,7 +985,7 @@ export function DashboardPage() {
                     <div style={{ flex:1, minWidth:0 }}>
                       <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, fontWeight:700, color:'#2C1A0F', marginBottom:3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{meta.nome}</p>
                       <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, color:'#9B7B6A', margin:0 }}>
-                        <span style={{ color:meta.cor, fontWeight:600 }}>{fmt(meta.valorAtual)}</span>
+                        <span style={{ color:meta.cor, fontWeight:600 }}>{fmt(meta.valorAtualTotal)}</span>
                         {' '}/ {fmt(meta.valorAlvo)}
                       </p>
                     </div>
@@ -817,9 +993,9 @@ export function DashboardPage() {
                 )
               })}
             </div>
-          )}
-        </div>
-      </motion.div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ─── SECTION 5: Evolução do Ano — #0D0B1F escuro, texto branco ─── */}
       <motion.div variants={ITEM} style={{ marginBottom: 20 }}>
