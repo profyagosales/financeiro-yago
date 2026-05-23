@@ -156,23 +156,6 @@ export function DashboardPage() {
   })
   monthEventsList.sort((a, b) => a.day - b.day)
 
-  // ── Greeting insight (data-driven) ──────────────────────────────
-  let greetInsightText = 'Mês correndo bem por aqui.'
-  let greetInsightColor = '#7A5C4F'
-  if (saldoLivre < 0) {
-    greetInsightText = 'Atenção — saldo comprometido este mês.'
-    greetInsightColor = '#C4553B'
-  } else if (taxaPoupanca > 30) {
-    greetInsightText = 'Mês excepcional — você está economizando muito bem.'
-    greetInsightColor = '#3A8580'
-  } else if (proximosVenc.length > 0) {
-    const n = proximosVenc.length
-    greetInsightText = `${n} conta${n > 1 ? 's' : ''} vence${n > 1 ? 'm' : ''} nos próximos 7 dias.`
-    greetInsightColor = '#D4A017'
-  } else if (fixasPagas.length === contasFixas.length && contasFixas.length > 0) {
-    greetInsightText = 'Todas as contas fixas pagas. Arrasou!'
-    greetInsightColor = '#3A8580'
-  }
 
   return (
     <motion.div
@@ -183,65 +166,77 @@ export function DashboardPage() {
       <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '4fr 1fr', gap: 14, marginBottom: 20 }}>
 
         {/* ══════════════════════════════════════════════════════════
-            GREETING CARD — Editorial Magazine
-            Tipografia hero em Fraunces, insight contextual com dado
-            real, zero personagem, zero doodle. Limpo e premium.
+            GREETING CARD — Gradient mesh rico + decoração orbital
+            abstrata. Zero personagem, zero watermark, zero insight.
+            Fundo vivo, tipografia hero, animação ambiente suave.
             ══════════════════════════════════════════════════════════ */}
         <div style={{
           position: 'relative',
-          minHeight: 160,
+          minHeight: 168,
           borderRadius: 24,
           overflow: 'hidden',
-          background: 'linear-gradient(145deg, #FEFCF8 0%, #F3EFFF 52%, #FFFBF4 100%)',
-          boxShadow: '0 4px 24px rgba(80,78,118,0.11), 0 1px 4px rgba(44,26,15,0.05)',
-          border: '1px solid rgba(255,255,255,0.9)',
+          background: [
+            'radial-gradient(ellipse at 8% 55%,  rgba(196,85,59,0.14)  0%, transparent 52%)',
+            'radial-gradient(ellipse at 85% 12%, rgba(80,78,118,0.2)   0%, transparent 48%)',
+            'radial-gradient(ellipse at 68% 92%, rgba(58,133,128,0.11) 0%, transparent 42%)',
+            'radial-gradient(ellipse at 42% 50%, rgba(212,160,23,0.07) 0%, transparent 55%)',
+            'linear-gradient(145deg, #FFF9F5 0%, #F4F0FF 100%)',
+          ].join(','),
+          boxShadow: '0 4px 28px rgba(80,78,118,0.13), 0 1px 6px rgba(44,26,15,0.05)',
+          border: '1px solid rgba(255,255,255,0.92)',
         }}>
 
-          {/* ── Barra vertical esquerda — acento editorial ── */}
+          {/* ── Barra vertical esquerda ── */}
           <div style={{
-            position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, zIndex: 2,
+            position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, zIndex: 2,
             background: 'linear-gradient(180deg, #504E76 0%, #C4553B 100%)',
           }} />
 
-          {/* ── Marca d'água "R$" — fundo, muito sutil ── */}
-          <div style={{
-            position: 'absolute', right: 20, bottom: -28,
-            fontFamily: "'Fraunces',Georgia,serif",
-            fontSize: 168, fontWeight: 700, letterSpacing: -8,
-            color: 'rgba(80,78,118,0.042)',
-            lineHeight: 1, userSelect: 'none', pointerEvents: 'none',
-            zIndex: 0,
-          }}>R$</div>
-
-          {/* ── Orbe de luz — canto superior direito ── */}
-          <div style={{
-            position: 'absolute', right: -40, top: -40, width: 200, height: 200,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(196,195,227,0.15) 0%, transparent 68%)',
-            pointerEvents: 'none', zIndex: 0,
-          }} />
+          {/* ── Decoração orbital — abstrata, sem personagem ── */}
+          <motion.svg
+            style={{
+              position: 'absolute', right: -24, top: '50%', translateY: '-50%',
+              width: 230, height: 230, zIndex: 0, opacity: 0.9,
+            }}
+            viewBox="0 0 220 220" fill="none"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
+          >
+            {/* Anéis concêntricos */}
+            <circle cx="110" cy="110" r="102" stroke="rgba(80,78,118,0.09)"  strokeWidth="1"/>
+            <circle cx="110" cy="110" r="72"  stroke="rgba(196,85,59,0.11)"  strokeWidth="1.2"/>
+            <circle cx="110" cy="110" r="44"  stroke="rgba(58,133,128,0.1)"  strokeWidth="0.8" strokeDasharray="7 5"/>
+            {/* Núcleo */}
+            <circle cx="110" cy="110" r="14"  fill="rgba(80,78,118,0.09)"/>
+            <circle cx="110" cy="110" r="5"   fill="rgba(80,78,118,0.2)"/>
+            {/* Pontos em órbita */}
+            <circle cx="110" cy="8"   r="5.5" fill="rgba(212,160,23,0.5)"/>
+            <circle cx="204" cy="156" r="4.5" fill="rgba(196,85,59,0.38)"/>
+            <circle cx="22"  cy="148" r="4"   fill="rgba(58,133,128,0.32)"/>
+            <circle cx="182" cy="34"  r="3.5" fill="rgba(80,78,118,0.28)"/>
+            {/* Arco acento — terra */}
+            <path d="M 110 8 A 102 102 0 0 1 204 156"
+              stroke="rgba(196,85,59,0.22)" strokeWidth="2" strokeLinecap="round"/>
+            {/* Cruz de referência */}
+            <line x1="0"   y1="110" x2="220" y2="110" stroke="rgba(80,78,118,0.05)" strokeWidth="0.8"/>
+            <line x1="110" y1="0"   x2="110" y2="220" stroke="rgba(80,78,118,0.05)" strokeWidth="0.8"/>
+          </motion.svg>
 
           {/* ── Conteúdo ── */}
           <div style={{
             position: 'relative', zIndex: 1,
-            padding: '22px 32px 22px 36px',
-            height: '100%', minHeight: 160,
+            padding: '24px 32px 24px 38px',
+            height: '100%', minHeight: 168,
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>
 
-            {/* Linha topo: saudação + data */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <span style={{
-                fontFamily: "'Plus Jakarta Sans',sans-serif",
-                fontSize: 10, fontWeight: 700,
-                color: '#9B7B6A', letterSpacing: '.1em', textTransform: 'uppercase',
-              }}>{saudacao}</span>
-              <span style={{
-                fontFamily: "'Plus Jakarta Sans',sans-serif",
-                fontSize: 11, fontWeight: 500,
-                color: 'rgba(122,92,79,0.5)',
-              }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</span>
-            </div>
+            {/* Label saudação */}
+            <span style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontSize: 10, fontWeight: 700,
+              color: '#9B7B6A', letterSpacing: '.1em', textTransform: 'uppercase',
+              marginBottom: 10, display: 'block',
+            }}>{saudacao}</span>
 
             {/* Nome — tipografia herói */}
             <motion.h1
@@ -250,30 +245,25 @@ export function DashboardPage() {
               transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
               style={{
                 fontFamily: "'Fraunces',Georgia,serif",
-                fontWeight: 700, fontSize: 58,
+                fontWeight: 700, fontSize: 64,
                 lineHeight: 1, letterSpacing: '-2.5px',
                 color: '#2C1A0F', margin: 0,
               }}
-            >Yago.</motion.h1>
+            >Yago</motion.h1>
 
-            {/* Régua + insight contextual */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 14 }}>
-              <div style={{
-                width: 28, height: 2.5,
-                background: greetInsightColor,
-                borderRadius: 2, flexShrink: 0,
-              }} />
-              <motion.p
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.28, duration: 0.45 }}
-                style={{
-                  fontFamily: "'Plus Jakarta Sans',sans-serif",
-                  fontSize: 13, fontWeight: 500,
-                  color: greetInsightColor, margin: 0, lineHeight: 1.4,
-                }}
-              >{greetInsightText}</motion.p>
-            </div>
+            {/* Data */}
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25, duration: 0.45 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 14 }}
+            >
+              <div style={{ width: 24, height: 2.5, background: '#C4553B', borderRadius: 2, flexShrink: 0 }} />
+              <span style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontSize: 13, fontWeight: 500, color: '#7A5C4F',
+              }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</span>
+            </motion.div>
 
           </div>
         </div>
