@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { IconEdit, IconTrash, IconPlus, IconTrophy, IconLink, IconCalendarEvent } from '@tabler/icons-react'
 import type { MetaComputed } from '@/db/hooks/useMetas'
-import { deleteMeta } from '@/db/hooks/useMetas'
 import { fmt } from '@/lib/format'
 import { getMetaIcon, META_TIPO_BY } from './constants'
 
@@ -9,9 +9,11 @@ interface Props {
   meta: MetaComputed
   onEdit: () => void
   onAporte: () => void
+  onDelete: () => void
 }
 
-export function MetaCard({ meta, onEdit, onAporte }: Props) {
+export function MetaCard({ meta, onEdit, onAporte, onDelete }: Props) {
+  const [hover, setHover] = useState(false)
   const Icon = getMetaIcon(meta.icone)
   const tipoMeta = META_TIPO_BY.get(meta.tipo ?? 'outros')
   const atingida = meta.progressoPct >= 100
@@ -25,21 +27,17 @@ export function MetaCard({ meta, onEdit, onAporte }: Props) {
     ? falta / Math.max(1, diasRestantes / 30)
     : null
 
-  const handleDelete = () => {
-    if (confirm(`Excluir a meta "${meta.nome}"? Os investimentos vinculados permanecem (sem vínculo).`)) {
-      if (meta.id !== undefined) deleteMeta(meta.id)
-    }
-  }
-
   return (
     <motion.div
       layout
-      whileHover={{ y: -3, boxShadow: '0 10px 28px rgba(44,26,15,0.1), 0 2px 8px rgba(44,26,15,0.05)' }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      whileHover={{ y: -4, boxShadow: '0 10px 28px rgba(44,26,15,0.1), 0 2px 8px rgba(44,26,15,0.05)' }}
       transition={{ type: 'spring', stiffness: 240, damping: 26 }}
       style={{
         position: 'relative',
         background: '#FFFFFF', border: '1px solid #EDE6DC',
-        borderRadius: 18, padding: '18px 20px',
+        borderRadius: 20, padding: '18px 20px',
         boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 2px 10px rgba(44,26,15,0.04)',
         display: 'flex', flexDirection: 'column', gap: 12,
         height: '100%',
@@ -75,14 +73,20 @@ export function MetaCard({ meta, onEdit, onAporte }: Props) {
             }}>{tipoMeta.label}</p>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button onClick={onEdit} title="Editar" style={ICON_BTN}>
-            <IconEdit size={12} stroke={1.8} color="#7A5C4F" />
-          </button>
-          <button onClick={handleDelete} title="Excluir" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
-            <IconTrash size={12} stroke={2} color="#C4553B" />
-          </button>
-        </div>
+        <AnimatePresence>
+          {hover && (
+            <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 8 }}
+              transition={{ duration: 0.12 }}
+              style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+              <button onClick={onEdit} title="Editar" style={ICON_BTN}>
+                <IconEdit size={12} stroke={1.8} color="#7A5C4F" />
+              </button>
+              <button onClick={onDelete} title="Excluir" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
+                <IconTrash size={12} stroke={2} color="#C4553B" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Progresso */}

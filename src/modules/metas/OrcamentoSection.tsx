@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { IconPlus, IconEdit, IconX, IconAlertTriangle, IconCheck } from '@tabler/icons-react'
+import { IconPlus, IconEdit, IconX, IconAlertTriangle, IconCheck, IconTrash } from '@tabler/icons-react'
 import { useOrcamentos, addOrcamento, editOrcamento, deleteOrcamento } from '@/db/hooks/useOrcamentos'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useGastosPorCategoria } from '@/db/hooks/useTransacoes'
@@ -17,9 +17,15 @@ export function OrcamentoSection() {
   const gastos = useGastosPorCategoria(mes, ano)
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const [form, setForm] = useState({ categoriaId: null as number | null, valorLimite: '' })
 
-  useBodyScrollLock(adding)
+  useBodyScrollLock(adding || confirmDeleteId !== null)
+
+  // Mini-KPIs
+  const totalLimite = orcamentos.reduce((s, o) => s + o.valorLimite, 0)
+  const totalGasto = orcamentos.reduce((s, o) => s + (gastos.get(o.categoriaId) ?? 0), 0)
+  const estourados = orcamentos.filter(o => (gastos.get(o.categoriaId) ?? 0) > o.valorLimite).length
 
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
 
@@ -77,11 +83,37 @@ export function OrcamentoSection() {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10, alignItems: 'stretch' }}>
-          {orcamentos.map(orc => (
-            <OrcamentoRow key={orc.id} orc={orc} gastos={gastos} onEdit={() => openEdit(orc)} />
-          ))}
-        </div>
+        <>
+          {/* Mini KPIs */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 12, padding: '10px 14px', background: '#FBF8F3', border: '1px solid #EDE6DC', borderRadius: 12 }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>Gasto / limite</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: totalGasto > totalLimite ? '#C4553B' : '#2C1A0F', letterSpacing: '-0.3px', margin: '2px 0 0' }}>
+                {fmt(totalGasto)} <span style={{ color: '#9B7B6A', fontWeight: 600, fontSize: 12 }}>/ {fmt(totalLimite)}</span>
+              </p>
+            </div>
+            <div style={{ width: 1, background: '#EDE6DC' }} />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>Uso geral</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.3px', margin: '2px 0 0' }}>
+                {totalLimite > 0 ? ((totalGasto / totalLimite) * 100).toFixed(0) : 0}%
+              </p>
+            </div>
+            <div style={{ width: 1, background: '#EDE6DC' }} />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: estourados > 0 ? '#C4553B' : '#9B7B6A', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>Estourados</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: estourados > 0 ? '#C4553B' : '#2C1A0F', letterSpacing: '-0.3px', margin: '2px 0 0' }}>
+                {estourados} <span style={{ color: '#9B7B6A', fontWeight: 600, fontSize: 12 }}>de {orcamentos.length}</span>
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10, alignItems: 'stretch' }}>
+            {orcamentos.map(orc => (
+              <OrcamentoRow key={orc.id} orc={orc} gastos={gastos} onEdit={() => openEdit(orc)} onDelete={() => orc.id !== undefined && setConfirmDeleteId(orc.id)} />
+            ))}
+          </div>
+        </>
       )}
 
       <AnimatePresence>
@@ -169,12 +201,41 @@ export function OrcamentoSection() {
             </motion.div>
           </motion.div>
         )}
+
+        {confirmDeleteId !== null && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setConfirmDeleteId(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)', backdropFilter: 'blur(8px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: '#FFFDF9', borderRadius: 22, padding: '28px 24px', maxWidth: 360, width: '100%', textAlign: 'center', boxShadow: '0 24px 64px rgba(13,6,4,0.4)' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: '#FAF0EE', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <IconTrash size={26} color="#C4553B" stroke={1.8} />
+              </div>
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.5px', margin: '0 0 8px' }}>Excluir orçamento?</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginBottom: 22, lineHeight: 1.5 }}>
+                O limite mensal dessa categoria será removido. As transações continuam intactas.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setConfirmDeleteId(null)}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #E8E0D5', background: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <motion.button whileTap={{ scale: 0.97 }}
+                  onClick={async () => { await deleteOrcamento(confirmDeleteId); setConfirmDeleteId(null) }}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: '#C4553B', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer', boxShadow: '0 4px 12px rgba(196,85,59,0.3)' }}>
+                  Excluir
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </section>
   )
 }
 
-function OrcamentoRow({ orc, gastos, onEdit }: { orc: { id?: number; categoriaId: number; valorLimite: number }; gastos: Map<number, number>; onEdit: () => void }) {
+function OrcamentoRow({ orc, gastos, onEdit, onDelete }: { orc: { id?: number; categoriaId: number; valorLimite: number }; gastos: Map<number, number>; onEdit: () => void; onDelete: () => void }) {
   const [catNome, setCatNome] = useState('')
   const [catCor, setCatCor] = useState('#9B8A7A')
   const shook = useRef(false)
@@ -223,8 +284,8 @@ function OrcamentoRow({ orc, gastos, onEdit }: { orc: { id?: number; categoriaId
             <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <IconEdit size={11} stroke={1.8} color="#7A5C4F" />
             </button>
-            <button onClick={() => orc.id !== undefined && deleteOrcamento(orc.id)} style={{ background: '#FAF0EE', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconX size={13} stroke={2} color="#C4553B" />
+            <button onClick={onDelete} title="Excluir" style={{ background: '#FAF0EE', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconTrash size={11} stroke={2} color="#C4553B" />
             </button>
           </div>
         </div>

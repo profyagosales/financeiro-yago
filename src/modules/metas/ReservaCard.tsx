@@ -125,13 +125,13 @@ export function ReservaCard({ reserva, onEdit, onAporte }: Props) {
           {reserva.progressoPct < 100 && (
             <button onClick={onAporte}
               style={{
-                marginTop: 14, background: 'linear-gradient(135deg, #D4A017, #B88812)',
-                color: '#1A1810', border: 'none', borderRadius: 12,
+                marginTop: 14, background: '#FFFFFF',
+                color: '#143E3B', border: 'none', borderRadius: 12,
                 padding: '10px 18px', cursor: 'pointer',
                 fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 800,
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                boxShadow: '0 4px 16px rgba(212,160,23,0.32)',
-                letterSpacing: '.02em',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                letterSpacing: '.01em',
               }}>
               <IconPlus size={14} stroke={2.5} /> Aportar à reserva
             </button>
