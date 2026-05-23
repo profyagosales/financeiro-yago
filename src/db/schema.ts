@@ -1,7 +1,7 @@
 import Dexie, { type Table } from 'dexie'
 
 // ─── Existentes ──────────────────────────────────────────────────────
-export interface Conta { id?: number; nome: string; tipo: string; saldoInicial: number; saldoAtual: number; cor: string; icone: string; chequeEspecialLimite?: number; ativo: boolean; syncId?: string; updatedAt: number }
+export interface Conta { id?: number; nome: string; tipo: string; saldoInicial: number; saldoAtual: number; cor: string; icone: string; logo?: string; chequeEspecialLimite?: number; ativo: boolean; syncId?: string; updatedAt: number }
 export interface Categoria { id?: number; nome: string; tipo: string; icone: string; cor: string; ordem: number; syncId?: string }
 export interface Transacao { id?: number; data: string; valor: number; tipo: string; contaId: number; categoriaId: number; descricao: string; notas?: string; tags?: string[]; status: string; transferId?: string; recorrencia?: string; syncId?: string; updatedAt: number }
 export interface Cartao { id?: number; nome: string; bandeira: string; limite: number; cor: string; diaFechamento: number; diaVencimento: number; ativo: boolean; syncId?: string }
