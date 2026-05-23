@@ -8,6 +8,7 @@ import { useCategorias } from '@/db/hooks/useCategorias'
 import { useCartoes } from '@/db/hooks/useCartoes'
 import { marcarComoComprado } from '@/db/hooks/useDesejos'
 import { fmt } from '@/lib/format'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 interface Props {
   desejo: Desejo
@@ -16,6 +17,7 @@ interface Props {
 
 // Marca um desejo como comprado e cria a transação correspondente.
 export function ComprarForm({ desejo, onClose }: Props) {
+  useBodyScrollLock(true)
   const today = new Date().toISOString().split('T')[0]
   const contas = useContas()
   const cartoes = useCartoes()

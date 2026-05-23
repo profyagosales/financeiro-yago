@@ -10,6 +10,7 @@ import { fmt } from '@/lib/format'
 import { Dobrao } from '@/components/mascot/Dobrao'
 import type { Categoria, Conta, Cartao, ContaFixa } from '@/db/schema'
 import { IconPlus, IconX, IconTrash, IconCheck, IconEdit, IconChevronLeft, IconChevronRight, IconAlertTriangle, IconCircleCheck, IconCalendarDue, IconTrendingUp, IconCalendar, IconFlame, IconBuildingBank, IconCreditCard } from '@tabler/icons-react'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 // ─── Typography tokens ───────────────────────────────────────────────
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
@@ -48,6 +49,9 @@ export function Page() {
   const [feeForm, setFeeForm] = useState({ juros: '', multa: '' })
   const [paymentMethod, setPaymentMethod] = useState<'conta' | 'cartao'>('conta')
   const [form, setForm] = useState({ nome: '', valor: '', diaVencimento: 10, categoriaId: null as number | null, contaId: null as number | null, cartaoId: null as number | null })
+
+  // Lock body scroll quando qualquer modal estiver aberto
+  useBodyScrollLock(adding || confirmDelete !== null || payingWithFee !== null)
 
   // Mapas de apoio
   const catMap = useMemo(() => new Map(categorias.map(c => [c.id!, c])), [categorias])

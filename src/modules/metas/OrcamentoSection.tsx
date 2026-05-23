@@ -8,6 +8,7 @@ import { fmt, mesAnoAtual } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { sounds } from '@/lib/sounds'
 import { db } from '@/db/schema'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 export function OrcamentoSection() {
   const { mes, ano } = mesAnoAtual()
@@ -17,6 +18,8 @@ export function OrcamentoSection() {
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState({ categoriaId: null as number | null, valorLimite: '' })
+
+  useBodyScrollLock(adding)
 
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
 

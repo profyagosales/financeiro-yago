@@ -5,6 +5,7 @@ import type { Investimento, InvestimentoTipo, InvestimentoBenchmark, Investiment
 import { addInvestimento, editInvestimento } from '@/db/hooks/useInvestimentos'
 import { useMetas } from '@/db/hooks/useMetas'
 import { TIPOS, BENCHMARKS, LIQUIDEZ_OPTIONS, TIPO_META } from './constants'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 interface Props {
   invest?: Investimento | null
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
+  useBodyScrollLock(true)
   const metas = useMetas()
   const today = new Date().toISOString().split('T')[0]
   const isEditing = !!invest

@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect } from 'react'
 import { IconX } from '@tabler/icons-react'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 // ─── Modal premium reutilizável ──────────────────────────────────────
 //
@@ -58,16 +59,16 @@ export function Modal({
 }: ModalProps) {
   const maxWidth = SIZE_MAP[size]
 
-  // ESC fecha + lock body scroll
+  // Lock body scroll quando aberto (compartilhado via hook)
+  useBodyScrollLock(open)
+
+  // ESC fecha
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
     }
   }, [open, onClose])
 

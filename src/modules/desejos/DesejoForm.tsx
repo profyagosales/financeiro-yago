@@ -5,6 +5,7 @@ import type { Desejo, DesejoPrioridade } from '@/db/schema'
 import { addDesejo, editDesejo } from '@/db/hooks/useDesejos'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { PRIORIDADES } from './constants'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 interface Props {
   desejo?: Desejo | null
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function DesejoForm({ desejo, presetPrioridade, onClose }: Props) {
+  useBodyScrollLock(true)
   const categorias = useCategorias('despesa')
   const today = new Date().toISOString().split('T')[0]
   const isEditing = !!desejo

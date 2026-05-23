@@ -5,6 +5,7 @@ import type { Divida, DividaTipo } from '@/db/schema'
 import { addDivida, editDivida } from '@/db/hooks/useDividas'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { TIPOS, TIPO_META } from './constants'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 interface Props {
   divida?: Divida | null
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function DividaForm({ divida, onClose }: Props) {
+  useBodyScrollLock(true)
   const categorias = useCategorias('despesa')
   const today = new Date().toISOString().split('T')[0]
   const isEditing = !!divida

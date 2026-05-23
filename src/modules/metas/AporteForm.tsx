@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { IconX, IconCheck, IconCurrencyReal, IconChartLine } from '@tabler/icons-react'
 import type { Meta } from '@/db/schema'
 import { aportarMeta } from '@/db/hooks/useMetas'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 interface Props {
   meta: Meta
@@ -14,6 +15,7 @@ interface Props {
 //   1. Aporte direto na meta (incrementa meta.valorAtual)
 //   2. Vincular investimento real (abre InvestimentoForm com presetMetaId)
 export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
+  useBodyScrollLock(true)
   const [valor, setValor] = useState('')
   const [path, setPath] = useState<'direto' | null>(null)
 

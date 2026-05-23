@@ -5,6 +5,7 @@ import type { Meta, MetaTipo } from '@/db/schema'
 import { addMeta, editMeta, calcularAlvoReserva, useMetas } from '@/db/hooks/useMetas'
 import { fmt } from '@/lib/format'
 import { META_TIPOS, META_ICONS, META_CORES, COBERTURA_OPTIONS, getMetaIcon } from './constants'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 interface Props {
   meta?: Meta | null
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function MetaForm({ meta, presetTipo, onClose }: Props) {
+  useBodyScrollLock(true)
   const metas = useMetas()
   const isEditing = !!meta
 
