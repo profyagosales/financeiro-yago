@@ -67,39 +67,18 @@ export function DashboardPage() {
   const cartoes = useCartoes()
 
   const fixasPendentes = contasFixas.filter(cf => !pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
-  const fixasPagas = contasFixas.filter(cf => pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
-  const totalFixasMes = contasFixas.reduce((s, cf) => s + cf.valor, 0)
   const totalParcelamentos = parcelamentos.reduce((s, l) => s + l.valor, 0)
   const totalComprometido = despesas + fixasPendentes.reduce((s, cf) => s + cf.valor, 0) + totalParcelamentos
   const saldoLivre = receitas - totalComprometido
-  const taxaPoupanca = receitas > 0 ? Math.max(0, (receitas - despesas) / receitas * 100) : 0
 
   const hoje = new Date().getDate()
   const diasNoMes = new Date(ano, mes, 0).getDate()
-  const diasRestantes = Math.max(1, diasNoMes - hoje + 1)
-  const porDia = saldoLivre / diasRestantes
-
-  const proximosVenc = contasFixas.filter(cf => {
-    const pago = pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago')
-    return !pago && cf.diaVencimento >= hoje && cf.diaVencimento <= hoje + 7
-  }).sort((a, b) => a.diaVencimento - b.diaVencimento)
-
-  const cartoesAlerta = cartoes.filter(c => {
-    const dias = c.diaFechamento >= hoje ? c.diaFechamento - hoje : 31 - hoje + c.diaFechamento
-    return dias <= 5
-  })
 
   const pieData = categorias
     .map(c => ({ name: c.nome, value: gastosPorCat.get(c.id!) ?? 0, color: c.cor, cat: c }))
     .filter(d => d.value > 0).sort((a, b) => b.value - a.value).slice(0, 6)
 
-  const h = new Date().getHours()
-  const saudacao = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })
-  const dataHoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
-  const hasAlerts = proximosVenc.length > 0 || cartoesAlerta.length > 0
-
-  const poupancaColor = taxaPoupanca > 20 ? '#3A8580' : taxaPoupanca > 0 ? '#D4A017' : '#C4553B'
 
   const metas = useMetas()
   const txsMes = useTransacoesByMes(mes, ano)
@@ -162,162 +141,7 @@ export function DashboardPage() {
       variants={STAGGER} initial="hidden" animate="show"
       style={{ width: '100%', padding: '32px', paddingBottom: 48 }}>
 
-      {/* ─── ROW 1: Greeting ─── */}
-      <motion.div variants={ITEM} style={{ display: 'grid', gridTemplateColumns: '4fr 1fr', gap: 14, marginBottom: 20 }}>
-
-        {/* ══════════════════════════════════════════════════════════
-            GREETING CARD — Gradient mesh rico + decoração orbital
-            abstrata. Zero personagem, zero watermark, zero insight.
-            Fundo vivo, tipografia hero, animação ambiente suave.
-            ══════════════════════════════════════════════════════════ */}
-        <div style={{
-          position: 'relative',
-          minHeight: 168,
-          borderRadius: 24,
-          overflow: 'hidden',
-          background: [
-            'radial-gradient(ellipse at 8% 55%,  rgba(196,85,59,0.14)  0%, transparent 52%)',
-            'radial-gradient(ellipse at 85% 12%, rgba(80,78,118,0.2)   0%, transparent 48%)',
-            'radial-gradient(ellipse at 68% 92%, rgba(58,133,128,0.11) 0%, transparent 42%)',
-            'radial-gradient(ellipse at 42% 50%, rgba(212,160,23,0.07) 0%, transparent 55%)',
-            'linear-gradient(145deg, #FFF9F5 0%, #F4F0FF 100%)',
-          ].join(','),
-          boxShadow: '0 4px 28px rgba(80,78,118,0.13), 0 1px 6px rgba(44,26,15,0.05)',
-          border: '1px solid rgba(255,255,255,0.92)',
-        }}>
-
-          {/* ── Barra vertical esquerda ── */}
-          <div style={{
-            position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, zIndex: 2,
-            background: 'linear-gradient(180deg, #504E76 0%, #C4553B 100%)',
-          }} />
-
-          {/* ── Decoração orbital — abstrata, sem personagem ── */}
-          <motion.svg
-            style={{
-              position: 'absolute', right: -24, top: '50%', translateY: '-50%',
-              width: 230, height: 230, zIndex: 0, opacity: 0.9,
-            }}
-            viewBox="0 0 220 220" fill="none"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
-          >
-            {/* Anéis concêntricos */}
-            <circle cx="110" cy="110" r="102" stroke="rgba(80,78,118,0.09)"  strokeWidth="1"/>
-            <circle cx="110" cy="110" r="72"  stroke="rgba(196,85,59,0.11)"  strokeWidth="1.2"/>
-            <circle cx="110" cy="110" r="44"  stroke="rgba(58,133,128,0.1)"  strokeWidth="0.8" strokeDasharray="7 5"/>
-            {/* Núcleo */}
-            <circle cx="110" cy="110" r="14"  fill="rgba(80,78,118,0.09)"/>
-            <circle cx="110" cy="110" r="5"   fill="rgba(80,78,118,0.2)"/>
-            {/* Pontos em órbita */}
-            <circle cx="110" cy="8"   r="5.5" fill="rgba(212,160,23,0.5)"/>
-            <circle cx="204" cy="156" r="4.5" fill="rgba(196,85,59,0.38)"/>
-            <circle cx="22"  cy="148" r="4"   fill="rgba(58,133,128,0.32)"/>
-            <circle cx="182" cy="34"  r="3.5" fill="rgba(80,78,118,0.28)"/>
-            {/* Arco acento — terra */}
-            <path d="M 110 8 A 102 102 0 0 1 204 156"
-              stroke="rgba(196,85,59,0.22)" strokeWidth="2" strokeLinecap="round"/>
-            {/* Cruz de referência */}
-            <line x1="0"   y1="110" x2="220" y2="110" stroke="rgba(80,78,118,0.05)" strokeWidth="0.8"/>
-            <line x1="110" y1="0"   x2="110" y2="220" stroke="rgba(80,78,118,0.05)" strokeWidth="0.8"/>
-          </motion.svg>
-
-          {/* ── Conteúdo ── */}
-          <div style={{
-            position: 'relative', zIndex: 1,
-            padding: '24px 32px 24px 38px',
-            height: '100%', minHeight: 168,
-            display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          }}>
-
-            {/* Label saudação */}
-            <span style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif",
-              fontSize: 10, fontWeight: 700,
-              color: '#9B7B6A', letterSpacing: '.1em', textTransform: 'uppercase',
-              marginBottom: 10, display: 'block',
-            }}>{saudacao}</span>
-
-            {/* Nome — tipografia herói */}
-            <motion.h1
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
-              style={{
-                fontFamily: "'Fraunces',Georgia,serif",
-                fontWeight: 700, fontSize: 64,
-                lineHeight: 1, letterSpacing: '-2.5px',
-                color: '#2C1A0F', margin: 0,
-              }}
-            >Yago</motion.h1>
-
-            {/* Data */}
-            <motion.div
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.25, duration: 0.45 }}
-              style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 14 }}
-            >
-              <div style={{ width: 24, height: 2.5, background: '#C4553B', borderRadius: 2, flexShrink: 0 }} />
-              <span style={{
-                fontFamily: "'Plus Jakarta Sans',sans-serif",
-                fontSize: 13, fontWeight: 500, color: '#7A5C4F',
-              }}>{dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)}</span>
-            </motion.div>
-
-          </div>
-        </div>
-
-        {/* ── Card mês ── */}
-        <div style={{
-          background: '#504E76',
-          borderRadius: 24,
-          padding: '20px 14px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 10,
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-          <div style={{ position:'absolute', top:-24, right:-24, width:80, height:80,
-            borderRadius:'50%', background:'rgba(255,255,255,0.05)', pointerEvents:'none' }}/>
-          <div style={{ position:'absolute', bottom:-14, left:-14, width:56, height:56,
-            borderRadius:'50%', background:'rgba(241,100,46,0.1)', pointerEvents:'none' }}/>
-
-          {/* Anel — hero visual, maior */}
-          <svg width="76" height="76" viewBox="0 0 76 76" style={{ flexShrink:0 }}>
-            <circle cx="38" cy="38" r="30" fill="none"
-              stroke="rgba(255,255,255,0.12)" strokeWidth="6"/>
-            <motion.circle cx="38" cy="38" r="30" fill="none"
-              stroke="rgba(196,195,227,0.85)" strokeWidth="6"
-              strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 30}
-              initial={{ strokeDashoffset: 2 * Math.PI * 30 }}
-              animate={{ strokeDashoffset: 2 * Math.PI * 30 * (1 - hoje / diasNoMes) }}
-              transition={{ duration:1.4, ease:[0.34,1.56,0.64,1], delay:0.4 }}
-              style={{ transform:'rotate(-90deg)', transformOrigin:'38px 38px' }}
-            />
-            <text x="38" y="34" textAnchor="middle" fill="white"
-              fontSize="15" fontFamily="Fraunces, Georgia, serif" fontWeight="700">{hoje}</text>
-            <text x="38" y="47" textAnchor="middle" fill="rgba(255,255,255,0.4)"
-              fontSize="7" fontFamily="Plus Jakarta Sans, sans-serif">DE {diasNoMes}</text>
-          </svg>
-
-          {/* Mês + Ano abaixo do anel */}
-          <div style={{ textAlign:'center' }}>
-            <p style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, fontWeight:700,
-              color:'#ffffff', textTransform:'capitalize', lineHeight:1.1, margin:0 }}>
-              {mesNome}
-            </p>
-            <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10,
-              color:'rgba(255,255,255,0.38)', marginTop:2 }}>{ano}</p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* ─── ROW 2: KPIs (vertical) + Rich Calendar ─── */}
+      {/* ─── ROW 1: KPIs (vertical) + Rich Calendar ─── */}
       {(() => {
         const saldoMes = receitas - totalComprometido
         const saldoColor  = saldoMes >= 0 ? '#3A8580' : '#C4553B'
