@@ -83,9 +83,6 @@ export function Page() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
         <div>
           <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>Investimentos</h1>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>
-            Gerencie suas aplicações financeiras — CDB, Tesouro, ações, cripto e mais
-          </p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
           <button onClick={() => aplicarRentabilidadeAutoTodos()}

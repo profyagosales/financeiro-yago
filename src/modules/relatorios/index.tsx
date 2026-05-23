@@ -502,7 +502,6 @@ export function Page() {
       <div style={{ padding: '32px 32px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, borderBottom: '1px solid #EDE6DC' }}>
         <div>
           <h1 style={{ ...DISPLAY, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Relatórios</h1>
-          <p style={{ ...BODY, fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>Análise financeira detalhada do período</p>
         </div>
       </div>
 

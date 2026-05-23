@@ -54,9 +54,6 @@ export function Page() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
         <div>
           <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>Dívidas</h1>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>
-            Empréstimos, financiamentos e parcelamentos — pagamentos sincronizam com Contas Fixas
-          </p>
         </div>
         <button onClick={() => setAdding(true)}
           style={{

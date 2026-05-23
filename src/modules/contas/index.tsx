@@ -132,11 +132,6 @@ export function Page() {
             <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>
               Contas
             </h1>
-            {contas.length === 0 && (
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginTop: 4 }}>
-                Suas contas bancárias e carteiras
-              </p>
-            )}
           </div>
 
           {/* Top KPIs inline */}

@@ -162,9 +162,6 @@ export function Page() {
       }}>
         <div>
           <h1 style={{ ...DISPLAY as object, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px', margin: 0 }}>Contas Fixas</h1>
-          <p style={{ ...SUB as object, fontSize: 13, marginTop: 4 }}>
-            {contasFixas.length} {contasFixas.length === 1 ? 'conta cadastrada' : 'contas cadastradas'} · {fmt(totalMes)} por mês
-          </p>
         </div>
 
         {/* Period selector + Adicionar */}
