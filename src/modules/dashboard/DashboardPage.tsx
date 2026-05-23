@@ -266,31 +266,31 @@ export function DashboardPage() {
 
           {/* Mês + ano */}
           <div style={{ textAlign:'center' }}>
-            <p style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:26, fontWeight:700,
+            <p style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:700,
               color:'#ffffff', textTransform:'capitalize', lineHeight:1.1, margin:0 }}>
               {mesNome}
             </p>
-            <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12,
+            <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10,
               color:'rgba(255,255,255,0.38)', marginTop:2 }}>{ano}</p>
           </div>
 
           {/* Anel de dias */}
-          <svg width="80" height="80" viewBox="0 0 76 76">
-            <circle cx="38" cy="38" r={ringR} fill="none"
-              stroke="rgba(255,255,255,0.12)" strokeWidth="6"/>
-            <motion.circle cx="38" cy="38" r={ringR} fill="none"
-              stroke="rgba(196,195,227,0.82)" strokeWidth="6"
+          <svg width="58" height="58" viewBox="0 0 58 58">
+            <circle cx="29" cy="29" r="24" fill="none"
+              stroke="rgba(255,255,255,0.12)" strokeWidth="5"/>
+            <motion.circle cx="29" cy="29" r="24" fill="none"
+              stroke="rgba(196,195,227,0.82)" strokeWidth="5"
               strokeLinecap="round"
-              strokeDasharray={ringCirc}
-              initial={{ strokeDashoffset: ringCirc }}
-              animate={{ strokeDashoffset: ringCirc * (1 - hoje / diasNoMes) }}
+              strokeDasharray={2 * Math.PI * 24}
+              initial={{ strokeDashoffset: 2 * Math.PI * 24 }}
+              animate={{ strokeDashoffset: 2 * Math.PI * 24 * (1 - hoje / diasNoMes) }}
               transition={{ duration:1.4, ease:[0.34,1.56,0.64,1], delay:0.4 }}
-              style={{ transform:'rotate(-90deg)', transformOrigin:'38px 38px' }}
+              style={{ transform:'rotate(-90deg)', transformOrigin:'29px 29px' }}
             />
-            <text x="38" y="35" textAnchor="middle" fill="white"
-              fontSize="15" fontFamily="Fraunces, Georgia, serif" fontWeight="700">{hoje}</text>
-            <text x="38" y="47" textAnchor="middle" fill="rgba(255,255,255,0.38)"
-              fontSize="7" fontFamily="Plus Jakarta Sans, sans-serif">DE {diasNoMes}</text>
+            <text x="29" y="26" textAnchor="middle" fill="white"
+              fontSize="12" fontFamily="Fraunces, Georgia, serif" fontWeight="700">{hoje}</text>
+            <text x="29" y="36" textAnchor="middle" fill="rgba(255,255,255,0.38)"
+              fontSize="6" fontFamily="Plus Jakarta Sans, sans-serif">DE {diasNoMes}</text>
           </svg>
 
         </div>
