@@ -128,7 +128,7 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
           }}>Fatura de {mesNome}</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap', marginTop: 6 }}>
             <p style={{
-              fontFamily: "'Fraunces',Georgia,serif", fontSize: 52, fontWeight: 700,
+              fontFamily: "'Fraunces',Georgia,serif", fontSize: 48, fontWeight: 700,
               color: faturaAtual > 0 ? '#2C1A0F' : '#9B7B6A',
               letterSpacing: '-2px', lineHeight: 1, margin: 0,
             }}>{fmt(faturaAtual)}</p>

@@ -89,7 +89,7 @@ export function CartaoListRow({ cartao, active, onClick }: Props) {
           }}>{cartao.bandeira}</p>
         </div>
         <span style={{
-          fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700,
+          fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700,
           color: fatura > 0 ? '#2C1A0F' : '#9B7B6A',
           letterSpacing: '-0.4px',
         }}>{fmt(fatura)}</span>
