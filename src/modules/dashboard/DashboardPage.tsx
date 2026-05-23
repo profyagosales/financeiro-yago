@@ -252,8 +252,8 @@ export function DashboardPage() {
           letterSpacing: '-1.2px',
           lineHeight: 1,
           display: 'block',
-          width: 'auto',
-          textAlign: 'left',
+          width: '100%',
+          textAlign: 'center',
           marginTop: 0,
         }
         const KPI_CARD: React.CSSProperties = {
