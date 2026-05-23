@@ -524,91 +524,231 @@ export function DashboardPage() {
       })()}
 
       {/* ─── Análise de gastos + Top 5 ─── */}
-      <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:20 }}>
+      {(() => {
+        // Lookup categoria por id
+        const catById = new Map(categorias.map(c => [c.id!, c]))
+        // Gastos por categoria do mês anterior (para trends)
+        const lastMonthByCat = new Map<number, number>()
+        const lastMonthNum = mes - 1
+        if (lastMonthNum > 0) {
+          txsAno
+            .filter(t => parseInt(t.data.split('-')[1]) === lastMonthNum && t.tipo === 'despesa')
+            .forEach(t => {
+              const prev = lastMonthByCat.get(t.categoriaId) ?? 0
+              lastMonthByCat.set(t.categoriaId, prev + t.valor)
+            })
+        }
+        const catTrend = (catId: number, current: number) => {
+          const prev = lastMonthByCat.get(catId) ?? 0
+          if (prev === 0) return null
+          return ((current - prev) / prev) * 100
+        }
 
-        {/* Top Categorias — #F4F0FF lilás clarinho */}
-        <div style={{ background:'#F4F0FF', border:'1px solid rgba(196,195,227,0.35)', borderRadius:22, boxShadow:'0 2px 16px rgba(196,195,227,0.18)', padding:20, display:'flex', flexDirection:'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Gastos por categoria</h2>
+        // Gold trend pill (mesma vibe dos KPIs)
+        const renderCatTrend = (val: number | null) => {
+          if (val === null || !isFinite(val)) return null
+          const isUp = val >= 0
+          const arrow = isUp ? '↑' : '↓'
+          const sign = isUp ? '+' : ''
+          return (
+            <span style={{
+              fontFamily:"'Plus Jakarta Sans',sans-serif",
+              fontSize:9, fontWeight:700,
+              color:'#A8442B',
+              background:'rgba(212,160,23,0.18)',
+              border:'1px solid rgba(212,160,23,0.4)',
+              padding:'2px 6px', borderRadius:8,
+              display:'inline-flex', alignItems:'center', gap:2,
+              whiteSpace:'nowrap',
+            }}>
+              <span style={{ fontSize:10, color:'#D4A017', lineHeight:1, fontWeight:800 }}>{arrow}</span>
+              {sign}{Math.abs(val).toFixed(0)}%
+            </span>
+          )
+        }
+
+        return (
+        <motion.div variants={ITEM} style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:20 }}>
+
+        {/* ════════════════════════════════════════════════
+            GASTOS POR CATEGORIA — lavanda refinado
+            Donut + ranking lado a lado com trends
+            ════════════════════════════════════════════════ */}
+        <div style={{
+          position:'relative',
+          background:'#F4F0FF',
+          border:'1px solid rgba(196,195,227,0.4)',
+          borderRadius:22,
+          boxShadow:'0 4px 20px rgba(196,195,227,0.22), 0 1px 4px rgba(80,78,118,0.06)',
+          padding:22,
+          display:'flex', flexDirection:'column',
+          overflow:'hidden',
+        }}>
+          {/* Decoração SVG canto inferior direito */}
+          <svg style={{ position:'absolute', right:0, bottom:0, width:160, height:80, opacity:0.55, pointerEvents:'none' }}
+            viewBox="0 0 160 80" fill="none">
+            <path d="M0,52 Q40,10 80,40 Q120,68 160,28" stroke="rgba(80,78,118,0.18)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+            <path d="M0,72 Q50,38 100,62 Q140,80 160,60" stroke="rgba(196,195,227,0.45)" strokeWidth="1" fill="none" strokeLinecap="round"/>
+            <circle cx="156" cy="28" r="3" fill="#504E76" opacity="0.3"/>
+          </svg>
+
+          {/* Header — Fraunces + accent line */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16, position:'relative', zIndex:1 }}>
+            <div>
+              <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, fontWeight:700, color:'#2C1A0F', margin:0, letterSpacing:'-0.4px' }}>Gastos por categoria</h2>
+              <div style={{ width:32, height:2, background:'#504E76', borderRadius:1, marginTop:6, opacity:0.6 }}/>
+            </div>
             <button onClick={() => navigate('/relatorios')}
-              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#C4553B', background: 'none', border: 'none', cursor: 'pointer' }}>
+              style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:700, color:'#C4553B', background:'none', border:'none', cursor:'pointer', letterSpacing:'.04em' }}>
               Ver →
             </button>
           </div>
 
           {pieData.length > 0 ? (
-            <>
-              <div style={{ position: 'relative', width: '100%', height: 130, marginBottom: 14 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'180px 1fr', gap:18, flex:1, position:'relative', zIndex:1, alignItems:'center' }}>
+              {/* Donut esquerda */}
+              <div style={{ position:'relative', width:180, height:180 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value" strokeWidth={0}>
+                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={62} outerRadius={84} paddingAngle={3} dataKey="value" strokeWidth={0}>
                       {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
                     <Tooltip content={<DarkTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <p style={{ ...LABEL, fontSize: 8, marginBottom: 3 }}>Total</p>
-                    <p style={{ ...DISPLAY, fontSize: 16, color: '#2C1A0F' }}>{fmt(despesas)}</p>
+                <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'none' }}>
+                  <div style={{ textAlign:'center' }}>
+                    <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:8, fontWeight:700, color:'#9B7B6A', letterSpacing:'.18em', textTransform:'uppercase', margin:0 }}>Total</p>
+                    <p style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:700, color:'#2C1A0F', letterSpacing:'-0.7px', margin:'4px 0 0', lineHeight:1 }}>{fmt(despesas)}</p>
+                    <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, color:'#9B7B6A', margin:'4px 0 0', letterSpacing:'.02em' }}>{pieData.length} categoria{pieData.length !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                {pieData.slice(0, 5).map(d => (
-                  <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
-                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#2C1A0F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
-                    <span style={{ ...DISPLAY, fontSize: 12, color: '#2C1A0F' }}>{fmt(d.value)}</span>
-                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', minWidth: 32, textAlign: 'right' }}>
-                      {despesas > 0 ? (d.value / despesas * 100).toFixed(0) : 0}%
-                    </span>
-                  </div>
-                ))}
+
+              {/* Ranking direita */}
+              <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
+                {pieData.slice(0, 5).map(d => {
+                  const pct = despesas > 0 ? (d.value / despesas * 100) : 0
+                  const trend = catTrend(d.cat.id!, d.value)
+                  return (
+                    <div key={d.name}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(80,78,118,0.07)' }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
+                      style={{ display:'flex', flexDirection:'column', gap:4, padding:'6px 8px', borderRadius:8, transition:'background .15s', cursor:'default' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <CategoryIcon nome={d.cat.nome} cor={d.cat.cor} size={22} radius={7}/>
+                        <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, color:'#2C1A0F', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{d.name}</span>
+                        {renderCatTrend(trend)}
+                      </div>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <div style={{ flex:1, height:5, borderRadius:3, background:'rgba(80,78,118,0.1)', overflow:'hidden' }}>
+                          <motion.div initial={{ width:0 }} animate={{ width:`${pct}%` }} transition={{ type:'spring', stiffness:80, damping:18, delay:0.1 }}
+                            style={{ height:'100%', borderRadius:3, background:d.color }}/>
+                        </div>
+                        <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, fontWeight:600, color:'#2C1A0F', minWidth:60, textAlign:'right' }}>{fmt(d.value)}</span>
+                        <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, color:'#7A5C4F', minWidth:30, textAlign:'right', fontWeight:600 }}>{pct.toFixed(0)}%</span>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            </>
+            </div>
           ) : (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', textAlign: 'center' }}>Sem gastos em {mesNome}</p>
+            <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', minHeight:180, position:'relative', zIndex:1 }}>
+              <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:'#9B7B6A', textAlign:'center' }}>Sem gastos em {mesNome}</p>
             </div>
           )}
         </div>
 
-        {/* Top 5 Despesas — branco, barras horizontais animadas */}
-        <div style={{ background:'#FFFFFF', border:'1px solid rgba(44,26,15,0.08)', borderRadius:22, boxShadow:'0 2px 16px rgba(44,26,15,0.05)', padding:20 }}>
-          <div style={{ marginBottom:4 }}>
-            <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, fontWeight:700, color:'#2C1A0F', margin:0 }}>Maiores Despesas</h2>
-            <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:11, color:'#9B7B6A', marginTop:3 }}>
-              {mesNome.charAt(0).toUpperCase() + mesNome.slice(1)} {ano}
-            </p>
+        {/* ════════════════════════════════════════════════
+            MAIORES DESPESAS — terra-light coral
+            Ranking editorial com ícones + barras
+            ════════════════════════════════════════════════ */}
+        <div style={{
+          position:'relative',
+          background:'#F5E8E4',
+          border:'1px solid rgba(196,85,59,0.2)',
+          borderRadius:22,
+          boxShadow:'0 4px 20px rgba(196,85,59,0.13), 0 1px 4px rgba(168,68,43,0.06)',
+          padding:22,
+          overflow:'hidden',
+        }}>
+          {/* Decoração SVG canto superior direito */}
+          <svg style={{ position:'absolute', right:0, top:0, width:140, height:80, opacity:0.5, pointerEvents:'none' }}
+            viewBox="0 0 140 80" fill="none">
+            <path d="M0,30 Q40,8 80,28 Q110,40 140,18" stroke="rgba(196,85,59,0.28)" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+            <path d="M20,52 Q60,28 100,48 Q130,62 140,42" stroke="rgba(212,160,23,0.32)" strokeWidth="1" fill="none" strokeLinecap="round"/>
+            <circle cx="138" cy="18" r="3" fill="#C4553B" opacity="0.35"/>
+          </svg>
+
+          {/* Header */}
+          <div style={{ marginBottom:16, position:'relative', zIndex:1 }}>
+            <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, fontWeight:700, color:'#2C1A0F', margin:0, letterSpacing:'-0.4px' }}>Maiores Despesas</h2>
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:6 }}>
+              <div style={{ width:24, height:2, background:'#C4553B', borderRadius:1, opacity:0.65 }}/>
+              <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:700, color:'#A8442B', margin:0, letterSpacing:'.15em', textTransform:'uppercase' }}>
+                {mesNome} {ano}
+              </p>
+            </div>
           </div>
 
           {top5.length === 0 ? (
-            <div style={{ paddingTop:24, textAlign:'center' }}>
-              <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:'#9B7B6A' }}>Nenhum gasto no mês</p>
+            <div style={{ paddingTop:24, textAlign:'center', position:'relative', zIndex:1 }}>
+              <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:'#A8442B' }}>Nenhum gasto no mês</p>
             </div>
           ) : (
-            <div style={{ marginTop:16, display:'flex', flexDirection:'column', gap:14 }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:8, position:'relative', zIndex:1 }}>
               {(() => {
                 const maxVal = top5[0]?.valor ?? 1
                 return top5.map((tx, idx) => {
                   const pct = (tx.valor / maxVal) * 100
-                  const barColors = ['#C4553B','#D4A017','#3A8580','#504E76','#A3B565']
-                  const color = barColors[idx]
+                  const isTop = idx === 0
+                  const cat = catById.get(tx.categoriaId)
+                  const txDate = new Date(tx.data + 'T00:00:00')
+                  const dayMonth = `${txDate.getDate().toString().padStart(2,'0')}/${(txDate.getMonth()+1).toString().padStart(2,'0')}`
                   return (
-                    <div key={tx.id}>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                        <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:13, fontWeight:700, color, minWidth:18 }}>{idx+1}</span>
-                        <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12, fontWeight:600, color:'#2C1A0F', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', margin:0 }}>{tx.descricao}</p>
-                        <p style={{ ...DISPLAY, fontSize:13, color:'#2C1A0F', flexShrink:0 }}>{fmt(tx.valor)}</p>
+                    <div key={tx.id}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = isTop ? 'rgba(168,68,43,0.1)' : 'rgba(196,85,59,0.06)' }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = isTop ? 'rgba(168,68,43,0.07)' : 'transparent' }}
+                      style={{
+                        background: isTop ? 'rgba(168,68,43,0.07)' : 'transparent',
+                        border: isTop ? '1px solid rgba(168,68,43,0.18)' : '1px solid transparent',
+                        borderRadius:12, padding: isTop ? '10px 12px' : '6px 12px',
+                        transition:'background .15s',
+                        display:'flex', alignItems:'center', gap:12,
+                      }}>
+                      {/* Número do ranking */}
+                      <span style={{
+                        fontFamily:"'Fraunces',Georgia,serif",
+                        fontSize: isTop ? 32 : 22,
+                        fontWeight:700,
+                        color: isTop ? '#A8442B' : 'rgba(168,68,43,0.55)',
+                        lineHeight:1, minWidth: isTop ? 30 : 22, textAlign:'center',
+                        letterSpacing:'-1px',
+                      }}>{idx+1}</span>
+
+                      {/* Ícone categoria */}
+                      {cat && <CategoryIcon nome={cat.nome} cor={cat.cor} size={isTop ? 32 : 26} radius={isTop ? 9 : 7}/>}
+
+                      {/* Nome + sub */}
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize: isTop ? 13 : 12, fontWeight:700, color:'#2C1A0F', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{tx.descricao}</p>
+                        <p style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10, fontWeight:500, color:'#A8442B', margin:'2px 0 0', opacity:0.75, letterSpacing:'.02em' }}>
+                          {cat?.nome ?? '—'} · {dayMonth}
+                        </p>
                       </div>
-                      <div style={{ height:5, borderRadius:3, background:'rgba(44,26,15,0.07)', overflow:'hidden' }}>
-                        <motion.div
-                          style={{ height:'100%', borderRadius:3, background:color }}
-                          initial={{ width:0 }}
-                          animate={{ width:`${Math.min(95, pct)}%` }}
-                          transition={{ type:'spring', stiffness:80, damping:18, delay:0.1+idx*0.06 }}
-                        />
+
+                      {/* Valor + barra */}
+                      <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:5, minWidth:90 }}>
+                        <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize: isTop ? 16 : 13, fontWeight:700, color:'#2C1A0F', letterSpacing:'-0.4px' }}>{fmt(tx.valor)}</span>
+                        <div style={{ width: isTop ? 90 : 70, height:4, borderRadius:2, background:'rgba(196,85,59,0.15)', overflow:'hidden' }}>
+                          <motion.div
+                            style={{ height:'100%', borderRadius:2, background: isTop ? '#A8442B' : '#C4553B' }}
+                            initial={{ width:0 }}
+                            animate={{ width:`${Math.min(100, pct)}%` }}
+                            transition={{ type:'spring', stiffness:80, damping:18, delay:0.1+idx*0.06 }}
+                          />
+                        </div>
                       </div>
                     </div>
                   )
@@ -618,6 +758,8 @@ export function DashboardPage() {
           )}
         </div>
       </motion.div>
+        )
+      })()}
 
       {/* ─── Metas ─── */}
       <motion.div variants={ITEM} style={{ marginBottom:20 }}>
