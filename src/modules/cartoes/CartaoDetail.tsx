@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   IconPlus, IconEdit, IconTrash, IconChevronLeft, IconChevronRight,
-  IconDotsVertical, IconArrowUpRight, IconArrowDownRight, IconHistory,
+  IconDotsVertical, IconHistory,
 } from '@tabler/icons-react'
 import type { Cartao, LancamentoCartao, Categoria } from '@/db/schema'
 import { db } from '@/db/schema'
@@ -12,7 +12,8 @@ import {
   useLancamentosCartao, useTotalFatura, deleteLancamentoCartao, deleteLancamentoComParcelas,
 } from '@/db/hooks/useCartoes'
 import { fmt, mesAnoAtual } from '@/lib/format'
-import { RealCardVisual } from '@/components/ui/RealCardVisual'
+import { BankLogo } from '@/components/ui/BankLogo'
+import { BandeiraLogo } from '@/components/ui/BandeiraLogo'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { Modal } from '@/components/ui/Modal'
 
@@ -50,10 +51,7 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
     else setMes(m => m + 1)
   }
 
-  // Stroke do donut do limite
-  const ringR = 36
-  const ringCirc = 2 * Math.PI * ringR
-  const corStatus = pctUsado >= 90 ? '#C4553B' : pctUsado >= 70 ? '#D4A017' : cartao.cor
+  const corBarra = pctUsado >= 90 ? '#C4553B' : pctUsado >= 70 ? '#D4A017' : cartao.cor
 
   return (
     <motion.div
@@ -70,52 +68,45 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
         display: 'flex', flexDirection: 'column',
         height: '100%',
       }}>
-      {/* ─── LOCKED HEADER ─── */}
+
+      {/* ─── LOCKED HEADER — editorial ─── */}
       <div style={{
-        padding: '20px 22px',
-        background: `linear-gradient(135deg, ${cartao.cor}14 0%, ${cartao.cor}04 100%)`,
+        padding: '22px 28px',
+        background: `linear-gradient(135deg, ${cartao.cor}10 0%, ${cartao.cor}03 100%)`,
         borderBottom: '1px solid #EDE6DC',
         flexShrink: 0,
-        display: 'grid', gridTemplateColumns: '1fr auto', gap: 24, alignItems: 'center',
+        display: 'flex', alignItems: 'center', gap: 18,
       }}>
-        {/* Esquerda: cartão visual mini + nome */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18, minWidth: 0 }}>
-          <div style={{ width: 180, flexShrink: 0 }}>
-            <RealCardVisual
-              nome={cartao.nome}
-              bandeira={cartao.bandeira}
-              cor={cartao.cor}
-              logo={cartao.logo}
-              titular={cartao.titular}
-              ultimosDigitos={cartao.ultimosDigitos}
-              diaVencimento={cartao.diaVencimento}
-              cartaoId={cartao.id ?? 0}
-              width={180}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+        <BankLogo logo={cartao.logo} nome={cartao.nome} cor={cartao.cor} size={64} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <h2 style={{
-              fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700,
-              color: '#2C1A0F', margin: 0, letterSpacing: '-0.7px', lineHeight: 1.1,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              fontFamily: "'Fraunces',Georgia,serif",
+              fontSize: 30, fontWeight: 700,
+              color: '#2C1A0F', margin: 0,
+              letterSpacing: '-0.9px', lineHeight: 1.05,
             }}>{cartao.nome}</h2>
-            <p style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600,
-              color: cartao.cor, margin: '4px 0 0',
-              letterSpacing: '.08em', textTransform: 'uppercase',
-            }}>{cartao.bandeira}</p>
-            <p style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
-              color: '#9B7B6A', margin: '8px 0 0',
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '4px 10px', borderRadius: 8,
+              background: `${cartao.cor}14`,
+              border: `1px solid ${cartao.cor}30`,
             }}>
-              Fecha dia <strong style={{ color: '#2C1A0F' }}>{cartao.diaFechamento}</strong>
-              {' · '}
-              Vence dia <strong style={{ color: '#2C1A0F' }}>{cartao.diaVencimento}</strong>
-            </p>
+              <BandeiraLogo bandeira={cartao.bandeira} size={26} variant="dark" />
+            </span>
           </div>
+          <p style={{
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 500,
+            color: '#7A5C4F', margin: '8px 0 0',
+            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+          }}>
+            <Meta label="Fecha dia" value={String(cartao.diaFechamento)} />
+            <Dot />
+            <Meta label="Vence dia" value={String(cartao.diaVencimento)} />
+            <Dot />
+            <Meta label="Limite" value={fmt(cartao.limite)} />
+          </p>
         </div>
-
-        {/* Direita: ações */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           <button onClick={onEdit} title="Editar cartão" style={ICON_BTN}>
             <IconEdit size={14} stroke={1.8} color="#7A5C4F" />
@@ -127,71 +118,45 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
       </div>
 
       {/* ─── SCROLLABLE BODY ─── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '26px 28px 28px' }}>
 
-        {/* Stats trio */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 14, alignItems: 'stretch', marginBottom: 18 }}>
-          <StatCard
-            label="Fatura atual"
-            value={fmt(faturaAtual)}
-            sub={mesNome}
-            cor={corStatus}
-          />
-          <StatCard
-            label="Disponível"
-            value={fmt(disponivel)}
-            sub={`de ${fmt(cartao.limite)}`}
-            cor="#1E7D5A"
-          />
-          {/* Donut % uso */}
-          <div style={{
-            background: '#FBF8F3', border: '1px solid #EDE6DC', borderRadius: 14,
-            padding: '14px 18px',
-            display: 'flex', alignItems: 'center', gap: 12,
-            minWidth: 180,
-          }}>
-            <div style={{ position: 'relative', width: 80, height: 80, flexShrink: 0 }}>
-              <svg width="80" height="80" viewBox="0 0 80 80">
-                <circle cx="40" cy="40" r={ringR} fill="none" stroke="rgba(44,26,15,0.06)" strokeWidth="6"/>
-                <motion.circle cx="40" cy="40" r={ringR} fill="none"
-                  stroke={corStatus} strokeWidth="6" strokeLinecap="round"
-                  strokeDasharray={ringCirc}
-                  initial={{ strokeDashoffset: ringCirc }}
-                  animate={{ strokeDashoffset: ringCirc * (1 - pctUsado / 100) }}
-                  transition={{ type: 'spring', stiffness: 80, damping: 22, delay: 0.1 }}
-                  style={{ transform: 'rotate(-90deg)', transformOrigin: '40px 40px' }}
-                />
-              </svg>
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                <span style={{
-                  fontFamily: "'Fraunces',Georgia,serif", fontSize: 17, fontWeight: 700,
-                  color: '#2C1A0F', letterSpacing: '-0.4px', lineHeight: 1,
-                }}>{pctUsado.toFixed(0)}%</span>
-                <span style={{
-                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 8, fontWeight: 700,
-                  color: '#9B7B6A', letterSpacing: '.08em', textTransform: 'uppercase',
-                  marginTop: 2,
-                }}>usado</span>
-              </div>
-            </div>
-            <div>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0 }}>
-                Limite total
-              </p>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F', margin: '4px 0 0', letterSpacing: '-0.5px' }}>
-                {fmt(cartao.limite)}
-              </p>
-            </div>
+        {/* HERO da fatura — tipografia editorial sem boxes */}
+        <section style={{ marginBottom: 24 }}>
+          <p style={{
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+            color: '#D4A017', letterSpacing: '.18em', textTransform: 'uppercase', margin: 0,
+          }}>Fatura de {mesNome}</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap', marginTop: 6 }}>
+            <p style={{
+              fontFamily: "'Fraunces',Georgia,serif", fontSize: 52, fontWeight: 700,
+              color: faturaAtual > 0 ? '#2C1A0F' : '#9B7B6A',
+              letterSpacing: '-2px', lineHeight: 1, margin: 0,
+            }}>{fmt(faturaAtual)}</p>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600,
+              color: '#7A5C4F', margin: 0,
+            }}>
+              <span style={{ color: '#1E7D5A', fontWeight: 700 }}>{fmt(disponivel)}</span> disponível
+              {' '}<span style={{ color: '#D4C8BC' }}>·</span>{' '}
+              <span style={{ color: corBarra, fontWeight: 700 }}>{pctUsado.toFixed(0)}%</span> do limite usado
+            </p>
           </div>
-        </div>
+          {/* Barra fina, elegante */}
+          <div style={{ marginTop: 14, height: 4, borderRadius: 2, background: 'rgba(44,26,15,0.06)', overflow: 'hidden' }}>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${pctUsado}%` }}
+              transition={{ type: 'spring', stiffness: 80, damping: 22 }}
+              style={{ height: '100%', borderRadius: 2, background: corBarra }}
+            />
+          </div>
+        </section>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-          <div style={{ display: 'flex', gap: 4, background: '#F5F0E8', padding: 4, borderRadius: 12 }}>
-            <TabBtn active={tab === 'lancamentos'} onClick={() => setTab('lancamentos')}>Lançamentos</TabBtn>
-            <TabBtn active={tab === 'categorias'} onClick={() => setTab('categorias')}>Categorias</TabBtn>
-            <TabBtn active={tab === 'historico'} onClick={() => setTab('historico')}>Histórico</TabBtn>
-          </div>
+        {/* TABS underline + botão Lançar */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
+          <TabBtn active={tab === 'lancamentos'} onClick={() => setTab('lancamentos')}>Lançamentos</TabBtn>
+          <TabBtn active={tab === 'categorias'} onClick={() => setTab('categorias')}>Categorias</TabBtn>
+          <TabBtn active={tab === 'historico'} onClick={() => setTab('historico')}>Histórico</TabBtn>
           <div style={{ flex: 1 }} />
           <button onClick={() => onLancar(mes, ano)}
             style={{
@@ -201,38 +166,54 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
               display: 'inline-flex', alignItems: 'center', gap: 5,
               boxShadow: `0 3px 10px ${cartao.cor}40`,
               letterSpacing: '.02em',
+              marginBottom: 8,
             }}>
             <IconPlus size={13} stroke={2.5} /> Lançar
           </button>
         </div>
 
-        {/* Month navigator (somente em Lançamentos e Categorias) */}
+        {/* Mês navegador minimalista (só em lançamentos/categorias) */}
         {tab !== 'historico' && (
           <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: '#FBF8F3', border: '1px solid #EDE6DC',
-            borderRadius: 12, padding: '8px 14px', marginBottom: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+            marginBottom: 18,
           }}>
             <button onClick={prev}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', color: '#7A5C4F' }}>
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: 6, borderRadius: 8,
+                color: '#9B7B6A',
+                display: 'flex', alignItems: 'center',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#FBF8F3')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            >
               <IconChevronLeft size={16} stroke={2} />
             </button>
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', gap: 8 }}>
               <p style={{
-                fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700,
+                fontFamily: "'Fraunces',Georgia,serif", fontSize: 15, fontWeight: 700,
                 color: '#2C1A0F', margin: 0, textTransform: 'capitalize', letterSpacing: '-0.3px',
               }}>{mesNome} {ano}</p>
               {isCurrentMonth && (
                 <span style={{
                   fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
                   color: '#1E7D5A', background: 'rgba(58,133,128,0.14)',
-                  padding: '1px 8px', borderRadius: 8,
+                  padding: '2px 8px', borderRadius: 7,
                   letterSpacing: '.06em', textTransform: 'uppercase',
                 }}>Atual</span>
               )}
             </div>
             <button onClick={next}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', color: '#7A5C4F' }}>
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: 6, borderRadius: 8,
+                color: '#9B7B6A',
+                display: 'flex', alignItems: 'center',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#FBF8F3')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            >
               <IconChevronRight size={16} stroke={2} />
             </button>
           </div>
@@ -265,7 +246,7 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
   )
 }
 
-// ─── Lançamentos tab ─────────────────────────────────────────────────
+// ─── Lançamentos tab — rows editoriais com coluna de data ────────────
 function LancamentosList({ lancs, cartaoCor, onEdit, onLancar }: {
   lancs: LancamentoCartao[]; cartaoCor: string;
   onEdit: (l: LancamentoCartao) => void
@@ -274,33 +255,41 @@ function LancamentosList({ lancs, cartaoCor, onEdit, onLancar }: {
   if (lancs.length === 0) {
     return (
       <div style={{
-        padding: '32px 24px', textAlign: 'center',
+        padding: '40px 24px', textAlign: 'center',
         background: '#FBF8F3', border: '1px dashed #EDE6DC', borderRadius: 14,
       }}>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', margin: 0 }}>
+        <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px' }}>
           Nenhum lançamento nesta fatura
+        </p>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: '6px 0 14px' }}>
+          As despesas registradas neste mês aparecem aqui
         </p>
         <button onClick={onLancar}
           style={{
-            marginTop: 12,
             background: 'transparent', color: cartaoCor, border: `1px solid ${cartaoCor}`,
-            borderRadius: 10, padding: '7px 14px', cursor: 'pointer',
+            borderRadius: 10, padding: '8px 16px', cursor: 'pointer',
             fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
             display: 'inline-flex', alignItems: 'center', gap: 5,
           }}>
-          <IconPlus size={13} stroke={2.4} /> Lançar primeiro gasto
+          <IconPlus size={13} stroke={2.4} /> Lançar primeira despesa
         </button>
       </div>
     )
   }
+
+  // Ordena do mais recente pro mais antigo
+  const sorted = [...lancs].sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {lancs.map(l => <LancamentoRow key={l.id} lanc={l} onEdit={() => onEdit(l)} />)}
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {sorted.map((l, idx) => (
+        <LancamentoRow key={l.id} lanc={l} onEdit={() => onEdit(l)} isLast={idx === sorted.length - 1} />
+      ))}
     </div>
   )
 }
 
-function LancamentoRow({ lanc, onEdit }: { lanc: LancamentoCartao; onEdit: () => void }) {
+function LancamentoRow({ lanc, onEdit, isLast }: { lanc: LancamentoCartao; onEdit: () => void; isLast: boolean }) {
   const [cat, setCat] = useState<Categoria | null>(null)
   const [openMenu, setOpenMenu] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<'this' | 'all' | null>(null)
@@ -310,50 +299,69 @@ function LancamentoRow({ lanc, onEdit }: { lanc: LancamentoCartao; onEdit: () =>
   }, [lanc.categoriaId])
 
   const isParcelado = lanc.totalParcelas > 1
+  const data = lanc.data ? new Date(lanc.data + 'T00:00:00') : null
+  const dia = data ? String(data.getDate()).padStart(2, '0') : '—'
+  const mesAbrev = data ? data.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '') : ''
 
   return (
     <>
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '10px 4px', borderRadius: 10,
-        transition: 'background .12s', position: 'relative',
+        display: 'grid',
+        gridTemplateColumns: '52px 1fr auto auto',
+        gap: 14, alignItems: 'center',
+        padding: '14px 8px',
+        borderBottom: isLast ? 'none' : '1px solid #F5F0E8',
+        transition: 'background .12s', borderRadius: 8,
       }}
         onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#FBF8F3'}
         onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}
       >
-        {cat ? (
-          <CategoryIcon nome={cat.nome} cor={cat.cor} size={36} radius={10} />
-        ) : (
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(122,92,79,0.12)' }}/>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600,
-            color: '#2C1A0F', margin: 0,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>{lanc.descricao || cat?.nome || 'Sem descrição'}</p>
-          <div style={{ display: 'flex', gap: 6, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-            {cat && (
-              <span style={{
-                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
-                color: cat.cor, background: `${cat.cor}18`,
-                padding: '2px 7px', borderRadius: 6,
-                letterSpacing: '.04em',
-              }}>{cat.nome}</span>
-            )}
-            {isParcelado && (
-              <span style={{
-                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
-                color: '#A8442B', background: 'rgba(196,85,59,0.12)',
-                padding: '2px 7px', borderRadius: 6,
-              }}>{lanc.parcelaAtual}/{lanc.totalParcelas}×</span>
-            )}
+        {/* Data column */}
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.7px', lineHeight: 1 }}>{dia}</p>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.1em', textTransform: 'uppercase', margin: '2px 0 0' }}>{mesAbrev}</p>
+        </div>
+
+        {/* Categoria + descrição + chips */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          {cat ? (
+            <CategoryIcon nome={cat.nome} cor={cat.cor} size={34} radius={10} />
+          ) : (
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(122,92,79,0.12)' }}/>
+          )}
+          <div style={{ minWidth: 0 }}>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600,
+              color: '#2C1A0F', margin: 0,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{lanc.descricao || cat?.nome || 'Sem descrição'}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+              {cat && (
+                <span style={{
+                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600,
+                  color: '#7A5C4F',
+                }}>{cat.nome}</span>
+              )}
+              {isParcelado && (
+                <>
+                  <span style={{ color: '#D4C8BC', fontSize: 10 }}>·</span>
+                  <span style={{
+                    fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+                    color: '#A8442B',
+                  }}>{lanc.parcelaAtual}/{lanc.totalParcelas}×</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Valor */}
         <span style={{
-          fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700,
-          color: '#2C1A0F', letterSpacing: '-0.4px', flexShrink: 0,
+          fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700,
+          color: '#2C1A0F', letterSpacing: '-0.5px',
         }}>{fmt(lanc.valor)}</span>
+
+        {/* Menu */}
         <div style={{ position: 'relative' }}>
           <button onClick={() => setOpenMenu(o => !o)} title="Opções"
             style={{
@@ -370,16 +378,18 @@ function LancamentoRow({ lanc, onEdit }: { lanc: LancamentoCartao; onEdit: () =>
                 position: 'absolute', top: '100%', right: 0, marginTop: 4,
                 background: '#FFFFFF', border: '1px solid #EDE6DC',
                 borderRadius: 10, boxShadow: '0 8px 24px rgba(28,10,5,0.18)',
-                zIndex: 95, minWidth: 180, padding: 4,
+                zIndex: 95, minWidth: 200, padding: 4,
                 display: 'flex', flexDirection: 'column',
               }}>
                 <MenuItem onClick={() => { setOpenMenu(false); onEdit() }}
                   icon={<IconEdit size={13} stroke={1.8} color="#7A5C4F" />} label="Editar"/>
                 <MenuItem onClick={() => { setOpenMenu(false); setConfirmDelete('this') }}
-                  icon={<IconTrash size={13} stroke={2} color="#C4553B" />} label={isParcelado ? 'Excluir só esta parcela' : 'Excluir'} danger/>
+                  icon={<IconTrash size={13} stroke={2} color="#C4553B" />}
+                  label={isParcelado ? 'Excluir só esta parcela' : 'Excluir'} danger/>
                 {isParcelado && (
                   <MenuItem onClick={() => { setOpenMenu(false); setConfirmDelete('all') }}
-                    icon={<IconTrash size={13} stroke={2} color="#C4553B" />} label="Excluir TODAS as parcelas" danger/>
+                    icon={<IconTrash size={13} stroke={2} color="#C4553B" />}
+                    label="Excluir TODAS as parcelas" danger/>
                 )}
               </div>
             </>
@@ -387,7 +397,6 @@ function LancamentoRow({ lanc, onEdit }: { lanc: LancamentoCartao; onEdit: () =>
         </div>
       </div>
 
-      {/* Confirm delete */}
       <Modal
         open={confirmDelete !== null}
         onClose={() => setConfirmDelete(null)}
@@ -432,7 +441,7 @@ function MenuItem({ icon, label, onClick, danger }: { icon: React.ReactNode; lab
     <button onClick={onClick}
       style={{
         background: 'transparent', border: 'none', cursor: 'pointer',
-        padding: '8px 10px', borderRadius: 7,
+        padding: '9px 12px', borderRadius: 7,
         display: 'flex', alignItems: 'center', gap: 8,
         fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600,
         color: danger ? '#C4553B' : '#2C1A0F', textAlign: 'left',
@@ -445,7 +454,7 @@ function MenuItem({ icon, label, onClick, danger }: { icon: React.ReactNode; lab
   )
 }
 
-// ─── Categorias tab ──────────────────────────────────────────────────
+// ─── Categorias tab — stacked bar + ranking ────────────────────────────
 function CategoriasTab({ lancs, faturaTotal }: { lancs: LancamentoCartao[]; faturaTotal: number }) {
   const categorias = useCategorias('despesa')
   const stats = useMemo(() => {
@@ -461,38 +470,81 @@ function CategoriasTab({ lancs, faturaTotal }: { lancs: LancamentoCartao[]; fatu
 
   if (stats.length === 0) {
     return (
-      <div style={{ padding: '32px 24px', textAlign: 'center', background: '#FBF8F3', border: '1px dashed #EDE6DC', borderRadius: 14 }}>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', margin: 0 }}>
-          Sem lançamentos pra agrupar nesta fatura
+      <div style={{ padding: '40px 24px', textAlign: 'center', background: '#FBF8F3', border: '1px dashed #EDE6DC', borderRadius: 14 }}>
+        <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px' }}>
+          Sem categorias pra agrupar
+        </p>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: '6px 0 0' }}>
+          Lance despesas pra ver a distribuição
         </p>
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {stats.map(s => {
-        const pct = faturaTotal > 0 ? (s.valor / faturaTotal) * 100 : 0
-        return (
-          <div key={s.catId}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: s.cor }}/>
-              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#2C1A0F', flex: 1 }}>{s.nome}</span>
-              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F' }}>{pct.toFixed(0)}%</span>
-              <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', minWidth: 80, textAlign: 'right', letterSpacing: '-0.4px' }}>{fmt(s.valor)}</span>
+    <div>
+      {/* Stacked bar horizontal */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{
+          display: 'flex', height: 12, borderRadius: 6, overflow: 'hidden',
+          background: 'rgba(44,26,15,0.06)',
+        }}>
+          {stats.map(s => {
+            const pct = faturaTotal > 0 ? (s.valor / faturaTotal) * 100 : 0
+            return (
+              <motion.div
+                key={s.catId}
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ type: 'spring', stiffness: 80, damping: 22 }}
+                title={`${s.nome}: ${pct.toFixed(0)}%`}
+                style={{ background: s.cor, height: '100%' }}
+              />
+            )
+          })}
+        </div>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '8px 0 0', textAlign: 'right' }}>
+          Total: <strong style={{ color: '#2C1A0F' }}>{fmt(faturaTotal)}</strong>
+        </p>
+      </div>
+
+      {/* Ranking */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {stats.map((s, idx) => {
+          const pct = faturaTotal > 0 ? (s.valor / faturaTotal) * 100 : 0
+          return (
+            <div key={s.catId}
+              style={{
+                display: 'grid', gridTemplateColumns: '28px 1fr auto auto', gap: 14, alignItems: 'center',
+                padding: '12px 4px',
+                borderBottom: idx === stats.length - 1 ? 'none' : '1px solid #F5F0E8',
+              }}>
+              <span style={{
+                fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700,
+                color: idx === 0 ? s.cor : 'rgba(122,92,79,0.55)',
+                letterSpacing: '-0.5px', textAlign: 'center',
+              }}>{idx + 1}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: s.cor, flexShrink: 0 }}/>
+                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F' }}>
+                  {s.nome}
+                </span>
+              </div>
+              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#7A5C4F', minWidth: 40, textAlign: 'right' }}>
+                {pct.toFixed(0)}%
+              </span>
+              <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F', minWidth: 90, textAlign: 'right', letterSpacing: '-0.4px' }}>
+                {fmt(s.valor)}
+              </span>
             </div>
-            <div style={{ height: 5, borderRadius: 3, background: 'rgba(44,26,15,0.06)', overflow: 'hidden' }}>
-              <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ type: 'spring', stiffness: 100, damping: 22 }}
-                style={{ height: '100%', background: s.cor, borderRadius: 3 }}/>
-            </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-// ─── Histórico tab ────────────────────────────────────────────────────
+// ─── Histórico tab — colunas verticais elegantes ───────────────────────
 function HistoricoTab({ cartao }: { cartao: Cartao }) {
   const todos = useLiveQuery(
     () => cartao.id !== undefined
@@ -511,100 +563,132 @@ function HistoricoTab({ cartao }: { cartao: Cartao }) {
     })
     return Array.from(map.entries())
       .map(([_key, v]) => v)
-      .sort((a, b) => (b.ano - a.ano) || (b.mes - a.mes))
-      .slice(0, 12)
+      .sort((a, b) => (a.ano - b.ano) || (a.mes - b.mes)) // ASC pra cronológico
+      .slice(-12)
   }, [todos])
 
   const maxTotal = byMesAno.reduce((m, x) => Math.max(m, x.total), 0)
+  const total12m = byMesAno.reduce((s, x) => s + x.total, 0)
+  const media = byMesAno.length > 0 ? total12m / byMesAno.length : 0
   const atual = mesAnoAtual()
 
   if (byMesAno.length === 0) {
     return (
-      <div style={{ padding: '32px 24px', textAlign: 'center', background: '#FBF8F3', border: '1px dashed #EDE6DC', borderRadius: 14 }}>
-        <IconHistory size={28} stroke={1.6} color="#9B7B6A" />
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', margin: '8px 0 0' }}>
-          Ainda sem histórico de faturas
+      <div style={{ padding: '40px 24px', textAlign: 'center', background: '#FBF8F3', border: '1px dashed #EDE6DC', borderRadius: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+        <IconHistory size={32} stroke={1.6} color="#9B7B6A" />
+        <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px' }}>
+          Ainda sem histórico
+        </p>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: 0 }}>
+          As faturas anteriores aparecem aqui
         </p>
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {byMesAno.map(item => {
-        const pct = maxTotal > 0 ? (item.total / maxTotal) * 100 : 0
-        const isAtual = item.mes === atual.mes && item.ano === atual.ano
-        const nomeMes = new Date(item.ano, item.mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-        return (
-          <div key={`${item.ano}-${item.mes}`}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 4px' }}>
-            <div style={{ width: 110, flexShrink: 0 }}>
-              <p style={{
-                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
-                color: '#2C1A0F', margin: 0, textTransform: 'capitalize',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>{nomeMes}</p>
-              {isAtual && (
-                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#1E7D5A', margin: '2px 0 0', letterSpacing: '.04em', textTransform: 'uppercase' }}>Atual</p>
-              )}
-            </div>
-            <div style={{ flex: 1, height: 22, background: 'rgba(44,26,15,0.04)', borderRadius: 6, overflow: 'hidden' }}>
+    <div>
+      {/* Stats compactos em linha */}
+      <div style={{ display: 'flex', gap: 28, marginBottom: 22, alignItems: 'baseline' }}>
+        <InlineStat label={`Média mensal (${byMesAno.length} meses)`} value={fmt(media)} cor="#7A5C4F" />
+        <InlineStat label={`Total em ${byMesAno.length} ${byMesAno.length === 1 ? 'mês' : 'meses'}`} value={fmt(total12m)} cor="#2C1A0F" />
+      </div>
+
+      {/* Colunas verticais */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: `repeat(${byMesAno.length}, 1fr)`, gap: 8,
+        height: 180, alignItems: 'end',
+        padding: '0 4px',
+      }}>
+        {byMesAno.map(item => {
+          const pct = maxTotal > 0 ? (item.total / maxTotal) * 100 : 0
+          const isAtual = item.mes === atual.mes && item.ano === atual.ano
+          const mesAbrev = new Date(item.ano, item.mes - 1, 1).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
+          return (
+            <div key={`${item.ano}-${item.mes}`}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: 6 }}>
+              <span style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
+                color: isAtual ? cartao.cor : '#9B7B6A',
+                letterSpacing: '.04em',
+              }}>{fmt(item.total).replace('R$', '')}</span>
               <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ type: 'spring', stiffness: 100, damping: 22 }}
+                initial={{ height: 0 }}
+                animate={{ height: `${pct}%` }}
+                transition={{ type: 'spring', stiffness: 80, damping: 22, delay: 0.05 }}
                 style={{
-                  height: '100%',
-                  background: `linear-gradient(90deg, ${cartao.cor}, ${cartao.cor}dd)`,
-                  borderRadius: 6,
+                  width: '100%',
+                  minHeight: 4,
+                  background: isAtual
+                    ? `linear-gradient(180deg, ${cartao.cor}, ${cartao.cor}cc)`
+                    : `linear-gradient(180deg, ${cartao.cor}55, ${cartao.cor}30)`,
+                  borderRadius: '4px 4px 0 0',
                 }}
               />
+              <span style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+                color: isAtual ? cartao.cor : '#7A5C4F',
+                letterSpacing: '.04em', textTransform: 'uppercase',
+              }}>{mesAbrev}</span>
             </div>
-            <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', minWidth: 90, textAlign: 'right', letterSpacing: '-0.4px' }}>
-              {fmt(item.total)}
-            </span>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────
-function StatCard({ label, value, sub, cor }: { label: string; value: string; sub?: string; cor: string }) {
+function Meta({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{
-      background: '#FBF8F3', border: '1px solid #EDE6DC',
-      borderRadius: 14, padding: '14px 18px',
-      display: 'flex', flexDirection: 'column', gap: 4,
-      borderLeft: `3px solid ${cor}`,
-    }}>
-      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0 }}>
+    <span>
+      <span style={{ color: '#9B7B6A' }}>{label} </span>
+      <strong style={{ color: '#2C1A0F', fontWeight: 700 }}>{value}</strong>
+    </span>
+  )
+}
+
+function Dot() {
+  return <span style={{ color: '#D4C8BC' }}>·</span>
+}
+
+function InlineStat({ label, value, cor }: { label: string; value: string; cor: string }) {
+  return (
+    <div>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0 }}>
         {label}
       </p>
-      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: cor, margin: 0, letterSpacing: '-0.7px', lineHeight: 1 }}>
+      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.5px' }}>
         {value}
       </p>
-      {sub && (
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: 0 }}>
-          {sub}
-        </p>
-      )}
     </div>
   )
 }
 
 function TabBtn({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{
-      background: active ? '#FFFFFF' : 'transparent',
-      color: active ? '#2C1A0F' : '#9B7B6A',
-      border: 'none', borderRadius: 8, padding: '6px 14px', cursor: 'pointer',
-      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12,
-      fontWeight: active ? 700 : 500,
-      boxShadow: active ? '0 1px 4px rgba(44,26,15,0.1)' : 'none',
-      transition: 'all .15s',
-    }}>{children}</button>
+    <button onClick={onClick}
+      style={{
+        position: 'relative',
+        background: 'transparent', border: 'none', cursor: 'pointer',
+        padding: '10px 4px',
+        marginRight: 18,
+        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13,
+        fontWeight: active ? 700 : 500,
+        color: active ? '#2C1A0F' : '#9B7B6A',
+        letterSpacing: '.02em',
+        transition: 'color .15s',
+      }}>
+      {children}
+      {active && (
+        <motion.div
+          layoutId="cartao-tab-underline"
+          style={{
+            position: 'absolute', left: 0, right: 0, bottom: -1, height: 2,
+            background: '#C4553B', borderRadius: 2,
+          }}/>
+      )}
+    </button>
   )
 }
 
