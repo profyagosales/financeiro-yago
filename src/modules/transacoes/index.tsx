@@ -1,24 +1,29 @@
-import { useState, useMemo, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   IconPlus, IconSearch, IconReceipt, IconArrowUpRight, IconArrowDownRight,
+  IconBolt, IconClock, IconCalendarEvent, IconTrash, IconCheck, IconX,
+  IconKeyboard,
 } from '@tabler/icons-react'
 import type { Transacao } from '@/db/schema'
 import { db } from '@/db/schema'
 import { useContas } from '@/db/hooks/useContas'
 import { useCategorias } from '@/db/hooks/useCategorias'
+import { deleteTransacao, editTransacao } from '@/db/hooks/useTransacoes'
 import { fmt } from '@/lib/format'
 import { useUIStore } from '@/store/ui'
 import { TransactionListRow } from './TransactionListRow'
 import { TransactionDetail } from './TransactionDetail'
 import { PeriodSelector, buildPeriods, type Period } from './PeriodSelector'
 import { Dropdown } from '@/components/ui/Dropdown'
+import { Modal } from '@/components/ui/Modal'
 
 export function Page() {
   const contas = useContas()
   const categorias = useCategorias()
   const { openFab } = useUIStore()
+  const searchRef = useRef<HTMLInputElement | null>(null)
 
   // Período
   const initialPeriod = useMemo(() => buildPeriods().find(p => p.key === 'mes')!, [])
@@ -31,8 +36,22 @@ export function Page() {
   const [categoriasFiltro, setCategoriasFiltro] = useState<number[]>([])
   const [statusFiltro, setStatusFiltro] = useState<string[]>([])
 
-  // Seleção
+  // Quick filter state
+  const [quickToday, setQuickToday] = useState(false)
+  const [quickPendente, setQuickPendente] = useState(false)
+  const [quickReceitas, setQuickReceitas] = useState(false)
+  const [quickDespesas, setQuickDespesas] = useState(false)
+
+  // Bulk selection
+  const [bulkMode, setBulkMode] = useState(false)
+  const [bulkSelected, setBulkSelected] = useState<Set<number>>(new Set())
+  const [bulkAction, setBulkAction] = useState<'delete' | 'pago' | 'pendente' | null>(null)
+
+  // Seleção (detail)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+
+  // Help modal
+  const [showHelp, setShowHelp] = useState(false)
 
   // Transações do período
   const txsPeriodo = useLiveQuery(
@@ -40,9 +59,19 @@ export function Page() {
     [period.start, period.end],
   ) ?? []
 
+  // Hoje (pra quick filter)
+  const hojeStr = useMemo(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }, [])
+
   // Aplicar filtros
   const txsFiltradas = useMemo(() => {
     let r = txsPeriodo
+    if (quickToday) r = r.filter(t => t.data === hojeStr)
+    if (quickPendente) r = r.filter(t => t.status === 'pendente')
+    if (quickReceitas) r = r.filter(t => t.tipo === 'receita')
+    if (quickDespesas) r = r.filter(t => t.tipo === 'despesa')
     if (tipos.length > 0) r = r.filter(t => tipos.includes(t.tipo))
     if (contasFiltro.length > 0) r = r.filter(t => contasFiltro.includes(t.contaId))
     if (categoriasFiltro.length > 0) r = r.filter(t => categoriasFiltro.includes(t.categoriaId))
@@ -59,7 +88,7 @@ export function Page() {
       })
     }
     return r.sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
-  }, [txsPeriodo, tipos, contasFiltro, categoriasFiltro, statusFiltro, search, categorias, contas])
+  }, [txsPeriodo, quickToday, quickPendente, quickReceitas, quickDespesas, hojeStr, tipos, contasFiltro, categoriasFiltro, statusFiltro, search, categorias, contas])
 
   // Stats do período
   const stats = useMemo(() => {
@@ -91,7 +120,92 @@ export function Page() {
     }
   }, [selectedId, txsFiltradas])
 
-  const hasActiveFilters = tipos.length > 0 || contasFiltro.length > 0 || categoriasFiltro.length > 0 || statusFiltro.length > 0 || !!search
+  const hasActiveFilters = tipos.length > 0 || contasFiltro.length > 0 || categoriasFiltro.length > 0 || statusFiltro.length > 0 || !!search || quickToday || quickPendente || quickReceitas || quickDespesas
+
+  // ─── Keyboard shortcuts ────────────────────────────────────────────
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // Skip if user is typing in an input/textarea
+      const target = e.target as HTMLElement
+      const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+      const cmdKey = e.metaKey || e.ctrlKey
+
+      // / focuses search (works even outside)
+      if (e.key === '/' && !isInputFocused) {
+        e.preventDefault()
+        searchRef.current?.focus()
+        return
+      }
+      // ? mostra help
+      if (e.key === '?' && !isInputFocused) {
+        e.preventDefault()
+        setShowHelp(true)
+        return
+      }
+      if (isInputFocused) return
+
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault()
+        openFab()
+      } else if (e.key === 'Escape') {
+        if (bulkMode) { setBulkMode(false); setBulkSelected(new Set()) }
+        else if (selectedId !== null) setSelectedId(null)
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        const ids = txsFiltradas.map(t => t.id).filter((x): x is number => x !== undefined)
+        if (ids.length === 0) return
+        const idx = selectedId !== null ? ids.indexOf(selectedId) : -1
+        const next = e.key === 'ArrowDown'
+          ? Math.min(ids.length - 1, idx + 1)
+          : Math.max(0, idx - 1)
+        setSelectedId(ids[next] ?? ids[0])
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId !== null) {
+        e.preventDefault()
+        deleteTransacao(selectedId)
+        setSelectedId(null)
+      } else if (cmdKey && e.key === 'a') {
+        e.preventDefault()
+        // Select all in bulk
+        setBulkMode(true)
+        const ids = new Set<number>()
+        txsFiltradas.forEach(t => { if (t.id !== undefined) ids.add(t.id) })
+        setBulkSelected(ids)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [bulkMode, selectedId, txsFiltradas, openFab])
+
+  // Bulk handlers
+  const toggleBulk = (id: number) => {
+    setBulkSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+    setBulkMode(true)
+  }
+
+  const handleBulkDelete = async () => {
+    for (const id of bulkSelected) await deleteTransacao(id)
+    setBulkSelected(new Set())
+    setBulkMode(false)
+    setBulkAction(null)
+  }
+  const handleBulkStatus = async (status: 'pago' | 'pendente') => {
+    for (const id of bulkSelected) await editTransacao(id, { status: status === 'pago' ? 'efetivada' : 'pendente' })
+    setBulkSelected(new Set())
+    setBulkMode(false)
+    setBulkAction(null)
+  }
+
+  // Clear all filters
+  const clearAll = () => {
+    setSearch('')
+    setTipos([]); setContasFiltro([]); setCategoriasFiltro([]); setStatusFiltro([])
+    setQuickToday(false); setQuickPendente(false); setQuickReceitas(false); setQuickDespesas(false)
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -145,9 +259,10 @@ export function Page() {
         }}>
           <IconSearch size={14} stroke={2} color="#9B7B6A" />
           <input
+            ref={searchRef}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar transações..."
+            placeholder="Buscar transações... (pressione /)"
             style={{
               flex: 1, background: 'transparent', border: 'none', outline: 'none',
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 500,
@@ -201,13 +316,7 @@ export function Page() {
         />
 
         {hasActiveFilters && (
-          <button onClick={() => {
-            setSearch('')
-            setTipos([])
-            setContasFiltro([])
-            setCategoriasFiltro([])
-            setStatusFiltro([])
-          }}
+          <button onClick={clearAll}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
@@ -216,7 +325,112 @@ export function Page() {
             Limpar tudo
           </button>
         )}
+
+        {/* Help shortcut */}
+        <button onClick={() => setShowHelp(true)} title="Atalhos de teclado"
+          style={{
+            marginLeft: 'auto',
+            background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 10,
+            padding: '8px 10px', cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+            color: '#7A5C4F',
+          }}>
+          <IconKeyboard size={13} stroke={2}/> Atalhos
+        </button>
       </div>
+
+      {/* ─── Quick filter chips ─── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14, flexShrink: 0, flexWrap: 'wrap',
+      }}>
+        <span style={{
+          fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+          color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase',
+          marginRight: 6,
+        }}>Atalhos:</span>
+        <QuickChip icon={<IconCalendarEvent size={11} stroke={2}/>} active={quickToday} onClick={() => setQuickToday(t => !t)}>
+          Hoje
+        </QuickChip>
+        <QuickChip icon={<IconClock size={11} stroke={2}/>} active={quickPendente} cor="#D4A017" onClick={() => setQuickPendente(p => !p)}>
+          Pendentes
+        </QuickChip>
+        <QuickChip icon={<IconArrowUpRight size={11} stroke={2}/>} active={quickReceitas} cor="#1E7D5A" onClick={() => setQuickReceitas(r => !r)}>
+          Só receitas
+        </QuickChip>
+        <QuickChip icon={<IconArrowDownRight size={11} stroke={2}/>} active={quickDespesas} cor="#C4553B" onClick={() => setQuickDespesas(d => !d)}>
+          Só despesas
+        </QuickChip>
+        <div style={{ flex: 1 }} />
+        <button onClick={() => {
+          if (bulkMode) { setBulkMode(false); setBulkSelected(new Set()) }
+          else setBulkMode(true)
+        }}
+          style={{
+            background: bulkMode ? '#2C1A0F' : '#FFFFFF',
+            color: bulkMode ? '#FFFFFF' : '#7A5C4F',
+            border: `1px solid ${bulkMode ? '#2C1A0F' : '#EDE6DC'}`,
+            borderRadius: 10, padding: '6px 12px', cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+          }}>
+          <IconCheck size={11} stroke={2.4}/> {bulkMode ? 'Sair do modo seleção' : 'Selecionar várias'}
+        </button>
+      </div>
+
+      {/* ─── Bulk action bar (aparece quando há seleção) ─── */}
+      <AnimatePresence>
+        {bulkSelected.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+            style={{
+              background: '#2C1A0F', color: '#FFFFFF',
+              borderRadius: 12, padding: '10px 16px',
+              marginBottom: 14,
+              display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0,
+              boxShadow: '0 8px 24px rgba(28,10,5,0.22)',
+            }}>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700 }}>
+              {bulkSelected.size} {bulkSelected.size === 1 ? 'selecionada' : 'selecionadas'}
+            </span>
+            <div style={{ flex: 1 }} />
+            <button onClick={() => handleBulkStatus('pago')}
+              style={{
+                background: 'rgba(58,133,128,0.22)', color: '#A7E0DC', border: '1px solid rgba(58,133,128,0.4)',
+                borderRadius: 10, padding: '6px 12px', cursor: 'pointer',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+              }}>
+              <IconCheck size={12} stroke={2.4}/> Marcar como pago
+            </button>
+            <button onClick={() => handleBulkStatus('pendente')}
+              style={{
+                background: 'rgba(212,160,23,0.22)', color: '#F2C745', border: '1px solid rgba(212,160,23,0.4)',
+                borderRadius: 10, padding: '6px 12px', cursor: 'pointer',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+              }}>
+              <IconClock size={12} stroke={2.2}/> Pendente
+            </button>
+            <button onClick={() => setBulkAction('delete')}
+              style={{
+                background: 'rgba(196,85,59,0.28)', color: '#FFBFAE', border: '1px solid rgba(196,85,59,0.5)',
+                borderRadius: 10, padding: '6px 12px', cursor: 'pointer',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+              }}>
+              <IconTrash size={12} stroke={2}/> Excluir
+            </button>
+            <button onClick={() => { setBulkSelected(new Set()); setBulkMode(false) }}
+              style={{
+                background: 'transparent', color: 'rgba(255,255,255,0.6)', border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer',
+                display: 'flex', alignItems: 'center',
+              }}>
+              <IconX size={14} stroke={2}/>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ─── Master-detail ─── */}
       <div style={{
@@ -292,8 +506,17 @@ export function Page() {
                       <TransactionListRow
                         key={t.id}
                         tx={t}
-                        active={selectedId === t.id}
-                        onClick={() => t.id !== undefined && setSelectedId(t.id)}
+                        active={!bulkMode && selectedId === t.id}
+                        bulkMode={bulkMode}
+                        bulkSelected={t.id !== undefined && bulkSelected.has(t.id)}
+                        onClick={() => {
+                          if (bulkMode) {
+                            if (t.id !== undefined) toggleBulk(t.id)
+                          } else {
+                            if (t.id !== undefined) setSelectedId(t.id)
+                          }
+                        }}
+                        onToggleBulk={() => t.id !== undefined && toggleBulk(t.id)}
                       />
                     ))}
                   </div>
@@ -304,11 +527,108 @@ export function Page() {
         </div>
 
         {/* RIGHT — detail */}
-        {selected && (
+        {selected && !bulkMode && (
           <TransactionDetail tx={selected} onClose={() => setSelectedId(null)} />
         )}
       </div>
+
+      {/* Bulk delete confirm */}
+      <Modal
+        open={bulkAction === 'delete'}
+        onClose={() => setBulkAction(null)}
+        size="sm"
+        title={`Excluir ${bulkSelected.size} ${bulkSelected.size === 1 ? 'transação' : 'transações'}?`}
+        subtitle="Esta ação não pode ser desfeita"
+        icon={<IconTrash size={20} stroke={1.8} color="#C4553B" />}
+      >
+        <Modal.Body>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', lineHeight: 1.5, margin: 0 }}>
+            Os saldos das contas envolvidas serão ajustados automaticamente.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <button onClick={() => setBulkAction(null)}
+            style={{ background: 'transparent', color: '#7A5C4F', border: '1.5px solid #EDE6DC', borderRadius: 12, padding: '11px 20px', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700 }}>
+            Cancelar
+          </button>
+          <button onClick={handleBulkDelete}
+            style={{ background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none', borderRadius: 12, padding: '11px 22px', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 7, boxShadow: '0 4px 16px rgba(196,85,59,0.35)' }}>
+            <IconTrash size={15} stroke={2.4} /> Excluir {bulkSelected.size}
+          </button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Help / Shortcuts modal */}
+      <Modal
+        open={showHelp}
+        onClose={() => setShowHelp(false)}
+        size="md"
+        title="Atalhos de teclado"
+        subtitle="Acelere seu fluxo de trabalho"
+        icon={<IconKeyboard size={20} stroke={1.8} color="#7A5C4F" />}
+      >
+        <Modal.Body>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Shortcut keys={['N']} label="Nova transação" />
+            <Shortcut keys={['/']} label="Focar busca" />
+            <Shortcut keys={['↑', '↓']} label="Navegar entre transações" />
+            <Shortcut keys={['Esc']} label="Fechar detalhe ou seleção" />
+            <Shortcut keys={['Del']} label="Excluir transação selecionada" />
+            <Shortcut keys={['⌘', 'A']} label="Selecionar todas (modo bulk)" />
+            <Shortcut keys={['?']} label="Mostrar esta ajuda" />
+          </div>
+        </Modal.Body>
+      </Modal>
     </motion.div>
+  )
+}
+
+function Shortcut({ keys, label }: { keys: string[]; label: string }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '8px 12px', background: '#FBF8F3', borderRadius: 10,
+    }}>
+      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#2C1A0F' }}>
+        {label}
+      </span>
+      <div style={{ display: 'flex', gap: 4 }}>
+        {keys.map((k, i) => (
+          <kbd key={i} style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            minWidth: 24, height: 24, padding: '0 6px',
+            background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 6,
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+            color: '#2C1A0F',
+            boxShadow: '0 1px 2px rgba(28,10,5,0.06)',
+          }}>{k}</kbd>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function QuickChip({ children, icon, active, cor = '#2C1A0F', onClick }: {
+  children: React.ReactNode
+  icon?: React.ReactNode
+  active: boolean
+  cor?: string
+  onClick: () => void
+}) {
+  return (
+    <button onClick={onClick}
+      style={{
+        background: active ? cor : '#FFFFFF',
+        color: active ? '#FFFFFF' : '#7A5C4F',
+        border: `1px solid ${active ? cor : '#EDE6DC'}`,
+        borderRadius: 16, padding: '5px 10px', cursor: 'pointer',
+        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+        display: 'inline-flex', alignItems: 'center', gap: 5,
+        whiteSpace: 'nowrap',
+        transition: 'all .12s',
+      }}>
+      {icon}{children}
+    </button>
   )
 }
 

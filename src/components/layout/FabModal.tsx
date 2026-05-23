@@ -1,18 +1,31 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import {
+  IconX, IconCamera, IconCheck, IconRepeat, IconCreditCard,
+  IconBuildingBank, IconArrowsExchange, IconFile, IconPaperclip,
+  IconClock, IconTag, IconMinus, IconPlus,
+} from '@tabler/icons-react'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContas } from '@/db/hooks/useContas'
 import { useCartoes, addLancamentoCartao } from '@/db/hooks/useCartoes'
 import { addTransacao } from '@/db/hooks/useTransacoes'
 import { addAnexo } from '@/db/hooks/useAnexos'
-import { todayISO, mesAnoAtual } from '@/lib/format'
+import { todayISO, mesAnoAtual, fmt } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { IconX, IconCamera, IconCheck, IconRepeat, IconCreditCard, IconBuildingBank, IconArrowsExchange, IconFile, IconPaperclip } from '@tabler/icons-react'
+import { BankLogo } from '@/components/ui/BankLogo'
+import { Modal } from '@/components/ui/Modal'
 import { sounds, haptic } from '@/lib/sounds'
 
 type TipoLanc = 'despesa' | 'receita' | 'transferencia'
 type FontePag = 'conta' | 'cartao'
-const METODOS = ['PIX','Débito','Dinheiro','TED/DOC','Boleto'] as const
+
+const METODOS = ['PIX', 'Débito', 'Dinheiro', 'TED/DOC', 'Boleto'] as const
+
+const TIPO_META: Record<TipoLanc, { label: string; shortLabel: string; cor: string; sign: string }> = {
+  despesa:       { label: 'Despesa',        shortLabel: '− Despesa',  cor: '#C4553B', sign: '−' },
+  receita:       { label: 'Receita',        shortLabel: '+ Receita',  cor: '#3A8580', sign: '+' },
+  transferencia: { label: 'Transferência',  shortLabel: '⇄ Transf.',  cor: '#7C5CBF', sign: '' },
+}
 
 export function FabModal({ onClose, defaultContaId }: { onClose: () => void; defaultContaId?: number | null }) {
   const [tipo, setTipo] = useState<TipoLanc>('despesa')
@@ -32,18 +45,11 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
   // Transferência
   const [contaDestinoId, setContaDestinoId] = useState<number | null>(null)
 
-  // Recorrência
+  // Recorrência, status, tags
   const [recorrente, setRecorrente] = useState(false)
-
-  // Status + Tags
   const [status, setStatus] = useState<'confirmado' | 'pendente'>('confirmado')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
-  const addTag = (val: string) => {
-    const t = val.trim().toLowerCase().replace(/[^a-záàâãéèêíóôõúç0-9_-]/gi, '')
-    if (t && !tags.includes(t)) setTags(prev => [...prev, t])
-    setTagInput('')
-  }
 
   // Anexo
   const [preview, setPreview] = useState<{ url: string; file: File } | null>(null)
@@ -56,6 +62,19 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
   const cartoes = useCartoes()
   const { mes, ano } = mesAnoAtual()
 
+  const tipoMeta = TIPO_META[tipo]
+  const valorNum = parseFloat(valor.replace(',', '.')) || 0
+  const contaSelecionada = contas.find(c => c.id === contaId)
+  const contaDestino = contas.find(c => c.id === contaDestinoId)
+  const cartaoSelecionado = cartoes.find(c => c.id === cartaoId)
+  const catSelecionada = categorias.find(c => c.id === catId)
+
+  const addTagAction = (val: string) => {
+    const t = val.trim().toLowerCase().replace(/[^a-záàâãéèêíóôõúç0-9_-]/gi, '')
+    if (t && !tags.includes(t)) setTags(prev => [...prev, t])
+    setTagInput('')
+  }
+
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return
     setPreview({ url: f.type.startsWith('image/') ? URL.createObjectURL(f) : '', file: f })
@@ -63,8 +82,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
   }
 
   const isValid = () => {
-    const num = parseFloat(valor.replace(',', '.'))
-    if (!num) return false
+    if (!valorNum) return false
     if (tipo === 'transferencia') return !!contaId && !!contaDestinoId && contaId !== contaDestinoId
     if (fontePag === 'conta') return !!contaId && !!catId
     if (fontePag === 'cartao') return !!cartaoId && !!catId
@@ -74,289 +92,696 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
   const handleSave = async () => {
     if (!isValid()) return
     setSaving(true)
-    const num = parseFloat(valor.replace(',', '.'))
+    const num = valorNum
 
-    if (tipo === 'transferencia' && contaId && contaDestinoId) {
-      const id = await addTransacao({ data, valor: num, tipo: 'despesa', contaId, categoriaId: catId ?? 1, descricao: `Transferência → ${contas.find(c=>c.id===contaDestinoId)?.nome}`, status: 'confirmado', recorrencia: recorrente ? 'mensal' : 'unica' })
-      await addTransacao({ data, valor: num, tipo: 'receita', contaId: contaDestinoId, categoriaId: catId ?? 1, descricao: `Transferência ← ${contas.find(c=>c.id===contaId)?.nome}`, status: 'confirmado', recorrencia: 'unica' })
-    } else if (fontePag === 'cartao' && cartaoId) {
-      await addLancamentoCartao({ cartaoId, descricao: desc || categorias.find(c=>c.id===catId)?.nome || '', valor: num, data, categoriaId: catId!, totalParcelas: parcelas, mes, ano })
-    } else if (contaId) {
-      const id = await addTransacao({ data, valor: num, tipo, contaId, categoriaId: catId!, descricao: desc || categorias.find(c=>c.id===catId)?.nome || '', status, tags: tags.length > 0 ? tags : undefined, recorrencia: recorrente ? 'mensal' : 'unica' })
-      if (preview && id) await addAnexo(id as number, preview.file)
+    try {
+      if (tipo === 'transferencia' && contaId && contaDestinoId) {
+        await addTransacao({
+          data, valor: num, tipo: 'despesa', contaId, categoriaId: catId ?? 1,
+          descricao: `Transferência → ${contas.find(c => c.id === contaDestinoId)?.nome}`,
+          status: 'confirmado',
+          recorrencia: recorrente ? 'mensal' : 'unica',
+        })
+        await addTransacao({
+          data, valor: num, tipo: 'receita', contaId: contaDestinoId, categoriaId: catId ?? 1,
+          descricao: `Transferência ← ${contas.find(c => c.id === contaId)?.nome}`,
+          status: 'confirmado',
+          recorrencia: 'unica',
+        })
+      } else if (fontePag === 'cartao' && cartaoId) {
+        await addLancamentoCartao({
+          cartaoId,
+          descricao: desc || catSelecionada?.nome || '',
+          valor: num, data, categoriaId: catId!, totalParcelas: parcelas, mes, ano,
+        })
+      } else if (contaId) {
+        const id = await addTransacao({
+          data, valor: num, tipo, contaId, categoriaId: catId!,
+          descricao: desc || catSelecionada?.nome || '',
+          status,
+          tags: tags.length > 0 ? tags : undefined,
+          recorrencia: recorrente ? 'mensal' : 'unica',
+        })
+        if (preview && id) await addAnexo(id as number, preview.file)
+      }
+      sounds.success()
+      haptic('medium')
+    } finally {
+      setSaving(false)
+      onClose()
     }
-
-    sounds.success()
-    haptic('medium')
-    setSaving(false)
-    onClose()
   }
 
-  const corBotao = tipo === 'receita' ? '#3A8580' : tipo === 'transferencia' ? '#7C5CBF' : '#C4553B'
+  return (
+    <Modal
+      open={true}
+      onClose={onClose}
+      size="2xl"
+      title="Novo lançamento"
+      subtitle="Registre uma despesa, receita ou transferência"
+    >
+      {/* Body com split layout */}
+      <div style={{
+        flex: 1, overflowY: 'auto',
+        display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 0,
+      }}>
+
+        {/* ─── LEFT: form ─── */}
+        <div style={{ padding: '20px 26px', borderRight: '1px solid #EDE6DC', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Tipo tabs com cor semântica */}
+          <div style={{
+            display: 'flex', background: '#FBF8F3',
+            borderRadius: 12, padding: 4, gap: 4,
+          }}>
+            {(['despesa', 'receita', 'transferencia'] as TipoLanc[]).map(t => {
+              const meta = TIPO_META[t]
+              const active = tipo === t
+              return (
+                <button key={t}
+                  onClick={() => {
+                    setTipo(t); setCatId(null)
+                    if (t === 'transferencia') setFontePag('conta')
+                  }}
+                  style={{
+                    flex: 1, padding: '10px 4px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                    background: active ? meta.cor : 'transparent',
+                    color: active ? '#FFFFFF' : '#7A5C4F',
+                    fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+                    boxShadow: active ? `0 3px 12px ${meta.cor}40` : 'none',
+                    transition: 'all .15s',
+                  }}>
+                  {meta.shortLabel}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Valor hero */}
+          <div style={{
+            display: 'flex', alignItems: 'center',
+            background: '#FBF8F3',
+            border: `2px solid ${valorNum ? tipoMeta.cor : '#EDE6DC'}`,
+            borderRadius: 14, padding: '12px 16px', gap: 8,
+            transition: 'all .15s',
+            boxShadow: valorNum ? `0 0 0 4px ${tipoMeta.cor}10` : 'none',
+          }}>
+            <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, color: tipoMeta.cor, fontWeight: 700 }}>R$</span>
+            <input value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" type="tel" autoFocus inputMode="decimal"
+              style={{
+                border: 'none', background: 'transparent',
+                fontFamily: "'Fraunces',Georgia,serif", fontSize: 32, fontWeight: 700,
+                color: '#2C1A0F', flex: 1, outline: 'none', width: '100%',
+              }}/>
+          </div>
+
+          {/* Descrição + photo */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descrição (opcional)"
+              style={{
+                flex: 1, background: '#FBF8F3', border: '1.5px solid #EDE6DC',
+                borderRadius: 10, padding: '11px 14px',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#2C1A0F', outline: 'none',
+              }}/>
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowAttach(s => !s)} title="Anexar arquivo"
+              style={{
+                width: 44, height: 44, borderRadius: 10,
+                border: preview ? '2px solid #3A8580' : '1.5px solid #EDE6DC',
+                background: preview ? '#EBF5F0' : '#FBF8F3', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+              {preview ? <IconCheck size={18} color="#3A8580" /> : <IconCamera size={18} color="#7A5C4F" />}
+            </motion.button>
+          </div>
+
+          <AnimatePresence>
+            {showAttach && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+                <div style={{ display: 'flex', gap: 8, background: '#FBF8F3', border: '1.5px dashed #EDE6DC', borderRadius: 10, padding: 8 }}>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => cameraRef.current?.click()}
+                    style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', background: '#2C1A0F', color: '#FFFFFF', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                    <IconCamera size={13} stroke={2}/> Câmera
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => fileRef.current?.click()}
+                    style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: '1.5px solid #EDE6DC', background: '#FFFFFF', color: '#2C1A0F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                    <IconFile size={13} stroke={2}/> Arquivo
+                  </motion.button>
+                </div>
+                <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleFile} />
+                <input ref={fileRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleFile} />
+              </motion.div>
+            )}
+            {preview && (
+              <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                style={{ background: '#EBF5F0', border: '1.5px solid #D0E8D8', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                {preview.url ? (
+                  <img src={preview.url} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}/>
+                ) : (
+                  <div style={{ width: 36, height: 36, background: '#3D7EB5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <IconPaperclip size={18} color="#FFFFFF" stroke={2}/>
+                  </div>
+                )}
+                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#3A8580', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{preview.file.name}</p>
+                <button onClick={() => setPreview(null)} style={{ background: '#F5F0E8', border: 'none', cursor: 'pointer', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <IconX size={11} color="#7A5C4F"/>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Data */}
+          <div>
+            <FieldLabel>Data</FieldLabel>
+            <input value={data} onChange={e => setData(e.target.value)} type="date"
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                background: '#FBF8F3', border: '1.5px solid #EDE6DC',
+                borderRadius: 10, padding: '10px 14px',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#2C1A0F', outline: 'none',
+              }}/>
+          </div>
+
+          {/* Transferência ─ DE / PARA */}
+          {tipo === 'transferencia' ? (
+            <>
+              <ContaSelector label="De (origem)" contas={contas} value={contaId} onChange={setContaId} accentCor="#7C5CBF" />
+              <ContaSelector label="Para (destino)" contas={contas.filter(c => c.id !== contaId)} value={contaDestinoId} onChange={setContaDestinoId} accentCor="#7C5CBF" />
+            </>
+          ) : (
+            <>
+              {/* Forma de pagamento tabs */}
+              <div>
+                <FieldLabel>Forma de pagamento</FieldLabel>
+                <div style={{ display: 'flex', background: '#FBF8F3', borderRadius: 10, padding: 3, gap: 3 }}>
+                  <button onClick={() => setFontePag('conta')}
+                    style={{
+                      flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
+                      background: fontePag === 'conta' ? '#FFFFFF' : 'transparent',
+                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+                      color: fontePag === 'conta' ? '#2C1A0F' : '#9B7B6A',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                      boxShadow: fontePag === 'conta' ? '0 1px 4px rgba(44,26,15,0.08)' : 'none',
+                      transition: 'all .15s',
+                    }}>
+                    <IconBuildingBank size={13} stroke={2}/> Conta / PIX
+                  </button>
+                  <button onClick={() => setFontePag('cartao')}
+                    style={{
+                      flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
+                      background: fontePag === 'cartao' ? '#FFFFFF' : 'transparent',
+                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+                      color: fontePag === 'cartao' ? '#2C1A0F' : '#9B7B6A',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                      boxShadow: fontePag === 'cartao' ? '0 1px 4px rgba(44,26,15,0.08)' : 'none',
+                      transition: 'all .15s',
+                    }}>
+                    <IconCreditCard size={13} stroke={2}/> Cartão de crédito
+                  </button>
+                </div>
+              </div>
+
+              {fontePag === 'conta' && (
+                <>
+                  <ContaSelector label="Conta" contas={contas} value={contaId} onChange={setContaId} accentCor={tipoMeta.cor} />
+                  {/* Método */}
+                  <div>
+                    <FieldLabel>Método</FieldLabel>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {METODOS.map(m => {
+                        const active = metodoPag === m
+                        return (
+                          <button key={m} onClick={() => setMetodoPag(m)}
+                            style={{
+                              padding: '6px 12px', borderRadius: 20,
+                              border: `1px solid ${active ? tipoMeta.cor : '#EDE6DC'}`,
+                              background: active ? tipoMeta.cor : '#FFFFFF',
+                              color: active ? '#FFFFFF' : '#7A5C4F',
+                              cursor: 'pointer',
+                              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                              transition: 'all .15s',
+                            }}>
+                            {m}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {fontePag === 'cartao' && (
+                <>
+                  <div>
+                    <FieldLabel>Cartão</FieldLabel>
+                    {cartoes.length === 0 ? (
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: '4px 0 0' }}>
+                        Nenhum cartão cadastrado
+                      </p>
+                    ) : (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {cartoes.map(c => {
+                          const active = cartaoId === c.id
+                          return (
+                            <button key={c.id} onClick={() => setCartaoId(c.id!)}
+                              style={{
+                                padding: '5px 12px 5px 5px', borderRadius: 22,
+                                border: `1.5px solid ${active ? c.cor : '#EDE6DC'}`,
+                                background: active ? c.cor : '#FFFFFF',
+                                color: active ? '#FFFFFF' : '#2C1A0F',
+                                cursor: 'pointer',
+                                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                                display: 'inline-flex', alignItems: 'center', gap: 6,
+                                transition: 'all .15s',
+                              }}>
+                              <BankLogo logo={c.logo} nome={c.nome} cor={c.cor} size={22} radiusRatio={0.28} />
+                              {c.nome}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  {/* Parcelamento */}
+                  <div>
+                    <FieldLabel>Parcelamento</FieldLabel>
+                    <div style={{
+                      background: '#FBF8F3', border: '1.5px solid #EDE6DC',
+                      borderRadius: 12, padding: '10px 14px',
+                      display: 'flex', alignItems: 'center', gap: 10,
+                    }}>
+                      <button onClick={() => setParcelas(p => Math.max(1, p - 1))}
+                        style={{ width: 32, height: 32, borderRadius: 8, background: '#FFFFFF', border: '1px solid #EDE6DC', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <IconMinus size={14} stroke={2.2} color="#7A5C4F"/>
+                      </button>
+                      <div style={{ flex: 1, textAlign: 'center' }}>
+                        <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.5px' }}>{parcelas}×</p>
+                        {parcelas > 1 && valorNum > 0 && (
+                          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '2px 0 0' }}>
+                            {fmt(valorNum / parcelas)} por mês
+                          </p>
+                        )}
+                        {parcelas === 1 && (
+                          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '2px 0 0' }}>À vista</p>
+                        )}
+                      </div>
+                      <button onClick={() => setParcelas(p => Math.min(48, p + 1))}
+                        style={{ width: 32, height: 32, borderRadius: 8, background: tipoMeta.cor, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 2px 8px ${tipoMeta.cor}40` }}>
+                        <IconPlus size={14} stroke={2.4} color="#FFFFFF"/>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {/* Categoria — não pra transferência */}
+          {tipo !== 'transferencia' && (
+            <div>
+              <FieldLabel>Categoria</FieldLabel>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(94px, 1fr))', gap: 8 }}>
+                {categorias.map(c => {
+                  const active = catId === c.id
+                  return (
+                    <button key={c.id} onClick={() => setCatId(c.id!)}
+                      style={{
+                        background: active ? `${c.cor}18` : '#FBF8F3',
+                        border: `1.5px solid ${active ? c.cor : '#EDE6DC'}`,
+                        borderRadius: 12, padding: '10px 6px', cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                        transition: 'all .15s',
+                      }}>
+                      <CategoryIcon nome={c.nome} cor={c.cor} size={30} radius={9} />
+                      <span style={{
+                        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+                        color: active ? c.cor : '#2C1A0F', textAlign: 'center',
+                      }}>{c.nome}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Status + tags + recorrente — só pra conta */}
+          {tipo !== 'transferencia' && fontePag === 'conta' && (
+            <>
+              {/* Status */}
+              <div>
+                <FieldLabel>Status</FieldLabel>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={() => setStatus('confirmado')}
+                    style={{
+                      background: status === 'confirmado' ? 'rgba(58,133,128,0.14)' : 'transparent',
+                      color: status === 'confirmado' ? '#1E7D5A' : '#9B7B6A',
+                      border: `1.5px solid ${status === 'confirmado' ? '#3A8580' : '#EDE6DC'}`,
+                      borderRadius: 22, padding: '6px 12px', cursor: 'pointer',
+                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                    }}>
+                    <IconCheck size={12} stroke={2.4}/> Confirmado
+                  </button>
+                  <button onClick={() => setStatus('pendente')}
+                    style={{
+                      background: status === 'pendente' ? 'rgba(212,160,23,0.14)' : 'transparent',
+                      color: status === 'pendente' ? '#A8730F' : '#9B7B6A',
+                      border: `1.5px solid ${status === 'pendente' ? '#D4A017' : '#EDE6DC'}`,
+                      borderRadius: 22, padding: '6px 12px', cursor: 'pointer',
+                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                    }}>
+                    <IconClock size={12} stroke={2.2}/> Pendente
+                  </button>
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div>
+                <FieldLabel>Tags</FieldLabel>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {tags.map(t => (
+                    <span key={t} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      background: '#FBF8F3', border: '1px solid #EDE6DC', borderRadius: 20,
+                      padding: '4px 10px',
+                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600,
+                      color: '#7A5C4F',
+                    }}>
+                      <IconTag size={11} stroke={2}/>{t}
+                      <button onClick={() => setTags(tags.filter(x => x !== t))}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#9B7B6A', display: 'flex' }}>
+                        <IconX size={11} stroke={2.4}/>
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTagAction(tagInput) } }}
+                    placeholder="+ tag (Enter)"
+                    style={{
+                      background: 'transparent', border: '1px dashed #D4C8BC',
+                      borderRadius: 20, padding: '4px 10px',
+                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600,
+                      color: '#7A5C4F', outline: 'none', width: 110,
+                    }}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Repetir mensal */}
+          {tipo !== 'transferencia' && (
+            <button onClick={() => setRecorrente(r => !r)}
+              style={{
+                background: recorrente ? `${tipoMeta.cor}14` : '#FBF8F3',
+                border: `1.5px solid ${recorrente ? tipoMeta.cor : '#EDE6DC'}`,
+                borderRadius: 12, padding: '10px 14px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+              }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: recorrente ? tipoMeta.cor : 'rgba(122,92,79,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <IconRepeat size={16} stroke={2} color={recorrente ? '#FFFFFF' : '#7A5C4F'} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>
+                  Repetir todo mês
+                </p>
+                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '2px 0 0' }}>
+                  {recorrente ? 'Salva como conta fixa recorrente' : 'Lançamento único'}
+                </p>
+              </div>
+              <div style={{
+                width: 38, height: 22, borderRadius: 11,
+                background: recorrente ? tipoMeta.cor : '#EDE6DC',
+                position: 'relative', transition: 'background .15s',
+              }}>
+                <motion.div
+                  animate={{ x: recorrente ? 18 : 2 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  style={{ position: 'absolute', top: 2, width: 18, height: 18, borderRadius: '50%', background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }}
+                />
+              </div>
+            </button>
+          )}
+        </div>
+
+        {/* ─── RIGHT: live preview ─── */}
+        <div style={{
+          padding: '20px 26px',
+          background: 'linear-gradient(180deg, #FAF6F0 0%, #FFFFFF 100%)',
+          display: 'flex', flexDirection: 'column', gap: 14,
+        }}>
+          <p style={{
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+            color: '#9B7B6A', letterSpacing: '.16em', textTransform: 'uppercase', margin: 0,
+          }}>Preview</p>
+
+          {/* Mini row preview */}
+          <LivePreview
+            tipo={tipo}
+            valor={valorNum}
+            descricao={desc || catSelecionada?.nome || ''}
+            categoria={catSelecionada ?? null}
+            conta={fontePag === 'conta' ? contaSelecionada ?? null : null}
+            cartao={fontePag === 'cartao' ? cartaoSelecionado ?? null : null}
+            contaDestino={tipo === 'transferencia' ? contaDestino ?? null : null}
+            data={data}
+            status={status}
+            tags={tags}
+            recorrente={recorrente}
+            parcelas={parcelas}
+            tipoMeta={tipoMeta}
+          />
+
+          <div style={{
+            background: '#FBF8F3', border: '1px solid #EDE6DC',
+            borderRadius: 12, padding: '12px 14px',
+          }}>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F',
+              margin: 0, lineHeight: 1.5,
+            }}>
+              {tipo === 'transferencia'
+                ? 'Cria 2 transações: uma saída na conta origem e uma entrada na conta destino.'
+                : fontePag === 'cartao'
+                  ? `Será adicionado à fatura do cartão${parcelas > 1 ? ` em ${parcelas} parcelas` : ''}.`
+                  : recorrente
+                    ? 'Será criada uma conta fixa que se repete todo mês.'
+                    : 'Lançamento único que afeta o saldo da conta selecionada.'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <Modal.Footer>
+        <button onClick={onClose}
+          style={{ background: 'transparent', color: '#7A5C4F', border: '1.5px solid #EDE6DC', borderRadius: 12, padding: '11px 20px', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700 }}>
+          Cancelar
+        </button>
+        <button onClick={handleSave}
+          disabled={!isValid() || saving}
+          style={{
+            background: isValid() ? `linear-gradient(135deg, ${tipoMeta.cor}DD, ${tipoMeta.cor})` : '#E0D5C8',
+            color: '#FFFFFF', border: 'none', borderRadius: 12,
+            padding: '11px 22px',
+            cursor: isValid() && !saving ? 'pointer' : 'not-allowed',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            boxShadow: isValid() ? `0 4px 16px ${tipoMeta.cor}44` : 'none',
+            opacity: isValid() && !saving ? 1 : 0.7,
+          }}>
+          <IconCheck size={16} stroke={2.5} />
+          {tipo === 'transferencia' ? 'Realizar transferência' : tipo === 'receita' ? 'Salvar receita' : 'Salvar despesa'}
+        </button>
+      </Modal.Footer>
+    </Modal>
+  )
+}
+
+// ─── Subcomponents ─────────────────────────────────────────────────
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span style={{
+      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+      color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase',
+      display: 'block', marginBottom: 8,
+    }}>{children}</span>
+  )
+}
+
+function ContaSelector({ label, contas, value, onChange, accentCor }: {
+  label: string
+  contas: { id?: number; nome: string; cor: string; logo?: string }[]
+  value: number | null
+  onChange: (v: number) => void
+  accentCor: string
+}) {
+  return (
+    <div>
+      <FieldLabel>{label}</FieldLabel>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {contas.length === 0 ? (
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: 0 }}>
+            Nenhuma conta cadastrada
+          </p>
+        ) : (
+          contas.map(c => {
+            const active = c.id === value
+            return (
+              <button key={c.id} onClick={() => onChange(c.id!)}
+                style={{
+                  padding: '5px 12px 5px 5px', borderRadius: 22,
+                  border: `1.5px solid ${active ? c.cor : '#EDE6DC'}`,
+                  background: active ? c.cor : '#FFFFFF',
+                  color: active ? '#FFFFFF' : '#2C1A0F',
+                  cursor: 'pointer',
+                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  transition: 'all .15s',
+                }}>
+                <BankLogo logo={c.logo} nome={c.nome} cor={c.cor} size={22} radiusRatio={0.28} />
+                {c.nome}
+              </button>
+            )
+          })
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Live preview — mini row + extra info
+type Categoria = ReturnType<typeof useCategorias>[number]
+type Conta = ReturnType<typeof useContas>[number]
+type Cartao = ReturnType<typeof useCartoes>[number]
+
+function LivePreview({
+  tipo, valor, descricao, categoria, conta, cartao, contaDestino,
+  data, status, tags, recorrente, parcelas, tipoMeta,
+}: {
+  tipo: TipoLanc
+  valor: number
+  descricao: string
+  categoria: Categoria | null
+  conta: Conta | null
+  cartao: Cartao | null
+  contaDestino: Conta | null
+  data: string
+  status: 'confirmado' | 'pendente'
+  tags: string[]
+  recorrente: boolean
+  parcelas: number
+  tipoMeta: typeof TIPO_META[TipoLanc]
+}) {
+  const valorDisplay = valor > 0 ? fmt(valor) : 'R$ 0,00'
+  const sign = tipoMeta.sign
+  const corValor = tipo === 'receita' ? '#1E7D5A' : tipo === 'transferencia' ? '#7C5CBF' : '#2C1A0F'
+  const dataFmt = data ? new Date(data + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,15,0.55)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <motion.div
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '100%', opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-        onClick={e => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 560, background: '#FFFFFF', borderRadius: '28px 28px 0 0', padding: '20px 20px 48px', maxHeight: '94dvh', overflowY: 'auto', boxShadow: '0 -8px 40px rgba(44,26,15,0.2)' }}>
-
-        {/* Handle bar */}
-        <motion.div
-          initial={{ scaleX: 0.5 }}
-          animate={{ scaleX: 1 }}
-          transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
-          style={{ width: 40, height: 4, borderRadius: 2, background: '#E8E0D5', margin: '0 auto 20px' }} />
-
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F' }}>Novo lançamento</h2>
-          <button onClick={onClose} style={{ background: '#F5F0E8', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconX size={16} color="#9B7B6A" />
-          </button>
-        </div>
-
-        {/* Tipo */}
-        <motion.div
-          layout
-          style={{ display: 'flex', background: '#F5F0E8', borderRadius: 16, padding: 4, marginBottom: 18, gap: 4 }}>
-          {(['despesa','receita','transferencia'] as TipoLanc[]).map(t => (
-            <motion.button key={t}
-              layout
-              onClick={() => { setTipo(t); setCatId(null); if (t === 'transferencia') setFontePag('conta') }}
-              style={{ flex: 1, padding: '10px 4px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                background: tipo === t ? (t==='receita'?'#3A8580':t==='transferencia'?'#7C5CBF':'#C4553B') : 'transparent',
-                color: tipo === t ? 'white' : '#9B7B6A',
-                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
-                boxShadow: tipo === t ? `0 4px 14px ${t==='receita'?'rgba(58,133,128,0.35)':t==='transferencia'?'rgba(124,92,191,0.35)':'rgba(196,85,59,0.35)'}` : 'none',
-                transition: 'all .15s' }}>
-              {t === 'despesa' ? '− Despesa' : t === 'receita' ? '+ Receita' : '⇄ Transf.'}
-            </motion.button>
-          ))}
-        </motion.div>
-
-        {/* Valor */}
-        <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: `2px solid ${valor ? corBotao : '#E8E0D5'}`, borderRadius: 16, padding: '12px 16px', gap: 8, marginBottom: 12, transition: 'border-color .2s, box-shadow .2s', boxShadow: valor ? `0 0 0 4px ${corBotao}10` : 'none' }}>
-          <span style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, color: corBotao, fontWeight: 700 }}>R$</span>
-          <input value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" type="tel" autoFocus
-            style={{ border: 'none', background: 'transparent', fontFamily: "'Fraunces',Georgia,serif", fontSize: 32, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none', width: '100%' }} />
-        </div>
-
-        {/* Descrição + câmera */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descrição (opcional)"
-            style={{ flex: 1, background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '11px 14px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#2C1A0F', outline: 'none' }} />
-          <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowAttach(s => !s)}
-            style={{ width: 46, height: 46, borderRadius: 12, border: preview ? '2px solid #3A8580' : '1.5px solid #E8E0D5', background: preview ? '#EBF5F0' : '#FAF6F0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {preview ? <IconCheck size={18} color="#3A8580" /> : <IconCamera size={18} color="#9B7B6A" />}
-          </motion.button>
-        </div>
-
-        <AnimatePresence>
-          {showAttach && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', marginBottom: 10 }}>
-              <div style={{ display: 'flex', gap: 8, background: '#FAF6F0', border: '1.5px dashed #E8E0D5', borderRadius: 14, padding: 10 }}>
-                <motion.button whileTap={{ scale: 0.95 }} onClick={() => cameraRef.current?.click()}
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 11, border: 'none', background: '#2C1A0F', color: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><IconCamera size={14} stroke={2} /> Câmera</motion.button>
-                <motion.button whileTap={{ scale: 0.95 }} onClick={() => fileRef.current?.click()}
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 11, border: '1.5px solid #E8E0D5', background: 'white', color: '#2C1A0F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><IconFile size={14} stroke={2} /> Arquivo / PDF</motion.button>
-              </div>
-              <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleFile} />
-              <input ref={fileRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleFile} />
-            </motion.div>
-          )}
-          {preview && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-              style={{ background: '#EBF5F0', border: '1.5px solid #D0E8D8', borderRadius: 12, padding: '9px 12px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-              {preview.url ? <img src={preview.url} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} /> : <div style={{ width: 40, height: 40, background: '#3D7EB5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><IconPaperclip size={20} color="white" stroke={2} /></div>}
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#3A8580', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preview.file.name}</p>
-              <button onClick={() => setPreview(null)} style={{ background: '#F5F0E8', border: 'none', cursor: 'pointer', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconX size={12} color="#9B7B6A" /></button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Data */}
-        <input value={data} onChange={e => setData(e.target.value)} type="date"
-          style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '11px 14px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, color: '#2C1A0F', outline: 'none', marginBottom: 14 }} />
-
-        {/* Fonte de pagamento — só para despesa/receita */}
-        {tipo !== 'transferencia' && (
-          <div style={{ marginBottom: 14 }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 8, letterSpacing: '.04em' }}>FORMA DE PAGAMENTO</p>
-            <div style={{ display: 'flex', background: '#F5F0E8', borderRadius: 12, padding: 4, gap: 4, marginBottom: 10 }}>
-              <button onClick={() => setFontePag('conta')}
-                style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', cursor: 'pointer', background: fontePag === 'conta' ? '#FFFDF9' : 'transparent', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: fontePag === 'conta' ? '#2C1A0F' : '#9B7B6A', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, boxShadow: fontePag === 'conta' ? '0 1px 4px rgba(44,26,15,0.08)' : 'none', transition: 'all .15s' }}>
-                <IconBuildingBank size={14} stroke={2} /> Conta / PIX
-              </button>
-              <button onClick={() => setFontePag('cartao')}
-                style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', cursor: 'pointer', background: fontePag === 'cartao' ? '#FFFDF9' : 'transparent', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: fontePag === 'cartao' ? '#2C1A0F' : '#9B7B6A', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, boxShadow: fontePag === 'cartao' ? '0 1px 4px rgba(44,26,15,0.08)' : 'none', transition: 'all .15s' }}>
-                <IconCreditCard size={14} stroke={2} /> Cartão de crédito
-              </button>
-            </div>
-
-            {/* Conta */}
-            {fontePag === 'conta' && (
+    <div style={{
+      background: '#FFFFFF', border: '1px solid #EDE6DC',
+      borderRadius: 14, padding: '12px 14px',
+      boxShadow: '0 4px 18px rgba(44,26,15,0.06)',
+      display: 'flex', flexDirection: 'column', gap: 10,
+    }}>
+      {/* Row preview */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {tipo === 'transferencia' ? (
+          <div style={{ width: 38, height: 38, borderRadius: 11, background: tipoMeta.cor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <IconArrowsExchange size={20} stroke={2} color="#FFFFFF"/>
+          </div>
+        ) : categoria ? (
+          <CategoryIcon nome={categoria.nome} cor={categoria.cor} size={38} radius={11} />
+        ) : (
+          <div style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(122,92,79,0.12)', flexShrink: 0 }}/>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+            color: descricao ? '#2C1A0F' : '#9B7B6A', margin: 0,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {descricao || 'Descrição da transação'}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, flexWrap: 'nowrap', overflow: 'hidden' }}>
+            {tipo === 'transferencia' ? (
+              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#7A5C4F' }}>
+                {conta?.nome ?? '—'} → {contaDestino?.nome ?? '—'}
+              </span>
+            ) : (
               <>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 8 }}>
-                  {contas.map(c => (
-                    <button key={c.id} onClick={() => setContaId(c.id!)}
-                      style={{ padding: '6px 12px', borderRadius: 20, border: contaId === c.id ? `2px solid ${c.cor}` : '1.5px solid #E8E0D5', cursor: 'pointer', background: contaId === c.id ? `${c.cor}18` : 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: contaId === c.id ? c.cor : '#7A5C4F', transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: c.cor }} />{c.nome}
-                    </button>
-                  ))}
-                </div>
-                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 6 }}>MÉTODO</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {METODOS.map(m => (
-                    <button key={m} onClick={() => setMetodoPag(m)}
-                      style={{ padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer', background: metodoPag === m ? '#C4553B' : '#F5F0E8', color: metodoPag === m ? 'white' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, transition: 'all .15s' }}>
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Cartão */}
-            {fontePag === 'cartao' && (
-              <>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 10 }}>
-                  {cartoes.length === 0
-                    ? <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A' }}>Nenhum cartão cadastrado</p>
-                    : cartoes.map(c => (
-                      <button key={c.id} onClick={() => setCartaoId(c.id!)}
-                        style={{ padding: '6px 14px', borderRadius: 20, border: cartaoId === c.id ? `2px solid ${c.cor}` : '1.5px solid #E8E0D5', cursor: 'pointer', background: cartaoId === c.id ? c.cor : 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: cartaoId === c.id ? 'white' : '#7A5C4F', transition: 'all .15s' }}>
-                        {c.nome}
-                      </button>
-                    ))
-                  }
-                </div>
-                {/* Parcelamento */}
-                <div style={{ background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '12px 14px' }}>
-                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 8 }}>PARCELAMENTO</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <button onClick={() => setParcelas(p => Math.max(1,p-1))}
-                      style={{ width: 36, height: 36, borderRadius: 10, background: '#E8E0D5', border: 'none', cursor: 'pointer', fontSize: 20, fontWeight: 700, color: '#2C1A0F' }}>−</button>
-                    <div style={{ flex: 1, textAlign: 'center' }}>
-                      <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700, color: '#2C1A0F' }}>{parcelas}x</p>
-                      {parcelas > 1 && valor && (
-                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 2 }}>
-                          de R$ {(parseFloat(valor.replace(',','.')) / parcelas).toFixed(2).replace('.',',')} por mês
-                        </p>
-                      )}
-                      {parcelas === 1 && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 2 }}>À vista</p>}
-                    </div>
-                    <button onClick={() => setParcelas(p => Math.min(48,p+1))}
-                      style={{ width: 36, height: 36, borderRadius: 10, background: '#C4553B', border: 'none', cursor: 'pointer', fontSize: 20, fontWeight: 700, color: 'white' }}>+</button>
-                  </div>
-                </div>
+                {categoria && (
+                  <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#7A5C4F' }}>
+                    {categoria.nome}
+                  </span>
+                )}
+                {(conta || cartao) && (
+                  <>
+                    <span style={{ color: '#D4C8BC', fontSize: 9 }}>·</span>
+                    {conta ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <BankLogo logo={conta.logo} nome={conta.nome} cor={conta.cor} size={14} radiusRatio={0.28}/>
+                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A' }}>{conta.nome}</span>
+                      </span>
+                    ) : cartao ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <BankLogo logo={cartao.logo} nome={cartao.nome} cor={cartao.cor} size={14} radiusRatio={0.28}/>
+                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A' }}>{cartao.nome}{parcelas > 1 ? ` ${parcelas}×` : ''}</span>
+                      </span>
+                    ) : null}
+                  </>
+                )}
+                {status === 'pendente' && (
+                  <span style={{
+                    fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
+                    color: '#A8730F', background: 'rgba(212,160,23,0.16)',
+                    padding: '1px 5px', borderRadius: 5, letterSpacing: '.04em',
+                  }}>pendente</span>
+                )}
               </>
             )}
           </div>
-        )}
+        </div>
+        <span style={{
+          fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700,
+          color: corValor, letterSpacing: '-0.4px',
+        }}>{sign}{valorDisplay}</span>
+      </div>
 
-        {/* Transferência — conta destino */}
-        {tipo === 'transferencia' && (
-          <div style={{ marginBottom: 14 }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 8 }}>DE</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 10 }}>
-              {contas.map(c => (
-                <button key={c.id} onClick={() => setContaId(c.id!)}
-                  style={{ padding: '6px 12px', borderRadius: 20, border: contaId === c.id ? `2px solid ${c.cor}` : '1.5px solid #E8E0D5', cursor: 'pointer', background: contaId === c.id ? `${c.cor}18` : 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: contaId === c.id ? c.cor : '#7A5C4F', transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: c.cor }} />{c.nome}
-                </button>
-              ))}
-            </div>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 8 }}>PARA</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-              {contas.filter(c => c.id !== contaId).map(c => (
-                <button key={c.id} onClick={() => setContaDestinoId(c.id!)}
-                  style={{ padding: '6px 12px', borderRadius: 20, border: contaDestinoId === c.id ? `2px solid ${c.cor}` : '1.5px solid #E8E0D5', cursor: 'pointer', background: contaDestinoId === c.id ? `${c.cor}18` : 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: contaDestinoId === c.id ? c.cor : '#7A5C4F', transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: c.cor }} />{c.nome}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Meta info */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center',
+        padding: '8px 0 0', borderTop: '1px solid #F5F0E8',
+      }}>
+        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.04em' }}>
+          {dataFmt || '— —'}
+        </span>
+        {recorrente && (
+          <>
+            <span style={{ color: '#D4C8BC', fontSize: 9 }}>·</span>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: tipoMeta.cor, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+              <IconRepeat size={10} stroke={2.4} /> Recorrente
+            </span>
+          </>
         )}
-
-        {/* Categoria */}
-        {tipo !== 'transferencia' && (
-          <div style={{ marginBottom: 16 }}>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#9B7B6A', marginBottom: 8, letterSpacing: '.04em' }}>CATEGORIA</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: 8 }}>
-              {categorias.map(c => (
-                <motion.button key={c.id} onClick={() => setCatId(c.id!)} whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.05 }}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '10px 4px', borderRadius: 14, border: catId === c.id ? `2px solid ${c.cor}` : '1.5px solid #E8E0D5', background: catId === c.id ? `${c.cor}12` : 'white', cursor: 'pointer', transition: 'all .15s' }}>
-                  <CategoryIcon nome={c.nome} cor={c.cor} size={38} radius={11} />
-                  <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: catId === c.id ? c.cor : '#7A5C4F', textAlign: 'center', lineHeight: 1.2 }}>{c.nome}</span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Status (confirmado/pendente) */}
-        {tipo !== 'transferencia' && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-            {(['confirmado', 'pendente'] as const).map(s => (
-              <button key={s} onClick={() => setStatus(s)}
-                style={{ flex: 1, padding: '9px 0', borderRadius: 10, border: `1.5px solid ${status === s ? (s === 'confirmado' ? '#3A8580' : '#D4A017') : '#E8E0D5'}`, background: status === s ? (s === 'confirmado' ? '#EBF5F0' : '#FDF4E3') : 'white', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: status === s ? (s === 'confirmado' ? '#3A8580' : '#D4A017') : '#9B7B6A', transition: 'all .15s' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{s === 'confirmado' ? <><IconCheck size={12} stroke={2.5} />Confirmado</> : <><IconRepeat size={12} stroke={2} />Pendente</>}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Tags */}
-        {tipo !== 'transferencia' && (
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: tags.length > 0 ? 6 : 0 }}>
-              {tags.map(t => (
-                <span key={t} onClick={() => setTags(ts => ts.filter(x => x !== t))}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: `${corBotao}18`, border: `1px solid ${corBotao}40`, borderRadius: 20, padding: '3px 10px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: corBotao, cursor: 'pointer' }}>
-                  #{t} ×
-                </span>
-              ))}
-            </div>
-            <input value={tagInput} onChange={e => setTagInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(tagInput) } }}
-              onBlur={() => { if (tagInput.trim()) addTag(tagInput) }}
-              placeholder="# Adicionar tag (Enter)"
-              style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '9px 14px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#2C1A0F', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-        )}
-
-        {/* Recorrente — só conta/despesa */}
-        {tipo !== 'transferencia' && fontePag === 'conta' && (
-          <motion.button onClick={() => setRecorrente(r => !r)} whileTap={{ scale: 0.98 }}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 14, border: `1.5px solid ${recorrente ? '#C4553B' : '#E8E0D5'}`, background: recorrente ? '#FAF0EE' : '#FAF6F0', cursor: 'pointer', marginBottom: 16, transition: 'all .15s' }}>
-            <IconRepeat size={18} color={recorrente ? '#C4553B' : '#9B7B6A'} stroke={2} />
-            <div style={{ flex: 1, textAlign: 'left' }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: recorrente ? '#C4553B' : '#2C1A0F' }}>Repetir todo mês</p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>Salva como conta fixa recorrente</p>
-            </div>
-            <div style={{ width: 22, height: 22, borderRadius: '50%', background: recorrente ? '#C4553B' : '#E8E0D5', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}>
-              {recorrente && <IconCheck size={13} color="white" stroke={3} />}
-            </div>
-          </motion.button>
-        )}
-
-        {/* Botão salvar */}
-        <motion.button onClick={handleSave} whileTap={{ scale: 0.97 }}
-          disabled={!isValid() || saving}
-          style={{ width: '100%', padding: '16px 0', borderRadius: 14, border: 'none', cursor: isValid() ? 'pointer' : 'default', background: isValid() ? corBotao : '#E8E0D5', color: isValid() ? 'white' : '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700, transition: 'all .2s' }}>
-          {saving ? 'Salvando...' : tipo === 'transferencia' ? 'Realizar transferência' : fontePag === 'cartao' ? `Lançar no cartão${parcelas > 1 ? ` em ${parcelas}x` : ' à vista'}` : `Salvar ${tipo}`}
-        </motion.button>
-      </motion.div>
-    </motion.div>
+        {tags.map(t => (
+          <span key={t} style={{
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 600,
+            color: '#7A5C4F', background: '#FBF8F3', border: '1px solid #EDE6DC',
+            padding: '1px 6px', borderRadius: 5,
+            display: 'inline-flex', alignItems: 'center', gap: 2,
+          }}>
+            <IconTag size={9} stroke={2}/>{t}
+          </span>
+        ))}
+      </div>
+    </div>
   )
 }

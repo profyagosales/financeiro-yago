@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { IconArrowsExchange } from '@tabler/icons-react'
-import type { Transacao, Conta, Categoria, Cartao } from '@/db/schema'
+import { IconArrowsExchange, IconCheck } from '@tabler/icons-react'
+import type { Transacao, Conta, Categoria } from '@/db/schema'
 import { db } from '@/db/schema'
 import { fmt } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
@@ -10,10 +10,13 @@ import { BankLogo } from '@/components/ui/BankLogo'
 interface Props {
   tx: Transacao
   active: boolean
+  bulkSelected?: boolean
+  bulkMode?: boolean
   onClick: () => void
+  onToggleBulk?: (e: React.MouseEvent) => void
 }
 
-export function TransactionListRow({ tx, active, onClick }: Props) {
+export function TransactionListRow({ tx, active, bulkSelected, bulkMode, onClick, onToggleBulk }: Props) {
   const [cat, setCat] = useState<Categoria | null>(null)
   const [conta, setConta] = useState<Conta | null>(null)
 
@@ -33,19 +36,19 @@ export function TransactionListRow({ tx, active, onClick }: Props) {
   const borderCor = cat?.cor ?? '#7A5C4F'
 
   return (
-    <motion.button
-      onClick={onClick}
+    <motion.div
       whileTap={{ scale: 0.99 }}
+      onClick={onClick}
       style={{
         width: '100%',
-        background: active ? `${borderCor}10` : 'transparent',
+        background: bulkSelected ? `${borderCor}1A` : active ? `${borderCor}10` : 'transparent',
         border: 'none',
-        borderLeft: active ? `3px solid ${borderCor}` : '3px solid transparent',
+        borderLeft: bulkSelected ? `3px solid ${borderCor}` : active ? `3px solid ${borderCor}` : '3px solid transparent',
         borderRadius: 10,
         padding: '11px 12px 11px 9px',
         cursor: 'pointer',
         display: 'grid',
-        gridTemplateColumns: 'auto 1fr auto',
+        gridTemplateColumns: bulkMode ? 'auto auto 1fr auto' : 'auto 1fr auto',
         gap: 12,
         alignItems: 'center',
         textAlign: 'left',
@@ -53,12 +56,26 @@ export function TransactionListRow({ tx, active, onClick }: Props) {
         opacity: isPendente ? 0.78 : 1,
       }}
       onMouseEnter={e => {
-        if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(122,92,79,0.05)'
+        if (!active && !bulkSelected) (e.currentTarget as HTMLDivElement).style.background = 'rgba(122,92,79,0.05)'
       }}
       onMouseLeave={e => {
-        if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+        if (!active && !bulkSelected) (e.currentTarget as HTMLDivElement).style.background = 'transparent'
       }}
     >
+      {/* Bulk checkbox (somente em bulk mode) */}
+      {bulkMode && (
+        <button onClick={e => { e.stopPropagation(); onToggleBulk?.(e) }}
+          aria-label={bulkSelected ? 'Desmarcar' : 'Marcar'}
+          style={{
+            background: bulkSelected ? borderCor : 'transparent',
+            border: `1.5px solid ${bulkSelected ? borderCor : '#D4C8BC'}`,
+            borderRadius: 5, width: 18, height: 18, padding: 0, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+          {bulkSelected && <IconCheck size={12} stroke={3} color="#FFFFFF" />}
+        </button>
+      )}
+
       {/* Ícone categoria ou transfer */}
       {isTransfer ? (
         <div style={{
@@ -127,6 +144,6 @@ export function TransactionListRow({ tx, active, onClick }: Props) {
       }}>
         {sign}{fmt(tx.valor).replace(/^-/, '')}
       </span>
-    </motion.button>
+    </motion.div>
   )
 }
