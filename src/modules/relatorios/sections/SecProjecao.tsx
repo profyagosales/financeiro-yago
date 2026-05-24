@@ -1,9 +1,10 @@
 // ─── Projeção de Saldo: line chart com forecast + bandas ───────────
 import { IconChartArrows, IconArrowUpRight, IconArrowDownRight, IconWaveSawTool } from '@tabler/icons-react'
 import {
-  ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine, Legend,
 } from 'recharts'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 import { SectionShell } from '../components/SectionShell'
 import { ChartTooltip } from '../components/ChartTooltip'
 import { fmt } from '@/lib/format'
@@ -37,9 +38,8 @@ export function SecProjecao({ d }: Props) {
       icon={<IconChartArrows size={18} stroke={2} color="#A8730F" />}
       accent="#D4A017"
     >
-      <div style={{ width: '100%', height: 280, minWidth: 0 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
+      <ChartContainer height={280}>
+        <ComposedChart data={data} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
             <defs>
               <linearGradient id="banda-grad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#D4A017" stopOpacity={0.22} />
@@ -66,9 +66,8 @@ export function SecProjecao({ d }: Props) {
             <Legend
               wrapperStyle={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, paddingTop: 6 }}
               iconType="circle" iconSize={8} />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+        </ComposedChart>
+      </ChartContainer>
 
       {/* Footer com leituras */}
       <div style={{

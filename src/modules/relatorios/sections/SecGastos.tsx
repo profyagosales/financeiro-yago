@@ -2,7 +2,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { IconChartPie, IconArrowDownRight, IconArrowUpRight } from '@tabler/icons-react'
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip } from 'recharts'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 import { SectionShell } from '../components/SectionShell'
 import { ChartTooltip } from '../components/ChartTooltip'
 import { ProgressBar } from '@/components/ui/ProgressBar'
@@ -38,10 +39,9 @@ export function SecGastos({ d }: Props) {
           gap: 24, alignItems: 'flex-start',
         }} className="gastos-grid">
           {/* Donut + total no centro */}
-          <div style={{ minWidth: 0 }}>
-            <div style={{ position: 'relative', width: '100%', height: 280, minWidth: 0 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+          <div style={{ minWidth: 0, position: 'relative' }}>
+            <ChartContainer height={280}>
+              <PieChart>
                   <Pie data={cats} dataKey="valor" innerRadius={75} outerRadius={115}
                     paddingAngle={2} stroke="none"
                     onMouseEnter={(_, idx) => setHover(idx)}
@@ -52,9 +52,9 @@ export function SecGastos({ d }: Props) {
                     ))}
                   </Pie>
                   <Tooltip content={<ChartTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Total centralizado */}
+              </PieChart>
+            </ChartContainer>
+            {/* Total centralizado */}
               <div style={{
                 position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
                 textAlign: 'center', pointerEvents: 'none',
@@ -92,7 +92,6 @@ export function SecGastos({ d }: Props) {
                   </>
                 )}
               </div>
-            </div>
           </div>
 
           {/* Top 10 horizontal bars com delta */}

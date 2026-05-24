@@ -1,7 +1,8 @@
 // ─── Investimentos: donut por classe + performers + vencimentos ─────
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip } from 'recharts'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 import {
   IconChartLine, IconTrendingUp, IconTrendingDown, IconCalendarTime,
 } from '@tabler/icons-react'
@@ -55,8 +56,8 @@ export function SecInvestimentos({ d }: Props) {
         display: 'grid', gridTemplateColumns: 'minmax(280px, 360px) 1fr', gap: 24, alignItems: 'flex-start',
       }} className="invest-grid">
         {/* Donut */}
-        <div style={{ position: 'relative', width: '100%', height: 280, minWidth: 0 }}>
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ position: 'relative', minWidth: 0 }}>
+          <ChartContainer height={280}>
             <PieChart>
               <Pie data={distrib} dataKey="total" nameKey="tipo"
                 innerRadius={75} outerRadius={115} paddingAngle={2} stroke="none"
@@ -69,7 +70,7 @@ export function SecInvestimentos({ d }: Props) {
               </Pie>
               <Tooltip content={<ChartTooltip />} />
             </PieChart>
-          </ResponsiveContainer>
+          </ChartContainer>
           <div style={{
             position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
             textAlign: 'center', pointerEvents: 'none',

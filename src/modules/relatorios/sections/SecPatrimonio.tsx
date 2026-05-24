@@ -1,6 +1,7 @@
 // ─── Patrimônio: area 12m + breakdown ──────────────────────────────
 import { IconCoin, IconBuildingBank, IconChartLine, IconCreditCardOff } from '@tabler/icons-react'
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 import { SectionShell } from '../components/SectionShell'
 import { ChartTooltip } from '../components/ChartTooltip'
 import { fmt } from '@/lib/format'
@@ -36,9 +37,8 @@ export function SecPatrimonio({ d }: Props) {
       }} className="patrim-grid">
         {/* Chart */}
         <div style={{ minWidth: 0 }}>
-          <div style={{ width: '100%', height: 260, minWidth: 0 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
+          <ChartContainer height={260}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
                 <defs>
                   <linearGradient id="patrim-grad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#504E76" stopOpacity={0.42} />
@@ -54,9 +54,8 @@ export function SecPatrimonio({ d }: Props) {
                 <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#9B7B6A', strokeDasharray: '3 3', strokeWidth: 1 }} />
                 <Area type="monotone" dataKey="Patrimonio" name="Patrimônio"
                   stroke="#504E76" strokeWidth={2.8} fill="url(#patrim-grad)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+            </AreaChart>
+          </ChartContainer>
         </div>
 
         {/* Breakdown */}

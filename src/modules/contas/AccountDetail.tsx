@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 import {
   IconPlus, IconHistory, IconEdit, IconTrash, IconArrowUpRight, IconArrowDownRight,
   IconArrowsUpDown, IconWallet, IconReceipt,
@@ -233,9 +234,8 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
               color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px',
             }}>Saldo nos últimos 30 dias</h3>
           </header>
-          <div style={{ width: '100%', height: 180, minWidth: 0 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+          <ChartContainer height={180}>
+            <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
                 <defs>
                   <linearGradient id={`grad-${conta.id}`} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={conta.cor} stopOpacity={0.32}/>
@@ -268,9 +268,8 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
                   dot={false}
                   activeDot={{ r: 4, fill: conta.cor, strokeWidth: 2, stroke: '#FFFFFF' }}
                 />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+            </AreaChart>
+          </ChartContainer>
         </section>
 
         {/* Últimas transações */}

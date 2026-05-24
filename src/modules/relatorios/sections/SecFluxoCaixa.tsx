@@ -2,9 +2,8 @@
 import {
   IconArrowsExchange, IconArrowUp, IconArrowDown, IconTrendingUp, IconTrendingDown,
 } from '@tabler/icons-react'
-import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-} from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 import { SectionShell } from '../components/SectionShell'
 import { ChartTooltip } from '../components/ChartTooltip'
 import { fmt } from '@/lib/format'
@@ -35,9 +34,8 @@ export function SecFluxoCaixa({ d }: Props) {
       ) : (
         <>
           {/* Chart */}
-          <div style={{ width: '100%', height: 280, minWidth: 0 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
+          <ChartContainer height={280}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
                 <defs>
                   <linearGradient id="rec-grad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#3A8580" stopOpacity={0.32} />
@@ -60,9 +58,8 @@ export function SecFluxoCaixa({ d }: Props) {
                 <Legend
                   wrapperStyle={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, paddingTop: 6 }}
                   iconType="circle" iconSize={8} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+            </AreaChart>
+          </ChartContainer>
 
           {/* Cards de extremos */}
           <div style={{
