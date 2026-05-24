@@ -12,6 +12,7 @@ import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
 import { useInvestimentos, useTotalInvestimentos } from '@/db/hooks/useInvestimentos'
 import { useDividasComputed } from '@/db/hooks/useDividas'
 import { useMetasComputed, useReservaEmergencia } from '@/db/hooks/useMetas'
+import { isEspelhoInvestimento } from '@/db/hooks/useTransacoes'
 import { usePeriodoResolved } from './usePeriodo'
 import {
   serieMensal, serieDiaria, heatmapDiaSemana,
@@ -51,7 +52,7 @@ export function useRelatoriosData() {
     if (state.contaId !== null) q = q.filter(t => t.contaId === state.contaId)
     if (state.categoriaId !== null) q = q.filter(t => t.categoriaId === state.categoriaId)
     if (state.tipo !== 'todos') q = q.filter(t => t.tipo === state.tipo)
-    return q.filter(t => !t.transferId).toArray()
+    return q.filter(t => !t.transferId && !isEspelhoInvestimento(t)).toArray()
   }, [intervalo.start, intervalo.end, state.contaId, state.categoriaId, state.tipo]) ?? []
 
   // Transações do período anterior (pra comparativo)
@@ -60,7 +61,7 @@ export function useRelatoriosData() {
     if (state.contaId !== null) q = q.filter(t => t.contaId === state.contaId)
     if (state.categoriaId !== null) q = q.filter(t => t.categoriaId === state.categoriaId)
     if (state.tipo !== 'todos') q = q.filter(t => t.tipo === state.tipo)
-    return q.filter(t => !t.transferId).toArray()
+    return q.filter(t => !t.transferId && !isEspelhoInvestimento(t)).toArray()
   }, [intervalo.prev.start, intervalo.prev.end, state.contaId, state.categoriaId, state.tipo]) ?? []
 
   // Série 12m fixa (sempre últimos 12 meses, independente do filtro)
@@ -72,7 +73,7 @@ export function useRelatoriosData() {
     const start = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`
     const end = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
     return db.transacoes.where('data').between(start, end, true, true)
-      .filter(t => !t.transferId)
+      .filter(t => !t.transferId && !isEspelhoInvestimento(t))
       .toArray()
   }, []) ?? []
 

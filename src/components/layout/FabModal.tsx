@@ -186,7 +186,9 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
             boxShadow: valorNum ? `0 0 0 4px ${tipoMeta.cor}10` : 'none',
           }}>
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, color: tipoMeta.cor, fontWeight: 700 }}>R$</span>
-            <input value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" type="tel" autoFocus inputMode="decimal"
+            <input value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00"
+              type="tel" autoFocus inputMode="decimal"
+              aria-label={`Valor da ${tipoMeta.label.toLowerCase()} em reais`}
               style={{
                 border: 'none', background: 'transparent',
                 fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 32, fontWeight: 700,
@@ -197,6 +199,8 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
           {/* Descrição + photo */}
           <div style={{ display: 'flex', gap: 8 }}>
             <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descrição (opcional)"
+              aria-label="Descrição da transação (opcional)"
+              maxLength={120}
               style={{
                 flex: 1, background: '#FBF8F3', border: '1.5px solid #EDE6DC',
                 borderRadius: 10, padding: '11px 14px',
@@ -556,8 +560,8 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
 
       {/* Footer */}
       <Modal.Footer>
-        <button onClick={onClose}
-          style={{ background: 'transparent', color: '#7A5C4F', border: '1.5px solid #EDE6DC', borderRadius: 12, padding: '11px 20px', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700 }}>
+        <button onClick={onClose} disabled={saving}
+          style={{ background: 'transparent', color: '#7A5C4F', border: '1.5px solid #EDE6DC', borderRadius: 12, padding: '11px 20px', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700 }}>
           Cancelar
         </button>
         <button onClick={handleSave}
@@ -573,7 +577,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
             opacity: isValid() && !saving ? 1 : 0.7,
           }}>
           <IconCheck size={16} stroke={2.5} />
-          {tipo === 'transferencia' ? 'Realizar transferência' : tipo === 'receita' ? 'Salvar receita' : 'Salvar despesa'}
+          {saving ? 'Salvando…' : tipo === 'transferencia' ? 'Realizar transferência' : tipo === 'receita' ? 'Salvar receita' : 'Salvar despesa'}
         </button>
       </Modal.Footer>
     </Modal>

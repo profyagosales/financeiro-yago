@@ -43,6 +43,7 @@ export function ContasFixasDesktop() {
 
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [payingWithFee, setPayingWithFee] = useState<ContaFixa | null>(null)
   const [feeForm, setFeeForm] = useState({ juros: '', multa: '' })
@@ -120,8 +121,10 @@ export function ContasFixasDesktop() {
     setPaymentMethod('conta')
   }
   const handleSave = async () => {
+    if (saving) return
     const nomeTrim = form.nome.trim()
     if (!nomeTrim || !form.valor || !form.categoriaId) return
+    setSaving(true)
     const data = {
       nome: nomeTrim,
       valor: parseFloat(form.valor.replace(/\./g, '').replace(',', '.')),
@@ -139,6 +142,8 @@ export function ContasFixasDesktop() {
       console.error('[ContasFixasDesktop.handleSave]', e)
       const { showErrorToast } = await import('@/lib/sounds')
       showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar conta fixa — tente de novo')
+    } finally {
+      setSaving(false)
     }
   }
 

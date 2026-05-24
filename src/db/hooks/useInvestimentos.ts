@@ -29,7 +29,11 @@ export function useInvestimentosByMeta(metaId: number | undefined) {
 
 export function useTotalInvestimentos() {
   const list = useInvestimentos()
-  // Converte ativos USD pra BRL usando cotação cacheada
+  // useDolar força re-render quando cotação muda em appConfig (R9 fix:
+  // antes _ultimoDolar era module-level mutável e hooks não re-renderizavam
+  // quando fetchDolarECache resolvia → patrimônio USD ficava em R$5.40).
+  const _dolar = useDolar()
+  void _dolar
   const { totalBRL, aplicadoBRL, rendimentoBRL } = totalCarteiraBRL(list)
   return { total: totalBRL, aplicado: aplicadoBRL, rendimento: rendimentoBRL }
 }
@@ -482,24 +486,64 @@ export function calcVendasStats(movs: InvestimentoMovimentacao[]) {
 }
 
 // ─── Conversão de moeda (BRL ↔ USD) ──────────────────────────────────
-// Reativo: useDolar() retorna a cotação atual do dólar, busca via API
-// se não tiver, cacheia 5min, fallback default 5.40 se API offline.
+// Reativo: useDolar() retorna a cotação atual do dólar.
+// Estratégia dual:
+//   - `_ultimoDolar` (module-level): valor síncrono pra `converterParaBRL`/`totalCarteiraBRL`
+//   - `db.appConfig['lastDolar']`: persistência reativa via useLiveQuery
+// Quando fetchDolarECache resolve, atualiza AMBOS — useLiveQuery dispara
+// re-render dos consumidores (Dashboard, Relatórios) e totalCarteiraBRL
+// lê o `_ultimoDolar` síncrono já atualizado.
 let _ultimoDolar = 5.40
 
+// Hook reativo: re-renderiza components quando lastDolar muda em appConfig
 export function useDolar(): number {
+  const stored = useLiveQuery(
+    () => db.appConfig.where('key').equals('lastDolar').first(),
+    [],
+  )
+  const v = stored?.value as number | undefined
+  // Sincroniza _ultimoDolar com appConfig (caso pull tenha vindo de outro device)
+  if (typeof v === 'number' && v > 0 && v !== _ultimoDolar) {
+    _ultimoDolar = v
+  }
   return _ultimoDolar
 }
 
 export async function fetchDolarECache(): Promise<number> {
   const c = await fetchCotacaoDolar()
-  if (c && c > 0) _ultimoDolar = c
+  if (c && c > 0) {
+    _ultimoDolar = c
+    // Persiste em appConfig pra disparar useLiveQuery reativo
+    try {
+      const existing = await db.appConfig.where('key').equals('lastDolar').first()
+      if (existing?.id) {
+        await db.appConfig.update(existing.id, { value: c, updatedAt: Date.now() })
+      } else {
+        await db.appConfig.add({ key: 'lastDolar', value: c, updatedAt: Date.now() })
+      }
+    } catch { /* fallback gracioso: usa só module-level */ }
+  }
   return _ultimoDolar
 }
 
-// Inicializa cotação na primeira chamada (chame em /investimentos mount)
+// Inicializa cotação na primeira chamada (chame em AppShell mount).
+// Lê valor de appConfig antes de fetch pra recuperar estado cross-session.
 let _dolarFetchInProgress: Promise<number> | null = null
 export async function ensureDolarLoaded(): Promise<number> {
-  if (!_dolarFetchInProgress) _dolarFetchInProgress = fetchDolarECache()
+  if (!_dolarFetchInProgress) {
+    _dolarFetchInProgress = (async () => {
+      // Tenta ler do appConfig primeiro (cache cross-session)
+      try {
+        const cached = await db.appConfig.where('key').equals('lastDolar').first()
+        const v = cached?.value as number | undefined
+        if (typeof v === 'number' && v > 0) {
+          _ultimoDolar = v
+        }
+      } catch { /* noop */ }
+      // Refresh em background da API (sem await — não bloqueia boot)
+      return fetchDolarECache()
+    })()
+  }
   return _dolarFetchInProgress
 }
 

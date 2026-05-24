@@ -59,7 +59,8 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
   if (!data || data.length === 0) return { pulled: 0, errors: 0 }
 
   let pulled = 0
-  let maxUpdatedAt: string | null = null
+  let maxAppliedUpdatedAt: string | null = null
+  let hadErrors = false
 
   for (const remote of data) {
     const r = remote as Record<string, unknown>
@@ -68,7 +69,6 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
     const isDeleted = r.deleted === true
 
     if (typeof remoteUuid !== 'string') continue
-    maxUpdatedAt = remoteUpdatedAt
 
     // Lookup local existente
     const localId = getLocalId(tableName, remoteUuid)
@@ -94,7 +94,15 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
           }
           await config.dexie().delete(localId)
           await deleteMapping(tableName, localId)
-        } catch { /* noop */ }
+          // Soft-delete aplicado com sucesso — pode avançar cursor
+          maxAppliedUpdatedAt = remoteUpdatedAt
+        } catch {
+          hadErrors = true
+        }
+      } else {
+        // Soft-delete remoto pra row que nunca existiu local — também avança
+        // cursor pra não re-pullar a mesma row mais tarde
+        maxAppliedUpdatedAt = remoteUpdatedAt
       }
       continue
     }
@@ -108,23 +116,40 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
       const existing = await config.dexie().get(localId) as Record<string, unknown> | undefined
       const existingUpdatedAt = (existing?.updatedAt as number) ?? 0
       if (remoteUpdatedMs > existingUpdatedAt) {
-        await config.dexie().update(localId, localRecord)
-        pulled += 1
+        try {
+          await config.dexie().update(localId, localRecord)
+          pulled += 1
+          maxAppliedUpdatedAt = remoteUpdatedAt
+        } catch (e) {
+          console.warn(`[sync pull update] ${tableName}:`, e)
+          hadErrors = true
+        }
+      } else {
+        // LWW pulou (versão local é mais nova) — também avança cursor
+        // porque não precisamos re-tentar essa row remota mais tarde
+        maxAppliedUpdatedAt = remoteUpdatedAt
       }
     } else {
-      // INSERT novo
+      // INSERT novo. Bug histórico: cursor avançava MESMO se INSERT falhasse
+      // (unique violation, FK pending) → row nunca era re-pullada até full sync.
+      // Agora só avança se o INSERT realmente aplicou.
       try {
         const newLocalId = await config.dexie().add(localRecord) as number
         await setMapping(tableName, newLocalId, remoteUuid)
         pulled += 1
+        maxAppliedUpdatedAt = remoteUpdatedAt
       } catch (e) {
         console.warn(`[sync pull insert] ${tableName}:`, e)
+        hadErrors = true
       }
     }
   }
 
-  if (maxUpdatedAt) await setMeta(sinceKey, maxUpdatedAt)
-  return { pulled, errors: 0 }
+  // Só avança cursor pra rows que aplicamos sem erro. Se houve qualquer
+  // erro, o próximo pull vai re-tentar as rows pendentes (cursor fica
+  // no último ts aplicado com sucesso).
+  if (maxAppliedUpdatedAt) await setMeta(sinceKey, maxAppliedUpdatedAt)
+  return { pulled, errors: hadErrors ? 1 : 0 }
 }
 
 export async function pullAll(opts: { full?: boolean } = {}): Promise<{ pulled: number; errors: number }> {

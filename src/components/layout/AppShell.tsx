@@ -229,10 +229,28 @@ export function AppShell() {
     }
     navigator.serviceWorker.addEventListener('message', onSwMessage)
 
+    // R9 fix: força revalidação do sw.js periodicamente + ao voltar foreground.
+    // Browsers naturalmente revalidam só em navegações, e em PWA standalone
+    // (especialmente iOS) o user pode ficar dias sem ver o toast "Atualizar
+    // versão". Trigger update() no boot + visibility + a cada 30min.
+    const triggerUpdate = () => {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg) reg.update().catch(() => { /* offline: noop */ })
+      })
+    }
+    triggerUpdate() // boot
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') triggerUpdate()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    const updateInterval = setInterval(triggerUpdate, 30 * 60 * 1000)
+
     return () => {
       mounted = false
       navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange)
       navigator.serviceWorker.removeEventListener('message', onSwMessage)
+      document.removeEventListener('visibilitychange', onVisibility)
+      clearInterval(updateInterval)
       if (registration && updateFoundListener) {
         registration.removeEventListener('updatefound', updateFoundListener)
       }

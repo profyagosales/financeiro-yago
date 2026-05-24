@@ -58,11 +58,20 @@ export function ComprarForm({ desejo, onClose }: Props) {
 
     try {
       // Fallback de categoria: se vazio, busca uma categoria de despesa
-      // existente como default (evita FK órfã com categoriaId=0)
+      // existente como default. Se NENHUMA existe (banco fresh sem seed
+      // ou pós-wipe), cria "Outros gastos" automaticamente — evita FK
+      // hardcode `1` (que pode não existir em DBs reset/import).
       let catId = categoriaIdNum
       if (!catId) {
         const cat = await db.categorias.where('tipo').equals('despesa').first()
-        catId = cat?.id ?? 1
+        if (cat?.id) {
+          catId = cat.id
+        } else {
+          catId = await db.categorias.add({
+            nome: 'Outros gastos', tipo: 'despesa',
+            icone: '📦', cor: '#7A5C4F', ordem: 999,
+          }) as number
+        }
       }
       const txId = (await db.transacoes.add({
         data: form.data,

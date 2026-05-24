@@ -621,6 +621,7 @@ function ContaFixaForm({ open, editing, mes: _mes, ano: _ano, onClose, onDelete 
   )
   const [contaId, setContaId] = useState<number | null>(editing?.contaId ?? null)
   const [cartaoId, setCartaoId] = useState<number | null>(editing?.cartaoId ?? null)
+  const [saving, setSaving] = useState(false)
 
   // Resetar form quando editing mudar — derived state pattern (sem useEffect)
   const [prevEditingKey, setPrevEditingKey] = useState<number | null>(editing?.id ?? null)
@@ -638,6 +639,8 @@ function ContaFixaForm({ open, editing, mes: _mes, ano: _ano, onClose, onDelete 
 
   const handleSave = async () => {
     const nomeTrim = nome.trim()
+    if (saving) return
+    setSaving(true)
     const valorNum = parseFloat(valor.replace(/\./g, '').replace(',', '.'))
     if (!nomeTrim || !valorNum || !categoriaId) return
     const data = {
@@ -661,6 +664,8 @@ function ContaFixaForm({ open, editing, mes: _mes, ano: _ano, onClose, onDelete 
       console.error('[ContaFixaForm.handleSave]', e)
       showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar conta fixa — tente de novo')
       sounds.error()
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -708,30 +713,31 @@ function ContaFixaForm({ open, editing, mes: _mes, ano: _ano, onClose, onDelete 
               <IconTrash size={13} stroke={2.2} /> Excluir
             </button>
           )}
-          <button onClick={onClose} style={{
+          <button onClick={onClose} disabled={saving} style={{
             flex: onDelete ? undefined : 1,
             padding: '11px 18px',
             background: 'rgba(255,255,255,0.7)', color: C.inkSoft,
             border: '1px solid rgba(255,255,255,0.85)',
-            borderRadius: 12, cursor: 'pointer',
+            borderRadius: 12, cursor: saving ? 'not-allowed' : 'pointer',
+            opacity: saving ? 0.5 : 1,
             fontFamily: "'Plus Jakarta Sans',sans-serif",
             fontSize: 12.5, fontWeight: 700,
           }}>
             Cancelar
           </button>
-          <button onClick={handleSave} disabled={!canSave}
+          <button onClick={handleSave} disabled={!canSave || saving}
             style={{
               flex: 1,
               padding: '11px 18px',
-              background: canSave ? `linear-gradient(135deg, ${C.orangeBri}, ${C.orange})` : 'rgba(155,123,106,0.2)',
-              color: canSave ? '#FFFFFF' : C.muted,
+              background: (canSave && !saving) ? `linear-gradient(135deg, ${C.orangeBri}, ${C.orange})` : 'rgba(155,123,106,0.2)',
+              color: (canSave && !saving) ? '#FFFFFF' : C.muted,
               border: 'none', borderRadius: 12,
-              cursor: canSave ? 'pointer' : 'default',
+              cursor: (canSave && !saving) ? 'pointer' : 'default',
               fontFamily: "'Plus Jakarta Sans',sans-serif",
               fontSize: 13, fontWeight: 700,
-              boxShadow: canSave ? '0 6px 16px rgba(196,85,59,0.36)' : 'none',
+              boxShadow: (canSave && !saving) ? '0 6px 16px rgba(196,85,59,0.36)' : 'none',
             }}>
-            {editing ? 'Salvar' : 'Criar'}
+            {saving ? 'Salvando…' : editing ? 'Salvar' : 'Criar'}
           </button>
         </div>
       }
