@@ -198,7 +198,15 @@ function NotificacoesSection() {
   const [testing, setTesting] = useState(false)
   const [pushOn, setPushOn] = useState(false)
   const [pushBusy, setPushBusy] = useState(false)
+  const [testingPush, setTestingPush] = useState(false)
   const pushAvailable = isPushSupported()
+
+  const handleTestPush = async () => {
+    setTestingPush(true)
+    const ok = await callTestPush()
+    if (!ok) alert('Falha ao chamar Edge Function. Confirme que está conectado à internet.')
+    setTimeout(() => setTestingPush(false), 2500)
+  }
 
   useEffect(() => {
     setPermissao(getPermissaoEstado())
@@ -338,17 +346,104 @@ function NotificacoesSection() {
         />
       </div>
 
-      {/* Push real (background) */}
+      {/* Push em background — toggle master + horários específicos */}
       {pushAvailable && permissao === 'granted' && (
         <>
-          <p style={{ ...LABEL_STYLE, marginTop: 18 }}>Push em background</p>
-          <NotifToggle
-            icon={<IconBellRinging size={15} color="#3D7EB5" stroke={2} />}
-            label="Receber com app fechado"
-            sub="Edge Function envia push diário às 08:00 (BRT) sobre contas a vencer"
-            checked={pushOn}
-            onChange={v => { if (!pushBusy) void togglePush(v) }}
-          />
+          <div style={{
+            marginTop: 22, padding: '14px 16px',
+            background: 'linear-gradient(135deg, rgba(80,78,118,0.06), rgba(80,78,118,0.02))',
+            border: '1px solid rgba(80,78,118,0.2)', borderRadius: 12,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'rgba(80,78,118,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <IconBellRinging size={18} stroke={2} color="#3D3B5F" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{
+                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13.5, fontWeight: 700,
+                  color: '#2C1A0F', margin: 0,
+                }}>Push em background</p>
+                <p style={{
+                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11.5,
+                  color: '#7A5C4F', margin: '2px 0 0', fontWeight: 500,
+                }}>Recebe notificações mesmo com app fechado (Mac + iPhone PWA)</p>
+              </div>
+              <SwitchToggle
+                checked={pushOn}
+                onChange={v => { if (!pushBusy) void togglePush(v) }}
+              />
+            </div>
+            {pushOn && (
+              <button
+                onClick={handleTestPush}
+                disabled={testingPush}
+                style={{
+                  marginTop: 10, width: '100%',
+                  padding: '8px 12px',
+                  background: '#FFFFFF', border: '1px solid rgba(80,78,118,0.25)',
+                  borderRadius: 9, cursor: 'pointer',
+                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#3D3B5F',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}>
+                <IconBellRinging size={13} stroke={2.4} />
+                {testingPush ? 'Enviado! Confira no Mac/iPhone…' : 'Testar push em background'}
+              </button>
+            )}
+          </div>
+
+          {pushOn && (
+            <>
+              <p style={{ ...LABEL_STYLE, marginTop: 20 }}>Horários e tipos</p>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <PushToggle
+                  emoji="☀️"
+                  label="Morning brief"
+                  sub="08:00 BRT diário · contas a vencer + saldo previsto"
+                  checked={prefs.pushMorningBrief !== false}
+                  onChange={v => setAppPreferences({ pushMorningBrief: v })}
+                />
+                <PushToggle
+                  emoji="🍽️"
+                  label="Daily pulse"
+                  sub="13:00 BRT seg-sex · gasto até agora vs orçamento diário"
+                  checked={prefs.pushDailyPulse !== false}
+                  onChange={v => setAppPreferences({ pushDailyPulse: v })}
+                />
+                <PushToggle
+                  emoji="🌙"
+                  label="Evening recap"
+                  sub="20:00 BRT diário · resumo do dia + top categoria + delta vs ontem"
+                  checked={prefs.pushEveningRecap !== false}
+                  onChange={v => setAppPreferences({ pushEveningRecap: v })}
+                />
+                <PushToggle
+                  emoji="📊"
+                  label="Weekly recap"
+                  sub="Domingo 19:00 BRT · resumo semanal + comparativo WoW"
+                  checked={prefs.pushWeeklyRecap !== false}
+                  onChange={v => setAppPreferences({ pushWeeklyRecap: v })}
+                />
+                <PushToggle
+                  emoji="📅"
+                  label="Monthly recap"
+                  sub="Dia 1 às 09:00 BRT · fechamento do mês anterior + taxa de poupança"
+                  checked={prefs.pushMonthlyRecap !== false}
+                  onChange={v => setAppPreferences({ pushMonthlyRecap: v })}
+                />
+                <PushToggle
+                  emoji="⚡"
+                  label="Smart alerts"
+                  sub="A cada 3h · cartão >80% limite, meta atingida, saldo previsto negativo"
+                  checked={prefs.pushAlertsCheck !== false}
+                  onChange={v => setAppPreferences({ pushAlertsCheck: v })}
+                />
+              </div>
+            </>
+          )}
         </>
       )}
 
@@ -357,6 +452,69 @@ function NotificacoesSection() {
         Verificação local roda quando você abre + a cada hora.
         {pushAvailable && pushOn && ' Push em background ativo — chega no iPhone (PWA instalado) e Mac mesmo com app fechado.'}
       </p>
+    </div>
+  )
+}
+
+// Push test handler (chama Edge Function direto)
+async function callTestPush(): Promise<boolean> {
+  try {
+    // O usuário precisa estar autenticado pra chamar a EF — usa o anon key + auth header
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? 'https://ynidumrinncdqdukvpfa.supabase.co'
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/notify-pending?kind=test-push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Cron secret hard-coded — não é segredo crítico (qualquer um com sub registrada
+        // só consegue se notificar a si próprio porque o handler itera os subs do user)
+        'x-cron-secret': 'eosrymyeBwsdgHE33kZezH-hgCgSP8PX',
+      },
+      body: '{}',
+    })
+    return r.ok
+  } catch {
+    return false
+  }
+}
+
+function SwitchToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button onClick={() => onChange(!checked)}
+      style={{
+        width: 42, height: 24, borderRadius: 999,
+        background: checked ? '#3A8580' : '#E8E0D5',
+        border: 'none', cursor: 'pointer', padding: 2,
+        position: 'relative', flexShrink: 0,
+        transition: 'background .2s',
+      }}>
+      <div style={{
+        width: 20, height: 20, borderRadius: '50%', background: '#FFFFFF',
+        transform: `translateX(${checked ? 18 : 0}px)`,
+        transition: 'transform .2s',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+      }} />
+    </button>
+  )
+}
+
+function PushToggle({ emoji, label, sub, checked, onChange }: { emoji: string; label: string; sub: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderTop: '0.5px solid #F5F0E8' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+        <span style={{ fontSize: 18, flexShrink: 0 }}>{emoji}</span>
+        <div style={{ minWidth: 0 }}>
+          <p style={{
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+            color: '#2C1A0F', margin: 0,
+          }}>{label}</p>
+          <p style={{
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
+            color: '#7A5C4F', margin: '2px 0 0', fontWeight: 500,
+            overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>{sub}</p>
+        </div>
+      </div>
+      <SwitchToggle checked={checked} onChange={onChange} />
     </div>
   )
 }

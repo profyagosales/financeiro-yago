@@ -5,7 +5,7 @@
 // O service worker mantém o app rodando offline depois da primeira
 // visita: ícones, fontes, JS bundle, etc ficam cacheados.
 
-const CACHE_NAME = 'financeiro-yago-v2-brand'
+const CACHE_NAME = 'financeiro-yago-v3-rich-notif'
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -14,6 +14,7 @@ const CORE_ASSETS = [
   '/icon-192.svg',
   '/icon-512.svg',
   '/apple-touch-icon.svg',
+  '/brand/notification-badge.svg',
 ]
 
 // Install: pré-cache dos assets core
@@ -34,44 +35,93 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// Notificação clicada: abre a URL no app (se já aberto, foca; senão, abre)
+// ─── Notification click ────────────────────────────────────────────
+// Suporta ações (botões dentro da notificação). action vazio = corpo clicado.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = event.notification.data?.url || '/'
+  const data = event.notification.data || {}
+  const action = event.action
+
+  // Se a ação tem URL própria (ex: "Marcar como pago" leva pra /contas-fixas),
+  // usa ela. Senão, fallback pro data.url.
+  let url = data.url || '/'
+  if (action && data.actions && data.actions[action]) {
+    url = data.actions[action]
+  }
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
-      // Se já tem janela do app aberta, foca nela e navega
       for (const w of wins) {
         if ('focus' in w) {
           w.focus()
           if ('navigate' in w) {
-            try { w.navigate(url) } catch { /* fallback abaixo */ }
+            try { w.navigate(url) } catch { /* noop */ }
           }
           return
         }
       }
-      // Senão, abre nova janela
       if (clients.openWindow) return clients.openWindow(url)
     })
   )
 })
 
-// Push real (futuro — quando houver servidor com VAPID)
+// ─── Push real (web push via VAPID) ───────────────────────────────
+// Payload esperado do servidor:
+// {
+//   title:    string        (obrigatório)
+//   body:     string        (obrigatório)
+//   url:      string?       (URL ao clicar, default '/')
+//   tag:      string?       (notifs com mesmo tag se substituem)
+//   image:    string?       (preview grande dentro da notif)
+//   badge:    string?       (silhueta override)
+//   icon:     string?       (ícone override)
+//   actions:  Array<{action, title, icon?}>  (botões)
+//   actionsUrls: { [action]: url }   (mapa ação→URL)
+//   requireInteraction: boolean   (não some sozinho)
+//   silent: boolean
+//   renotify: boolean
+//   vibrate: number[]
+// }
 self.addEventListener('push', (event) => {
   if (!event.data) return
   try {
-    const payload = event.data.json()
+    const p = event.data.json()
+    const options = {
+      body: p.body || '',
+      icon: p.icon || '/icon-192.svg',
+      badge: p.badge || '/brand/notification-badge.svg',
+      image: p.image,
+      tag: p.tag || undefined,
+      renotify: p.renotify === true,
+      requireInteraction: p.requireInteraction === true,
+      silent: p.silent === true,
+      vibrate: p.vibrate || [80, 40, 80],
+      timestamp: Date.now(),
+      actions: Array.isArray(p.actions) ? p.actions.slice(0, 2) : undefined,
+      data: {
+        url: p.url || '/',
+        actions: p.actionsUrls || {},
+      },
+    }
     event.waitUntil(
-      self.registration.showNotification(payload.title || 'Financeiro do Yago', {
-        body: payload.body || '',
-        icon: '/icon-192.svg',
-        badge: '/favicon.svg',
-        data: { url: payload.url || '/' },
-      })
+      self.registration.showNotification(p.title || 'Financeiro do Yago', options),
     )
-  } catch {
-    /* ignore */
+  } catch (e) {
+    // Fallback texto bruto
+    const text = event.data.text() || 'Você tem uma novidade financeira'
+    event.waitUntil(
+      self.registration.showNotification('Financeiro do Yago', {
+        body: text,
+        icon: '/icon-192.svg',
+        badge: '/brand/notification-badge.svg',
+      }),
+    )
   }
+})
+
+// ─── Notification close (telemetria opcional) ─────────────────────
+self.addEventListener('notificationclose', () => {
+  // Hook pra futuro: contabilizar dismissals e ajustar agressividade
 })
 
 // Fetch: estratégia híbrida

@@ -96,11 +96,20 @@ export interface AppPreferences {
   autoLockMin?: number              // 0 = nunca, 1/5/15/30 = minutos
   soundEnabled?: boolean            // default true
   reducedMotion?: boolean           // default false
-  // Notificações (default tudo true; permissão do browser é separada)
+  // ── Notificações locais (verificação no app, sem servidor) ─────
   notifContasFixas?: boolean
   notifFaturas?: boolean
   notifOrcamento?: boolean
   notifMeta?: boolean
+  // ── Push em background (Edge Function via cron) ───────────────
+  // Cada toggle controla um tipo de push enviado pelo servidor.
+  // Tudo default true — user só desliga explicitamente.
+  pushMorningBrief?: boolean       // 08:00 BRT — contas vencendo + saldo
+  pushDailyPulse?: boolean         // 13:00 BRT seg-sex — gasto vs orçamento diário
+  pushEveningRecap?: boolean       // 20:00 BRT — recap do dia
+  pushWeeklyRecap?: boolean        // Domingo 19:00 BRT — resumo semanal
+  pushMonthlyRecap?: boolean       // Dia 1 09:00 BRT — fechamento mensal
+  pushAlertsCheck?: boolean        // A cada 3h — alertas inteligentes
 }
 
 export const PREFS_DEFAULT: AppPreferences = {
@@ -111,6 +120,12 @@ export const PREFS_DEFAULT: AppPreferences = {
   notifFaturas: true,
   notifOrcamento: true,
   notifMeta: true,
+  pushMorningBrief: true,
+  pushDailyPulse: true,
+  pushEveningRecap: true,
+  pushWeeklyRecap: true,
+  pushMonthlyRecap: true,
+  pushAlertsCheck: true,
 }
 
 export function useAppPreferences(): AppPreferences {
