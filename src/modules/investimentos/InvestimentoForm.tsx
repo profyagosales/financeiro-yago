@@ -256,7 +256,9 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
 
           {/* Tipo */}
           <Field label="Tipo de investimento">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            <div className="inv-tipo-grid" style={{
+              display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8,
+            }}>
               {TIPOS.map(t => {
                 const Icon = t.Icon
                 const active = form.tipo === t.value
@@ -266,19 +268,27 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                     style={{
                       background: active ? t.cor : '#FBF8F3',
                       border: `1.5px solid ${active ? t.cor : '#EDE6DC'}`,
-                      borderRadius: 12, padding: '10px 12px', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 8,
+                      borderRadius: 12, padding: '10px 8px', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 6,
                       transition: 'all .15s',
+                      minWidth: 0,
                     }}>
-                    <Icon size={18} stroke={1.8} color={active ? '#FFFFFF' : t.cor} />
+                    <Icon size={16} stroke={1.8} color={active ? '#FFFFFF' : t.cor} style={{ flexShrink: 0 }} />
                     <span style={{
-                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600,
+                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11.5, fontWeight: 600,
                       color: active ? '#FFFFFF' : '#2C1A0F',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      minWidth: 0,
                     }}>{t.label}</span>
                   </button>
                 )
               })}
             </div>
+            <style>{`
+              @media (max-width: 480px) {
+                .inv-tipo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+              }
+            `}</style>
           </Field>
 
           {/* Instituição: dropdown (conta cadastrada) ou outra (input livre) */}

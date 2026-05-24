@@ -131,21 +131,25 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
                     style={{
                       background: active ? t.cor : '#FBF8F3',
                       border: `1.5px solid ${active ? t.cor : '#EDE6DC'}`,
-                      borderRadius: 12, padding: '12px 14px',
+                      borderRadius: 12, padding: '12px 12px',
                       cursor: blocked ? 'not-allowed' : 'pointer',
                       opacity: blocked ? 0.4 : 1,
-                      display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+                      display: 'flex', alignItems: 'flex-start', gap: 8, textAlign: 'left',
                       transition: 'all .15s',
+                      minWidth: 0,
                     }}>
-                    <Icon size={20} stroke={1.8} color={active ? '#FFFFFF' : t.cor} />
-                    <div style={{ minWidth: 0 }}>
+                    <Icon size={18} stroke={1.8} color={active ? '#FFFFFF' : t.cor} style={{ flexShrink: 0, marginTop: 1 }} />
+                    <div style={{ minWidth: 0, flex: 1 }}>
                       <p style={{
-                        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
-                        color: active ? '#FFFFFF' : '#2C1A0F', margin: 0,
+                        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12.5, fontWeight: 700,
+                        color: active ? '#FFFFFF' : '#2C1A0F', margin: 0, lineHeight: 1.2,
+                        wordBreak: 'break-word',
                       }}>{t.label}</p>
                       <p style={{
                         fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 500,
-                        color: active ? 'rgba(255,255,255,0.8)' : '#7A5C4F', margin: '2px 0 0',
+                        color: active ? 'rgba(255,255,255,0.85)' : '#7A5C4F',
+                        margin: '3px 0 0', lineHeight: 1.3,
+                        wordBreak: 'break-word',
                       }}>{t.descricao}</p>
                     </div>
                   </button>

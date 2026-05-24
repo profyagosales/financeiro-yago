@@ -241,12 +241,12 @@ const CLOSE_BTN: React.CSSProperties = {
 }
 
 const PRIMARY_BTN: React.CSSProperties = {
-  background: 'linear-gradient(135deg, #2A1E3F, #504E76)',
+  background: 'linear-gradient(135deg, #F1642E, #C4553B)',
   color: '#FFFFFF', border: 'none', borderRadius: 12,
   padding: '11px 20px', cursor: 'pointer',
   fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
   display: 'flex', alignItems: 'center', gap: 7,
-  boxShadow: '0 8px 22px rgba(42,30,63,0.4)',
+  boxShadow: '0 8px 22px rgba(196,85,59,0.42)',
 }
 
 const SECONDARY_BTN: React.CSSProperties = {

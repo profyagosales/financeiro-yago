@@ -138,7 +138,7 @@ export function DividaForm({ divida, onClose }: Props) {
           )}
 
           {/* Nome + Instituição */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
             <Field label="Nome">
               <input
                 value={form.nome}
@@ -159,7 +159,9 @@ export function DividaForm({ divida, onClose }: Props) {
 
           {/* Tipo */}
           <Field label="Tipo de dívida">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+            <div className="div-tipo-grid" style={{
+              display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8,
+            }}>
               {TIPOS.map(t => {
                 const Icon = t.Icon
                 const active = form.tipo === t.value
@@ -169,23 +171,31 @@ export function DividaForm({ divida, onClose }: Props) {
                     style={{
                       background: active ? t.cor : '#FBF8F3',
                       border: `1.5px solid ${active ? t.cor : '#EDE6DC'}`,
-                      borderRadius: 12, padding: '10px 12px', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 8,
+                      borderRadius: 12, padding: '10px 8px', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 6,
                       transition: 'all .15s',
+                      minWidth: 0,
                     }}>
-                    <Icon size={18} stroke={1.8} color={active ? '#FFFFFF' : t.cor} />
+                    <Icon size={16} stroke={1.8} color={active ? '#FFFFFF' : t.cor} style={{ flexShrink: 0 }} />
                     <span style={{
-                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600,
+                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11.5, fontWeight: 600,
                       color: active ? '#FFFFFF' : '#2C1A0F',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      minWidth: 0,
                     }}>{t.label}</span>
                   </button>
                 )
               })}
             </div>
+            <style>{`
+              @media (max-width: 540px) {
+                .div-tipo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+              }
+            `}</style>
           </Field>
 
           {/* Valores principais */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
             <Field label="Valor total da dívida (R$)">
               <input
                 value={form.valorTotal}
@@ -205,7 +215,7 @@ export function DividaForm({ divida, onClose }: Props) {
           </div>
 
           {/* Parcelas */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 14 }}>
             <Field label="Parcelas total">
               <input
                 value={form.parcelasTotal}
@@ -233,7 +243,7 @@ export function DividaForm({ divida, onClose }: Props) {
           </div>
 
           {/* Data início + Dia vencimento + Categoria */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.4fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 14 }}>
             <Field label="Data início">
               <input type="date"
                 value={form.dataInicio}

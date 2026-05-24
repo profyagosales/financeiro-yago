@@ -94,20 +94,28 @@ export function ContaForm({ open, conta, onClose, onSave }: Props) {
       subtitle={isEditing ? 'Atualize os dados desta conta' : 'Cadastre uma conta bancária ou carteira'}
       icon={<IconBuildingBank size={22} stroke={1.8} color="#7A5C4F" />}
     >
-      {/* Body com grid 1.4fr | 1fr (form esquerda, preview direita) */}
-      <div style={{
+      {/* Body com grid 1.4fr | 1fr (form esquerda, preview direita).
+          Em mobile, esconde a coluna do preview e form ocupa tudo. */}
+      <div className="cf-body" style={{
         flex: 1,
         overflowY: 'auto',
         display: 'grid',
         gridTemplateColumns: '1.4fr 1fr',
         gap: 0,
       }}>
+        <style>{`
+          @media (max-width: 767px) {
+            .cf-body { grid-template-columns: 1fr !important; }
+            .cf-form { border-right: none !important; padding: 18px 16px !important; }
+            .cf-preview { display: none !important; }
+          }
+        `}</style>
         {/* ── LEFT: Form ── */}
-        <div style={{ padding: '24px 28px', borderRight: '1px solid #EDE6DC', display: 'flex', flexDirection: 'column', gap: 22 }}>
+        <div className="cf-form" style={{ padding: '24px 28px', borderRight: '1px solid #EDE6DC', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
           {/* Banco */}
           <Field label="Banco / Instituição">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: 8 }}>
               {BANK_PRESETS.slice(0, 16).map(b => {
                 const active = form.bankKey === b.key
                 return (
@@ -235,8 +243,8 @@ export function ContaForm({ open, conta, onClose, onSave }: Props) {
           </Field>
         </div>
 
-        {/* ── RIGHT: Preview ao vivo ── */}
-        <div style={{
+        {/* ── RIGHT: Preview ao vivo (escondido em mobile via .cf-preview) ── */}
+        <div className="cf-preview" style={{
           padding: '24px 28px',
           background: 'linear-gradient(180deg, #FAF6F0 0%, #FFFFFF 100%)',
           display: 'flex', flexDirection: 'column', gap: 14,
