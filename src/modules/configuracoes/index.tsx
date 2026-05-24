@@ -15,6 +15,7 @@ import {
   IconDeviceMobileMessage, IconDatabase, IconInfoCircle, IconFile, IconTrendingUp,
   IconUser, IconBrandGithub, IconTrash, IconAlertTriangle, IconSettings, IconClock,
   IconVolume, IconAccessible, IconCurrencyReal, IconTarget, IconBell, IconBellRinging,
+  IconLogout, IconMail,
 } from '@tabler/icons-react'
 import { getPermissaoEstado, pedirPermissao, notificarTeste, verificarPendencias, type PermissaoEstado } from '@/lib/notifications'
 import { useEffect } from 'react'
@@ -660,13 +661,13 @@ function ImportCSVSection() {
 
 // ─── PIN ─────────────────────────────────────────────────────────────
 function PinSection() {
-  const { setPin } = useAuthStore()
+  const { changePin } = useAuthStore()
   const [pinAtual, setPinAtual] = useState(''); const [pinNovo, setPinNovo] = useState(''); const [pinConf, setPinConf] = useState('')
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null); const [open, setOpen] = useState(false)
   const handleChange = async () => {
     if (pinNovo !== pinConf) { setMsg({ type: 'err', text: 'PINs não coincidem' }); return }
     if (pinNovo.length < 4) { setMsg({ type: 'err', text: 'Mínimo 4 dígitos' }); return }
-    const ok = await setPin(pinAtual, pinNovo)
+    const ok = await changePin(pinAtual, pinNovo)
     setMsg(ok ? { type: 'ok', text: 'PIN alterado!' } : { type: 'err', text: 'PIN atual incorreto' })
     if (ok) { setPinAtual(''); setPinNovo(''); setPinConf('') }
     setTimeout(() => setMsg(null), 3000)
@@ -980,8 +981,10 @@ const CURRENCY_PREFIX: React.CSSProperties = {
 
 // ═══ PAGE ═════════════════════════════════════════════════════════════
 export function Page() {
-  const { lock } = useAuthStore()
+  const { lock, signOut, email } = useAuthStore()
   const [msg, setMsg] = useState('')
+  const [confirmSignout, setConfirmSignout] = useState(false)
+  useBodyScrollLock(confirmSignout)
 
   const handleExport = async () => {
     const [contas, cats, txs, cartoes, fixas, metas, invests, dividas, desejos, aportes, proventos, movsInv, movsDiv, configs] = await Promise.all([
@@ -1044,11 +1047,51 @@ export function Page() {
 
       {/* ACESSO */}
       <Section title="Acesso e segurança" icon={<IconShieldLock size={18} color="#C4553B" stroke={1.8} />}>
+        {email && (
+          <Row icon={<IconMail size={18} color="#3D7EB5" stroke={1.8} />}
+            label="Conta"
+            sub={email}
+            right={<span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#1E7D5A', background: 'rgba(58,133,128,0.12)', padding: '3px 8px', borderRadius: 6, letterSpacing: '.04em' }}>SINCRONIZADA</span>} />
+        )}
         <PinSection />
         <Row icon={<IconLock size={18} color="#9B7B6A" stroke={1.8} />}
           label="Bloquear agora" sub="Requer PIN na próxima abertura"
           onClick={() => lock()} />
+        <Row icon={<IconLogout size={18} color="#C4553B" stroke={1.8} />}
+          label="Sair da conta"
+          sub="Desconecta este dispositivo (dados na cloud permanecem)"
+          onClick={() => setConfirmSignout(true)} danger />
       </Section>
+
+      <AnimatePresence>
+        {confirmSignout && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setConfirmSignout(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)', backdropFilter: 'blur(8px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: '#FFFDF9', borderRadius: 22, padding: '28px 24px', maxWidth: 380, width: '100%', textAlign: 'center' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: '#FAF0EE', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <IconLogout size={26} color="#C4553B" stroke={1.8} />
+              </div>
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', margin: '0 0 8px' }}>Sair da conta?</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', marginBottom: 18, lineHeight: 1.5 }}>
+                Você precisará enviar um novo magic link por email pra entrar de novo neste dispositivo. Seus dados na cloud permanecem intactos.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setConfirmSignout(false)}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #E8E0D5', background: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <motion.button whileTap={{ scale: 0.97 }} onClick={() => signOut()}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: '#C4553B', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer' }}>
+                  Sair
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* NOTIFICAÇÕES */}
       <Section title="Notificações" icon={<IconBellRinging size={18} color="#D4A017" stroke={1.8} />}>
