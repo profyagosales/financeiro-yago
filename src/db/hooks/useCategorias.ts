@@ -33,15 +33,20 @@ export function useCategorias(tipo?: 'receita' | 'despesa') {
       const cats = tipo
         ? await db.categorias.where('tipo').equals(tipo).toArray()
         : await db.categorias.toArray()
-      return cats.sort((a, b) => a.ordem - b.ordem)
+      // `ordem` não é indexado no Dexie — sort em memória, defendendo contra
+      // registros legados sem o campo (vem como undefined do sync remoto).
+      return cats.sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
     },
     [tipo]
   ) ?? []
 }
 
 export async function addCategoria(data: Omit<Categoria, 'id' | 'syncId' | 'ordem'> & { ordem?: number }) {
-  const last = await db.categorias.orderBy('ordem').last()
-  const nextOrdem = data.ordem ?? ((last?.ordem ?? 0) + 1)
+  // `ordem` não é indexado — table scan pra achar o maior. Volume baixo
+  // (sempre < 50 categorias) torna isso aceitável.
+  const all = await db.categorias.toArray()
+  const maxOrdem = all.reduce((max, c) => (c.ordem ?? 0) > max ? (c.ordem ?? 0) : max, 0)
+  const nextOrdem = data.ordem ?? (maxOrdem + 1)
   return db.categorias.add({
     nome: data.nome.trim(),
     tipo: data.tipo,
