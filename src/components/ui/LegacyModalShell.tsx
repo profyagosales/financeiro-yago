@@ -12,8 +12,9 @@
 // O footer respeita env(safe-area-inset-bottom) automaticamente no mobile.
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
 interface Props {
@@ -36,6 +37,11 @@ export function LegacyModalShell({
   zIndex = 200,
 }: Props) {
   const isMobile = useIsMobile()
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  // Focus trap A11Y: auto-focus primeiro input, prende Tab dentro,
+  // restaura foco ao fechar (WCAG 2.4.3).
+  useFocusTrap(dialogRef, open)
 
   useEffect(() => {
     if (!open) return
@@ -70,6 +76,7 @@ export function LegacyModalShell({
             padding: isMobile ? 0 : 24,
           }}>
           <motion.div
+            ref={dialogRef}
             role="dialog" aria-modal="true"
             initial={isMobile ? { y: '100%' } : { opacity: 0, y: 24, scale: 0.96 }}
             animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}

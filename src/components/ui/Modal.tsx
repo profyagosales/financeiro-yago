@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { IconX } from '@tabler/icons-react'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
 // ─── Modal premium reutilizável ──────────────────────────────────────
@@ -61,9 +62,14 @@ export function Modal({
 }: ModalProps) {
   const maxWidth = SIZE_MAP[size]
   const isMobile = useIsMobile()
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   // Lock body scroll quando aberto (compartilhado via hook)
   useBodyScrollLock(open)
+
+  // Focus trap A11Y: auto-focus primeiro input, prende Tab dentro do modal,
+  // restaura foco no fechamento.
+  useFocusTrap(dialogRef, open)
 
   // ESC fecha
   useEffect(() => {
@@ -107,6 +113,7 @@ export function Modal({
           }}
         >
           <motion.div
+            ref={dialogRef}
             role="dialog" aria-modal="true"
             initial={sheetInitial}
             animate={sheetAnimate}

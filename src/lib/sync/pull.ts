@@ -3,7 +3,7 @@
 import { supabase, getUserId } from '@/lib/supabase'
 import { TABLES, SYNC_TABLES_ORDERED } from './config'
 import { snakeToCamel } from './camelSnake'
-import { getLocalId, setMapping, getMeta, setMeta, lastPullKey, resolveFksToLocal } from './mapping'
+import { getLocalId, setMapping, deleteMapping, getMeta, setMeta, lastPullKey, resolveFksToLocal } from './mapping'
 
 // Converte record remoto pro shape local do Dexie.
 function remoteToLocalRecord(
@@ -76,6 +76,12 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
       // Soft delete remoto → apaga local. Pra anexos, também limpa o
       // blob no Storage — sem isso, anexos deletados em outro device
       // ficam órfãos eternamente.
+      //
+      // CRÍTICO: deletar o mapping também — senão, próximo INSERT que reuse
+      // local_id (Dexie autoincrement skips, mas mappings ficam stale)
+      // tentaria UPDATE no remote uuid já marcado deleted=true e falharia
+      // silenciosamente. Bug histórico: pull soft-delete deixava mapping
+      // pendurado eternamente.
       if (localId != null) {
         try {
           if (tableName === 'anexos') {
@@ -86,6 +92,7 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
             }
           }
           await config.dexie().delete(localId)
+          await deleteMapping(tableName, localId)
         } catch { /* noop */ }
       }
       continue

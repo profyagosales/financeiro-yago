@@ -15,8 +15,9 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { IconAlertTriangle } from '@tabler/icons-react'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface Props {
   open: boolean
@@ -37,6 +38,12 @@ export function ConfirmDialog({
   onConfirm, onClose,
 }: Props) {
   const [busy, setBusy] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  // Focus trap A11Y: foco vai pro botão cancelar/confirmar e fica preso
+  // dentro do dialog. Sem isso, Tab vaza pro background atrás do overlay.
+  useFocusTrap(dialogRef, open)
+
   useEffect(() => {
     if (!open) return
     setBusy(false)  // reset ao abrir
@@ -66,6 +73,7 @@ export function ConfirmDialog({
             padding: 20,
           }}>
           <motion.div
+            ref={dialogRef}
             role="alertdialog" aria-modal="true"
             initial={{ scale: 0.92, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 320, damping: 26 }}

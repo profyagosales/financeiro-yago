@@ -164,6 +164,7 @@ export function DesejoCard({ desejo, onEdit, onComprar, onDelete }: Props) {
 
 const SMALL_BTN: React.CSSProperties = {
   background: '#F5F0E8', border: 'none', borderRadius: 8,
-  width: 28, height: 28, cursor: 'pointer',
+  // 40x40 atende touch target mínimo mobile (era 28)
+  width: 40, height: 40, cursor: 'pointer',
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
 }

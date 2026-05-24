@@ -372,8 +372,8 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                     }}>
                       <button onClick={() => setParcelas(p => Math.max(1, p - 1))}
                         aria-label="Diminuir parcelas"
-                        style={{ width: 32, height: 32, borderRadius: 8, background: '#FFFFFF', border: '1px solid #EDE6DC', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <IconMinus size={14} stroke={2.2} color="#7A5C4F"/>
+                        style={{ width: 40, height: 40, borderRadius: 9, background: '#FFFFFF', border: '1px solid #EDE6DC', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <IconMinus size={15} stroke={2.2} color="#7A5C4F"/>
                       </button>
                       <div style={{ flex: 1, textAlign: 'center' }}>
                         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.3px' }}>{parcelas}×</p>
@@ -388,8 +388,8 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                       </div>
                       <button onClick={() => setParcelas(p => Math.min(48, p + 1))}
                         aria-label="Aumentar parcelas"
-                        style={{ width: 32, height: 32, borderRadius: 8, background: tipoMeta.cor, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 2px 8px ${tipoMeta.cor}40` }}>
-                        <IconPlus size={14} stroke={2.4} color="#FFFFFF"/>
+                        style={{ width: 40, height: 40, borderRadius: 9, background: tipoMeta.cor, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 2px 8px ${tipoMeta.cor}40` }}>
+                        <IconPlus size={15} stroke={2.4} color="#FFFFFF"/>
                       </button>
                     </div>
                   </div>

@@ -73,9 +73,17 @@ export function PWABanner() {
             style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 9, padding: '7px 12px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
             Instalar
           </motion.button>
-          <button onClick={handleDismiss} title="Fechar (volta em 7 dias)"
-            style={{ background: 'transparent', border: 'none', borderRadius: 7, width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#9B7B6A' }}>
-            <IconX size={13} stroke={2} />
+          <button onClick={handleDismiss}
+            title="Fechar (volta em 7 dias)"
+            aria-label="Fechar banner de instalação"
+            style={{
+              background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 8,
+              // 40x40 cumpre touch target mínimo (era 24)
+              width: 40, height: 40, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, color: '#9B7B6A',
+            }}>
+            <IconX size={15} stroke={2} />
           </button>
         </motion.div>
       )}

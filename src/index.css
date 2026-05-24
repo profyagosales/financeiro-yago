@@ -2,6 +2,20 @@
 @import "tailwindcss";
 
 :root {
+  /* Z-index scale — única fonte da verdade ─────────────────────────
+     Use SEMPRE estas variables em vez de números hardcoded.
+     Bug histórico: havia 100/180/190/200/250/300/350/400/500/9999 espalhados,
+     confiabilidade do empilhamento dependia de luck. */
+  --z-base: 0;
+  --z-nav: 100;          /* BottomNav (mobile), Sidebar (desktop) */
+  --z-fab: 110;          /* FAB e seu backdrop interno */
+  --z-pwa-banner: 180;   /* PWABanner / install prompt */
+  --z-modal: 200;        /* Modal, LegacyModalShell, StackScreen */
+  --z-popover: 300;      /* Dropdown / PeriodSelector / menus */
+  --z-toast: 400;        /* ErrorToast / SyncToast */
+  --z-confirm: 500;      /* ConfirmDialog (acima de tudo, decisão crítica) */
+  --z-overlay-max: 9000; /* Grain / overlays que devem ficar acima de tudo */
+
   /* Shadows */
   --shadow-xs: 0 1px 2px rgba(44,26,15,0.04);
   --shadow-sm: 0 1px 3px rgba(44,26,15,0.05), 0 4px 16px rgba(44,26,15,0.06);
@@ -152,8 +166,27 @@ html, body, #root {
 /* Selection */
 ::selection { background: rgba(196,85,59,0.15); color: var(--dark); }
 
-/* Focus visible */
-:focus-visible { outline: 2px solid rgba(196,85,59,0.5); outline-offset: 2px; border-radius: var(--r-sm); }
+/* Focus visible — REFORÇADO. Vários inputs/buttons usam outline:none inline.
+   Esta regra OVERRIDE com !important só no estado :focus-visible (teclado/A11Y),
+   preservando o comportamento sem ring em mouse-clicks. */
+:focus-visible { outline: 2px solid rgba(196,85,59,0.5) !important; outline-offset: 2px; border-radius: var(--r-sm); }
+
+/* prefers-reduced-motion — A11Y (vestibulares, motion sickness) ───────────
+   Desabilita animações longas e infinitas pra quem ativou Reduce Motion no SO.
+   Mantém apenas transições UI essenciais (<0.01ms = praticamente instantâneo). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Background mesh / orbs / decorativo: zero motion */
+  [data-decorative-motion="true"] {
+    animation: none !important;
+    transform: none !important;
+  }
+}
 
 /* Page layout */
 .page-root {

@@ -1,10 +1,11 @@
 import { Outlet, useLocation, useSearchParams, useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useState, useRef } from 'react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { FabModal } from './FabModal'
 import { PWABanner } from './PWABanner'
+import { IOSInstallBanner } from './IOSInstallBanner'
 import { useUIStore } from '@/store/ui'
 import { useAutoLock } from '@/hooks/useAutoLock'
 import { useNotificationCheck } from '@/hooks/useNotificationCheck'
@@ -65,12 +66,13 @@ function ErrorToast() {
             onClick={() => setMsg(null)}
             aria-label="Fechar aviso"
             style={{
-              background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: 8,
-              width: 26, height: 26, cursor: 'pointer', flexShrink: 0,
+              background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: 10,
+              // 40px atende touch target mínimo WCAG (era 26 — abaixo de 44 padrão Apple)
+              width: 40, height: 40, cursor: 'pointer', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#FFFFFF',
             }}>
-            <IconX size={13} stroke={2.2} />
+            <IconX size={15} stroke={2.2} />
           </button>
         </motion.div>
       )}
@@ -91,6 +93,9 @@ function isFixedLayoutRoute(pathname: string): boolean {
 }
 
 function BackgroundMesh() {
+  // Respeita prefers-reduced-motion: orbs ficam estáticas, sem animação
+  // (continuam visíveis pra preservar identidade visual, mas sem movimento).
+  const reduceMotion = useReducedMotion()
   const orbs = [
     { left: '72%', top: '0%',  color: 'rgba(196,85,59,0.32)',  size: 700, dur: 14, delay: 0 },
     { left: '90%', top: '50%', color: 'rgba(58,133,128,0.26)', size: 580, dur: 17, delay: 3 },
@@ -98,15 +103,15 @@ function BackgroundMesh() {
     { left: '12%', top: '28%', color: 'rgba(196,85,59,0.14)',  size: 440, dur: 24, delay: 9 },
   ]
   return (
-    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+    <div data-decorative-motion="true" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
       {orbs.map((orb, i) => (
         <motion.div key={i}
-          animate={{
+          animate={reduceMotion ? undefined : {
             x: [0, 50, -32, 0],
             y: [0, -40, 26, 0],
             scale: [1, 1.08, 0.94, 1],
           }}
-          transition={{ duration: orb.dur, repeat: Infinity, ease: 'easeInOut', delay: orb.delay }}
+          transition={reduceMotion ? undefined : { duration: orb.dur, repeat: Infinity, ease: 'easeInOut', delay: orb.delay }}
           style={{
             position: 'absolute',
             left: orb.left,
@@ -304,6 +309,7 @@ export function AppShell() {
       </AnimatePresence>
 
       <PWABanner />
+      <IOSInstallBanner />
 
       {/* Error toast — single host renderizado em AppShell.
           Disparado por qualquer handleSave/handleAdd async via showErrorToast() */}

@@ -24,6 +24,10 @@ let pullInterval: ReturnType<typeof setInterval> | null = null
 let pushDebounce: ReturnType<typeof setTimeout> | null = null
 let pullDebounce: ReturnType<typeof setTimeout> | null = null
 let syncInFlight = false
+// Bug histórico: se triggerPush() era chamado durante pull em andamento,
+// o syncInFlight=true fazia retorno imediato → push perdido. Agora setamos
+// pendingPush=true e re-rodamos um ciclo skipPull após o pull terminar.
+let pendingPush = false
 
 const PUSH_DEBOUNCE_MS = 800       // após write local, espera 800ms antes de push
 const PULL_DEBOUNCE_MS = 300       // realtime → debounce curto
@@ -45,7 +49,11 @@ function setStatus(status: 'idle' | 'syncing' | 'error' | 'offline', error?: str
 
 // Executa um ciclo completo push → pull. Marca status, evita reentrância.
 async function syncCycle(opts: { full?: boolean; skipPush?: boolean; skipPull?: boolean } = {}) {
-  if (syncInFlight) return
+  if (syncInFlight) {
+    // Se um cycle de push está pedindo enquanto outro roda, marca pra rodar depois
+    if (!opts.skipPush) pendingPush = true
+    return
+  }
   if (!isOnline()) { setStatus('offline'); return }
 
   // Precisa de session ativa
@@ -75,6 +83,11 @@ async function syncCycle(opts: { full?: boolean; skipPush?: boolean; skipPull?: 
     setStatus('error', msg)
   } finally {
     syncInFlight = false
+    // Se algo foi marcado durante o ciclo, drena agora
+    if (pendingPush) {
+      pendingPush = false
+      void syncCycle({ skipPull: true })
+    }
   }
 }
 
