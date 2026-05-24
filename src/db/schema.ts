@@ -67,6 +67,26 @@ export interface Investimento {
   updatedAt: number
 }
 
+// ─── DividaMovimentacao (NOVO v8) ────────────────────────────────────
+// Eventos que afetam o saldo da dívida além das parcelas regulares:
+// - amortização extraordinária (paga valor extra, abate principal)
+// - desconto (banco perdoa parte do saldo)
+// - quitação (paga restante, opcionalmente com desconto)
+// - ajuste manual (juros adicionais cobrados, correções, etc)
+export type MovimentacaoTipo = 'amortizacao' | 'desconto' | 'quitacao' | 'ajuste'
+
+export interface DividaMovimentacao {
+  id?: number
+  dividaId: number
+  data: string                          // YYYY-MM-DD
+  tipo: MovimentacaoTipo
+  valor: number                         // R$ — sempre positivo; "ajuste" pode ser negativo (acréscimo)
+  reduzParcelas?: number                // amortização que adianta N parcelas finais (opcional)
+  observacao?: string
+  syncId?: string
+  updatedAt: number
+}
+
 // ─── InvestimentoAporte (NOVO v7) ────────────────────────────────────
 // Cada compra individual de um ativo de renda variável.
 // Quantidade total e preço médio são derivados desta tabela.
@@ -172,6 +192,8 @@ class FinanceiroYagoDB extends Dexie {
   investimentosProventos!: Table<InvestimentoProvento>
   // Nova tabela v7
   investimentosAportes!: Table<InvestimentoAporte>
+  // Nova tabela v8
+  dividasMovimentacoes!: Table<DividaMovimentacao>
 
   constructor() {
     super('FinanceiroYago')
@@ -307,7 +329,6 @@ class FinanceiroYagoDB extends Dexie {
       dividas: '++id, tipo, contaFixaId, ativo, syncId',
       desejos: '++id, status, prioridade, transacaoId, syncId',
       investimentosProventos: '++id, investimentoId, data, tipo, syncId',
-      // NOVA
       investimentosAportes: '++id, investimentoId, data, syncId',
     }).upgrade(async tx => {
       // Migração: investimentos de renda variável que já têm quantidade+precoMedio
@@ -327,6 +348,28 @@ class FinanceiroYagoDB extends Dexie {
           updatedAt: Date.now(),
         })
       }
+    })
+
+    // v8 — Movimentações de dívidas (amortização, desconto, quitação, ajuste)
+    this.version(8).stores({
+      contas: '++id, tipo, ativo, syncId',
+      categorias: '++id, tipo, syncId',
+      transacoes: '++id, data, tipo, contaId, categoriaId, status, syncId',
+      cartoes: '++id, ativo, syncId',
+      lancamentosCartao: '++id, cartaoId, [cartaoId+mes+ano], mes, ano, parcelaPaiId, syncId',
+      contasFixas: '++id, ativo, categoriaId, syncId',
+      pagamentosFixos: '++id, contaFixaId, [contaFixaId+mes+ano], [mes+ano], syncId',
+      metas: '++id, ativo, tipo, syncId',
+      patrimonio: '++id, tipo, syncId',
+      orcamentos: '++id, categoriaId, syncId',
+      anexos: '++id, transacaoId',
+      investimentos: '++id, tipo, metaId, ativo, syncId',
+      dividas: '++id, tipo, contaFixaId, ativo, syncId',
+      desejos: '++id, status, prioridade, transacaoId, syncId',
+      investimentosProventos: '++id, investimentoId, data, tipo, syncId',
+      investimentosAportes: '++id, investimentoId, data, syncId',
+      // NOVA
+      dividasMovimentacoes: '++id, dividaId, data, tipo, syncId',
     })
   }
 }

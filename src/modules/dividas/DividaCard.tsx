@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion'
-import { IconEdit, IconTrash, IconCheck, IconLink } from '@tabler/icons-react'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { IconEdit, IconTrash, IconCheck, IconLink, IconCash, IconDiscount } from '@tabler/icons-react'
 import type { Divida } from '@/db/schema'
 import { fmt } from '@/lib/format'
 import { TIPO_META } from './constants'
@@ -9,15 +10,21 @@ interface DividaComputed extends Divida {
   parcelasRestantes: number
   progresso: number
   quitada: boolean
+  valorTotalEfetivo: number
+  totalAmortizado: number
+  totalDescontos: number
+  totalAjustes: number
 }
 
 interface Props {
   divida: DividaComputed
   onEdit: () => void
   onDelete: () => void
+  onMovimentar: () => void
 }
 
-export function DividaCard({ divida, onEdit, onDelete }: Props) {
+export function DividaCard({ divida, onEdit, onDelete, onMovimentar }: Props) {
+  const [hover, setHover] = useState(false)
   const tipoMeta = TIPO_META.get(divida.tipo)
   const Icon = tipoMeta?.Icon
   const cor = divida.cor ?? tipoMeta?.cor ?? '#C4553B'
@@ -35,7 +42,9 @@ export function DividaCard({ divida, onEdit, onDelete }: Props) {
   return (
     <motion.div
       layout
-      whileHover={{ y: -2, boxShadow: '0 12px 32px rgba(168,68,43,0.16), 0 2px 8px rgba(44,26,15,0.05)' }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      whileHover={{ y: -3, boxShadow: '0 12px 32px rgba(168,68,43,0.16), 0 2px 8px rgba(44,26,15,0.05)' }}
       transition={{ type: 'spring', stiffness: 240, damping: 26 }}
       style={{
         position: 'relative',
@@ -131,8 +140,24 @@ export function DividaCard({ divida, onEdit, onDelete }: Props) {
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
             <span style={{ ...SUB_TXT, color: '#9B7B6A' }}>Início {dataInicio}</span>
+            {divida.totalAmortizado > 0 && (
+              <>
+                <Dot />
+                <span style={{ ...SUB_TXT, color: '#3A8580', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  <IconCash size={11} stroke={2.2} /> {fmt(divida.totalAmortizado)} amortizado
+                </span>
+              </>
+            )}
+            {divida.totalDescontos > 0 && (
+              <>
+                <Dot />
+                <span style={{ ...SUB_TXT, color: '#A8730F', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  <IconDiscount size={11} stroke={2.2} /> {fmt(divida.totalDescontos)} desconto
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -150,14 +175,34 @@ export function DividaCard({ divida, onEdit, onDelete }: Props) {
           </p>
         </div>
 
-        {/* Ações */}
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          <button onClick={onEdit} title="Editar" style={ICON_BTN}>
-            <IconEdit size={14} stroke={1.8} color="#7A5C4F" />
-          </button>
-          <button onClick={onDelete} title="Excluir" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
-            <IconTrash size={14} stroke={2} color="#C4553B" />
-          </button>
+        {/* Ações: Movimentar sempre visível, edit/delete no hover */}
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+          {!divida.quitada && (
+            <button onClick={onMovimentar} title="Amortizar, desconto, quitar, ajustar"
+              style={{
+                background: 'rgba(168,68,43,0.12)', color: '#A8442B',
+                border: '1px solid rgba(168,68,43,0.3)', borderRadius: 9,
+                padding: '6px 10px', cursor: 'pointer',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+              }}>
+              <IconCash size={12} stroke={2.4} /> Movimentar
+            </button>
+          )}
+          <AnimatePresence>
+            {hover && (
+              <motion.div initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 6 }}
+                transition={{ duration: 0.12 }}
+                style={{ display: 'flex', gap: 6 }}>
+                <button onClick={onEdit} title="Editar" style={ICON_BTN}>
+                  <IconEdit size={14} stroke={1.8} color="#7A5C4F" />
+                </button>
+                <button onClick={onDelete} title="Excluir" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
+                  <IconTrash size={14} stroke={2} color="#C4553B" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>

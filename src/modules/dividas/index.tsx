@@ -1,15 +1,19 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { IconPlus, IconCash, IconCalendar, IconCheck } from '@tabler/icons-react'
+import { IconPlus, IconCash, IconCalendar, IconCheck, IconTrash } from '@tabler/icons-react'
 import { fmt } from '@/lib/format'
 import {
   useDividasComputed, useTotalDividas,
   deleteDivida, sincronizarTodasDividas,
 } from '@/db/hooks/useDividas'
 import type { Divida, DividaTipo } from '@/db/schema'
-import { TIPOS, TIPO_META } from './constants'
+import { TIPOS } from './constants'
 import { DividaCard } from './DividaCard'
 import { DividaForm } from './DividaForm'
+import { MovimentacaoModal } from './MovimentacaoModal'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+
+type DividaComputed = ReturnType<typeof useDividasComputed>[number]
 
 export function Page() {
   const dividas = useDividasComputed()
@@ -19,6 +23,10 @@ export function Page() {
   const [showQuitadas, setShowQuitadas] = useState(false)
   const [editing, setEditing] = useState<Divida | null>(null)
   const [adding, setAdding] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<DividaComputed | null>(null)
+  const [movimentando, setMovimentando] = useState<DividaComputed | null>(null)
+
+  useBodyScrollLock(confirmDelete !== null)
 
   // Sincroniza ao carregar página (pagamentos da Conta Fixa → Dívida)
   useEffect(() => { sincronizarTodasDividas() }, [])
@@ -41,14 +49,8 @@ export function Page() {
     return map
   }, [display])
 
-  const handleDelete = async (id: number) => {
-    if (confirm('Excluir esta dívida? A Conta Fixa vinculada será desativada também.')) {
-      await deleteDivida(id)
-    }
-  }
-
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: 32, width: '100%' }}>
+    <div style={{ padding: 32, width: '100%' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
@@ -150,19 +152,59 @@ export function Page() {
               key={d.id}
               divida={d}
               onEdit={() => setEditing(d)}
-              onDelete={() => d.id !== undefined && handleDelete(d.id)}
+              onDelete={() => setConfirmDelete(d)}
+              onMovimentar={() => setMovimentando(d)}
             />
           ))}
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modais */}
       <AnimatePresence>
         {(adding || editing) && (
           <DividaForm divida={editing} onClose={() => { setAdding(false); setEditing(null) }} />
         )}
+
+        {movimentando && (
+          <MovimentacaoModal
+            divida={movimentando}
+            onClose={() => setMovimentando(null)}
+          />
+        )}
+
+        {confirmDelete && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setConfirmDelete(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)', backdropFilter: 'blur(8px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: '#FFFDF9', borderRadius: 22, padding: '28px 24px', maxWidth: 380, width: '100%', textAlign: 'center', boxShadow: '0 24px 64px rgba(13,6,4,0.4)' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: '#FAF0EE', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <IconTrash size={26} color="#C4553B" stroke={1.8} />
+              </div>
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.5px', margin: '0 0 8px' }}>Excluir "{confirmDelete.nome}"?</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginBottom: 22, lineHeight: 1.5 }}>
+                A dívida e a Conta Fixa vinculada serão desativadas. O histórico de pagamentos e movimentações é mantido.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setConfirmDelete(null)}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #E8E0D5', background: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <motion.button whileTap={{ scale: 0.97 }}
+                  onClick={async () => {
+                    if (confirmDelete.id !== undefined) await deleteDivida(confirmDelete.id)
+                    setConfirmDelete(null)
+                  }}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: '#C4553B', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer', boxShadow: '0 4px 12px rgba(196,85,59,0.3)' }}>
+                  Excluir
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }
 
