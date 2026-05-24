@@ -19,6 +19,7 @@ import {
 } from '@tabler/icons-react'
 import { getPermissaoEstado, pedirPermissao, notificarTeste, verificarPendencias, type PermissaoEstado } from '@/lib/notifications'
 import { isPushSupported, isSubscribed, subscribePush, unsubscribePush } from '@/lib/pushSubscribe'
+import { supabase } from '@/lib/supabase'
 import { useEffect } from 'react'
 import {
   useTaxasBenchmark, setTaxasBenchmark,
@@ -460,18 +461,20 @@ function NotificacoesSection() {
   )
 }
 
-// Push test handler (chama Edge Function direto)
+// Push test handler — chama Edge Function autenticado com JWT do user.
+// A EF valida o JWT, identifica o user e SÓ envia push pras subs dele.
+// Sem isso, qualquer um podia disparar push pra todos via cron secret leaked.
 async function callTestPush(): Promise<boolean> {
   try {
-    // O usuário precisa estar autenticado pra chamar a EF — usa o anon key + auth header
+    const { data } = await supabase.auth.getSession()
+    const token = data.session?.access_token
+    if (!token) return false
     const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? 'https://ynidumrinncdqdukvpfa.supabase.co'
     const r = await fetch(`${SUPABASE_URL}/functions/v1/notify-pending?kind=test-push`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Cron secret hard-coded — não é segredo crítico (qualquer um com sub registrada
-        // só consegue se notificar a si próprio porque o handler itera os subs do user)
-        'x-cron-secret': 'eosrymyeBwsdgHE33kZezH-hgCgSP8PX',
+        'Authorization': `Bearer ${token}`,
       },
       body: '{}',
     })

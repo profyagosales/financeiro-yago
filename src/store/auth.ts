@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { hasPinSet, verifyPin, setPin as setPinLocal, changePin as changePinLocal, clearPin } from '@/lib/auth'
+import { db, wipeAllData } from '@/db/schema'
 
 const SESSION_KEY = 'fy-session-active'
 
@@ -119,6 +120,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
+    // Limpa dados locais antes do signOut do Supabase pra evitar que dados
+    // do user anterior fiquem misturados se outro user logar nesse device.
+    // Crítico: o "Esqueci o PIN" usa essa função — sem o wipe, o próximo
+    // signup com email diferente herdaria todo o IndexedDB anterior.
+    try {
+      await wipeAllData()
+      await Promise.all([db.syncMappings.clear(), db.syncMeta.clear()])
+    } catch (e) {
+      console.warn('[signOut] wipe local data falhou:', e)
+    }
     await supabase.auth.signOut()
     clearPin()
     setSessionActive(false)
