@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Brand · 3 conceitos · Financeiro do Yago</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #FBF8F3;
+    --surface:   #FFFFFF;
+    --border:    #EDE6DC;
+    --text:      #2C1A0F;
+    --muted:     #7A5C4F;
+    --purple:    #2A1E3F;
+    --purple-2:  #504E76;
+    --gold:      #D4A017;
+    --gold-2:    #F2C745;
+    --orange:    #C4553B;
+    --orange-2:  #F1642E;
+    --teal:      #3A8580;
+    --dark:      #1A1228;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px clamp(16px, 4vw, 48px) 80px;
+    line-height: 1.5;
+  }
+  .container { max-width: 1280px; margin: 0 auto; }
+  header {
+    margin-bottom: 40px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; color: var(--orange);
+    letter-spacing: .18em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 700;
+    letter-spacing: -1.2px; line-height: 1;
+    color: var(--text);
+  }
+  .lead {
+    font-size: 14px; color: var(--muted);
+    margin-top: 10px; max-width: 720px;
+    font-weight: 500;
+  }
+  .lead strong { color: var(--text); font-weight: 700; }
+
+  .concepts { display: flex; flex-direction: column; gap: 56px; }
+
+  .concept {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(44,26,15,0.05), 0 8px 24px rgba(44,26,15,0.06);
+  }
+  .concept-head {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 18px; flex-wrap: wrap;
+  }
+  .concept-tag {
+    width: 54px; height: 54px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 30px; font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+  .concept-tag.a { background: linear-gradient(135deg, var(--purple), var(--purple-2)); }
+  .concept-tag.b { background: linear-gradient(135deg, var(--orange), var(--orange-2)); }
+  .concept-tag.c { background: linear-gradient(135deg, var(--purple-2), var(--orange-2)); }
+
+  .concept-head h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 26px; font-weight: 700;
+    letter-spacing: -0.6px;
+  }
+  .concept-head p {
+    font-size: 13.5px; color: var(--muted); margin-top: 4px; max-width: 600px;
+  }
+
+  .grid {
+    padding: 28px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .tile {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .tile-canvas {
+    aspect-ratio: 4/3;
+    display: flex; align-items: center; justify-content: center;
+    padding: 28px;
+  }
+  .tile.light .tile-canvas { background: var(--bg); }
+  .tile.surface .tile-canvas { background: var(--surface); }
+  .tile.dark .tile-canvas { background: var(--dark); }
+  .tile.purple .tile-canvas { background: linear-gradient(135deg, var(--purple), var(--purple-2)); }
+  .tile.orange .tile-canvas { background: linear-gradient(135deg, var(--orange), var(--orange-2)); }
+  .tile-label {
+    padding: 10px 14px;
+    background: #FBF8F3;
+    border-top: 1px solid var(--border);
+    font-size: 10.5px; font-weight: 700; color: var(--muted);
+    letter-spacing: .12em; text-transform: uppercase;
+  }
+
+  .sizes-row {
+    padding: 20px 28px 28px;
+    display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap;
+    border-top: 1px solid var(--border);
+    background: #FBF8F3;
+  }
+  .size-block {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .size-block .label {
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    letter-spacing: .12em; text-transform: uppercase;
+  }
+  .size-block .size { display: flex; align-items: center; justify-content: center; }
+
+  /* Sidebar mock */
+  .applications {
+    padding: 28px;
+    display: grid; gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    border-top: 1px solid var(--border);
+    background: #FBF8F3;
+  }
+  .sidebar-mock {
+    background: var(--purple-2);
+    border-radius: 18px;
+    padding: 18px 16px;
+    display: flex; flex-direction: column; gap: 14px;
+    min-height: 200px;
+    box-shadow: 0 8px 24px rgba(80,78,118,0.32);
+  }
+  .sidebar-mock .header-area {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-mock .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: rgba(255,255,255,0.5);
+    font-size: 11.5px; font-weight: 600;
+  }
+  .sidebar-mock .nav-item.active {
+    background: rgba(255,255,255,0.1);
+    color: white;
+  }
+  .sidebar-mock .nav-dot {
+    width: 14px; height: 14px; border-radius: 4px;
+    background: rgba(255,255,255,0.18);
+  }
+
+  /* App icon mock */
+  .home-mock {
+    background: linear-gradient(135deg, #4a4a5a 0%, #2a2a3a 100%);
+    border-radius: 24px;
+    padding: 28px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    min-height: 200px;
+    align-items: start;
+  }
+  .home-mock .home-app {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+  }
+  .home-mock .home-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.15);
+  }
+  .home-mock .home-app.featured .home-icon { padding: 0; background: transparent; }
+  .home-mock .home-label {
+    font-size: 9px; color: rgba(255,255,255,0.85); font-weight: 500;
+  }
+
+  /* Voting CTA */
+  .vote {
+    margin-top: 40px;
+    background: linear-gradient(135deg, var(--purple), var(--purple-2));
+    border-radius: 22px;
+    padding: 32px;
+    color: white;
+    box-shadow: 0 12px 40px rgba(42,30,63,0.4);
+  }
+  .vote h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 24px; font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .vote p {
+    color: rgba(255,255,255,0.78);
+    margin-top: 6px; font-size: 13.5px;
+  }
+  .vote .options {
+    margin-top: 18px;
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .vote .options span {
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <p class="eyebrow">Brand · Concept review</p>
+    <h1>3 conceitos de logo pra escolher</h1>
+    <p class="lead">
+      Cada conceito usa <strong>exclusivamente a paleta já existente do app</strong>
+      (roxo do hero/sidebar, dourado do accent, laranja primário) e respeita a tipografia
+      <strong>Fraunces</strong>. Compare em vários tratamentos abaixo e me diga:
+      <strong>A</strong>, <strong>B</strong> ou <strong>C</strong>.
+    </p>
+  </header>
+
+  <div class="concepts">
+
+    <!-- ============================================================ -->
+    <!-- CONCEITO A — Y Aurora                                          -->
+    <!-- ============================================================ -->
+    <section class="concept">
+      <div class="concept-head">
+        <div class="concept-tag a">A</div>
+        <div>
+          <h2>Y Aurora</h2>
+          <p>Y geométrico limpo (peso uniforme, cantos arredondados) sobre cartão roxo escuro
+             com glow dourado sutil. Estética Apple/Linear/Stripe — minimalista premium.
+             Versátil em qualquer tamanho.</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Símbolo full -->
+        <div class="tile light">
+          <div class="tile-canvas">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <defs>
+                <linearGradient id="a-bg" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#2A1E3F"/>
+                  <stop offset="100%" stop-color="#504E76"/>
+                </linearGradient>
+                <radialGradient id="a-glow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#F2C745" stop-opacity="0.42"/>
+                  <stop offset="60%" stop-color="#D4A017" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="a-y" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#F2C745"/>
+                  <stop offset="100%" stop-color="#D4A017"/>
+                </linearGradient>
+              </defs>
+              <rect width="180" height="180" rx="44" fill="url(#a-bg)"/>
+              <circle cx="90" cy="86" r="58" fill="url(#a-glow)"/>
+              <path d="M 56 52 L 90 92 L 124 52" stroke="url(#a-y)" stroke-width="16"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 92 L 90 132" stroke="url(#a-y)" stroke-width="16"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Símbolo · sobre claro</div>
+        </div>
+
+        <!-- Sobre dark -->
+        <div class="tile dark">
+          <div class="tile-canvas">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#a-bg)"/>
+              <circle cx="90" cy="86" r="58" fill="url(#a-glow)"/>
+              <path d="M 56 52 L 90 92 L 124 52" stroke="url(#a-y)" stroke-width="16"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 92 L 90 132" stroke="url(#a-y)" stroke-width="16"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Símbolo · sobre escuro</div>
+        </div>
+
+        <!-- Mono branco -->
+        <div class="tile purple">
+          <div class="tile-canvas">
+            <svg width="160" height="160" viewBox="0 0 180 180">
+              <path d="M 56 52 L 90 92 L 124 52" stroke="#FFFFFF" stroke-width="16"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 92 L 90 132" stroke="#FFFFFF" stroke-width="16"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Monocromático branco</div>
+        </div>
+
+        <!-- Mono escuro -->
+        <div class="tile surface">
+          <div class="tile-canvas">
+            <svg width="160" height="160" viewBox="0 0 180 180">
+              <path d="M 56 52 L 90 92 L 124 52" stroke="#2C1A0F" stroke-width="16"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 92 L 90 132" stroke="#2C1A0F" stroke-width="16"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Monocromático escuro</div>
+        </div>
+
+        <!-- Lockup horizontal -->
+        <div class="tile light" style="grid-column: 1 / -1;">
+          <div class="tile-canvas" style="aspect-ratio: 5/2;">
+            <div style="display: flex; align-items: center; gap: 18px;">
+              <svg width="76" height="76" viewBox="0 0 180 180">
+                <rect width="180" height="180" rx="44" fill="url(#a-bg)"/>
+                <circle cx="90" cy="86" r="58" fill="url(#a-glow)"/>
+                <path d="M 56 52 L 90 92 L 124 52" stroke="url(#a-y)" stroke-width="16"
+                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M 90 92 L 90 132" stroke="url(#a-y)" stroke-width="16"
+                      stroke-linecap="round" fill="none"/>
+              </svg>
+              <div>
+                <p style="font-family: 'Fraunces', Georgia, serif; font-size: 32px; font-weight: 700;
+                          letter-spacing: -0.8px; line-height: 1; color: var(--text);">
+                  Financeiro<span style="color: var(--orange);">.</span>
+                </p>
+                <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px;
+                          letter-spacing: .24em; text-transform: uppercase; color: var(--muted);
+                          font-weight: 700; margin-top: 4px;">do Yago</p>
+              </div>
+            </div>
+          </div>
+          <div class="tile-label">Lockup horizontal</div>
+        </div>
+      </div>
+
+      <!-- Sizes test -->
+      <div class="sizes-row">
+        <div class="size-block">
+          <div class="size">
+            <svg width="64" height="64" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#a-bg)"/>
+              <path d="M 56 52 L 90 92 L 124 52" stroke="url(#a-y)" stroke-width="16"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 92 L 90 132" stroke="url(#a-y)" stroke-width="16"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="label">64px</span>
+        </div>
+        <div class="size-block">
+          <div class="size">
+            <svg width="32" height="32" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#a-bg)"/>
+              <path d="M 56 52 L 90 92 L 124 52" stroke="url(#a-y)" stroke-width="18"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 92 L 90 132" stroke="url(#a-y)" stroke-width="18"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="label">32px</span>
+        </div>
+        <div class="size-block">
+          <div class="size">
+            <svg width="16" height="16" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#a-bg)"/>
+              <path d="M 56 52 L 90 92 L 124 52" stroke="url(#a-y)" stroke-width="22"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 92 L 90 132" stroke="url(#a-y)" stroke-width="22"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="label">16px (favicon)</span>
+        </div>
+      </div>
+
+      <!-- Applications -->
+      <div class="applications">
+        <div class="sidebar-mock">
+          <div class="header-area">
+            <svg width="32" height="32" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#a-bg)"/>
+              <path d="M 56 52 L 90 92 L 124 52" stroke="url(#a-y)" stroke-width="18"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 92 L 90 132" stroke="url(#a-y)" stroke-width="18"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+            <div>
+              <p style="font-family: 'Fraunces'; font-size: 14px; font-weight: 700; color: white; line-height: 1;">Financeiro</p>
+              <p style="font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; margin-top: 2px;">do Yago</p>
+            </div>
+          </div>
+          <div class="nav-item active"><div class="nav-dot"></div>Dashboard</div>
+          <div class="nav-item"><div class="nav-dot"></div>Relatórios</div>
+          <div class="nav-item"><div class="nav-dot"></div>Contas</div>
+        </div>
+        <div class="home-mock">
+          <div class="home-app featured">
+            <svg class="home-icon" width="56" height="56" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#a-bg)"/>
+              <circle cx="90" cy="86" r="58" fill="url(#a-glow)"/>
+              <path d="M 56 52 L 90 92 L 124 52" stroke="url(#a-y)" stroke-width="16"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 92 L 90 132" stroke="url(#a-y)" stroke-width="16"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+            <span class="home-label">Financeiro</span>
+          </div>
+          <div class="home-app"><div class="home-icon"></div><span class="home-label">Notas</span></div>
+          <div class="home-app"><div class="home-icon"></div><span class="home-label">Mail</span></div>
+          <div class="home-app"><div class="home-icon"></div><span class="home-label">Photos</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CONCEITO B — Y Ascendente                                      -->
+    <!-- ============================================================ -->
+    <section class="concept">
+      <div class="concept-head">
+        <div class="concept-tag b">B</div>
+        <div>
+          <h2>Y Ascendente</h2>
+          <p>Y cinético — o braço direito é mais alto e a ponta vira uma seta ascendente integrada.
+             Gradient laranja→dourado direto da paleta primária. Sem cartão (símbolo solto, funciona
+             em qualquer fundo). Narrativa forte de crescimento financeiro.</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="tile light">
+          <div class="tile-canvas">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <defs>
+                <linearGradient id="b-y" x1="0" y1="180" x2="180" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#C4553B"/>
+                  <stop offset="55%" stop-color="#F1642E"/>
+                  <stop offset="100%" stop-color="#F2C745"/>
+                </linearGradient>
+              </defs>
+              <!-- Braço esquerdo -->
+              <path d="M 32 52 L 90 110" stroke="url(#b-y)" stroke-width="22"
+                    stroke-linecap="round" fill="none"/>
+              <!-- Braço direito + arrowhead integrada -->
+              <path d="M 90 110 L 142 38" stroke="url(#b-y)" stroke-width="22"
+                    stroke-linecap="round" fill="none"/>
+              <!-- Pontinha de seta -->
+              <path d="M 122 30 L 148 30 L 148 56" stroke="url(#b-y)" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <!-- Haste vertical -->
+              <path d="M 90 110 L 90 152" stroke="url(#b-y)" stroke-width="22"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Símbolo · sobre claro</div>
+        </div>
+
+        <div class="tile dark">
+          <div class="tile-canvas">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <path d="M 32 52 L 90 110" stroke="url(#b-y)" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 90 110 L 142 38" stroke="url(#b-y)" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 122 30 L 148 30 L 148 56" stroke="url(#b-y)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 110 L 90 152" stroke="url(#b-y)" stroke-width="22" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Símbolo · sobre escuro</div>
+        </div>
+
+        <div class="tile purple">
+          <div class="tile-canvas">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <path d="M 32 52 L 90 110" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 90 110 L 142 38" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 122 30 L 148 30 L 148 56" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 110 L 90 152" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Monocromático branco</div>
+        </div>
+
+        <div class="tile surface">
+          <div class="tile-canvas">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <path d="M 32 52 L 90 110" stroke="#2C1A0F" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 90 110 L 142 38" stroke="#2C1A0F" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 122 30 L 148 30 L 148 56" stroke="#2C1A0F" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 110 L 90 152" stroke="#2C1A0F" stroke-width="22" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Monocromático escuro</div>
+        </div>
+
+        <!-- App icon (sobre cartão pq símbolo solto não funciona em ícone) -->
+        <div class="tile orange">
+          <div class="tile-canvas">
+            <svg width="160" height="160" viewBox="0 0 180 180">
+              <path d="M 32 52 L 90 110" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 90 110 L 142 38" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 122 30 L 148 30 L 148 56" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 110 L 90 152" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Sobre cartão laranja (app icon)</div>
+        </div>
+
+        <div class="tile light" style="grid-column: 1 / -1;">
+          <div class="tile-canvas" style="aspect-ratio: 5/2;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <svg width="80" height="80" viewBox="0 0 180 180">
+                <path d="M 32 52 L 90 110" stroke="url(#b-y)" stroke-width="22" stroke-linecap="round" fill="none"/>
+                <path d="M 90 110 L 142 38" stroke="url(#b-y)" stroke-width="22" stroke-linecap="round" fill="none"/>
+                <path d="M 122 30 L 148 30 L 148 56" stroke="url(#b-y)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M 90 110 L 90 152" stroke="url(#b-y)" stroke-width="22" stroke-linecap="round" fill="none"/>
+              </svg>
+              <div>
+                <p style="font-family: 'Fraunces'; font-size: 32px; font-weight: 700; letter-spacing: -0.8px; line-height: 1; color: var(--text);">
+                  Financeiro<span style="color: var(--orange);">.</span>
+                </p>
+                <p style="font-family: 'Plus Jakarta Sans'; font-size: 11px; letter-spacing: .24em;
+                          text-transform: uppercase; color: var(--muted); font-weight: 700; margin-top: 4px;">do Yago</p>
+              </div>
+            </div>
+          </div>
+          <div class="tile-label">Lockup horizontal</div>
+        </div>
+      </div>
+
+      <div class="sizes-row">
+        <div class="size-block">
+          <div class="size">
+            <svg width="64" height="64" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#b-y)"/>
+              <path d="M 32 52 L 90 110" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 90 110 L 142 38" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 122 30 L 148 30 L 148 56" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 110 L 90 152" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="label">64px</span>
+        </div>
+        <div class="size-block">
+          <div class="size">
+            <svg width="32" height="32" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#b-y)"/>
+              <path d="M 32 52 L 90 110" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round" fill="none"/>
+              <path d="M 90 110 L 142 38" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round" fill="none"/>
+              <path d="M 90 110 L 90 152" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="label">32px</span>
+        </div>
+        <div class="size-block">
+          <div class="size">
+            <svg width="16" height="16" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#b-y)"/>
+              <path d="M 32 52 L 90 110" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" fill="none"/>
+              <path d="M 90 110 L 142 38" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" fill="none"/>
+              <path d="M 90 110 L 90 152" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="label">16px (favicon)</span>
+        </div>
+      </div>
+
+      <div class="applications">
+        <div class="sidebar-mock">
+          <div class="header-area">
+            <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--orange),var(--orange-2));display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 180 180">
+                <path d="M 32 52 L 90 110" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" fill="none"/>
+                <path d="M 90 110 L 142 38" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" fill="none"/>
+                <path d="M 90 110 L 90 152" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+            <div>
+              <p style="font-family: 'Fraunces'; font-size: 14px; font-weight: 700; color: white; line-height: 1;">Financeiro</p>
+              <p style="font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; margin-top: 2px;">do Yago</p>
+            </div>
+          </div>
+          <div class="nav-item active"><div class="nav-dot"></div>Dashboard</div>
+          <div class="nav-item"><div class="nav-dot"></div>Relatórios</div>
+          <div class="nav-item"><div class="nav-dot"></div>Contas</div>
+        </div>
+        <div class="home-mock">
+          <div class="home-app featured">
+            <svg class="home-icon" width="56" height="56" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#b-y)"/>
+              <path d="M 32 52 L 90 110" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 90 110 L 142 38" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+              <path d="M 122 30 L 148 30 L 148 56" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 90 110 L 90 152" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+            </svg>
+            <span class="home-label">Financeiro</span>
+          </div>
+          <div class="home-app"><div class="home-icon"></div><span class="home-label">Notas</span></div>
+          <div class="home-app"><div class="home-icon"></div><span class="home-label">Mail</span></div>
+          <div class="home-app"><div class="home-icon"></div><span class="home-label">Photos</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CONCEITO C — Monograma FY                                      -->
+    <!-- ============================================================ -->
+    <section class="concept">
+      <div class="concept-head">
+        <div class="concept-tag c">C</div>
+        <div>
+          <h2>Monograma FY</h2>
+          <p>Ligadura tipográfica "F+Y" com terminações refinadas (inspiração Fraunces, a fonte
+             de display do app). Marca pessoal mais autoral. Sobre cartão escuro com accent dourado
+             marcando o ponto onde as letras se cruzam.</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="tile light">
+          <div class="tile-canvas">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <defs>
+                <linearGradient id="c-bg" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#2A1E3F"/>
+                  <stop offset="100%" stop-color="#3D3457"/>
+                </linearGradient>
+                <linearGradient id="c-mark" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#FBF8F3"/>
+                  <stop offset="100%" stop-color="#D4D0C5"/>
+                </linearGradient>
+              </defs>
+              <rect width="180" height="180" rx="44" fill="url(#c-bg)"/>
+              <!-- F -->
+              <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+                    stroke="url(#c-mark)" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <!-- Y -->
+              <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+                    stroke="url(#c-mark)" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <!-- Accent dourado: ponto onde se cruzam -->
+              <circle cx="122" cy="96" r="6" fill="#F2C745"/>
+            </svg>
+          </div>
+          <div class="tile-label">Símbolo · sobre claro</div>
+        </div>
+
+        <div class="tile dark">
+          <div class="tile-canvas">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#c-bg)"/>
+              <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+                    stroke="url(#c-mark)" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+                    stroke="url(#c-mark)" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <circle cx="122" cy="96" r="6" fill="#F2C745"/>
+            </svg>
+          </div>
+          <div class="tile-label">Símbolo · sobre escuro</div>
+        </div>
+
+        <div class="tile purple">
+          <div class="tile-canvas">
+            <svg width="160" height="160" viewBox="0 0 180 180">
+              <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+                    stroke="#FFFFFF" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+                    stroke="#FFFFFF" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Monocromático branco</div>
+        </div>
+
+        <div class="tile surface">
+          <div class="tile-canvas">
+            <svg width="160" height="160" viewBox="0 0 180 180">
+              <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+                    stroke="#2C1A0F" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+                    stroke="#2C1A0F" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="tile-label">Monocromático escuro</div>
+        </div>
+
+        <div class="tile light" style="grid-column: 1 / -1;">
+          <div class="tile-canvas" style="aspect-ratio: 5/2;">
+            <div style="display: flex; align-items: center; gap: 18px;">
+              <svg width="80" height="80" viewBox="0 0 180 180">
+                <rect width="180" height="180" rx="44" fill="url(#c-bg)"/>
+                <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+                      stroke="url(#c-mark)" stroke-width="14"
+                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+                      stroke="url(#c-mark)" stroke-width="14"
+                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <circle cx="122" cy="96" r="6" fill="#F2C745"/>
+              </svg>
+              <div>
+                <p style="font-family: 'Fraunces'; font-size: 32px; font-weight: 700; letter-spacing: -0.8px; line-height: 1; color: var(--text);">
+                  Financeiro<span style="color: var(--orange);">.</span>
+                </p>
+                <p style="font-family: 'Plus Jakarta Sans'; font-size: 11px; letter-spacing: .24em;
+                          text-transform: uppercase; color: var(--muted); font-weight: 700; margin-top: 4px;">do Yago</p>
+              </div>
+            </div>
+          </div>
+          <div class="tile-label">Lockup horizontal</div>
+        </div>
+      </div>
+
+      <div class="sizes-row">
+        <div class="size-block">
+          <div class="size">
+            <svg width="64" height="64" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#c-bg)"/>
+              <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+                    stroke="url(#c-mark)" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+                    stroke="url(#c-mark)" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <circle cx="122" cy="96" r="6" fill="#F2C745"/>
+            </svg>
+          </div>
+          <span class="label">64px</span>
+        </div>
+        <div class="size-block">
+          <div class="size">
+            <svg width="32" height="32" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#c-bg)"/>
+              <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+                    stroke="url(#c-mark)" stroke-width="18"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+                    stroke="url(#c-mark)" stroke-width="18"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="label">32px</span>
+        </div>
+        <div class="size-block">
+          <div class="size">
+            <svg width="16" height="16" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#c-bg)"/>
+              <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+                    stroke="url(#c-mark)" stroke-width="24"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+                    stroke="url(#c-mark)" stroke-width="24"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="label">16px (favicon)</span>
+        </div>
+      </div>
+
+      <div class="applications">
+        <div class="sidebar-mock">
+          <div class="header-area">
+            <svg width="32" height="32" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#c-bg)"/>
+              <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+                    stroke="url(#c-mark)" stroke-width="18"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+                    stroke="url(#c-mark)" stroke-width="18"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <div>
+              <p style="font-family: 'Fraunces'; font-size: 14px; font-weight: 700; color: white; line-height: 1;">Financeiro</p>
+              <p style="font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; margin-top: 2px;">do Yago</p>
+            </div>
+          </div>
+          <div class="nav-item active"><div class="nav-dot"></div>Dashboard</div>
+          <div class="nav-item"><div class="nav-dot"></div>Relatórios</div>
+          <div class="nav-item"><div class="nav-dot"></div>Contas</div>
+        </div>
+        <div class="home-mock">
+          <div class="home-app featured">
+            <svg class="home-icon" width="56" height="56" viewBox="0 0 180 180">
+              <rect width="180" height="180" rx="44" fill="url(#c-bg)"/>
+              <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+                    stroke="url(#c-mark)" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+                    stroke="url(#c-mark)" stroke-width="14"
+                    stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <circle cx="122" cy="96" r="6" fill="#F2C745"/>
+            </svg>
+            <span class="home-label">Financeiro</span>
+          </div>
+          <div class="home-app"><div class="home-icon"></div><span class="home-label">Notas</span></div>
+          <div class="home-app"><div class="home-icon"></div><span class="home-label">Mail</span></div>
+          <div class="home-app"><div class="home-icon"></div><span class="home-label">Photos</span></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="vote">
+    <h3>Qual você quer?</h3>
+    <p>Me responda apenas com a letra do conceito vencedor. Em seguida eu replico o escolhido
+       em <strong>todos os formatos</strong>: favicon, PWA, maskable, Apple touch, notification badge,
+       OG image, splash, componente React `&lt;Logo /&gt;`, e atualizo manifest, index.html e sidebar.</p>
+    <div class="options">
+      <span>A · Y Aurora</span>
+      <span>B · Y Ascendente</span>
+      <span>C · Monograma FY</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
