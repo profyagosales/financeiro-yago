@@ -34,6 +34,46 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+// Notificação clicada: abre a URL no app (se já aberto, foca; senão, abre)
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || '/'
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      // Se já tem janela do app aberta, foca nela e navega
+      for (const w of wins) {
+        if ('focus' in w) {
+          w.focus()
+          if ('navigate' in w) {
+            try { w.navigate(url) } catch { /* fallback abaixo */ }
+          }
+          return
+        }
+      }
+      // Senão, abre nova janela
+      if (clients.openWindow) return clients.openWindow(url)
+    })
+  )
+})
+
+// Push real (futuro — quando houver servidor com VAPID)
+self.addEventListener('push', (event) => {
+  if (!event.data) return
+  try {
+    const payload = event.data.json()
+    event.waitUntil(
+      self.registration.showNotification(payload.title || 'Financeiro do Yago', {
+        body: payload.body || '',
+        icon: '/icon-192.svg',
+        badge: '/favicon.svg',
+        data: { url: payload.url || '/' },
+      })
+    )
+  } catch {
+    /* ignore */
+  }
+})
+
 // Fetch: estratégia híbrida
 self.addEventListener('fetch', (event) => {
   const req = event.request

@@ -6,6 +6,7 @@ import { FabModal } from './FabModal'
 import { PWABanner } from './PWABanner'
 import { useUIStore } from '@/store/ui'
 import { useAutoLock } from '@/hooks/useAutoLock'
+import { useNotificationCheck } from '@/hooks/useNotificationCheck'
 import { IconPlus } from '@tabler/icons-react'
 
 // Rotas que controlam a própria altura (master-detail / fixed layout)
@@ -58,6 +59,7 @@ export function AppShell() {
   const { fabOpen, fabDefaultContaId, openFab, closeFab } = useUIStore()
   const location = useLocation()
   useAutoLock()
+  useNotificationCheck()
 
   return (
     <div className="grain" style={{ display: 'flex', height: '100dvh', background: '#FFFFFF', overflow: 'hidden' }}>

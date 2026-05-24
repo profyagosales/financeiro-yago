@@ -14,8 +14,10 @@ import {
   IconRefresh, IconChevronRight, IconCheck, IconTableImport, IconShieldLock,
   IconDeviceMobileMessage, IconDatabase, IconInfoCircle, IconFile, IconTrendingUp,
   IconUser, IconBrandGithub, IconTrash, IconAlertTriangle, IconSettings, IconClock,
-  IconVolume, IconAccessible, IconCurrencyReal, IconTarget,
+  IconVolume, IconAccessible, IconCurrencyReal, IconTarget, IconBell, IconBellRinging,
 } from '@tabler/icons-react'
+import { getPermissaoEstado, pedirPermissao, notificarTeste, verificarPendencias, type PermissaoEstado } from '@/lib/notifications'
+import { useEffect } from 'react'
 import {
   useTaxasBenchmark, setTaxasBenchmark,
   useBrapiToken, setBrapiToken,
@@ -171,6 +173,165 @@ function PerfilSection() {
       </div>
     </div>
   )
+}
+
+// ─── NOTIFICAÇÕES ────────────────────────────────────────────────────
+function NotificacoesSection() {
+  const prefs = useAppPreferences()
+  const [permissao, setPermissao] = useState<PermissaoEstado>('default')
+  const [testing, setTesting] = useState(false)
+
+  useEffect(() => {
+    setPermissao(getPermissaoEstado())
+  }, [])
+
+  const handlePedir = async () => {
+    const r = await pedirPermissao()
+    setPermissao(r)
+    if (r === 'granted') {
+      // testa de cara e roda primeira checagem
+      await notificarTeste()
+      await verificarPendencias({
+        contasFixasVencendo: prefs.notifContasFixas !== false,
+        faturasFechando: prefs.notifFaturas !== false,
+        orcamentoEstourado: prefs.notifOrcamento !== false,
+        metaAtingida: prefs.notifMeta !== false,
+      })
+    }
+  }
+
+  const handleTest = async () => {
+    setTesting(true)
+    const ok = await notificarTeste()
+    if (!ok) alert('Falha ao enviar notificação. Verifique se a permissão está concedida.')
+    setTimeout(() => setTesting(false), 1500)
+  }
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as { standalone?: boolean }).standalone === true
+
+  return (
+    <div>
+      {/* Aviso iOS + status atual */}
+      {permissao === 'unsupported' ? (
+        <div style={ALERT_BOX_RED}>
+          <IconAlertTriangle size={16} color="#C4553B" stroke={2} />
+          <p style={ALERT_TEXT_RED}>Seu navegador não suporta notificações.</p>
+        </div>
+      ) : permissao === 'denied' ? (
+        <div style={ALERT_BOX_RED}>
+          <IconAlertTriangle size={16} color="#C4553B" stroke={2} style={{ flexShrink: 0, marginTop: 1 }} />
+          <p style={ALERT_TEXT_RED}>
+            Notificações <strong>bloqueadas</strong> nas configurações do navegador.
+            Pra reativar: vá nas preferências do site no seu browser/sistema e libere manualmente.
+          </p>
+        </div>
+      ) : permissao === 'default' ? (
+        <div style={{ marginBottom: 14 }}>
+          <button onClick={handlePedir}
+            style={{
+              width: '100%', padding: '12px 16px',
+              background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none',
+              borderRadius: 12, cursor: 'pointer',
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: '0 4px 16px rgba(196,85,59,0.32)',
+            }}>
+            <IconBellRinging size={16} stroke={2.4} /> Ativar notificações
+          </button>
+        </div>
+      ) : (
+        <div style={{
+          padding: '10px 14px', background: 'rgba(58,133,128,0.1)', border: '1px solid rgba(58,133,128,0.25)',
+          borderRadius: 10, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <IconCheck size={14} color="#1E7D5A" stroke={2.4} />
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#1E7D5A', fontWeight: 600, flex: 1, margin: 0 }}>
+            Notificações ativas
+          </p>
+          <button onClick={handleTest} disabled={testing}
+            style={{ background: '#FFFFFF', border: '1px solid #C8E0DA', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#1E7D5A' }}>
+            {testing ? 'Enviada!' : 'Testar'}
+          </button>
+        </div>
+      )}
+
+      {/* Aviso iOS especial */}
+      {isIOS && !isStandalone && (
+        <div style={{
+          padding: '10px 12px', background: '#FFF5E5', border: '1px solid rgba(212,160,23,0.35)',
+          borderRadius: 10, marginBottom: 14, display: 'flex', gap: 8, alignItems: 'flex-start',
+        }}>
+          <IconAlertTriangle size={14} color="#A8730F" stroke={2} style={{ flexShrink: 0, marginTop: 2 }} />
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#A8730F', lineHeight: 1.5, margin: 0, fontWeight: 600 }}>
+            <strong>Importante no iPhone/iPad:</strong> notificações só funcionam depois que você adicionar o app à tela inicial pelo Safari ("Compartilhar → Adicionar à Tela de Início"). Veja a seção <strong>Instalação no dispositivo</strong> acima.
+          </p>
+        </div>
+      )}
+
+      {/* Toggles do que notificar */}
+      <p style={LABEL_STYLE}>O que notificar</p>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <NotifToggle
+          icon={<IconBell size={15} color="#D4A017" stroke={2} />}
+          label="Contas fixas vencendo"
+          sub="3 dias antes do vencimento e no dia"
+          checked={prefs.notifContasFixas !== false}
+          onChange={v => setAppPreferences({ notifContasFixas: v })}
+        />
+        <NotifToggle
+          icon={<IconBell size={15} color="#C4553B" stroke={2} />}
+          label="Faturas de cartão fechando"
+          sub="3 dias antes do fechamento, com total parcial"
+          checked={prefs.notifFaturas !== false}
+          onChange={v => setAppPreferences({ notifFaturas: v })}
+        />
+        <NotifToggle
+          icon={<IconBell size={15} color="#A8442B" stroke={2} />}
+          label="Orçamento estourado"
+          sub="Quando uma categoria passa do limite mensal"
+          checked={prefs.notifOrcamento !== false}
+          onChange={v => setAppPreferences({ notifOrcamento: v })}
+        />
+        <NotifToggle
+          icon={<IconBell size={15} color="#1E7D5A" stroke={2} />}
+          label="Metas atingidas"
+          sub="Quando você bate 100% de uma meta"
+          checked={prefs.notifMeta !== false}
+          onChange={v => setAppPreferences({ notifMeta: v })}
+        />
+      </div>
+
+      <p style={{ ...HELP_STYLE, marginTop: 14, marginBottom: 0 }}>
+        <IconInfoCircle size={11} stroke={2} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+        O app verifica pendências quando você abre + a cada 1 hora enquanto fica aberto.
+        Notificações em <strong>background com app fechado</strong> exigiriam servidor (push real) — fica pra futura iteração.
+      </p>
+    </div>
+  )
+}
+
+function NotifToggle({ icon, label, sub, checked, onChange }: { icon: React.ReactNode; label: string; sub: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderTop: '0.5px solid #F5F0E8' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {icon}
+        <div>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>{label}</p>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: 0 }}>{sub}</p>
+        </div>
+      </div>
+      <Toggle checked={checked} onChange={onChange} />
+    </div>
+  )
+}
+
+const ALERT_BOX_RED: React.CSSProperties = {
+  padding: '10px 12px', background: 'rgba(196,85,59,0.1)', border: '1px solid rgba(196,85,59,0.25)',
+  borderRadius: 10, marginBottom: 14, display: 'flex', gap: 8, alignItems: 'flex-start',
+}
+const ALERT_TEXT_RED: React.CSSProperties = {
+  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#A8442B', fontWeight: 600, margin: 0, lineHeight: 1.5,
 }
 
 // ─── PREFERÊNCIAS ────────────────────────────────────────────────────
@@ -887,6 +1048,11 @@ export function Page() {
         <Row icon={<IconLock size={18} color="#9B7B6A" stroke={1.8} />}
           label="Bloquear agora" sub="Requer PIN na próxima abertura"
           onClick={() => lock()} />
+      </Section>
+
+      {/* NOTIFICAÇÕES */}
+      <Section title="Notificações" icon={<IconBellRinging size={18} color="#D4A017" stroke={1.8} />}>
+        <NotificacoesSection />
       </Section>
 
       {/* PREFERÊNCIAS */}

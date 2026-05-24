@@ -88,12 +88,21 @@ export interface AppPreferences {
   autoLockMin?: number              // 0 = nunca, 1/5/15/30 = minutos
   soundEnabled?: boolean            // default true
   reducedMotion?: boolean           // default false
+  // Notificações (default tudo true; permissão do browser é separada)
+  notifContasFixas?: boolean
+  notifFaturas?: boolean
+  notifOrcamento?: boolean
+  notifMeta?: boolean
 }
 
 export const PREFS_DEFAULT: AppPreferences = {
   autoLockMin: 0,
   soundEnabled: true,
   reducedMotion: false,
+  notifContasFixas: true,
+  notifFaturas: true,
+  notifOrcamento: true,
+  notifMeta: true,
 }
 
 export function useAppPreferences(): AppPreferences {
