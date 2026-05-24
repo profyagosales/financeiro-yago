@@ -303,15 +303,17 @@ function BrapiTokenSection() {
           value={token}
           onChange={e => setToken(e.target.value)}
           placeholder="abc123XYZ..."
-          type={show ? 'text' : 'password'}
+          type="text"
+          autoComplete="off"
+          spellCheck={false}
           style={{
             flex: 1, boxSizing: 'border-box',
             background: '#FBF8F3', border: '1.5px solid #EDE6DC',
             borderRadius: 10, padding: '10px 12px',
             fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 500,
             color: '#2C1A0F', outline: 'none',
-            letterSpacing: show ? 'normal' : '0.2em',
-          }}
+            WebkitTextSecurity: show ? 'none' : 'disc',
+          } as React.CSSProperties}
         />
         <button onClick={() => setShow(s => !s)}
           style={{ background: '#F5F0E8', border: 'none', borderRadius: 10, padding: '0 14px', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#7A5C4F' }}>

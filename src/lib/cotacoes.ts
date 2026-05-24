@@ -135,9 +135,9 @@ export async function fetchCotacaoAtivoBR(ticker: string): Promise<number | null
 
 // ─── Câmbio USD/BRL ──────────────────────────────────────────────────
 /**
- * Busca cotação do dólar comercial em BRL via Brapi.
- * Tenta Brapi (com token) primeiro; se falhar, faz fallback em AwesomeAPI
- * (gratuita, sem token, CORS aberto).
+ * Busca cotação do dólar comercial em BRL via AwesomeAPI.
+ * (Brapi /currency só funciona em plano pago — 403 no free.)
+ * AwesomeAPI é gratuita, sem token, CORS aberto.
  * @returns Cotação USD→BRL, ou null
  */
 export async function fetchCotacaoDolar(): Promise<number | null> {
@@ -145,24 +145,6 @@ export async function fetchCotacaoDolar(): Promise<number | null> {
   const cached = getCached(cacheKey)
   if (cached !== null) return cached
 
-  // 1. Tenta Brapi (se houver token)
-  const token = await getBrapiTokenSafe()
-  if (token) {
-    try {
-      const res = await fetch(`https://brapi.dev/api/v2/currency?currency=USD-BRL&token=${encodeURIComponent(token)}`)
-      if (res.ok) {
-        const json = await res.json() as { currency?: Array<{ bidPrice?: string | number }> }
-        const raw = json.currency?.[0]?.bidPrice
-        const value = typeof raw === 'string' ? parseFloat(raw) : raw
-        if (typeof value === 'number' && !isNaN(value)) {
-          setCached(cacheKey, value)
-          return value
-        }
-      }
-    } catch { /* tenta fallback */ }
-  }
-
-  // 2. Fallback: AwesomeAPI (gratuita, sem auth, CORS ok)
   try {
     const res = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL')
     if (!res.ok) return null
