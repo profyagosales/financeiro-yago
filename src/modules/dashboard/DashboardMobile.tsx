@@ -34,9 +34,9 @@ const ITEM = {
 // ─── Design tokens MOBILE ──────────────────────────────────────────
 const C = {
   // Gradient background (peach → creme)
-  bgTop:    '#FFE2C7',
-  bgMid:    '#FFF1DE',
-  bgBottom: '#FBF8F3',
+  bgTop:    '#FFE2C7',  // peach claro topo
+  bgMid:    '#FFF1DE',  // peach mais suave
+  bgBottom: '#FFE9D7',  // peach quente no fim (não branco morto)
 
   // Texto
   ink:      '#2C1A0F',
@@ -80,8 +80,8 @@ export function DashboardMobile() {
       position: 'relative',
       minHeight: '100dvh',
       width: '100%',
-      // Gradient cobrindo viewport inteira (do peach pro creme)
-      background: `linear-gradient(180deg, ${C.bgTop} 0%, ${C.bgMid} 30%, ${C.bgBottom} 68%, ${C.bgBottom} 100%)`,
+      // Gradient cobrindo a viewport inteira mantendo peach mesmo no fim
+      background: `linear-gradient(180deg, ${C.bgTop} 0%, ${C.bgMid} 35%, ${C.bgBottom} 100%)`,
     }}>
       {/* Halo decorativo no canto superior direito */}
       <div aria-hidden style={{
@@ -89,6 +89,19 @@ export function DashboardMobile() {
         width: 340, height: 340, borderRadius: '50%',
         background: 'radial-gradient(circle, rgba(241,100,46,0.18), transparent 65%)',
         filter: 'blur(20px)', pointerEvents: 'none',
+      }} />
+      {/* Halo decorativo no fundo esquerdo — quebra o vazio inferior */}
+      <div aria-hidden style={{
+        position: 'absolute', left: -100, bottom: -80,
+        width: 320, height: 320, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(212,160,23,0.16), transparent 60%)',
+        filter: 'blur(28px)', pointerEvents: 'none',
+      }} />
+      <div aria-hidden style={{
+        position: 'absolute', right: '-20%', top: '55%',
+        width: 280, height: 280, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(124,92,191,0.1), transparent 65%)',
+        filter: 'blur(36px)', pointerEvents: 'none',
       }} />
 
       <motion.div
@@ -510,29 +523,108 @@ function RegularContent({ d, navigate }: {
         </motion.button>
       )}
 
-      {/* ─── INTERMEDIATE: tem patrimônio mas zero pendências ─── */}
-      {!proximoVenc && contas.length === 0 && d.ultimasTxs.length === 0 && d.totalDividas === 0 && (
-        <motion.section variants={ITEM}
-          style={{
-            background: C.glass,
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: `1px solid ${C.glassBorder}`,
-            borderRadius: 18,
-            padding: '20px 18px',
-            textAlign: 'center',
-            boxShadow: C.glassShadow,
-          }}>
-          <IconCircleCheck size={28} stroke={1.8} color={C.green} style={{ marginBottom: 8 }} />
-          <p style={{
-            fontFamily: "'Fraunces',Georgia,serif",
-            fontSize: 17, fontWeight: 700, color: C.ink, margin: 0,
-            letterSpacing: '-0.4px',
-          }}>Tudo tranquilo por aqui</p>
-        </motion.section>
+      {/* ─── PRÓXIMOS PASSOS (setup incompleto) ─── */}
+      {(d.ultimasTxs.length === 0 || (!proximoVenc && d.proximos7Dias.length === 0)) && (
+        <NextSteps d={d} hasContas={contas.length > 0} />
       )}
-
     </>
+  )
+}
+
+// ─── NEXT STEPS — sugestões pra completar o setup ───────────────────
+function NextSteps({ d, hasContas }: {
+  d: ReturnType<typeof useDashboardData>
+  hasContas: boolean
+}) {
+  const navigate = useNavigate()
+
+  // Monta dinamicamente baseado no que falta
+  const all = [
+    !hasContas && {
+      Icon: IconBuildingBank,
+      title: 'Adicionar uma conta',
+      sub: 'Carteira, conta corrente, banco',
+      cor: '#3D7EB5', bg: 'rgba(61,126,181,0.13)',
+      onClick: () => navigate('/contas'),
+    },
+    d.ultimasTxs.length === 0 && {
+      Icon: IconArrowsExchange,
+      title: 'Lançar transações',
+      sub: 'Use o + na barra inferior',
+      cor: '#1E7D5A', bg: 'rgba(30,125,90,0.13)',
+      onClick: () => { /* FAB cobre isso, então não navega */ },
+    },
+    d.proximos7Dias.length === 0 && {
+      Icon: IconCalendarEvent,
+      title: 'Cadastrar contas fixas',
+      sub: 'Aluguel, assinaturas — automático',
+      cor: '#D4A017', bg: 'rgba(212,160,23,0.18)',
+      onClick: () => navigate('/contas-fixas'),
+    },
+    d.metasPrioritarias.length === 0 && {
+      Icon: IconTarget,
+      title: 'Definir uma meta',
+      sub: 'Reserva, viagem, sonho',
+      cor: '#7C5CBF', bg: 'rgba(124,92,191,0.14)',
+      onClick: () => navigate('/metas'),
+    },
+  ].filter(Boolean) as Array<{
+    Icon: typeof IconCalendarEvent
+    title: string; sub: string; cor: string; bg: string; onClick: () => void
+  }>
+
+  if (all.length === 0) return null
+
+  return (
+    <motion.section variants={ITEM}>
+      <SectionHeader>
+        <IconSparkles size={12} stroke={2.4} color={C.gold} style={{ marginRight: 5, verticalAlign: '-2px' }} />
+        Próximos passos
+      </SectionHeader>
+
+      <div style={{
+        marginTop: 8,
+        background: C.glass,
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: `1px solid ${C.glassBorder}`,
+        borderRadius: 18,
+        padding: '4px 14px',
+        boxShadow: C.glassShadow,
+      }}>
+        {all.slice(0, 3).map((s, i) => (
+          <button key={i}
+            onClick={s.onClick}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '12px 0',
+              width: '100%',
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              textAlign: 'left',
+              borderTop: i > 0 ? '1px dashed rgba(44,26,15,0.08)' : 'none',
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+            }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 11, background: s.bg,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <s.Icon size={17} stroke={2.1} color={s.cor} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                fontSize: 13, fontWeight: 700, color: C.ink, margin: 0,
+                lineHeight: 1.25,
+              }}>{s.title}</p>
+              <p style={{
+                fontSize: 11, color: C.muted, margin: '1px 0 0', fontWeight: 500,
+              }}>{s.sub}</p>
+            </div>
+            <IconChevronRight size={14} stroke={2.2} color={C.muted} style={{ flexShrink: 0 }} />
+          </button>
+        ))}
+      </div>
+    </motion.section>
   )
 }
 
