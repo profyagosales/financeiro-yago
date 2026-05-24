@@ -5,7 +5,7 @@
 // O service worker mantém o app rodando offline depois da primeira
 // visita: ícones, fontes, JS bundle, etc ficam cacheados.
 
-const CACHE_NAME = 'financeiro-yago-v5-update-prompt'
+const CACHE_NAME = 'financeiro-yago-v6-fix-mime-html-fallback'
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -137,40 +137,81 @@ self.addEventListener('notificationclose', () => {
   // Hook pra futuro: contabilizar dismissals e ajustar agressividade
 })
 
-// Fetch: estratégia híbrida
+// Fetch: estratégia diferenciada por tipo de recurso.
+//
+// Hashed assets em /assets/ (Vite gera nome único por build): cache-first
+// permanente — o conteúdo NUNCA muda pra mesma URL.
+//
+// Documentos HTML e navegações (incluindo index.html, /transacoes, etc):
+// network-first com fallback pra cache — assim novo deploy sempre traz a
+// HTML mais recente que referencia os chunks novos. Sem isso, SW velho
+// servia HTML cacheada que apontava pra chunks antigos já deletados do
+// Vercel — Vercel respondia /index.html pra qualquer asset missing, o
+// browser tentava parsear como JS module e falhava com MIME type error.
+//
+// Resposta com Content-Type text/html nunca é cacheada como JS/CSS
+// (defesa em profundidade contra recidiva).
 self.addEventListener('fetch', (event) => {
   const req = event.request
-
-  // Só GET
   if (req.method !== 'GET') return
 
   const url = new URL(req.url)
 
-  // Bypassar APIs externas (CoinGecko, Brapi, AwesomeAPI) — sempre network
+  // APIs externas (CoinGecko, Brapi, AwesomeAPI): sempre network direto.
   if (url.hostname.includes('coingecko.com') ||
       url.hostname.includes('brapi.dev') ||
       url.hostname.includes('awesomeapi.com.br')) {
-    return // navegador segue padrão
+    return
+  }
+  if (url.origin !== self.location.origin) return
+
+  const isHashedAsset = url.pathname.startsWith('/assets/')
+  const isNavigation = req.mode === 'navigate' ||
+                       (req.headers.get('accept') || '').includes('text/html')
+
+  // 1. Hashed assets: cache-first permanente
+  if (isHashedAsset) {
+    event.respondWith(
+      caches.match(req).then(cached => cached || fetch(req).then(res => {
+        if (res.ok && res.type === 'basic') {
+          const ct = res.headers.get('content-type') || ''
+          // Recusa cachear se Vercel devolveu HTML pra um chunk (servidor
+          // mal configurado / chunk não existe) — evita poisoning do cache.
+          if (!ct.includes('text/html')) {
+            const clone = res.clone()
+            caches.open(CACHE_NAME).then(cache => cache.put(req, clone))
+          }
+        }
+        return res
+      }).catch(() => new Response('', { status: 504, statusText: 'Offline' })))
+    )
+    return
   }
 
-  // Assets estáticos (mesmo origin): cache-first
-  if (url.origin === self.location.origin) {
+  // 2. HTML / navegações: network-first, fallback pra cache (offline).
+  if (isNavigation) {
     event.respondWith(
-      caches.match(req).then((cached) => {
-        if (cached) return cached
-        return fetch(req).then((res) => {
-          // Cacheia sucesso 200 (não cripto/POST)
-          if (res.ok && res.type === 'basic') {
-            const clone = res.clone()
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone))
-          }
-          return res
-        }).catch(() => {
-          // Offline + sem cache: tenta index.html (SPA fallback)
-          if (req.mode === 'navigate') return caches.match('/index.html')
-          return new Response('', { status: 504, statusText: 'Offline' })
-        })
-      })
+      fetch(req).then(res => {
+        if (res.ok) {
+          const clone = res.clone()
+          caches.open(CACHE_NAME).then(cache => cache.put('/index.html', clone))
+        }
+        return res
+      }).catch(() => caches.match('/index.html').then(c => c || caches.match(req)).then(c =>
+        c || new Response('Offline', { status: 504, headers: { 'content-type': 'text/plain' } })
+      ))
     )
+    return
   }
+
+  // 3. Outros same-origin (favicons, manifest, fonts, etc): cache-first
+  event.respondWith(
+    caches.match(req).then(cached => cached || fetch(req).then(res => {
+      if (res.ok && res.type === 'basic') {
+        const clone = res.clone()
+        caches.open(CACHE_NAME).then(cache => cache.put(req, clone))
+      }
+      return res
+    }).catch(() => new Response('', { status: 504, statusText: 'Offline' })))
+  )
 })
