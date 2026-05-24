@@ -63,12 +63,6 @@ export function Page() {
           color: '#2C1A0F', letterSpacing: '-1.2px',
           margin: '4px 0 0', lineHeight: 1,
         }}>Relatórios</h1>
-        <p style={{
-          fontFamily: "'Plus Jakarta Sans',sans-serif",
-          fontSize: 14, color: '#7A5C4F', fontWeight: 500,
-          margin: '6px 0 0', maxWidth: 720, lineHeight: 1.4,
-        }}>Análise profunda da sua vida financeira — cruza receitas, despesas, investimentos,
-          dívidas, metas e projeta o futuro com base nos seus padrões.</p>
       </div>
 
       {/* Shelf sticky: filtros + nav num único bloco com bg sólido */}
