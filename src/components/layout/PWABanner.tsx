@@ -1,21 +1,85 @@
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLocation } from 'react-router-dom'
+import { IconDeviceMobile, IconX } from '@tabler/icons-react'
 import { usePWAInstall } from '@/hooks/usePWAInstall'
+
+// Banner de install do PWA — discreto, dismissível, esconde em /configuracoes
+// (onde já tem a seção completa de instalação).
+//
+// Quando o user fecha, salva timestamp em localStorage. Volta a aparecer
+// só depois de 7 dias (pra não atrapalhar mas também não sumir pra sempre).
+
+const STORAGE_KEY = 'fy-pwa-banner-dismissed-at'
+const REAPPEAR_AFTER_MS = 7 * 24 * 60 * 60 * 1000  // 7 dias
+
+function isDismissed(): boolean {
+  try {
+    const ts = localStorage.getItem(STORAGE_KEY)
+    if (!ts) return false
+    const dismissedAt = parseInt(ts, 10)
+    if (isNaN(dismissedAt)) return false
+    return Date.now() - dismissedAt < REAPPEAR_AFTER_MS
+  } catch { return false }
+}
+
 export function PWABanner() {
   const { canInstall, install } = usePWAInstall()
+  const location = useLocation()
+  const [dismissed, setDismissed] = useState(true)  // começa "dismissed" — re-avalia no mount
+
+  useEffect(() => {
+    setDismissed(isDismissed())
+  }, [])
+
+  const handleDismiss = () => {
+    try { localStorage.setItem(STORAGE_KEY, String(Date.now())) } catch { /* noop */ }
+    setDismissed(true)
+  }
+
+  const handleInstall = () => {
+    install()
+    handleDismiss()  // ao instalar, marca como dismissido
+  }
+
+  // Esconde em /configuracoes (já tem seção completa lá)
+  const ehConfiguracoes = location.pathname === '/configuracoes'
+  const visivel = canInstall && !dismissed && !ehConfiguracoes
+
   return (
     <AnimatePresence>
-      {canInstall && (
-        <motion.div initial={{ y: -60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -60, opacity: 0 }}
-          style={{ position: 'fixed', top: 12, left: 12, right: 12, zIndex: 500, background: '#2C1A0F', borderRadius: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 24 }}>📱</span>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: '#FAF6F0' }}>Instalar como app</p>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}>Acesse direto da tela inicial</p>
+      {visivel && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+          style={{
+            position: 'fixed', bottom: 90, right: 16,
+            zIndex: 180, maxWidth: 360,
+            background: '#2C1A0F',
+            borderRadius: 14,
+            padding: '12px 14px',
+            display: 'flex', alignItems: 'center', gap: 10,
+            boxShadow: '0 12px 32px rgba(28,10,5,0.4)',
+          }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 9,
+            background: 'rgba(196,85,59,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <IconDeviceMobile size={16} stroke={2} color="#FFFFFF" />
           </div>
-          <motion.button onClick={install} whileTap={{ scale: 0.95 }}
-            style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 10, padding: '8px 14px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#FAF6F0', margin: 0 }}>Instalar como app</p>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '2px 0 0' }}>Acesso rápido pela tela inicial</p>
+          </div>
+          <motion.button onClick={handleInstall} whileTap={{ scale: 0.95 }}
+            style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 9, padding: '7px 12px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
             Instalar
           </motion.button>
+          <button onClick={handleDismiss} title="Fechar (volta em 7 dias)"
+            style={{ background: 'transparent', border: 'none', borderRadius: 7, width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#9B7B6A' }}>
+            <IconX size={13} stroke={2} />
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
