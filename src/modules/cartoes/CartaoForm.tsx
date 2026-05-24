@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal'
 import { LogoUploader } from '@/components/ui/LogoUploader'
 import { RealCardVisual } from '@/components/ui/RealCardVisual'
 import { BandeiraLogo, BANDEIRAS_DISPONIVEIS } from '@/components/ui/BandeiraLogo'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { CORES_CARTAO } from './constants'
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 
 export function CartaoForm({ open, cartao, onClose }: Props) {
   const isEditing = !!cartao
+  const isMobile = useIsMobile()
 
   const [form, setForm] = useState({
     nome: cartao?.nome ?? '',
@@ -81,10 +83,44 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
     >
       <div style={{
         flex: 1, overflowY: 'auto',
-        display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 0,
+        display: 'grid',
+        // Mobile: 1 coluna (preview vai pro topo, compacto).
+        // Desktop: 2 colunas (form esquerda, preview direita).
+        gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr',
+        gap: 0,
       }}>
-        {/* ── LEFT: form ── */}
-        <div style={{ padding: '24px 28px', borderRight: '1px solid #EDE6DC', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* ── MOBILE: preview compacto no topo ── */}
+        {isMobile && (
+          <div style={{
+            padding: '14px 18px 6px',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+            borderBottom: '1px solid rgba(44,26,15,0.06)',
+          }}>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9.5, fontWeight: 700,
+              color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
+            }}>Pré-visualização</p>
+            <div style={{ transform: 'scale(0.78)', transformOrigin: 'center top', marginBottom: -40 }}>
+              <RealCardVisual
+                nome={previewNome}
+                bandeira={form.bandeira}
+                cor={form.cor}
+                logo={form.logo}
+                titular={form.titular}
+                ultimosDigitos={form.ultimosDigitos.length === 4 ? form.ultimosDigitos : undefined}
+                diaVencimento={parseInt(form.diaVencimento) || 12}
+                cartaoId={cartao?.id ?? 99}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── LEFT (desktop) / TOPO (mobile): form ── */}
+        <div style={{
+          padding: isMobile ? '16px 18px' : '24px 28px',
+          borderRight: isMobile ? 'none' : '1px solid #EDE6DC',
+          display: 'flex', flexDirection: 'column', gap: 20,
+        }}>
 
           {/* Bandeira */}
           <Field label="Bandeira do cartão">
@@ -203,35 +239,37 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
           </Field>
         </div>
 
-        {/* ── RIGHT: preview do cartão ao vivo ── */}
-        <div style={{
-          padding: '28px',
-          background: 'linear-gradient(180deg, #FAF6F0 0%, #FFFFFF 100%)',
-          display: 'flex', flexDirection: 'column', gap: 14, justifyContent: 'center',
-        }}>
-          <p style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
-            color: '#9B7B6A', letterSpacing: '.16em', textTransform: 'uppercase', margin: 0,
-          }}>Pré-visualização</p>
-
-          <RealCardVisual
-            nome={previewNome}
-            bandeira={form.bandeira}
-            cor={form.cor}
-            logo={form.logo}
-            titular={form.titular}
-            ultimosDigitos={form.ultimosDigitos.length === 4 ? form.ultimosDigitos : undefined}
-            diaVencimento={parseInt(form.diaVencimento) || 12}
-            cartaoId={cartao?.id ?? 99}
-          />
-
-          <p style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A',
-            margin: 0, lineHeight: 1.5,
+        {/* ── RIGHT (desktop only): preview do cartão ao vivo ── */}
+        {!isMobile && (
+          <div style={{
+            padding: '28px',
+            background: 'linear-gradient(180deg, #FAF6F0 0%, #FFFFFF 100%)',
+            display: 'flex', flexDirection: 'column', gap: 14, justifyContent: 'center',
           }}>
-            Os últimos 4 dígitos podem ser personalizados — os demais números são gerados aleatoriamente apenas pra ilustração visual.
-          </p>
-        </div>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+              color: '#9B7B6A', letterSpacing: '.16em', textTransform: 'uppercase', margin: 0,
+            }}>Pré-visualização</p>
+
+            <RealCardVisual
+              nome={previewNome}
+              bandeira={form.bandeira}
+              cor={form.cor}
+              logo={form.logo}
+              titular={form.titular}
+              ultimosDigitos={form.ultimosDigitos.length === 4 ? form.ultimosDigitos : undefined}
+              diaVencimento={parseInt(form.diaVencimento) || 12}
+              cartaoId={cartao?.id ?? 99}
+            />
+
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A',
+              margin: 0, lineHeight: 1.5,
+            }}>
+              Os últimos 4 dígitos podem ser personalizados — os demais números são gerados aleatoriamente apenas pra ilustração visual.
+            </p>
+          </div>
+        )}
       </div>
 
       <Modal.Footer>

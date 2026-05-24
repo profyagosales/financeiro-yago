@@ -13,6 +13,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
 interface Props {
@@ -48,7 +49,10 @@ export function LegacyModalShell({
     }
   }, [open, onClose])
 
-  return (
+  // Portal pra escapar do stacking context do <main> (que tem position:relative
+  // + z-index:1 no AppShell). Sem portal, qualquer z-index aqui ficaria preso
+  // abaixo do BottomNav (sibling do main, z-index 100 no contexto raiz).
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -135,6 +139,7 @@ export function LegacyModalShell({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }

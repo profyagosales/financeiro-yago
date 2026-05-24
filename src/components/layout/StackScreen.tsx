@@ -12,6 +12,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { IconX } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
 
@@ -44,7 +45,8 @@ export function StackScreen({
     }
   }, [open, onClose])
 
-  return (
+  // Portal pra escapar do stacking context do <main>
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -157,6 +159,7 @@ export function StackScreen({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }

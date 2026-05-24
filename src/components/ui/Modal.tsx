@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { IconX } from '@tabler/icons-react'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -84,7 +85,8 @@ export function Modal({
     ? { type: 'spring' as const, stiffness: 320, damping: 32 }
     : { type: 'spring' as const, stiffness: 260, damping: 28 }
 
-  return (
+  // Portal pra escapar do stacking context do <main>
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -202,7 +204,8 @@ export function Modal({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }
 
