@@ -658,6 +658,7 @@ function AnexoRow({ anexo, onDelete }: { anexo: Anexo; onDelete: () => void }) {
       }}>
         {isImg ? (
           <img src={src ?? ''} alt={anexo.nomeArquivo}
+            loading="lazy" decoding="async"
             onClick={handleVer}
             style={{ width: 36, height: 36, borderRadius: 7, objectFit: 'cover', flexShrink: 0, cursor: 'pointer' }}/>
         ) : (
@@ -719,6 +720,7 @@ function AnexoRow({ anexo, onDelete }: { anexo: Anexo; onDelete: () => void }) {
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 1000, maxHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isImg ? (
               <img src={src ?? ''} alt={anexo.nomeArquivo}
+                decoding="async"
                 style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: 10, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}/>
             ) : (
               <iframe src={src ?? ''} title={anexo.nomeArquivo}

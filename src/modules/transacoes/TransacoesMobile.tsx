@@ -5,7 +5,6 @@
 
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useLiveQuery } from 'dexie-react-hooks'
 import {
   IconSearch, IconX, IconArrowUpRight, IconArrowDownRight,
   IconArrowsExchange,
@@ -15,9 +14,11 @@ import { db, type Transacao } from '@/db/schema'
 import { useContas } from '@/db/hooks/useContas'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { editTransacao, deleteTransacao } from '@/db/hooks/useTransacoes'
+import { useLiveQueryLoading } from '@/hooks/useLiveQueryLoading'
 import { fmt, fmtDate } from '@/lib/format'
 import { StackScreen } from '@/components/layout/StackScreen'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { SkeletonRows } from '@/components/ui/SkeletonRows'
 import { sounds, haptic } from '@/lib/sounds'
 
 // ─── Tokens (mesma identidade Dashboard mobile) ────────────────────
@@ -83,10 +84,11 @@ export function TransacoesMobile() {
   const contas = useContas()
   const categorias = useCategorias()
 
-  const txs = useLiveQuery(
+  const { data: txs, loading: txsLoading } = useLiveQueryLoading<Transacao[]>(
     () => db.transacoes.where('data').between(periodo.start, periodo.end, true, true).toArray(),
     [periodo.start, periodo.end],
-  ) ?? []
+    [],
+  )
 
   // Filtros aplicados
   const txsFiltradas = useMemo(() => {
@@ -304,8 +306,12 @@ export function TransacoesMobile() {
           })}
         </motion.div>
 
-        {/* LISTA AGRUPADA POR DIA */}
-        {grouped.length === 0 ? (
+        {/* LISTA AGRUPADA POR DIA — 3 estados: loading | empty | list */}
+        {txsLoading ? (
+          <motion.div variants={ITEM} style={{ padding: '4px 0' }}>
+            <SkeletonRows count={5} height={62} rounded={16} />
+          </motion.div>
+        ) : grouped.length === 0 ? (
           <EmptyTxs hasFilters={!!search || tipoFiltro !== 'todos'} />
         ) : (
           <motion.div variants={ITEM}

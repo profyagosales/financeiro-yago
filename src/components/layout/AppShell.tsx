@@ -122,6 +122,9 @@ function BackgroundMesh() {
             background: orb.color,
             filter: `blur(${orb.size / 2.4}px)`,
             transform: 'translate(-50%, -50%)',
+            // GPU hint: força compositor a manter orb em layer separada,
+            // evita repaint da árvore principal durante o tween x/y/scale.
+            willChange: reduceMotion ? 'auto' : 'transform',
           }}
         />
       ))}

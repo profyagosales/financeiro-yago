@@ -154,6 +154,18 @@ html, body, #root {
   border-radius: var(--r-md);
 }
 
+/* content-visibility: pula renderização de rows fora do viewport.
+   Grande win em listas longas (50+ items). contain-intrinsic-size reserva
+   espaço pra evitar layout shift quando linha entra/sai do viewport. */
+.cv-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 64px;
+}
+.cv-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+}
+
 /* Card base */
 .card {
   background: var(--card);

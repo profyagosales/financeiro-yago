@@ -54,6 +54,7 @@ export function BankLogo({
     return (
       <div style={wrapStyle}>
         <img src={logo} alt={`Logo ${nome}`}
+          loading="lazy" decoding="async"
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}/>
       </div>
     )

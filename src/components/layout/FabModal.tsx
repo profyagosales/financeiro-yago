@@ -236,7 +236,9 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
               <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                 style={{ background: '#EBF5F0', border: '1.5px solid #D0E8D8', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
                 {preview.url ? (
-                  <img src={preview.url} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}/>
+                  <img src={preview.url} alt=""
+                    loading="lazy" decoding="async"
+                    style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}/>
                 ) : (
                   <div style={{ width: 36, height: 36, background: '#3D7EB5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <IconPaperclip size={18} color="#FFFFFF" stroke={2}/>

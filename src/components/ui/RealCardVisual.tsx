@@ -146,6 +146,7 @@ export function RealCardVisual({
                 flexShrink: 0,
               }}>
                 <img src={logo} alt={nome}
+                  loading="lazy" decoding="async"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
               </div>
             ) : null}
