@@ -41,10 +41,15 @@ export function useGastosPorCategoria(mes: number, ano: number) {
 }
 export async function addTransacao(data: Omit<Transacao, 'id' | 'syncId' | 'updatedAt'>) {
   const id = await db.transacoes.add({ ...data, updatedAt: Date.now() })
-  const conta = await db.contas.get(data.contaId)
-  if (conta) {
-    const delta = data.tipo === 'receita' ? data.valor : -data.valor
-    await db.contas.update(data.contaId, { saldoAtual: conta.saldoAtual + delta, updatedAt: Date.now() })
+  // SÓ impacta saldo se a transação está EFETIVADA. Pendentes são
+  // previsões/agendamentos — não mexem no dinheiro real até serem
+  // confirmadas. Bug histórico: criar tx pendente já debitava conta.
+  if (data.status === 'efetivada') {
+    const conta = await db.contas.get(data.contaId)
+    if (conta) {
+      const delta = data.tipo === 'receita' ? data.valor : -data.valor
+      await db.contas.update(data.contaId, { saldoAtual: conta.saldoAtual + delta, updatedAt: Date.now() })
+    }
   }
   if (data.tipo === 'receita') sounds.receita(); else sounds.despesa()
   haptic('light')
@@ -108,18 +113,24 @@ export async function deleteTransacao(id: number) {
     for (const irma of irmas) {
       if (irma.id == null) continue
       await db.transacoes.delete(irma.id)
-      const c = await db.contas.get(irma.contaId)
-      if (c) {
-        const d = irma.tipo === 'receita' ? -irma.valor : irma.valor
-        await db.contas.update(irma.contaId, { saldoAtual: c.saldoAtual + d, updatedAt: Date.now() })
+      // Só reverte saldo se a irmã estava EFETIVADA (pendente não afeta)
+      if (irma.status === 'efetivada') {
+        const c = await db.contas.get(irma.contaId)
+        if (c) {
+          const d = irma.tipo === 'receita' ? -irma.valor : irma.valor
+          await db.contas.update(irma.contaId, { saldoAtual: c.saldoAtual + d, updatedAt: Date.now() })
+        }
       }
     }
   }
   await db.transacoes.delete(id)
-  const conta = await db.contas.get(tx.contaId)
-  if (conta) {
-    const delta = tx.tipo === 'receita' ? -tx.valor : tx.valor
-    await db.contas.update(tx.contaId, { saldoAtual: conta.saldoAtual + delta, updatedAt: Date.now() })
+  // Só reverte saldo se a tx estava EFETIVADA
+  if (tx.status === 'efetivada') {
+    const conta = await db.contas.get(tx.contaId)
+    if (conta) {
+      const delta = tx.tipo === 'receita' ? -tx.valor : tx.valor
+      await db.contas.update(tx.contaId, { saldoAtual: conta.saldoAtual + delta, updatedAt: Date.now() })
+    }
   }
   haptic('heavy')
 }
@@ -164,8 +175,13 @@ export async function migrateStatusToCanonical(): Promise<void> {
 }
 
 // ─── Edit inteligente que ajusta saldo automaticamente ──────────────
-// Se `valor`, `tipo` ou `contaId` mudarem, reverte o impacto antigo
-// no saldo da conta e aplica o novo. Mantém consistência total.
+// Se `valor`, `tipo`, `contaId` OU `status` mudarem, reverte o impacto
+// antigo no saldo e aplica o novo. Mantém consistência total.
+//
+// Função pura `impacto` calcula o delta da conta dado (tipo, valor, status):
+// pendente → 0 (não afeta), efetivada → ±valor por tipo. Isso cobre TODOS
+// os cenários: toggle pendente↔efetivada, edição de valor, mudança de conta,
+// mudança de tipo, ou combinações.
 export async function editTransacaoComSaldo(id: number, novosDados: Partial<Transacao>) {
   const original = await db.transacoes.get(id)
   if (!original) return
@@ -173,34 +189,48 @@ export async function editTransacaoComSaldo(id: number, novosDados: Partial<Tran
   const novoValor   = novosDados.valor   ?? original.valor
   const novoTipo    = novosDados.tipo    ?? original.tipo
   const novaContaId = novosDados.contaId ?? original.contaId
+  const novoStatus  = novosDados.status  ?? original.status
 
-  // Houve mudança que afeta saldo?
-  const afetaSaldo = novoValor !== original.valor
-                  || novoTipo !== original.tipo
-                  || novaContaId !== original.contaId
+  // Impacto NO SALDO de uma tx: positivo = entra, negativo = sai, 0 = pendente
+  const impacto = (tipo: string, valor: number, status: string): number => {
+    if (status !== 'efetivada') return 0
+    return tipo === 'receita' ? valor : -valor
+  }
 
-  if (afetaSaldo) {
-    // Reverte impacto antigo na conta original
-    const contaAntiga = await db.contas.get(original.contaId)
-    if (contaAntiga) {
-      const deltaReverter = original.tipo === 'receita' ? -original.valor : original.valor
-      await db.contas.update(original.contaId, {
-        saldoAtual: contaAntiga.saldoAtual + deltaReverter,
-        updatedAt: Date.now(),
-      })
+  const antigoImpacto = impacto(original.tipo, original.valor, original.status)
+  const novoImpacto = impacto(novoTipo, novoValor, novoStatus)
+
+  if (novaContaId === original.contaId) {
+    // Mesma conta: aplica delta (novo - antigo) em uma operação
+    const delta = novoImpacto - antigoImpacto
+    if (delta !== 0) {
+      const conta = await db.contas.get(novaContaId)
+      if (conta) {
+        await db.contas.update(novaContaId, {
+          saldoAtual: conta.saldoAtual + delta,
+          updatedAt: Date.now(),
+        })
+      }
     }
-    // Aplica novo impacto (na conta nova, que pode ser a mesma)
-    const contaNova = await db.contas.get(novaContaId)
-    if (contaNova) {
-      const deltaAplicar = novoTipo === 'receita' ? novoValor : -novoValor
-      // Se conta é a mesma, o saldo já foi revertido — soma o novo
-      const saldoBase = novaContaId === original.contaId
-        ? (contaNova.saldoAtual + (original.tipo === 'receita' ? -original.valor : original.valor))
-        : contaNova.saldoAtual
-      await db.contas.update(novaContaId, {
-        saldoAtual: saldoBase + deltaAplicar,
-        updatedAt: Date.now(),
-      })
+  } else {
+    // Conta mudou: reverte na antiga, aplica na nova
+    if (antigoImpacto !== 0) {
+      const contaAntiga = await db.contas.get(original.contaId)
+      if (contaAntiga) {
+        await db.contas.update(original.contaId, {
+          saldoAtual: contaAntiga.saldoAtual - antigoImpacto,
+          updatedAt: Date.now(),
+        })
+      }
+    }
+    if (novoImpacto !== 0) {
+      const contaNova = await db.contas.get(novaContaId)
+      if (contaNova) {
+        await db.contas.update(novaContaId, {
+          saldoAtual: contaNova.saldoAtual + novoImpacto,
+          updatedAt: Date.now(),
+        })
+      }
     }
   }
 
@@ -216,18 +246,22 @@ export async function editTransacaoComSaldo(id: number, novosDados: Partial<Tran
       const updates: Partial<Transacao> = {}
       if (novosDados.valor !== undefined) updates.valor = novosDados.valor
       if (novosDados.data !== undefined) updates.data = novosDados.data
-      // Recursão controlada: cascateia mas a irmã não vai cascatear de volta
-      // porque o updatedAt já vai bater. Saldo da conta da irmã é ajustado aqui.
       const oldIrma = await db.transacoes.get(irma.id)
       if (!oldIrma) continue
-      const contaIrma = await db.contas.get(oldIrma.contaId)
-      if (contaIrma && novosDados.valor !== undefined) {
-        const deltaReverter = oldIrma.tipo === 'receita' ? -oldIrma.valor : oldIrma.valor
-        const deltaAplicar  = oldIrma.tipo === 'receita' ? novosDados.valor : -novosDados.valor
-        await db.contas.update(oldIrma.contaId, {
-          saldoAtual: contaIrma.saldoAtual + deltaReverter + deltaAplicar,
-          updatedAt: Date.now(),
-        })
+      // Ajusta saldo da conta da irmã usando função pura impacto (respeita status)
+      if (novosDados.valor !== undefined) {
+        const antIrmaImp = impacto(oldIrma.tipo, oldIrma.valor, oldIrma.status)
+        const novIrmaImp = impacto(oldIrma.tipo, novosDados.valor, oldIrma.status)
+        const dIrma = novIrmaImp - antIrmaImp
+        if (dIrma !== 0) {
+          const contaIrma = await db.contas.get(oldIrma.contaId)
+          if (contaIrma) {
+            await db.contas.update(oldIrma.contaId, {
+              saldoAtual: contaIrma.saldoAtual + dIrma,
+              updatedAt: Date.now(),
+            })
+          }
+        }
       }
       await db.transacoes.update(irma.id, { ...updates, updatedAt: Date.now() })
     }

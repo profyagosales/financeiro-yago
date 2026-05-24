@@ -120,19 +120,26 @@ export function ContasFixasDesktop() {
     setPaymentMethod('conta')
   }
   const handleSave = async () => {
-    if (!form.nome || !form.valor || !form.categoriaId) return
+    const nomeTrim = form.nome.trim()
+    if (!nomeTrim || !form.valor || !form.categoriaId) return
     const data = {
-      nome: form.nome,
-      valor: parseFloat(form.valor.replace(',', '.')),
+      nome: nomeTrim,
+      valor: parseFloat(form.valor.replace(/\./g, '').replace(',', '.')),
       diaVencimento: form.diaVencimento,
       categoriaId: form.categoriaId,
       contaId: paymentMethod === 'conta' ? form.contaId : null,
       cartaoId: paymentMethod === 'cartao' ? (form.cartaoId ?? undefined) : undefined,
     }
-    if (editingId !== null) await editContaFixa(editingId, data)
-    else await addContaFixa({ ...data, recorrencia: 'mensal', alertaDiasAntes: 3, ativo: true })
-    setAdding(false); setEditingId(null)
-    resetForm()
+    try {
+      if (editingId !== null) await editContaFixa(editingId, data)
+      else await addContaFixa({ ...data, recorrencia: 'mensal', alertaDiasAntes: 3, ativo: true })
+      setAdding(false); setEditingId(null)
+      resetForm()
+    } catch (e) {
+      console.error('[ContasFixasDesktop.handleSave]', e)
+      const { showErrorToast } = await import('@/lib/sounds')
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar conta fixa — tente de novo')
+    }
   }
 
   // Scroll to day refs

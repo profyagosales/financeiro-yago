@@ -3,6 +3,7 @@ import { IconX, IconCheck, IconInfoCircle } from '@tabler/icons-react'
 import type { Divida, DividaTipo } from '@/db/schema'
 import { addDivida, editDivida } from '@/db/hooks/useDividas'
 import { useCategorias } from '@/db/hooks/useCategorias'
+import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 import { TIPOS, TIPO_META } from './constants'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
@@ -15,7 +16,7 @@ interface Props {
 export function DividaForm({ divida, onClose }: Props) {
   // body scroll lock agora é responsabilidade do LegacyModalShell
   const categorias = useCategorias('despesa')
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISO()
   const isEditing = !!divida
 
   // Default: categoria "Empréstimos & Dívidas" se existir
@@ -41,15 +42,35 @@ export function DividaForm({ divida, onClose }: Props) {
   const tipoMeta = TIPO_META.get(form.tipo)
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
   const parseInt0 = (v: string) => parseInt(v) || 0
+  // Clamp 1..31 pra dia de vencimento, ignorando lixo (letras etc).
+  const clampDia = (s: string) => {
+    const n = parseInt(s.replace(/\D/g, '').slice(0, 2)) || 0
+    return Math.max(1, Math.min(31, n || 1))
+  }
 
-  const canSave = !!form.nome.trim() && parseValor(form.valorTotal) > 0 && parseValor(form.valorParcela) > 0
+  // Validações estruturais — bloqueiam Salvar:
+  // - parcelasTotal >= 1 (não faz sentido dívida de 0 parcelas)
+  // - parcelasPagas <= parcelasTotal (não pode pagar mais do que tem)
+  const parcelasTotalPreview = parseInt0(form.parcelasTotal)
+  const parcelasPagasPreview = parseInt0(form.parcelasPagas)
+  const parcelasOk = parcelasTotalPreview >= 1 && parcelasPagasPreview >= 0
+                  && parcelasPagasPreview <= parcelasTotalPreview
+
+  const canSave = !!form.nome.trim()
+               && parseValor(form.valorTotal) > 0
+               && parseValor(form.valorParcela) > 0
+               && parcelasOk
 
   const handleSave = async () => {
     const nomeTrim = form.nome.trim()
     const instituicaoTrim = form.instituicao.trim()
     if (!nomeTrim || parseValor(form.valorTotal) <= 0 || parseValor(form.valorParcela) <= 0) return
-    const parcelasTotalN = parseInt0(form.parcelasTotal)
-    const parcelasPagasN = parseInt0(form.parcelasPagas)
+    if (!parcelasOk) {
+      showErrorToast('Parcelas pagas não pode ser maior que parcelas total')
+      return
+    }
+    const parcelasTotalN = parcelasTotalPreview
+    const parcelasPagasN = parcelasPagasPreview
     const valorParcelaN = parseValor(form.valorParcela)
     const valorPagoCalculado = parcelasPagasN * valorParcelaN
 
@@ -64,7 +85,7 @@ export function DividaForm({ divida, onClose }: Props) {
       parcelasPagas: parcelasPagasN,
       jurosAnual: form.jurosAnual ? parseValor(form.jurosAnual) / 100 : undefined,
       dataInicio: form.dataInicio,
-      diaVencimento: parseInt0(form.diaVencimento) || 10,
+      diaVencimento: clampDia(form.diaVencimento),
       categoriaId: form.categoriaId ? parseInt(form.categoriaId) : undefined,
       cor: tipoMeta?.cor ?? '#C4553B',
       ativo: true,
@@ -260,7 +281,12 @@ export function DividaForm({ divida, onClose }: Props) {
             <Field label="Dia vencimento (1-31)">
               <input
                 value={form.diaVencimento}
-                onChange={e => setForm(f => ({ ...f, diaVencimento: e.target.value.replace(/[^\d]/g, '').slice(0, 2) }))}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^\d]/g, '').slice(0, 2)
+                  // Permite digitação progressiva (string vazia) mas guarda string crua
+                  setForm(f => ({ ...f, diaVencimento: raw }))
+                }}
+                onBlur={() => setForm(f => ({ ...f, diaVencimento: String(clampDia(f.diaVencimento)) }))}
                 placeholder="10" inputMode="numeric"
                 style={INPUT_STYLE}
               />

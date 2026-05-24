@@ -5,7 +5,7 @@
 // O service worker mantém o app rodando offline depois da primeira
 // visita: ícones, fontes, JS bundle, etc ficam cacheados.
 
-const CACHE_NAME = 'financeiro-yago-v6-fix-mime-html-fallback'
+const CACHE_NAME = 'financeiro-yago-v7-r3-tier1-fixes'
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -60,13 +60,20 @@ self.addEventListener('notificationclick', (event) => {
     url = data.actions[action]
   }
 
+  // Estratégia compatível Safari/iOS: w.navigate() é non-standard e joga em
+  // Safari. Em vez disso, postMessage pro client e ele navega via React Router.
+  // Fallback: openWindow se não houver janela aberta.
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
       for (const w of wins) {
         if ('focus' in w) {
           w.focus()
+          try {
+            w.postMessage({ type: 'NAVIGATE', url })
+          } catch { /* noop */ }
+          // Tenta navigate() (Chromium) como reforço — wrap no try
           if ('navigate' in w) {
-            try { w.navigate(url) } catch { /* noop */ }
+            try { w.navigate(url) } catch { /* Safari joga: noop */ }
           }
           return
         }
@@ -97,6 +104,14 @@ self.addEventListener('push', (event) => {
   if (!event.data) return
   try {
     const p = event.data.json()
+    // iOS Safari PWA suporta 0 actions → passar `actions` quebra a notif.
+    // Safari macOS suporta 2, Chromium até 4. Respeitar limite do browser.
+    const maxActions = (typeof Notification !== 'undefined' && 'maxActions' in Notification)
+      ? Notification.maxActions
+      : 0
+    const safeActions = Array.isArray(p.actions) && maxActions > 0
+      ? p.actions.slice(0, maxActions)
+      : undefined
     const options = {
       body: p.body || '',
       // PNG: Safari macOS renderiza mal SVG em notificações
@@ -110,7 +125,7 @@ self.addEventListener('push', (event) => {
       silent: p.silent === true ? true : undefined,
       vibrate: p.vibrate || [80, 40, 80],
       timestamp: Date.now(),
-      actions: Array.isArray(p.actions) ? p.actions.slice(0, 2) : undefined,
+      actions: safeActions,
       data: {
         url: p.url || '/',
         actions: p.actionsUrls || {},
@@ -164,6 +179,9 @@ self.addEventListener('fetch', (event) => {
     return
   }
   if (url.origin !== self.location.origin) return
+
+  // /api/* (Vercel Functions, futuro): sempre pass-through, nunca cache.
+  if (url.pathname.startsWith('/api/')) return
 
   const isHashedAsset = url.pathname.startsWith('/assets/')
   const isNavigation = req.mode === 'navigate' ||

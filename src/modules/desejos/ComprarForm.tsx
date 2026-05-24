@@ -7,7 +7,7 @@ import { useContas } from '@/db/hooks/useContas'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useCartoes } from '@/db/hooks/useCartoes'
 import { marcarComoComprado } from '@/db/hooks/useDesejos'
-import { fmt } from '@/lib/format'
+import { fmt, todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
 // Marca um desejo como comprado e cria a transação correspondente.
 export function ComprarForm({ desejo, onClose }: Props) {
   // body scroll lock agora é responsabilidade do LegacyModalShell
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISO()
   const contas = useContas()
   const cartoes = useCartoes()
   const categorias = useCategorias('despesa')

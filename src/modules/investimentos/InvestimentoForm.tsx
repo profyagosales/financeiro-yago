@@ -6,6 +6,7 @@ import { addInvestimento, editInvestimento, isRendaVariavel, isRendaFixa, addApo
 import { useTaxasBenchmark, calcTaxaEfetiva } from '@/db/hooks/useAppConfig'
 import { useMetas } from '@/db/hooks/useMetas'
 import { useContas } from '@/db/hooks/useContas'
+import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 import { TIPOS, LIQUIDEZ_OPTIONS, TIPO_META } from './constants'
 
@@ -19,7 +20,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
   // body scroll lock agora é responsabilidade do LegacyModalShell
   const metas = useMetas()
   const contas = useContas()
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISO()
   const isEditing = !!invest
 
   // Determinar se a instituição salva corresponde a uma conta cadastrada

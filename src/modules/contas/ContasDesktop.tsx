@@ -73,7 +73,8 @@ export function ContasDesktop() {
     const hoje = new Date()
     const inicio = new Date(hoje)
     inicio.setDate(hoje.getDate() - 13)
-    return inicio.toISOString().split('T')[0]
+    // hora LOCAL (toISOString seria UTC e quebraria no BRT à noite)
+    return `${inicio.getFullYear()}-${String(inicio.getMonth() + 1).padStart(2, '0')}-${String(inicio.getDate()).padStart(2, '0')}`
   }, [])
   const txs14d = useLiveQuery(
     () => db.transacoes.where('data').aboveOrEqual(ultimas30d).toArray(),
@@ -95,7 +96,8 @@ export function ContasDesktop() {
       for (let i = 0; i < 14; i++) {
         const d = new Date(hoje)
         d.setDate(hoje.getDate() - i)
-        const key = d.toISOString().split('T')[0]
+        // hora LOCAL
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         points.push(acc)
         acc -= deltaByDay.get(key) ?? 0
       }

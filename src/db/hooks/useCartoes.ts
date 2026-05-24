@@ -7,8 +7,21 @@ export function useCartoes() {
 export async function addCartao(data: Omit<Cartao, 'id' | 'syncId'>) {
   return db.cartoes.add(data)
 }
+
+// Soft-delete: marca ativo=false. updatedAt explícito garante que o sync
+// detecte o write como dirty e propague pros outros devices. (Sem isso, o
+// hook updating add updatedAt mas o flag dirty só dispara via triggerPush.)
 export async function deleteCartao(id: number) {
-  return db.cartoes.update(id, { ativo: false })
+  return db.cartoes.update(id, { ativo: false, updatedAt: Date.now() })
+}
+
+// Quantos lançamentos ATIVOS estão pendurados nesse cartão (em vida útil).
+// Use antes de oferecer "Excluir cartão" pra avisar o usuário.
+export async function countLancamentosAtivosByCartao(cartaoId: number): Promise<number> {
+  return db.lancamentosCartao
+    .where('cartaoId').equals(cartaoId)
+    .filter(l => l.parcelaAtual <= l.totalParcelas)
+    .count()
 }
 export function useLancamentosCartao(cartaoId: number, mes: number, ano: number) {
   return useLiveQuery(
@@ -71,7 +84,7 @@ export async function addLancamentoCartao(data: {
 }
 
 export async function editCartao(id: number, data: Partial<import('../schema').Cartao>) {
-  return db.cartoes.update(id, data)
+  return db.cartoes.update(id, { ...data, updatedAt: Date.now() })
 }
 
 // ─── Editar / Excluir lançamentos do cartão ───────────────────────────
@@ -79,7 +92,7 @@ export async function editLancamentoCartao(
   id: number,
   data: Partial<Omit<LancamentoCartao, 'id' | 'syncId'>>,
 ) {
-  return db.lancamentosCartao.update(id, data)
+  return db.lancamentosCartao.update(id, { ...data, updatedAt: Date.now() })
 }
 
 // Exclui um único lançamento (uma parcela específica)

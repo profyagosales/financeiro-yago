@@ -2,12 +2,12 @@ import Dexie, { type Table } from 'dexie'
 
 // ─── Existentes ──────────────────────────────────────────────────────
 export interface Conta { id?: number; nome: string; tipo: string; saldoInicial: number; saldoAtual: number; cor: string; icone: string; logo?: string; chequeEspecialLimite?: number; ativo: boolean; syncId?: string; updatedAt: number }
-export interface Categoria { id?: number; nome: string; tipo: string; icone: string; cor: string; ordem: number; syncId?: string }
+export interface Categoria { id?: number; nome: string; tipo: string; icone: string; cor: string; ordem: number; syncId?: string; updatedAt?: number }
 export interface Transacao { id?: number; data: string; valor: number; tipo: string; contaId: number; categoriaId: number; descricao: string; notas?: string; tags?: string[]; status: string; transferId?: string; recorrencia?: string; syncId?: string; updatedAt: number }
-export interface Cartao { id?: number; nome: string; bandeira: string; limite: number; cor: string; diaFechamento: number; diaVencimento: number; ativo: boolean; logo?: string; titular?: string; ultimosDigitos?: string; syncId?: string }
-export interface LancamentoCartao { id?: number; cartaoId: number; descricao: string; valor: number; data: string; categoriaId: number; parcelaAtual: number; totalParcelas: number; parcelaPaiId?: number; mes: number; ano: number; syncId?: string }
-export interface ContaFixa { id?: number; nome: string; valor: number; diaVencimento: number; categoriaId: number; contaId?: number | null; cartaoId?: number; recorrencia: string; alertaDiasAntes: number; ativo: boolean; syncId?: string }
-export interface PagamentoFixo { id?: number; contaFixaId: number; mes: number; ano: number; status: string; dataPagamento?: string; valor?: number; syncId?: string }
+export interface Cartao { id?: number; nome: string; bandeira: string; limite: number; cor: string; diaFechamento: number; diaVencimento: number; ativo: boolean; logo?: string; titular?: string; ultimosDigitos?: string; syncId?: string; updatedAt?: number }
+export interface LancamentoCartao { id?: number; cartaoId: number; descricao: string; valor: number; data: string; categoriaId: number; parcelaAtual: number; totalParcelas: number; parcelaPaiId?: number; mes: number; ano: number; syncId?: string; updatedAt?: number }
+export interface ContaFixa { id?: number; nome: string; valor: number; diaVencimento: number; categoriaId: number; contaId?: number | null; cartaoId?: number; recorrencia: string; alertaDiasAntes: number; ativo: boolean; syncId?: string; updatedAt?: number }
+export interface PagamentoFixo { id?: number; contaFixaId: number; mes: number; ano: number; status: string; dataPagamento?: string; valor?: number; syncId?: string; updatedAt?: number }
 
 // ─── Meta refatorada (v5) ────────────────────────────────────────────
 //   - Novo campo `tipo` distingue Compra / Reserva de Emergência / Aposentadoria / Outros
@@ -181,6 +181,12 @@ export interface InvestimentoMovimentacao {
   precoUnitario?: number                // preço de venda por unidade
   // ─── Renda fixa (resgate) ────────────────────────────────────────
   valorResgate?: number                 // R$/US$ resgatado (RF)
+  valorAplicadoConsumido?: number       // snapshot do custoProporcional na hora
+                                        // do resgate. Permite restaurar com
+                                        // PRECISÃO o valorAplicado quando o
+                                        // movimento é deletado (sem isso, o
+                                        // resgate-delete deixa valorAplicado
+                                        // permanentemente subestimado).
   // ─── Comum a ambos ───────────────────────────────────────────────
   custos?: number                       // corretagem/emolumentos/IOF na saída
   // Snapshot pra histórico/cálculo de resultado (não é fonte da verdade)
@@ -257,7 +263,7 @@ export interface Desejo {
 }
 
 // ─── Orcamento (mantido) ─────────────────────────────────────────────
-export interface Orcamento { id?: number; categoriaId: number; valorLimite: number; periodo: string; rollover: boolean; inicio?: string; fim?: string; syncId?: string }
+export interface Orcamento { id?: number; categoriaId: number; valorLimite: number; periodo: string; rollover: boolean; inicio?: string; fim?: string; syncId?: string; updatedAt?: number }
 // ─── Anexo (mantido) ─────────────────────────────────────────────────
 export interface Anexo {
   id?: number
@@ -341,7 +347,9 @@ class FinanceiroYagoDB extends Dexie {
     }).upgrade(async tx => {
       // ── Migração: PatrimonioItem → Investimento / Divida ──
       const items = await tx.table('patrimonio').toArray() as PatrimonioItem[]
-      const hoje = new Date().toISOString().split('T')[0]
+      // ISO local (não UTC): off-by-one bug à noite no BRT
+      const _d = new Date()
+      const hoje = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, '0')}-${String(_d.getDate()).padStart(2, '0')}`
 
       for (const item of items) {
         if (item.tipo === 'ativo') {

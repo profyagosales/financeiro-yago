@@ -3,7 +3,7 @@ import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconTrash, IconCash, IconDiscount, IconCircleCheck, IconAdjustments } from '@tabler/icons-react'
 import type { Divida, MovimentacaoTipo } from '@/db/schema'
 import { useMovimentacoes, addMovimentacao, deleteMovimentacao, MOVIMENTACAO_LABEL, MOVIMENTACAO_COR, calcMovimentacoesTotais } from '@/db/hooks/useDividas'
-import { fmt } from '@/lib/format'
+import { fmt, todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
@@ -24,7 +24,7 @@ const TABS: { value: Tab; label: string; icon: typeof IconCash; cor: string; des
 export function MovimentacaoModal({ divida, onClose }: Props) {
   // body scroll lock agora é responsabilidade do LegacyModalShell
   const movs = useMovimentacoes(divida.id)
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISO()
 
   const [tab, setTab] = useState<Tab>('amortizacao')
 

@@ -422,6 +422,7 @@ export async function registrarResgate(args: {
     data: args.data,
     tipo: 'resgate',
     valorResgate: args.valorResgate,
+    valorAplicadoConsumido: custoProporcional, // snapshot pra restaurar no delete
     custos: args.custos,
     resultado,
     observacao: args.observacao,
@@ -448,12 +449,24 @@ export async function deleteMovimentacaoInvest(id: number) {
   if (m.tipo === 'venda') {
     await recalcInvestimentoFromAportes(m.investimentoId)
   } else if (m.tipo === 'resgate') {
-    // Restaura valorAtual e valorAplicado proporcionalmente
+    // Restaura valorAtual e valorAplicado. Usa snapshot
+    // `valorAplicadoConsumido` (gravado no registrarResgate) pra restaurar
+    // com PRECISÃO. Para movimentos legados sem snapshot, recalcula
+    // proporção atual como fallback (aproximado, mas melhor que ignorar).
     const inv = await db.investimentos.get(m.investimentoId)
     if (inv && m.valorResgate) {
-      // Não temos snapshot perfeito; reverter aproximado
+      const restoreAtual = inv.valorAtual + m.valorResgate
+      const restoreAplicado = m.valorAplicadoConsumido !== undefined
+        ? inv.valorAplicado + m.valorAplicadoConsumido
+        : (() => {
+            // Fallback p/ movs legados sem snapshot — calcula proporção atual
+            const totalAtualPlus = inv.valorAtual + m.valorResgate
+            const ratio = totalAtualPlus > 0 ? m.valorResgate / totalAtualPlus : 0
+            return inv.valorAplicado + (inv.valorAplicado * ratio / (1 - ratio || 1))
+          })()
       await db.investimentos.update(m.investimentoId, {
-        valorAtual: Math.round((inv.valorAtual + m.valorResgate) * 100) / 100,
+        valorAtual: Math.round(restoreAtual * 100) / 100,
+        valorAplicado: Math.round(restoreAplicado * 100) / 100,
         updatedAt: Date.now(),
       })
     }

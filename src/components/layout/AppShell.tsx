@@ -1,6 +1,6 @@
-import { Outlet, useLocation, useSearchParams } from 'react-router-dom'
+import { Outlet, useLocation, useSearchParams, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { FabModal } from './FabModal'
@@ -127,6 +127,10 @@ function BackgroundMesh() {
 export function AppShell() {
   const { fabOpen, fabDefaultContaId, openFab, closeFab } = useUIStore()
   const location = useLocation()
+  const navigate = useNavigate()
+  // Ref pro navigate pra não invalidar useEffect de SW (que tem deps [])
+  const navigateRef = useRef(navigate)
+  useEffect(() => { navigateRef.current = navigate }, [navigate])
   useAutoLock()
   useNotificationCheck()
 
@@ -197,9 +201,25 @@ export function AppShell() {
     }
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
 
+    // SW manda { type: 'NAVIGATE', url } quando notif é clicada. Fallback
+    // pro w.navigate(url) que não funciona em Safari. Aqui usamos React
+    // Router pra navegação sem full reload.
+    const onSwMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'NAVIGATE' && typeof e.data.url === 'string') {
+        try {
+          const url = new URL(e.data.url, window.location.origin)
+          if (url.origin === window.location.origin) {
+            navigateRef.current(url.pathname + url.search + url.hash)
+          }
+        } catch { /* URL inválida: noop */ }
+      }
+    }
+    navigator.serviceWorker.addEventListener('message', onSwMessage)
+
     return () => {
       mounted = false
       navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange)
+      navigator.serviceWorker.removeEventListener('message', onSwMessage)
       if (registration && updateFoundListener) {
         registration.removeEventListener('updatefound', updateFoundListener)
       }

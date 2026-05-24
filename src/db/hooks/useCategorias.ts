@@ -66,10 +66,11 @@ export async function editCategoria(id: number, data: Partial<Categoria>) {
 }
 
 // Delete que evita FKs órfãs: reassina referências em transacoes,
-// lancamentosCartao e contasFixas pra categoria 'Outros' (despesa) ou
-// 'Outros' (receita) antes de remover. Sem isso, telas que fazem
+// lancamentosCartao, contasFixas, orcamentos e desejos pra categoria
+// 'Outros' (mesma tipo) antes de remover. Sem isso, telas que fazem
 // `categorias.find(c => c.id === tx.categoriaId)` recebem undefined e
-// renderizam "—" / quebram tooltip etc.
+// renderizam "—" / quebram tooltip / o Orçamento dessa categoria fica
+// fantasma.
 export async function deleteCategoria(id: number) {
   const cat = await db.categorias.get(id)
   if (!cat) return
@@ -88,6 +89,10 @@ export async function deleteCategoria(id: number) {
       // lancamentosCartao.categoriaId NÃO é indexado — filter scan
       db.lancamentosCartao.filter(l => l.categoriaId === id).modify({ categoriaId: fallbackId }),
       db.contasFixas.where('categoriaId').equals(id).modify({ categoriaId: fallbackId }),
+      // orcamentos: indexado em categoriaId
+      db.orcamentos.where('categoriaId').equals(id).modify({ categoriaId: fallbackId }),
+      // desejos: categoriaId opcional (filter scan, não indexado)
+      db.desejos.filter(d => d.categoriaId === id).modify({ categoriaId: fallbackId, updatedAt: Date.now() }),
     ])
   }
   return db.categorias.delete(id)

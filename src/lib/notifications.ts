@@ -156,8 +156,18 @@ export async function verificarPendencias(prefs: NotificationPrefs = NOTIF_PREFS
   // ─── 3. Orçamentos estourados ───────────────────────────────────
   if (prefs.orcamentoEstourado) {
     const orcamentos = await db.orcamentos.toArray()
+    // Bug histórico: aboveOrEqual SEM teto somava despesas futuras (em jan,
+    // se houvesse parcelas previstas pra fev/mar/dez, todas entravam) e
+    // disparava "orçamento estourado" falsamente cedo no mês. Agora usa
+    // between [01..fimDoMes] do mês corrente.
+    const inicio = `${ano}-${String(mes).padStart(2, '0')}-01`
+    // Fim do mês corrente — usa último dia do mês (32 funciona pq Date
+    // auto-corrige overflow): 2026-02-32 → 2026-03-04, então pegamos
+    // o ÚLTIMO dia válido criando Date com day=0 do mês SEGUINTE.
+    const lastDay = new Date(ano, mes, 0).getDate()
+    const fim = `${ano}-${String(mes).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
     const txs = await db.transacoes
-      .where('data').aboveOrEqual(`${ano}-${String(mes).padStart(2, '0')}-01`)
+      .where('data').between(inicio, fim, true, true)
       .toArray()
     const gastosPorCat = new Map<number, number>()
     // Exclui transferências: a despesa-perna na conta origem usaria a

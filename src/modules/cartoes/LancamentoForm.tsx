@@ -7,6 +7,7 @@ import {
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { Modal } from '@/components/ui/Modal'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
@@ -24,7 +25,7 @@ function initialLancamentoForm(lancamento?: LancamentoCartao | null) {
     descricao: lancamento?.descricao ?? '',
     categoriaId: lancamento?.categoriaId ? String(lancamento.categoriaId) : '',
     totalParcelas: lancamento?.totalParcelas ?? 1,
-    data: lancamento?.data ?? new Date().toISOString().split('T')[0],
+    data: lancamento?.data ?? todayISO(),
   }
 }
 

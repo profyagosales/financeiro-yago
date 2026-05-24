@@ -63,7 +63,9 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
   const { mes, ano } = mesAnoAtual()
 
   const tipoMeta = TIPO_META[tipo]
-  const valorNum = parseFloat(valor.replace(',', '.')) || 0
+  // Parse moeda BR completo: aceita "1.234,56" (separador de milhar + vírgula).
+  // Bug histórico: o replace só de ',' deixava o '.' e gerava NaN → R$ 0.
+  const valorNum = parseFloat(valor.replace(/\./g, '').replace(',', '.')) || 0
   const catSelecionada = categorias.find(c => c.id === catId)
 
   const addTagAction = (val: string) => {

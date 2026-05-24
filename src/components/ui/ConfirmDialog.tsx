@@ -57,7 +57,7 @@ export function ConfirmDialog({
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          onClick={onClose}
+          onClick={() => { if (!busy) onClose() }}
           style={{
             position: 'fixed', inset: 0, zIndex: 500,
             background: 'rgba(13,5,25,0.55)', backdropFilter: 'blur(8px)',

@@ -29,13 +29,16 @@ export function setupSyncHooks() {
       queueMicrotask(() => triggerPush())
     })
 
-    // updating: atualiza updatedAt
+    // updating: atualiza updatedAt + dispara push (SEMPRE)
+    // Bug histórico: o triggerPush() só rodava no `else` (quando o caller
+    // NÃO passava updatedAt). Mas TODOS os helpers passam updatedAt
+    // manualmente — resultado: edits silenciosamente paravam de sincronizar
+    // até o próximo create/delete. Agora dispara push em qualquer update.
     table.hook('updating', (mods: Record<string, unknown>) => {
-      // Se o caller já forneceu updatedAt, respeita; senão atualiza
+      queueMicrotask(() => triggerPush())
       if (!('updatedAt' in mods)) {
         return { ...mods, updatedAt: Date.now() }
       }
-      queueMicrotask(() => triggerPush())
       return undefined
     })
 

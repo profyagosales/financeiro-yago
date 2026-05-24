@@ -16,7 +16,7 @@ import type { Categoria } from '@/db/schema'
 import { useContas } from '@/db/hooks/useContas'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { fmt } from '@/lib/format'
+import { fmt, todayISO } from '@/lib/format'
 import {
   IconLock, IconDeviceFloppy, IconBrandChrome, IconDeviceMobile, IconBrandApple,
   IconRefresh, IconChevronRight, IconCheck, IconTableImport, IconShieldLock,
@@ -758,7 +758,7 @@ function parseCSVDate(s: string): string {
     const a = m[3].length === 2 ? `20${m[3]}` : m[3]
     return `${a}-${mo}-${d}`
   }
-  return new Date().toISOString().split('T')[0]
+  return todayISO()
 }
 
 function ImportCSVSection() {
@@ -800,7 +800,7 @@ function ImportCSVSection() {
     setImporting(true)
     let count = 0
     for (const row of rows) {
-      await addTransacao({ data: row.data, valor: row.valor, tipo: row.tipo, contaId: contaId!, categoriaId: catId!, descricao: row.descricao, status: 'confirmado', recorrencia: 'unica' })
+      await addTransacao({ data: row.data, valor: row.valor, tipo: row.tipo, contaId: contaId!, categoriaId: catId!, descricao: row.descricao, status: 'efetivada', recorrencia: 'unica' })
       count++
       setDone(count)
     }

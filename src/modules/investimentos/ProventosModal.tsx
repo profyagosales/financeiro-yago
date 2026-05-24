@@ -3,7 +3,7 @@ import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconCoins, IconTrash, IconPlus } from '@tabler/icons-react'
 import type { Investimento, ProventoTipo } from '@/db/schema'
 import { useProventos, addProvento, deleteProvento, calcDY12m, calcProventosMes } from '@/db/hooks/useInvestimentos'
-import { fmt } from '@/lib/format'
+import { fmt, todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
@@ -23,7 +23,7 @@ const TIPOS_PROVENTO: { value: ProventoTipo; label: string; cor: string }[] = [
 export function ProventosModal({ invest, onClose }: Props) {
   // body scroll lock agora é responsabilidade do LegacyModalShell
   const proventos = useProventos(invest.id)
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISO()
 
   const [form, setForm] = useState({
     data: today,

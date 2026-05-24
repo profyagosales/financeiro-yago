@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Meta, type Investimento } from '../schema'
+import { todayISO } from '@/lib/format'
 
 export function useMetas() {
   return useLiveQuery(() => db.metas.filter(m => m.ativo).toArray(), []) ?? []
@@ -86,7 +87,7 @@ export async function aportarMeta(id: number, valor: number, opts?: {
     const catId = catInvest?.id ?? (await db.categorias.where('tipo').equals('despesa').first())?.id ?? 1
     const { addTransacao } = await import('./useTransacoes')
     await addTransacao({
-      data: opts.data ?? new Date().toISOString().split('T')[0],
+      data: opts.data ?? todayISO(),
       valor,
       tipo: 'despesa',
       contaId: opts.contaOrigemId,
@@ -110,6 +111,11 @@ export async function deleteMeta(id: number) {
 // alvo = média das despesas dos últimos 6 meses × meses de cobertura.
 // Exclui transferências (transferId): elas geram despesa na conta-origem
 // mas não são gasto real — inflariam o alvo.
+//
+// Bug histórico: dividia o total SEMPRE por 6, mesmo quando o usuário
+// tinha < 6 meses de histórico (resultado: alvo subestimado em até 3x
+// no início do uso). Agora divide pelo nº de meses DISTINTOS com despesa
+// (mínimo 1, máximo 6) — reflete o gasto médio real.
 export async function calcularAlvoReserva(mesesCobertura: 3 | 6 | 12): Promise<number> {
   const todasDespesas = await db.transacoes
     .filter(t => t.tipo === 'despesa' && !t.transferId)
@@ -122,7 +128,14 @@ export async function calcularAlvoReserva(mesesCobertura: 3 | 6 | 12): Promise<n
   const recentes = todasDespesas.filter(t => new Date(t.data + 'T00:00:00') >= sixMonthsAgo)
   if (recentes.length === 0) return 0
 
+  // Conta meses DISTINTOS com despesa (YYYY-MM), max 6
+  const mesesComDespesa = new Set<string>()
+  for (const t of recentes) {
+    mesesComDespesa.add(t.data.slice(0, 7)) // YYYY-MM
+  }
+  const divisor = Math.min(6, Math.max(1, mesesComDespesa.size))
+
   const total = recentes.reduce((s, t) => s + t.valor, 0)
-  const mediaMensal = total / 6
+  const mediaMensal = total / divisor
   return Math.round(mediaMensal * mesesCobertura * 100) / 100
 }

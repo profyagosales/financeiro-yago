@@ -638,7 +638,7 @@ function ContaFixaForm({ open, editing, mes: _mes, ano: _ano, onClose, onDelete 
 
   const handleSave = async () => {
     const nomeTrim = nome.trim()
-    const valorNum = parseFloat(valor.replace(',', '.'))
+    const valorNum = parseFloat(valor.replace(/\./g, '').replace(',', '.'))
     if (!nomeTrim || !valorNum || !categoriaId) return
     const data = {
       nome: nomeTrim,
@@ -664,7 +664,7 @@ function ContaFixaForm({ open, editing, mes: _mes, ano: _ano, onClose, onDelete 
     }
   }
 
-  const canSave = !!nome.trim() && parseFloat(valor.replace(',', '.')) > 0 && categoriaId !== null
+  const canSave = !!nome.trim() && parseFloat(valor.replace(/\./g, '').replace(',', '.')) > 0 && categoriaId !== null
 
   return (
     <LegacyModalShell open={open} onClose={onClose} maxWidth={560}

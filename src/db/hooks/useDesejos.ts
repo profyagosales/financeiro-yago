@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Desejo, type DesejoPrioridade, type DesejoStatus } from '../schema'
+import { todayISO } from '@/lib/format'
 
 export function useDesejos() {
   return useLiveQuery(() => db.desejos.toArray(), []) ?? []
@@ -51,7 +52,7 @@ export async function marcarComoComprado(
   transacaoId: number,
   valorReal: number,
 ) {
-  const hoje = new Date().toISOString().split('T')[0]
+  const hoje = todayISO()
   return db.desejos.update(id, {
     status: 'comprado',
     transacaoId,

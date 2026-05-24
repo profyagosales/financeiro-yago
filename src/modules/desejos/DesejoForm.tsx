@@ -3,6 +3,7 @@ import { IconX, IconCheck, IconLink, IconNote, IconTrash, IconShoppingCart } fro
 import type { Desejo, DesejoPrioridade } from '@/db/schema'
 import { addDesejo, editDesejo } from '@/db/hooks/useDesejos'
 import { useCategorias } from '@/db/hooks/useCategorias'
+import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 import { PRIORIDADES } from './constants'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
@@ -22,7 +23,7 @@ interface Props {
 export function DesejoForm({ desejo, presetPrioridade, onClose, onDelete, onComprar }: Props) {
   // body scroll lock agora é responsabilidade do LegacyModalShell
   const categorias = useCategorias('despesa')
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISO()
   const isEditing = !!desejo
 
   const [form, setForm] = useState({

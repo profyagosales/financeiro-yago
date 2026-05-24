@@ -5,6 +5,7 @@ import { IconX, IconCheck, IconShoppingCart, IconTrash, IconPlus, IconCurrencyDo
 import type { Investimento } from '@/db/schema'
 import { useAportes, addAporte, deleteAporte, calcAportesStats, useDolar } from '@/db/hooks/useInvestimentos'
 import { fetchCotacaoDolar, fetchCotacaoPorTipo } from '@/lib/cotacoes'
+import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 // useBodyScrollLock removido — LegacyModalShell já cuida disso
 
@@ -16,7 +17,7 @@ interface Props {
 export function AportesModal({ invest, onClose }: Props) {
   // body scroll lock agora é responsabilidade do LegacyModalShell
   const aportes = useAportes(invest.id)
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISO()
   const stats = calcAportesStats(aportes)
   const dolarCache = useDolar()
 

@@ -103,15 +103,25 @@ export function projecao30d(opts: ProjecaoOpts): Projecao30d {
 }
 
 // ─── Comprometido restante (contas fixas + parcelas) ───────────────
+// Inclui:
+//   - Fixas com vencimento HOJE ou FUTURO (ainda não pagas)
+//   - Fixas VENCIDAS no mês (já passaram do diaVencimento mas seguem
+//     'pendente') — atrasadas, ainda comprometem o saldoLivre
+//   - Parcelas de cartão dentro do mês corrente
+//
+// Bug histórico: filtro `diaVencimento >= diaAtual` excluía fixas
+// vencidas → saldoLivre ficava otimista (usuário "tinha dinheiro"
+// mas devia uma fixa atrasada).
 export function comprometidoRestante(
   contasFixas: ContaFixa[],
   pagamentos: PagamentoFixo[],
   parcelasFuturas: LancamentoCartao[],
-  diaAtual: number,
+  _diaAtual: number,
 ): { fixasPendentes: number; parcelas: number; total: number } {
+  // Todas as fixas ativas que NÃO foram pagas no mês entram em pendentes
+  // (independente do dia — vencidas seguem comprometendo o saldo).
   const fixasPendentes = contasFixas
     .filter(cf => cf.ativo)
-    .filter(cf => cf.diaVencimento >= diaAtual)
     .filter(cf => !pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago'))
     .reduce((s, cf) => s + cf.valor, 0)
   // Parcelas restantes (todas que caem dentro do mês corrente após hoje)

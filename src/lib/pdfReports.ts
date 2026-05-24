@@ -14,6 +14,12 @@ const fmtDate = (d: string) => {
   try { return new Date(d + 'T00:00:00').toLocaleDateString('pt-BR') } catch { return d }
 }
 
+// today em YYYY-MM-DD na HORA LOCAL (não UTC — evita off-by-one no BRT)
+const todayISO = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 // Paleta usada nos PDFs (consistente com o app)
 const COR = {
   terra: [196, 85, 59] as [number, number, number],
@@ -203,7 +209,7 @@ export async function gerarRelatorioContas(opts: PDFOptions = {}): Promise<Blob>
   const doc = new jsPDF('p', 'mm', 'a4')
   addHeader(doc, 'Extrato de contas',
     opts.periodoInicio
-      ? `Período: ${fmtDate(opts.periodoInicio)} a ${fmtDate(opts.periodoFim ?? new Date().toISOString().split('T')[0])}`
+      ? `Período: ${fmtDate(opts.periodoInicio)} a ${fmtDate(opts.periodoFim ?? todayISO())}`
       : 'Histórico completo')
 
   let cursorY = 52
@@ -483,7 +489,7 @@ export async function gerarRelatorioTransacoes(opts: PDFOptions = {}): Promise<B
   const doc = new jsPDF('p', 'mm', 'a4')
   addHeader(doc, 'Extrato de transações',
     opts.periodoInicio
-      ? `${fmtDate(opts.periodoInicio)} a ${fmtDate(opts.periodoFim ?? new Date().toISOString().split('T')[0])}`
+      ? `${fmtDate(opts.periodoInicio)} a ${fmtDate(opts.periodoFim ?? todayISO())}`
       : 'Todas as transações')
 
   addKpiRow(doc, 52, [

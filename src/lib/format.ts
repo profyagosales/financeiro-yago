@@ -17,8 +17,20 @@ export function fmtDate(dateStr: string) {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
+// ─── Data de hoje em YYYY-MM-DD (HORA LOCAL, não UTC) ──────────────
+// Bug histórico: `toISOString().split('T')[0]` retorna a data em UTC, que
+// no Brasil (UTC-3) avança 1 dia toda noite após 21h local. Resultado:
+// lançamentos default com data de amanhã → comprometeu fluxo de caixa
+// noturno por meses. Sempre usar este helper (ou `todayISO()` que aliasa).
 export function todayISO() {
-  return new Date().toISOString().split('T')[0]
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// Converte um Date arbitrário pra YYYY-MM-DD em hora LOCAL.
+// Use sempre que tiver um Date e precisar serializar como ISO date-only.
+export function toISODate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 export function mesAnoAtual() {

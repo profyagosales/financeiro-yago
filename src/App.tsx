@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useEffect, lazy, Suspense } from 'react'
 import { AuthFlow } from '@/screens/AuthFlow'
 import { AppShell } from '@/components/layout/AppShell'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { seedCategories, deduplicateCategories } from '@/db/schema'
 
 // ─── Lazy-loaded routes ──────────────────────────────────────────────
@@ -47,25 +48,27 @@ export default function App() {
   }, [])
 
   return (
-    <AuthFlow>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<AppShell />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="transacoes" element={<Suspense fallback={<RouteLoading />}><TransacoesPage /></Suspense>} />
-            <Route path="cartoes" element={<Suspense fallback={<RouteLoading />}><CartoesPage /></Suspense>} />
-            <Route path="mais" element={<Suspense fallback={<RouteLoading />}><MaisPage /></Suspense>} />
-            <Route path="contas" element={<Suspense fallback={<RouteLoading />}><ContasPage /></Suspense>} />
-            <Route path="contas-fixas" element={<Suspense fallback={<RouteLoading />}><ContasFixasPage /></Suspense>} />
-            <Route path="metas" element={<Suspense fallback={<RouteLoading />}><MetasPage /></Suspense>} />
-            <Route path="investimentos" element={<Suspense fallback={<RouteLoading />}><InvestimentosPage /></Suspense>} />
-            <Route path="dividas" element={<Suspense fallback={<RouteLoading />}><DividasPage /></Suspense>} />
-            <Route path="desejos" element={<Suspense fallback={<RouteLoading />}><DesejosPage /></Suspense>} />
-            <Route path="relatorios" element={<Suspense fallback={<RouteLoading />}><RelatoriosPage /></Suspense>} />
-            <Route path="configuracoes" element={<Suspense fallback={<RouteLoading />}><ConfiguracoesPage /></Suspense>} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </AuthFlow>
+    <ErrorBoundary>
+      <AuthFlow>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<AppShell />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="transacoes" element={<Suspense fallback={<RouteLoading />}><TransacoesPage /></Suspense>} />
+              <Route path="cartoes" element={<Suspense fallback={<RouteLoading />}><CartoesPage /></Suspense>} />
+              <Route path="mais" element={<Suspense fallback={<RouteLoading />}><MaisPage /></Suspense>} />
+              <Route path="contas" element={<Suspense fallback={<RouteLoading />}><ContasPage /></Suspense>} />
+              <Route path="contas-fixas" element={<Suspense fallback={<RouteLoading />}><ContasFixasPage /></Suspense>} />
+              <Route path="metas" element={<Suspense fallback={<RouteLoading />}><MetasPage /></Suspense>} />
+              <Route path="investimentos" element={<Suspense fallback={<RouteLoading />}><InvestimentosPage /></Suspense>} />
+              <Route path="dividas" element={<Suspense fallback={<RouteLoading />}><DividasPage /></Suspense>} />
+              <Route path="desejos" element={<Suspense fallback={<RouteLoading />}><DesejosPage /></Suspense>} />
+              <Route path="relatorios" element={<Suspense fallback={<RouteLoading />}><RelatoriosPage /></Suspense>} />
+              <Route path="configuracoes" element={<Suspense fallback={<RouteLoading />}><ConfiguracoesPage /></Suspense>} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </AuthFlow>
+    </ErrorBoundary>
   )
 }

@@ -32,11 +32,11 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
     [conta.id],
   ) ?? []
 
-  // Janela de 30 dias
+  // Janela de 30 dias (toISOString → UTC, off-by-one no BRT à noite)
   const hoje = new Date()
   const trintaDiasAtras = new Date(hoje)
   trintaDiasAtras.setDate(hoje.getDate() - 29)
-  const inicio30Str = trintaDiasAtras.toISOString().split('T')[0]
+  const inicio30Str = `${trintaDiasAtras.getFullYear()}-${String(trintaDiasAtras.getMonth() + 1).padStart(2, '0')}-${String(trintaDiasAtras.getDate()).padStart(2, '0')}`
   const txs30d = todasTxs.filter(t => t.data >= inicio30Str)
 
   // Métricas
@@ -58,11 +58,11 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
       const delta = t.tipo === 'receita' ? t.valor : -t.valor
       deltaByDay.set(t.data, (deltaByDay.get(t.data) ?? 0) + delta)
     })
-    // De hoje pra trás, 30 dias
+    // De hoje pra trás, 30 dias (hora LOCAL, não UTC)
     for (let i = 0; i < 30; i++) {
       const d = new Date(hoje)
       d.setDate(hoje.getDate() - i)
-      const key = d.toISOString().split('T')[0]
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       pts.push({
         dateKey: key,
         dia: d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', ''),

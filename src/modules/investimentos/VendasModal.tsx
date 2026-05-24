@@ -5,6 +5,7 @@ import { IconX, IconCheck, IconShoppingBag, IconTrash, IconPlus, IconArrowUpRigh
 import type { Investimento } from '@/db/schema'
 import { useMovimentacoesInvest, registrarVenda, registrarResgate, deleteMovimentacaoInvest, calcVendasStats, isRendaVariavel } from '@/db/hooks/useInvestimentos'
 import { fetchCotacaoPorTipo } from '@/lib/cotacoes'
+import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
 export function VendasModal({ invest, onClose }: Props) {
   // body scroll lock agora é responsabilidade do LegacyModalShell
   const movs = useMovimentacoesInvest(invest.id)
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISO()
   const stats = calcVendasStats(movs)
   const isVar = isRendaVariavel(invest.tipo)
   const moeda = invest.moeda ?? 'BRL'

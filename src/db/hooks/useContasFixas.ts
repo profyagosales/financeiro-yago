@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type ContaFixa } from '../schema'
+import { todayISO } from '@/lib/format'
 
 export function useContasFixas() {
   return useLiveQuery(() => db.contasFixas.filter(c => c.ativo).toArray(), []) ?? []
@@ -65,7 +66,7 @@ function tagPagamento(contaFixaId: number, mes: number, ano: number): string {
 
 export async function marcarPago(contaFixaId: number, mes: number, ano: number, valor: number) {
   const existing = await db.pagamentosFixos.where({ contaFixaId, mes, ano }).first()
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISO()
   if (existing) await db.pagamentosFixos.update(existing.id!, { status: 'pago', dataPagamento: today, valor })
   else await db.pagamentosFixos.add({ contaFixaId, mes, ano, status: 'pago', dataPagamento: today, valor })
 
