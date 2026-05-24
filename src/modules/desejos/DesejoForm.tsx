@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { IconX, IconCheck, IconLink, IconNote } from '@tabler/icons-react'
+import { IconX, IconCheck, IconLink, IconNote, IconTrash, IconShoppingCart } from '@tabler/icons-react'
 import type { Desejo, DesejoPrioridade } from '@/db/schema'
 import { addDesejo, editDesejo } from '@/db/hooks/useDesejos'
 import { useCategorias } from '@/db/hooks/useCategorias'
@@ -10,9 +10,15 @@ interface Props {
   desejo?: Desejo | null
   presetPrioridade?: DesejoPrioridade
   onClose: () => void
+  /** Quando definida + modo edit, exibe botão "Excluir" no rodapé.
+   *  Desktop usa botão próprio no DesejoCard e não passa essa prop. */
+  onDelete?: () => void
+  /** Quando definida + modo edit + desejo aberto, exibe botão "Comprar" no rodapé.
+   *  Desktop usa botão próprio no DesejoCard e não passa essa prop. */
+  onComprar?: () => void
 }
 
-export function DesejoForm({ desejo, presetPrioridade, onClose }: Props) {
+export function DesejoForm({ desejo, presetPrioridade, onClose, onDelete, onComprar }: Props) {
   // body scroll lock agora é responsabilidade do LegacyModalShell
   const categorias = useCategorias('despesa')
   const today = new Date().toISOString().split('T')[0]
@@ -77,13 +83,34 @@ export function DesejoForm({ desejo, presetPrioridade, onClose }: Props) {
         </div>
       }
       footer={
-        <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleSave} disabled={!canSave}
-            style={{ ...PRIMARY_BTN, opacity: canSave ? 1 : 0.5, cursor: canSave ? 'pointer' : 'not-allowed' }}>
-            <IconCheck size={16} stroke={2.5} />
-            {isEditing ? 'Salvar' : 'Adicionar'}
-          </button>
+        <div style={{
+          padding: '14px 22px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          gap: 10, flexWrap: 'wrap',
+        }}>
+          {/* Lado esquerdo: ações secundárias (delete + comprar) só em modo edit */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {isEditing && onDelete && (
+              <button onClick={onDelete} style={DANGER_GHOST_BTN}>
+                <IconTrash size={15} stroke={2.2} /> Excluir
+              </button>
+            )}
+            {isEditing && onComprar && desejo?.status === 'aberto' && (
+              <button onClick={onComprar} style={SUCCESS_BTN}>
+                <IconShoppingCart size={15} stroke={2.2} /> Comprei
+              </button>
+            )}
+          </div>
+
+          {/* Lado direito: ações primárias */}
+          <div style={{ display: 'flex', gap: 10, marginLeft: 'auto' }}>
+            <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
+            <button onClick={handleSave} disabled={!canSave}
+              style={{ ...PRIMARY_BTN, opacity: canSave ? 1 : 0.5, cursor: canSave ? 'pointer' : 'not-allowed' }}>
+              <IconCheck size={16} stroke={2.5} />
+              {isEditing ? 'Salvar' : 'Adicionar'}
+            </button>
+          </div>
         </div>
       }
     >
@@ -234,4 +261,21 @@ const SECONDARY_BTN: React.CSSProperties = {
   background: 'transparent', color: '#7A5C4F', border: '1.5px solid #EDE6DC',
   borderRadius: 12, padding: '11px 18px', cursor: 'pointer',
   fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+}
+
+const DANGER_GHOST_BTN: React.CSSProperties = {
+  background: 'rgba(196,85,59,0.08)', color: '#C4553B',
+  border: '1.5px solid rgba(196,85,59,0.25)', borderRadius: 12,
+  padding: '11px 14px', cursor: 'pointer',
+  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+}
+
+const SUCCESS_BTN: React.CSSProperties = {
+  background: 'linear-gradient(135deg, #3A8580, #2C7470)', color: '#FFFFFF',
+  border: 'none', borderRadius: 12,
+  padding: '11px 16px', cursor: 'pointer',
+  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+  display: 'inline-flex', alignItems: 'center', gap: 7,
+  boxShadow: '0 4px 16px rgba(58,133,128,0.35)',
 }

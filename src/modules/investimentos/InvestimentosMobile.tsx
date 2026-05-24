@@ -132,7 +132,161 @@ export function InvestimentosMobile() {
           onClose={() => { setFormOpen(false); setEditing(null) }}
         />
       )}
+
+      <AnimatePresence>
+        {actionFor && (
+          <InvestimentoActionSheet
+            invest={actionFor}
+            onClose={() => setActionFor(null)}
+            onEdit={() => { setEditing(actionFor); setActionFor(null); setFormOpen(true) }}
+            onAportes={() => { setAportesFor(actionFor); setActionFor(null) }}
+            onProventos={() => { setProventosFor(actionFor); setActionFor(null) }}
+            onVendas={() => { setVendasFor(actionFor); setActionFor(null) }}
+          />
+        )}
+      </AnimatePresence>
+
+      {aportesFor && (
+        <AportesModal invest={aportesFor} onClose={() => setAportesFor(null)} />
+      )}
+      {proventosFor && (
+        <ProventosModal invest={proventosFor} onClose={() => setProventosFor(null)} />
+      )}
+      {vendasFor && (
+        <VendasModal invest={vendasFor} onClose={() => setVendasFor(null)} />
+      )}
     </div>
+  )
+}
+
+// ─── Action sheet (bottom sheet) que aparece ao tocar num investimento ───
+function InvestimentoActionSheet({
+  invest, onClose, onEdit, onAportes, onProventos, onVendas,
+}: {
+  invest: Investimento
+  onClose: () => void
+  onEdit: () => void
+  onAportes: () => void
+  onProventos: () => void
+  onVendas: () => void
+}) {
+  const isVar = isRendaVariavel(invest.tipo)
+  const showProventos = aceitaProventos(invest.tipo) || invest.tipo === 'Cripto'
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 90,
+        background: 'rgba(28,10,5,0.45)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      }}>
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#FFFDF9', width: '100%', maxWidth: 520,
+          borderTopLeftRadius: 24, borderTopRightRadius: 24,
+          padding: '12px 18px calc(20px + env(safe-area-inset-bottom))',
+          boxShadow: '0 -8px 32px rgba(13,6,4,0.18)',
+        }}>
+        {/* Handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+          <div style={{ width: 36, height: 4, borderRadius: 999, background: 'rgba(44,26,15,0.18)' }} />
+        </div>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 4px 14px' }}>
+          <div style={{ width: 4, height: 36, borderRadius: 3, background: invest.cor, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{
+              fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700,
+              color: '#2C1A0F', margin: 0, letterSpacing: '-0.3px',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{invest.nome}</p>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A',
+              margin: '2px 0 0', fontWeight: 500, letterSpacing: '.04em',
+            }}>{invest.tipo}{invest.instituicao ? ` · ${invest.instituicao}` : ''}</p>
+          </div>
+          <button onClick={onClose} aria-label="Fechar"
+            style={{
+              background: 'rgba(44,26,15,0.06)', border: 'none', borderRadius: 10,
+              width: 34, height: 34, cursor: 'pointer', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+            <IconX size={16} stroke={2} color="#7A5C4F" />
+          </button>
+        </div>
+
+        {/* Ações */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <ActionRow
+            onClick={onAportes}
+            icon={<IconShoppingCart size={18} stroke={2} color="#FFFFFF" />}
+            iconBg="linear-gradient(135deg, #504E76, #3A3860)"
+            title={isVar ? 'Aportes' : 'Aplicações'}
+            subtitle={isVar ? 'Registrar compras / ver histórico' : 'Registrar novos aportes'}
+          />
+          {showProventos && (
+            <ActionRow
+              onClick={onProventos}
+              icon={<IconCoins size={18} stroke={2} color="#FFFFFF" />}
+              iconBg="linear-gradient(135deg, #3A8580, #1E7D5A)"
+              title="Proventos"
+              subtitle="Dividendos, JCP, aluguéis, rendimentos"
+            />
+          )}
+          <ActionRow
+            onClick={onVendas}
+            icon={<IconShoppingBag size={18} stroke={2} color="#FFFFFF" />}
+            iconBg="linear-gradient(135deg, #A8442B, #6E2918)"
+            title={isVar ? 'Vendas' : 'Resgates'}
+            subtitle={isVar ? 'Registrar venda e ver lucro/prejuízo' : 'Registrar resgate e ver impacto'}
+          />
+          <ActionRow
+            onClick={onEdit}
+            icon={<IconEdit size={18} stroke={2} color="#FFFFFF" />}
+            iconBg="linear-gradient(135deg, #7A5C4F, #5C4339)"
+            title="Editar"
+            subtitle="Nome, instituição, vínculos e mais"
+          />
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+function ActionRow({ onClick, icon, iconBg, title, subtitle }: {
+  onClick: () => void
+  icon: React.ReactNode
+  iconBg: string
+  title: string
+  subtitle: string
+}) {
+  return (
+    <button onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        background: '#FFFFFF', border: '1px solid #EDE6DC',
+        borderRadius: 14, padding: '12px 14px',
+        cursor: 'pointer', textAlign: 'left', width: '100%',
+        fontFamily: "'Plus Jakarta Sans',sans-serif",
+      }}>
+      <div style={{
+        width: 38, height: 38, borderRadius: 11, background: iconBg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        boxShadow: '0 4px 12px rgba(44,26,15,0.14)',
+      }}>
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13.5, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>{title}</p>
+        <p style={{ fontSize: 11, color: '#9B7B6A', margin: '2px 0 0', fontWeight: 500 }}>{subtitle}</p>
+      </div>
+      <IconChevronRight size={14} stroke={2.2} color="#9B7B6A" />
+    </button>
   )
 }
 

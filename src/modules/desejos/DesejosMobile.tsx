@@ -1,11 +1,14 @@
 // ─── Desejos mobile — lista limpa com pills de prioridade ──────────
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { IconPlus, IconHeart, IconShoppingCart, IconChevronRight, IconFlame } from '@tabler/icons-react'
-import { useDesejos } from '@/db/hooks/useDesejos'
+import { IconPlus, IconHeart, IconShoppingCart, IconChevronRight } from '@tabler/icons-react'
+import { useDesejos, deleteDesejo } from '@/db/hooks/useDesejos'
 import { PRIORIDADE_BY } from './constants'
 import { fmt } from '@/lib/format'
 import { DesejoForm } from './DesejoForm'
+import { ComprarForm } from './ComprarForm'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { sounds, haptic } from '@/lib/sounds'
 import type { Desejo } from '@/db/schema'
 
 const C = {
@@ -27,6 +30,8 @@ export function DesejosMobile() {
   const totalEstimado = abertos.reduce((s, d) => s + (d.valorEstimado ?? 0), 0)
   const [creating, setCreating] = useState<Desejo['prioridade'] | null>(null)
   const [editing, setEditing] = useState<Desejo | null>(null)
+  const [comprando, setComprando] = useState<Desejo | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Desejo | null>(null)
 
   return (
     <div style={{ position: 'relative', minHeight: '100dvh', width: '100%',
@@ -90,8 +95,36 @@ export function DesejosMobile() {
           desejo={editing}
           presetPrioridade={creating ?? undefined}
           onClose={() => { setCreating(null); setEditing(null) }}
+          onDelete={editing ? () => setConfirmDelete(editing) : undefined}
+          onComprar={editing ? () => { setComprando(editing); setEditing(null) } : undefined}
         />
       )}
+
+      {comprando && (
+        <ComprarForm
+          desejo={comprando}
+          onClose={() => setComprando(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title={`Excluir "${confirmDelete?.nome ?? 'desejo'}"?`}
+        body={confirmDelete?.transacaoId
+          ? 'O desejo será removido. A transação vinculada será mantida no histórico.'
+          : 'O desejo será removido permanentemente da sua lista.'}
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={async () => {
+          if (confirmDelete?.id !== undefined) {
+            await deleteDesejo(confirmDelete.id)
+            sounds.success(); haptic('heavy')
+          }
+          setConfirmDelete(null)
+          setEditing(null)
+        }}
+        onClose={() => setConfirmDelete(null)}
+      />
     </div>
   )
 }

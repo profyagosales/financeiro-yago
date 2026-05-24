@@ -1,12 +1,16 @@
 // ─── Metas mobile — identidade peach + lista de metas + reserva ────
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { IconPlus, IconTarget, IconShieldCheck, IconChevronRight, IconTrophy } from '@tabler/icons-react'
-import { useMetasComputed, useReservaEmergencia } from '@/db/hooks/useMetas'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  IconPlus, IconTarget, IconShieldCheck, IconChevronRight, IconTrophy,
+  IconCurrencyReal, IconEdit, IconTrash, IconX,
+} from '@tabler/icons-react'
+import { useMetasComputed, useReservaEmergencia, deleteMeta, type MetaComputed } from '@/db/hooks/useMetas'
 import { fmt } from '@/lib/format'
-import { Modal } from '@/components/ui/Modal'
 import { MetaForm } from './MetaForm'
 import { ReservaCard } from './ReservaCard'
+import { AporteForm } from './AporteForm'
+import { InvestimentoForm } from '../investimentos/InvestimentoForm'
 
 const C = {
   bgTop: '#FFE2C7', bgMid: '#FFF1DE', bgBottom: '#FFE9D7',
@@ -27,6 +31,11 @@ export function MetasMobile() {
   const outras = metas.filter(m => m.tipo !== 'reserva_emergencia')
   const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  // Tap-to-action: ao tocar numa meta, abre sheet com Aportar / Editar / Excluir
+  const [actionFor, setActionFor] = useState<MetaComputed | null>(null)
+  const [aporteFor, setAporteFor] = useState<MetaComputed | null>(null)
+  const [vincularInvestParaMetaId, setVincularInvestParaMetaId] = useState<number | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<MetaComputed | null>(null)
 
   const ativas = outras.filter(m => m.progressoPct < 100)
   const concluidas = outras.filter(m => m.progressoPct >= 100)
@@ -76,7 +85,7 @@ export function MetasMobile() {
             <ReservaCard
               reserva={reserva}
               onEdit={() => { setEditingId(reserva.id!); setFormOpen(true) }}
-              onAporte={() => { setEditingId(reserva.id!); setFormOpen(true) }}
+              onAporte={() => setAporteFor(reserva)}
             />
           </motion.section>
         )}
@@ -91,7 +100,7 @@ export function MetasMobile() {
             <h2 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: C.inkSoft, letterSpacing: '.16em', textTransform: 'uppercase', margin: '0 0 8px', padding: '0 4px' }}>Em andamento</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {ativas.map(m => (
-                <MetaRow key={m.id} meta={m} onClick={() => { setEditingId(m.id!); setFormOpen(true) }} />
+                <MetaRow key={m.id} meta={m} onClick={() => setActionFor(m)} />
               ))}
             </div>
           </motion.section>
@@ -103,7 +112,7 @@ export function MetasMobile() {
             <h2 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: C.green, letterSpacing: '.16em', textTransform: 'uppercase', margin: '0 0 8px', padding: '0 4px' }}>Concluídas · {concluidas.length}</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {concluidas.map(m => (
-                <MetaRow key={m.id} meta={m} concluida onClick={() => { setEditingId(m.id!); setFormOpen(true) }} />
+                <MetaRow key={m.id} meta={m} concluida onClick={() => setActionFor(m)} />
               ))}
             </div>
           </motion.section>
@@ -117,7 +126,208 @@ export function MetasMobile() {
           onClose={() => { setFormOpen(false); setEditingId(null) }}
         />
       )}
+
+      <AnimatePresence>
+        {actionFor && (
+          <MetaActionSheet
+            meta={actionFor}
+            onClose={() => setActionFor(null)}
+            onAporte={() => { setAporteFor(actionFor); setActionFor(null) }}
+            onEdit={() => { setEditingId(actionFor.id!); setActionFor(null); setFormOpen(true) }}
+            onDelete={() => { setConfirmDelete(actionFor); setActionFor(null) }}
+          />
+        )}
+      </AnimatePresence>
+
+      {aporteFor && (
+        <AporteForm
+          meta={aporteFor}
+          onClose={() => setAporteFor(null)}
+          onOpenInvestimento={() => {
+            if (aporteFor.id !== undefined) {
+              setVincularInvestParaMetaId(aporteFor.id)
+              setAporteFor(null)
+            }
+          }}
+        />
+      )}
+
+      {vincularInvestParaMetaId !== null && (
+        <InvestimentoForm
+          presetMetaId={vincularInvestParaMetaId}
+          onClose={() => setVincularInvestParaMetaId(null)}
+        />
+      )}
+
+      <AnimatePresence>
+        {confirmDelete && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setConfirmDelete(null)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 110,
+              background: 'rgba(28,10,5,0.55)', backdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+            }}>
+            <motion.div initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: '#FFFDF9', borderRadius: 22, padding: '28px 24px', maxWidth: 380, width: '100%', textAlign: 'center', boxShadow: '0 24px 64px rgba(13,6,4,0.4)' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: '#FAF0EE', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <IconTrash size={26} color={C.orange} stroke={1.8} />
+              </div>
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: '-0.5px', margin: '0 0 8px' }}>
+                Excluir "{confirmDelete.nome}"?
+              </p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: C.muted, marginBottom: 22, lineHeight: 1.5 }}>
+                A meta será desativada. Investimentos vinculados são mantidos, mas perdem o vínculo.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setConfirmDelete(null)}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #E8E0D5', background: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <motion.button whileTap={{ scale: 0.97 }}
+                  onClick={async () => {
+                    if (confirmDelete.id !== undefined) await deleteMeta(confirmDelete.id)
+                    setConfirmDelete(null)
+                  }}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: C.orange, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer', boxShadow: '0 4px 12px rgba(196,85,59,0.3)' }}>
+                  Excluir
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  )
+}
+
+// ─── Action sheet ao tocar numa meta ──────────────────────────────
+function MetaActionSheet({
+  meta, onClose, onAporte, onEdit, onDelete,
+}: {
+  meta: MetaComputed
+  onClose: () => void
+  onAporte: () => void
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const isReserva = meta.tipo === 'reserva_emergencia'
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 90,
+        background: 'rgba(28,10,5,0.45)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      }}>
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#FFFDF9', width: '100%', maxWidth: 520,
+          borderTopLeftRadius: 24, borderTopRightRadius: 24,
+          padding: '12px 18px calc(20px + env(safe-area-inset-bottom))',
+          boxShadow: '0 -8px 32px rgba(13,6,4,0.18)',
+        }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+          <div style={{ width: 36, height: 4, borderRadius: 999, background: 'rgba(44,26,15,0.18)' }} />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 4px 14px' }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 12,
+            background: `${meta.cor}22`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            {isReserva
+              ? <IconShieldCheck size={20} stroke={2} color={meta.cor} />
+              : <IconTarget size={20} stroke={2} color={meta.cor} />}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{
+              fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700,
+              color: C.ink, margin: 0, letterSpacing: '-0.3px',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{meta.nome}</p>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: C.muted,
+              margin: '2px 0 0', fontWeight: 500,
+            }}>
+              {fmt(meta.valorAtualTotal)} de {fmt(meta.valorAlvo)} · {meta.progressoPct.toFixed(0)}%
+            </p>
+          </div>
+          <button onClick={onClose} aria-label="Fechar"
+            style={{
+              background: 'rgba(44,26,15,0.06)', border: 'none', borderRadius: 10,
+              width: 34, height: 34, cursor: 'pointer', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+            <IconX size={16} stroke={2} color="#7A5C4F" />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <ActionRow
+            onClick={onAporte}
+            icon={<IconCurrencyReal size={18} stroke={2} color="#FFFFFF" />}
+            iconBg="linear-gradient(135deg, #F1642E, #C4553B)"
+            title="Aportar"
+            subtitle="Adicionar dinheiro à meta"
+          />
+          <ActionRow
+            onClick={onEdit}
+            icon={<IconEdit size={18} stroke={2} color="#FFFFFF" />}
+            iconBg="linear-gradient(135deg, #7A5C4F, #5C4339)"
+            title="Editar"
+            subtitle="Alvo, prazo, cor e mais"
+          />
+          {!isReserva && (
+            <ActionRow
+              onClick={onDelete}
+              icon={<IconTrash size={18} stroke={2} color="#FFFFFF" />}
+              iconBg="linear-gradient(135deg, #A8442B, #6E2918)"
+              title="Excluir"
+              subtitle="Desativa a meta (não apaga investimentos)"
+            />
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+function ActionRow({ onClick, icon, iconBg, title, subtitle }: {
+  onClick: () => void
+  icon: React.ReactNode
+  iconBg: string
+  title: string
+  subtitle: string
+}) {
+  return (
+    <button onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        background: '#FFFFFF', border: '1px solid #EDE6DC',
+        borderRadius: 14, padding: '12px 14px',
+        cursor: 'pointer', textAlign: 'left', width: '100%',
+        fontFamily: "'Plus Jakarta Sans',sans-serif",
+      }}>
+      <div style={{
+        width: 38, height: 38, borderRadius: 11, background: iconBg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        boxShadow: '0 4px 12px rgba(44,26,15,0.14)',
+      }}>
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13.5, fontWeight: 700, color: C.ink, margin: 0 }}>{title}</p>
+        <p style={{ fontSize: 11, color: C.muted, margin: '2px 0 0', fontWeight: 500 }}>{subtitle}</p>
+      </div>
+      <IconChevronRight size={14} stroke={2.2} color={C.muted} />
+    </button>
   )
 }
 

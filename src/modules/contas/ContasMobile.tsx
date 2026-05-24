@@ -130,6 +130,25 @@ export function ContasMobile() {
         conta={editing}
         onClose={() => { setFormOpen(false); setEditing(null) }}
         onSave={() => { setFormOpen(false); setEditing(null) }}
+        onDelete={editing ? () => setConfirmDelete(editing) : undefined}
+      />
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title={`Excluir "${confirmDelete?.nome ?? 'conta'}"?`}
+        body="As transações vinculadas são mantidas no histórico. A conta fica oculta da lista."
+        confirmLabel="Excluir conta"
+        destructive
+        onConfirm={async () => {
+          if (confirmDelete?.id) {
+            await deleteConta(confirmDelete.id)
+            sounds.success(); haptic('heavy')
+          }
+          setConfirmDelete(null)
+          setFormOpen(false)
+          setEditing(null)
+        }}
+        onClose={() => setConfirmDelete(null)}
       />
     </div>
   )
