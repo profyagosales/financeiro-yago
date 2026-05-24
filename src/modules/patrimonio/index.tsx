@@ -1,18 +1,21 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts'
 import {
   IconChartLine, IconCash, IconBuildingBank, IconArrowUpRight, IconArrowDownRight,
-  IconShieldCheck, IconChevronRight,
+  IconShieldCheck, IconChevronRight, IconRefresh, IconPlus,
 } from '@tabler/icons-react'
 import { fmt } from '@/lib/format'
 import { useContas, useSaldoTotal } from '@/db/hooks/useContas'
-import { useInvestimentos, useTotalInvestimentos } from '@/db/hooks/useInvestimentos'
+import {
+  useInvestimentos, useTotalInvestimentos,
+  aplicarRentabilidadeAutoTodos, atualizarCotacoesTodos, ensureDolarLoaded, fetchDolarECache,
+} from '@/db/hooks/useInvestimentos'
 import { useDividasComputed, useTotalDividas } from '@/db/hooks/useDividas'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/schema'
-import { TIPOS as INV_TIPOS, TIPO_META as INV_TIPO_META, CLASSE_COR, CLASSE_LABEL } from '../investimentos/constants'
+import { TIPO_META as INV_TIPO_META, CLASSE_COR, CLASSE_LABEL } from '../investimentos/constants'
 import { TIPO_META as DIV_TIPO_META } from '../dividas/constants'
 
 export function Page() {
@@ -25,26 +28,49 @@ export function Page() {
   const dividas = useDividasComputed()
   const { totalDevido, totalParcelaMensal } = useTotalDividas()
 
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshMsg, setRefreshMsg] = useState<string | null>(null)
+
+  // Garante cotação do dólar carregada (pra converter ativos em USD)
+  useEffect(() => { ensureDolarLoaded() }, [])
+
   // Composição
   const totalAtivos = saldoContas + totalInvest
   const totalPassivos = totalDevido
   const patrimonioLiquido = totalAtivos - totalPassivos
 
-  // Trend (delta no mês baseado em receitas - despesas + rendimento)
+  // Delta do mês: APENAS o fluxo de caixa (receitas - despesas) do mês corrente.
+  // Não inclui rendimentoInvest porque esse é acumulado total desde o início,
+  // não o ganho do mês — somar inflaria o delta artificialmente.
   const now = new Date()
   const inicioMes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
   const txsMes = useLiveQuery(
     () => db.transacoes.where('data').aboveOrEqual(inicioMes).toArray(),
     [inicioMes],
   ) ?? []
-  const fluxoMes = useMemo(() => {
+  const deltaMes = useMemo(() => {
     const rec = txsMes.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
     const des = txsMes.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
     return rec - des
   }, [txsMes])
-  const deltaMes = fluxoMes + rendimentoInvest // aproximação: cash flow + rendimento dos investimentos
   const deltaPct = patrimonioLiquido !== 0 ? (deltaMes / Math.abs(patrimonioLiquido)) * 100 : 0
   const deltaPositivo = deltaMes >= 0
+
+  const semDados = totalAtivos === 0 && totalPassivos === 0
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    setRefreshMsg(null)
+    await fetchDolarECache()
+    await aplicarRentabilidadeAutoTodos()
+    const r = await atualizarCotacoesTodos()
+    setRefreshing(false)
+    const parts: string[] = []
+    if (r.sucesso > 0) parts.push(`${r.sucesso} cotação${r.sucesso !== 1 ? 'ões' : ''} atualizada${r.sucesso !== 1 ? 's' : ''}`)
+    if (r.falhou > 0) parts.push(`${r.falhou} falhou`)
+    setRefreshMsg(parts.length > 0 ? parts.join(' · ') : 'Rendimentos atualizados')
+    setTimeout(() => setRefreshMsg(null), 3000)
+  }
 
   // Distribuição de investimentos por classe
   const distribuicaoInvest = useMemo(() => {
@@ -80,14 +106,64 @@ export function Page() {
     : { label: 'Crítica', cor: '#C4553B' }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: 32, width: '100%' }}>
+    <div style={{ padding: 32, width: '100%' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
-        <div>
-          <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>Patrimônio</h1>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
+        <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>Patrimônio</h1>
+        <button onClick={handleRefresh} disabled={refreshing}
+          title="Atualizar cotações, dólar e rentabilidade automática"
+          style={{
+            background: '#FFFFFF', color: '#7A5C4F', border: '1.5px solid #EDE6DC',
+            borderRadius: 12, padding: '10px 16px', cursor: refreshing ? 'default' : 'pointer',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+            display: 'flex', alignItems: 'center', gap: 6,
+            opacity: refreshing ? 0.7 : 1,
+            flexShrink: 0,
+          }}>
+          <motion.span
+            animate={refreshing ? { rotate: 360 } : { rotate: 0 }}
+            transition={refreshing ? { repeat: Infinity, duration: 0.8, ease: 'linear' } : { duration: 0.2 }}
+            style={{ display: 'inline-flex' }}>
+            <IconRefresh size={14} stroke={2} />
+          </motion.span>
+          {refreshing ? 'Atualizando…' : (refreshMsg ?? 'Atualizar tudo')}
+        </button>
       </div>
+
+      {/* Empty state quando não tem nada cadastrado */}
+      {semDados && (
+        <div style={{
+          background: '#FFFFFF', border: '1px dashed #D4C8BC', borderRadius: 22,
+          padding: '56px 32px', textAlign: 'center',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
+        }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: 20,
+            background: 'linear-gradient(135deg, #1E5E5A, #143E3B)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 8px 24px rgba(20,62,59,0.3)',
+          }}>
+            <IconChartLine size={32} stroke={1.6} color="#A7E0DC" />
+          </div>
+          <div>
+            <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.6px' }}>
+              Sem dados de patrimônio
+            </h3>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', marginTop: 6, maxWidth: 460 }}>
+              Cadastre suas contas, investimentos e dívidas pra ver a visão consolidada do seu patrimônio líquido, evolução ao longo do tempo e composição da carteira.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <CTAButton label="Adicionar conta" cor="#3D7EB5" onClick={() => navigate('/contas')} />
+            <CTAButton label="Adicionar investimento" cor="#3A8580" onClick={() => navigate('/investimentos')} />
+            <CTAButton label="Adicionar dívida" cor="#A8442B" onClick={() => navigate('/dividas')} />
+          </div>
+        </div>
+      )}
+
+      {!semDados && (<>
+
 
       {/* HERO — Patrimônio Líquido */}
       <motion.div
@@ -149,7 +225,7 @@ export function Page() {
               />
               <HeroStat
                 label="Razão A/P"
-                value={totalPassivos === 0 ? '∞' : `${razao.toFixed(1)}×`}
+                value={totalPassivos === 0 ? '—' : `${razao.toFixed(1)}×`}
                 cor={saudeFinanceira.cor === '#3A8580' ? '#A7E0DC' : saudeFinanceira.cor === '#D4A017' ? '#F2C745' : '#FFBFAE'}
                 badge={saudeFinanceira.label}
               />
@@ -415,7 +491,23 @@ export function Page() {
           onClick={() => navigate('/dividas')}
         />
       </div>
-    </motion.div>
+      </>)}
+    </div>
+  )
+}
+
+function CTAButton({ label, cor, onClick }: { label: string; cor: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      style={{
+        background: cor, color: '#FFFFFF', border: 'none',
+        borderRadius: 12, padding: '10px 18px', cursor: 'pointer',
+        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+        display: 'inline-flex', alignItems: 'center', gap: 5,
+        boxShadow: `0 4px 12px ${cor}33`,
+      }}>
+      <IconPlus size={14} stroke={2.4} /> {label}
+    </button>
   )
 }
 
