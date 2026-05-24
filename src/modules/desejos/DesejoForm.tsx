@@ -3,6 +3,7 @@ import { IconX, IconCheck, IconLink, IconNote, IconTrash, IconShoppingCart } fro
 import type { Desejo, DesejoPrioridade } from '@/db/schema'
 import { addDesejo, editDesejo } from '@/db/hooks/useDesejos'
 import { useCategorias } from '@/db/hooks/useCategorias'
+import { showErrorToast, sounds } from '@/lib/sounds'
 import { PRIORIDADES } from './constants'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 
@@ -39,26 +40,37 @@ export function DesejoForm({ desejo, presetPrioridade, onClose, onDelete, onComp
   const canSave = !!form.nome.trim()
 
   const handleSave = async () => {
-    if (!canSave) return
+    const nomeTrim = form.nome.trim()
+    const descricaoTrim = form.descricao.trim()
+    const linkTrim = form.link.trim()
+    const observacoesTrim = form.observacoes.trim()
+    if (!nomeTrim) return
     const data = {
-      nome: form.nome,
-      descricao: form.descricao || undefined,
+      nome: nomeTrim,
+      descricao: descricaoTrim || undefined,
       prioridade: form.prioridade,
       valorEstimado: form.valorEstimado ? parseValor(form.valorEstimado) : undefined,
       valorMenorEncontrado: form.valorMenorEncontrado ? parseValor(form.valorMenorEncontrado) : undefined,
-      link: form.link || undefined,
-      observacoes: form.observacoes || undefined,
+      link: linkTrim || undefined,
+      observacoes: observacoesTrim || undefined,
       categoriaId: form.categoriaId ? parseInt(form.categoriaId) : undefined,
       status: 'aberto' as const,
       dataDesejo: desejo?.dataDesejo ?? today,
     }
 
-    if (isEditing && desejo?.id) {
-      await editDesejo(desejo.id, data)
-    } else {
-      await addDesejo(data)
+    try {
+      if (isEditing && desejo?.id) {
+        await editDesejo(desejo.id, data)
+      } else {
+        await addDesejo(data)
+      }
+      sounds.save()
+      onClose()
+    } catch (e) {
+      console.error('[DesejoForm.handleSave]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar desejo — tente de novo')
+      sounds.error()
     }
-    onClose()
   }
 
   return (

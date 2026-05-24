@@ -147,7 +147,7 @@ interface ScoreOpts {
 
 export function calcSaudeScore(opts: ScoreOpts): SaudeScore {
   // 1. Reserva (alvo = 6 meses ou alvoAutoCalculado)
-  let reserva = 0
+  let reserva: number
   if (opts.reservaAlvo > 0) {
     reserva = Math.min(100, (opts.reservaAtual / opts.reservaAlvo) * 100)
   } else if (opts.despesaMediaMensal > 0) {
@@ -180,7 +180,7 @@ export function calcSaudeScore(opts: ScoreOpts): SaudeScore {
   }
 
   // 4. Liquidez (saldo / despesa mensal — 3 meses = ótimo)
-  let liquidez = 0
+  let liquidez: number
   if (opts.despesaMediaMensal > 0) {
     const meses = opts.saldoContas / opts.despesaMediaMensal
     liquidez = Math.min(100, (meses / 3) * 100)

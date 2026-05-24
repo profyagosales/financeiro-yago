@@ -5,8 +5,7 @@ import { IconX, IconCheck, IconShoppingBag, IconTrash, IconPlus, IconArrowUpRigh
 import type { Investimento } from '@/db/schema'
 import { useMovimentacoesInvest, registrarVenda, registrarResgate, deleteMovimentacaoInvest, calcVendasStats, isRendaVariavel } from '@/db/hooks/useInvestimentos'
 import { fetchCotacaoPorTipo } from '@/lib/cotacoes'
-import { fmt } from '@/lib/format'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
   invest: Investimento
@@ -76,32 +75,40 @@ export function VendasModal({ invest, onClose }: Props) {
 
   const handleRegistrar = async () => {
     if (!invest.id) return
-    if (isVar) {
-      const qtd = parseValor(form.quantidade)
-      const preco = parseValor(form.precoUnitario)
-      if (qtd <= 0 || preco <= 0) return
-      if (qtd > qtdMaxima) return  // não pode vender mais do que tem
-      await registrarVenda({
-        investimentoId: invest.id,
-        data: form.data,
-        quantidade: qtd,
-        precoUnitario: preco,
-        custos: parseValor(form.custos) || undefined,
-        observacao: form.observacao || undefined,
-      })
-    } else {
-      const valor = parseValor(form.valorResgate)
-      if (valor <= 0) return
-      if (valor > invest.valorAtual) return
-      await registrarResgate({
-        investimentoId: invest.id,
-        data: form.data,
-        valorResgate: valor,
-        custos: parseValor(form.custos) || undefined,
-        observacao: form.observacao || undefined,
-      })
+    const observacaoTrim = form.observacao.trim()
+    try {
+      if (isVar) {
+        const qtd = parseValor(form.quantidade)
+        const preco = parseValor(form.precoUnitario)
+        if (qtd <= 0 || preco <= 0) return
+        if (qtd > qtdMaxima) return  // não pode vender mais do que tem
+        await registrarVenda({
+          investimentoId: invest.id,
+          data: form.data,
+          quantidade: qtd,
+          precoUnitario: preco,
+          custos: parseValor(form.custos) || undefined,
+          observacao: observacaoTrim || undefined,
+        })
+      } else {
+        const valor = parseValor(form.valorResgate)
+        if (valor <= 0) return
+        if (valor > invest.valorAtual) return
+        await registrarResgate({
+          investimentoId: invest.id,
+          data: form.data,
+          valorResgate: valor,
+          custos: parseValor(form.custos) || undefined,
+          observacao: observacaoTrim || undefined,
+        })
+      }
+      sounds.save()
+      setForm({ data: today, quantidade: '', precoUnitario: '', valorResgate: '', custos: '', observacao: '' })
+    } catch (e) {
+      console.error('[VendasModal.handleRegistrar]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao registrar movimentação — tente de novo')
+      sounds.error()
     }
-    setForm({ data: today, quantidade: '', precoUnitario: '', valorResgate: '', custos: '', observacao: '' })
   }
 
   return (

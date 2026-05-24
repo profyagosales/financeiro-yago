@@ -14,26 +14,44 @@ export function useAnexos(transacaoId: number) {
   return useLiveQuery(() => db.anexos.where('transacaoId').equals(transacaoId).toArray(), [transacaoId]) ?? []
 }
 
-// Adiciona anexo: upload pro Storage + salva no Dexie (dados base64 + storagePath)
+// Adiciona anexo: upload pro Storage primeiro. Se sucesso, NÃO duplica
+// o blob localmente — guarda só metadata. Se Storage falhar (offline),
+// fallback pra base64 local que sincroniza depois via SyncEngine quando
+// a conexão voltar.
+//
+// Antes guardava base64 SEMPRE + storagePath = duplicidade 2x (memória
+// no IndexedDB + blob no Storage). Arquivo de 5MB ocupava 10MB total.
 export async function addAnexo(transacaoId: number, file: File): Promise<void> {
-  // 1. Upload pro Storage (assíncrono, mas rápido)
-  const storagePath = await uploadAnexo(file)
+  const storagePath = await uploadAnexo(file).catch(() => null)
 
-  // 2. Lê base64 pra cache local
-  const dados = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = e => resolve(e.target?.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
+  // Storage falhou (offline / sem credencial): cacheia base64 localmente
+  // pra não perder o arquivo. Próximo sync sobe pro Storage.
+  if (!storagePath) {
+    const dados = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = e => resolve(e.target?.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+    await db.anexos.add({
+      transacaoId,
+      tipo: file.type,
+      nomeArquivo: file.name,
+      dados,
+      tamanho: file.size,
+      criadoEm: new Date().toISOString(),
+      updatedAt: Date.now(),
+    })
+    return
+  }
 
-  // 3. Persiste no Dexie
+  // Path feliz: só metadata, blob fica no Storage. useAnexoSrc resolve
+  // signed URL on-demand.
   await db.anexos.add({
     transacaoId,
     tipo: file.type,
     nomeArquivo: file.name,
-    dados,
-    storagePath: storagePath ?? undefined,
+    storagePath,
     tamanho: file.size,
     criadoEm: new Date().toISOString(),
     updatedAt: Date.now(),
@@ -51,23 +69,27 @@ export async function deleteAnexo(id: number) {
 // Resolve a URL exibível: usa `dados` (data URL base64) se existir,
 // senão busca signed URL do Storage. Retorna null se nenhum disponível.
 export function useAnexoSrc(anexo: Anexo): string | null {
-  const [src, setSrc] = useState<string | null>(anexo.dados ?? null)
+  // src remoto (signed URL do Storage) — só vai pra state se precisar fetch async
+  const [remoteSrc, setRemoteSrc] = useState<string | null>(null)
+
+  // Derived state: reseta remoteSrc se o anexo mudar (sem setState no effect)
+  const [prevKey, setPrevKey] = useState<string>(`${anexo.dados ?? ''}|${anexo.storagePath ?? ''}`)
+  const currentKey = `${anexo.dados ?? ''}|${anexo.storagePath ?? ''}`
+  if (prevKey !== currentKey) {
+    setPrevKey(currentKey)
+    setRemoteSrc(null)
+  }
 
   useEffect(() => {
+    // Só faz fetch async quando NÃO tem dados embed e tem storagePath
+    if (anexo.dados || !anexo.storagePath) return
     let alive = true
-    if (anexo.dados) {
-      setSrc(anexo.dados)
-      return
-    }
-    if (anexo.storagePath) {
-      void getAnexoUrl(anexo.storagePath).then(url => {
-        if (alive) setSrc(url)
-      })
-    } else {
-      setSrc(null)
-    }
+    void getAnexoUrl(anexo.storagePath).then(url => {
+      if (alive) setRemoteSrc(url)
+    })
     return () => { alive = false }
   }, [anexo.dados, anexo.storagePath])
 
-  return src
+  // Derived: prioriza dados embed; senão usa o resolvido async
+  return anexo.dados ?? remoteSrc
 }

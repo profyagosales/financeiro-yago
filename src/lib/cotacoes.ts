@@ -63,23 +63,26 @@ export function getCriptoIdFromTicker(ticker: string): string | null {
 }
 
 /**
- * Busca cotação de uma cripto em BRL via CoinGecko.
+ * Busca cotação de uma cripto na moeda solicitada via CoinGecko.
  * @param ticker  Símbolo (BTC, ETH, etc) ou ID CoinGecko (bitcoin, ethereum)
- * @returns       Cotação em BRL, ou null em caso de erro/cripto desconhecida
+ * @param moeda   Moeda alvo: 'BRL' (default) ou 'USD'. Cripto cotada em USD
+ *                deve buscar em USD pra evitar dupla conversão depois.
+ * @returns       Cotação na moeda solicitada, ou null em caso de erro
  */
-export async function fetchCotacaoCripto(ticker: string): Promise<number | null> {
+export async function fetchCotacaoCripto(ticker: string, moeda: 'BRL' | 'USD' = 'BRL'): Promise<number | null> {
   const upper = ticker.trim().toUpperCase()
   // Aceita tanto ticker (BTC) quanto ID CoinGecko (bitcoin, ethereum)
   const id = CRIPTO_TICKER_TO_ID[upper] ?? ticker.trim().toLowerCase()
-  const cacheKey = `cripto:${id}`
+  const vsCurrency = moeda === 'USD' ? 'usd' : 'brl'
+  const cacheKey = `cripto:${id}:${vsCurrency}`
   const cached = getCached(cacheKey)
   if (cached !== null) return cached
 
   try {
-    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=brl`)
+    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=${vsCurrency}`)
     if (!res.ok) return null
-    const json = await res.json() as Record<string, { brl?: number }>
-    const value = json[id]?.brl
+    const json = await res.json() as Record<string, { brl?: number; usd?: number }>
+    const value = moeda === 'USD' ? json[id]?.usd : json[id]?.brl
     if (typeof value !== 'number') return null
     setCached(cacheKey, value)
     return value
@@ -164,12 +167,25 @@ import type { InvestimentoTipo } from '@/db/schema'
 
 /**
  * Busca a cotação atual de um ativo baseado em tipo + ticker.
+ * Retorna o valor na moeda solicitada (default BRL). Pra cripto, busca
+ * direto em USD do CoinGecko quando moeda='USD' — sem isso, valores
+ * USD seriam convertidos pra BRL pela API e depois reconvertidos no
+ * patrimônio, gerando inflação ~5x.
  * Retorna null se tipo não tem API ou ticker é inválido.
  */
-export async function fetchCotacaoPorTipo(tipo: InvestimentoTipo, ticker: string | undefined): Promise<number | null> {
+export async function fetchCotacaoPorTipo(
+  tipo: InvestimentoTipo,
+  ticker: string | undefined,
+  moeda: 'BRL' | 'USD' = 'BRL',
+): Promise<number | null> {
   if (!ticker || !ticker.trim()) return null
-  if (tipo === 'Cripto') return fetchCotacaoCripto(ticker)
-  if (tipo === 'Ação' || tipo === 'FII' || tipo === 'ETF') return fetchCotacaoAtivoBR(ticker)
+  if (tipo === 'Cripto') return fetchCotacaoCripto(ticker, moeda)
+  // Brapi sempre retorna em BRL (B3 só negocia em BRL). Pra USD não há
+  // suporte gratuito; user precisa informar manualmente.
+  if (tipo === 'Ação' || tipo === 'FII' || tipo === 'ETF') {
+    if (moeda === 'USD') return null
+    return fetchCotacaoAtivoBR(ticker)
+  }
   return null
 }
 

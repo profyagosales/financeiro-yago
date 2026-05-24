@@ -70,7 +70,7 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
     maxUpdatedAt = remoteUpdatedAt
 
     // Lookup local existente
-    let localId = getLocalId(tableName, remoteUuid)
+    const localId = getLocalId(tableName, remoteUuid)
 
     if (isDeleted) {
       // Soft delete remoto → apaga local. Pra anexos, também limpa o

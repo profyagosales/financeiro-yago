@@ -32,7 +32,14 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
   const [ano, setAno] = useState(atual.ano)
   const [tab, setTab] = useState<Tab>('lancamentos')
 
-  useEffect(() => { setMes(atual.mes); setAno(atual.ano); setTab('lancamentos') }, [cartao.id])
+  // Reseta mes/ano/tab quando troca de cartão — derived state pattern (sem useEffect)
+  const [prevCartaoId, setPrevCartaoId] = useState(cartao.id)
+  if (prevCartaoId !== cartao.id) {
+    setPrevCartaoId(cartao.id)
+    setMes(atual.mes)
+    setAno(atual.ano)
+    setTab('lancamentos')
+  }
 
   const lancs = useLancamentosCartao(cartao.id!, mes, ano)
   const faturaAtual = useTotalFatura(cartao.id!, mes, ano)

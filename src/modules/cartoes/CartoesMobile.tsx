@@ -450,7 +450,7 @@ function CartoesEmptyState({ onAdd }: { onAdd: () => void }) {
 
 // ─── DETAIL (StackScreen content) ──────────────────────────────────
 
-function CartaoDetailMobile({ cartao, onClose, onDelete }: {
+function CartaoDetailMobile({ cartao, onClose: _onClose, onDelete }: {
   cartao: Cartao; onClose: () => void; onEdit: () => void; onDelete: () => void
 }) {
   const { mes: mesAtual, ano: anoAtual } = mesAnoAtual()

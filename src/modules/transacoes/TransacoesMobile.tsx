@@ -7,8 +7,8 @@ import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
-  IconBell, IconSearch, IconX, IconArrowUpRight, IconArrowDownRight,
-  IconFilter, IconCircleCheck, IconArrowsExchange,
+  IconSearch, IconX, IconArrowUpRight, IconArrowDownRight,
+  IconArrowsExchange,
   IconCheck, IconTrash, IconClock,
 } from '@tabler/icons-react'
 import { db, type Transacao } from '@/db/schema'
@@ -18,7 +18,6 @@ import { editTransacao, deleteTransacao } from '@/db/hooks/useTransacoes'
 import { fmt, fmtDate } from '@/lib/format'
 import { StackScreen } from '@/components/layout/StackScreen'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { useUIStore } from '@/store/ui'
 import { sounds, haptic } from '@/lib/sounds'
 
 // ─── Tokens (mesma identidade Dashboard mobile) ────────────────────
@@ -73,7 +72,7 @@ function buildPeriodos(): Periodo[] {
 // ─── Component ─────────────────────────────────────────────────────
 
 export function TransacoesMobile() {
-  const periodos = useMemo(buildPeriodos, [])
+  const periodos = useMemo(() => buildPeriodos(), [])
   const [periodoKey, setPeriodoKey] = useState<PeriodKey>('mes')
   const periodo = periodos.find(p => p.key === periodoKey)!
   const [search, setSearch] = useState('')
@@ -377,8 +376,14 @@ function StatPill({ label, value, color, signed }: {
 function DayGroup({ data, txs, onSelect }: {
   data: string; txs: Transacao[]; onSelect: (id: number) => void
 }) {
-  const hoje = new Date().toISOString().slice(0, 10)
-  const ontemDt = new Date(Date.now() - 86400_000).toISOString().slice(0, 10)
+  // Mover Date.now() para useMemo evita impureza no render (regra react-hooks/purity)
+  const { hoje, ontemDt } = useMemo(() => {
+    const now = new Date()
+    return {
+      hoje: now.toISOString().slice(0, 10),
+      ontemDt: new Date(now.getTime() - 86400_000).toISOString().slice(0, 10),
+    }
+  }, [])
   let label: string
   if (data === hoje) label = 'Hoje'
   else if (data === ontemDt) label = 'Ontem'
@@ -490,7 +495,6 @@ function TxRow({ tx, onClick, divider }: { tx: Transacao; onClick: () => void; d
 // ─── Empty state ───────────────────────────────────────────────────
 
 function EmptyTxs({ hasFilters }: { hasFilters: boolean }) {
-  const { openFab } = useUIStore()
   return (
     <motion.section variants={ITEM}
       style={{

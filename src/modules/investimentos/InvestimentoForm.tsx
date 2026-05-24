@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState } from 'react'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconRefresh, IconLock, IconBuildingBank, IconPlus, IconInfoCircle, IconTrendingUp, IconCurrencyDollar, IconCurrencyReal } from '@tabler/icons-react'
 import type { Investimento, InvestimentoTipo, InvestimentoLiquidez, TipoRendimento } from '@/db/schema'
@@ -6,9 +6,8 @@ import { addInvestimento, editInvestimento, isRendaVariavel, isRendaFixa, addApo
 import { useTaxasBenchmark, calcTaxaEfetiva } from '@/db/hooks/useAppConfig'
 import { useMetas } from '@/db/hooks/useMetas'
 import { useContas } from '@/db/hooks/useContas'
+import { showErrorToast, sounds } from '@/lib/sounds'
 import { TIPOS, LIQUIDEZ_OPTIONS, TIPO_META } from './constants'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
-import { fmt } from '@/lib/format'
 
 interface Props {
   invest?: Investimento | null
@@ -24,10 +23,12 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
   const isEditing = !!invest
 
   // Determinar se a instituição salva corresponde a uma conta cadastrada
-  const initialInstFromConta = useMemo(() => {
-    if (!invest?.instituicao) return null
-    return contas.find(c => c.nome.toLowerCase() === invest.instituicao!.toLowerCase()) ?? null
-  }, [invest?.instituicao, contas])
+  // (Sem useMemo: o cálculo é leve e preserva manual-memoization rule do React Compiler)
+  const initialInstFromConta = (() => {
+    const inst = invest?.instituicao
+    if (!inst) return null
+    return contas.find(c => c.nome.toLowerCase() === inst.toLowerCase()) ?? null
+  })()
 
   const [instMode, setInstMode] = useState<'conta' | 'outra' | null>(() => {
     if (!invest?.instituicao) return null
@@ -72,13 +73,13 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
   const isFix = isRendaFixa(form.tipo)
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
 
-  // Quando muda valor aplicado e ainda não tem valor atual setado, espelha (renda fixa)
-  useEffect(() => {
-    if (isVar) return
-    if (!isEditing && form.valorAplicado && !form.valorAtual) {
-      setForm(f => ({ ...f, valorAtual: f.valorAplicado }))
-    }
-  }, [form.valorAplicado, isVar])
+  // Espelha valor aplicado em valor atual quando renda fixa e ainda vazio
+  // (derived state pattern: setForm em response a prop change durante render)
+  const [prevValorAplicado, setPrevValorAplicado] = useState(form.valorAplicado)
+  if (!isVar && !isEditing && form.valorAplicado && !form.valorAtual && prevValorAplicado !== form.valorAplicado) {
+    setPrevValorAplicado(form.valorAplicado)
+    setForm(f => ({ ...f, valorAtual: f.valorAplicado }))
+  }
 
   // Resolver instituição final (conta selecionada OU texto livre)
   const resolveInstituicao = (): string | undefined => {
@@ -93,106 +94,115 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
   }
 
   const handleSave = async () => {
-    if (!form.nome) return
+    const nomeTrim = form.nome.trim()
+    const tickerTrim = form.ticker.trim().toUpperCase()
+    if (!nomeTrim) return
     // Renda variável (criação): precisa do primeiro aporte
     if (isVar && !isEditing && (!form.primeiroAporteQtd || !form.primeiroAportePreco)) return
     // Renda fixa: precisa de valor aplicado
     if (!isVar && !form.valorAplicado) return
 
-    if (isVar) {
-      // Cotação informada (ou usa preço do primeiro aporte como fallback)
-      const cot = parseValor(form.cotacaoAtual)
-      const qtdNova = parseValor(form.primeiroAporteQtd)
-      const precoNovo = parseValor(form.primeiroAportePreco)
+    try {
+      if (isVar) {
+        // Cotação informada (ou usa preço do primeiro aporte como fallback)
+        const cot = parseValor(form.cotacaoAtual)
+        const qtdNova = parseValor(form.primeiroAporteQtd)
+        const precoNovo = parseValor(form.primeiroAportePreco)
 
-      if (isEditing && invest?.id) {
-        // Edição: só atualiza dados gerais + cotação (aportes ficam no AportesModal)
-        await editInvestimento(invest.id, {
-          nome: form.nome,
-          tipo: form.tipo,
-          instituicao: resolveInstituicao(),
-          ticker: form.ticker ? form.ticker.toUpperCase() : undefined,
-          cotacaoAtual: cot > 0 ? cot : undefined,
-          moeda: form.moeda,
-          metaId: form.metaId ? parseInt(form.metaId) : undefined,
-          cor: tipoMeta?.cor ?? '#3A8580',
-        })
-        // Se cotação mudou, recalcula valorAtual
-        if (cot > 0 && invest.quantidade) {
+        if (isEditing && invest?.id) {
+          // Edição: só atualiza dados gerais + cotação (aportes ficam no AportesModal)
           await editInvestimento(invest.id, {
-            valorAtual: Math.round(invest.quantidade * cot * 100) / 100,
+            nome: nomeTrim,
+            tipo: form.tipo,
+            instituicao: resolveInstituicao(),
+            ticker: tickerTrim || undefined,
+            cotacaoAtual: cot > 0 ? cot : undefined,
+            moeda: form.moeda,
+            metaId: form.metaId ? parseInt(form.metaId) : undefined,
+            cor: tipoMeta?.cor ?? '#3A8580',
+          })
+          // Se cotação mudou, recalcula valorAtual
+          if (cot > 0 && invest.quantidade) {
+            await editInvestimento(invest.id, {
+              valorAtual: Math.round(invest.quantidade * cot * 100) / 100,
+            })
+          }
+        } else {
+          // Criação: cria investimento + primeiro aporte. recalcInvestimentoFromAportes faz o resto.
+          const initialValor = qtdNova * precoNovo
+          const valorAtualInicial = cot > 0 ? qtdNova * cot : initialValor
+          const id = await addInvestimento({
+            nome: nomeTrim,
+            tipo: form.tipo,
+            instituicao: resolveInstituicao(),
+            ticker: tickerTrim || undefined,
+            valorAplicado: initialValor,
+            valorAtual: valorAtualInicial,
+            valorAtualSource: 'manual',
+            quantidade: qtdNova,
+            precoMedio: precoNovo,
+            cotacaoAtual: cot > 0 ? cot : undefined,
+            moeda: form.moeda,
+            dataAplicacao: form.primeiroAporteData,
+            metaId: form.metaId ? parseInt(form.metaId) : undefined,
+            cor: tipoMeta?.cor ?? '#3A8580',
+            ativo: true,
+          })
+          await addAporte({
+            investimentoId: id as number,
+            data: form.primeiroAporteData,
+            quantidade: qtdNova,
+            precoUnitario: precoNovo,
+            observacao: 'Aporte inicial',
           })
         }
       } else {
-        // Criação: cria investimento + primeiro aporte. recalcInvestimentoFromAportes faz o resto.
-        const initialValor = qtdNova * precoNovo
-        const valorAtualInicial = cot > 0 ? qtdNova * cot : initialValor
-        const id = await addInvestimento({
-          nome: form.nome,
+        // Renda fixa: usa tipoRendimento para calcular taxa efetiva
+        const tipoRend = form.tipoRendimento
+        const pctIdx = form.percentualIndexador ? parseValor(form.percentualIndexador) / 100 : undefined
+        const taxaAdd = form.taxaAdicional ? parseValor(form.taxaAdicional) / 100 : undefined
+        const rentManual = form.rentabilidadeAnual ? parseValor(form.rentabilidadeAnual) / 100 : undefined
+
+        // Calcula a taxa efetiva pra armazenar
+        const tempInv = {
+          tipoRendimento: tipoRend,
+          rentabilidadeAnual: rentManual,
+          percentualIndexador: pctIdx,
+          taxaAdicional: taxaAdd,
+        }
+        const taxaEfetiva = calcTaxaEfetiva(tempInv, taxas)
+
+        const data = {
+          nome: nomeTrim,
           tipo: form.tipo,
           instituicao: resolveInstituicao(),
-          ticker: form.ticker ? form.ticker.toUpperCase() : undefined,
-          valorAplicado: initialValor,
-          valorAtual: valorAtualInicial,
-          valorAtualSource: 'manual',
-          quantidade: qtdNova,
-          precoMedio: precoNovo,
-          cotacaoAtual: cot > 0 ? cot : undefined,
-          moeda: form.moeda,
-          dataAplicacao: form.primeiroAporteData,
+          valorAplicado: parseValor(form.valorAplicado),
+          valorAtual: parseValor(form.valorAtual || form.valorAplicado),
+          valorAtualSource: form.valorAtualSource,
+          tipoRendimento: tipoRend,
+          rentabilidadeAnual: tipoRend === 'prefixado' ? rentManual : (taxaEfetiva > 0 ? taxaEfetiva : undefined),
+          percentualIndexador: (tipoRend === 'pos_cdi' || tipoRend === 'pos_selic') ? pctIdx : undefined,
+          taxaAdicional: tipoRend === 'ipca_mais' ? taxaAdd : undefined,
+          liquidez: form.liquidez || undefined,
+          dataAplicacao: form.dataAplicacao,
+          dataVencimento: form.dataVencimento || undefined,
           metaId: form.metaId ? parseInt(form.metaId) : undefined,
           cor: tipoMeta?.cor ?? '#3A8580',
           ativo: true,
-        })
-        await addAporte({
-          investimentoId: id as number,
-          data: form.primeiroAporteData,
-          quantidade: qtdNova,
-          precoUnitario: precoNovo,
-          observacao: 'Aporte inicial',
-        })
+        }
+        if (isEditing && invest?.id) {
+          await editInvestimento(invest.id, data)
+        } else {
+          await addInvestimento(data)
+        }
       }
-    } else {
-      // Renda fixa: usa tipoRendimento para calcular taxa efetiva
-      const tipoRend = form.tipoRendimento
-      const pctIdx = form.percentualIndexador ? parseValor(form.percentualIndexador) / 100 : undefined
-      const taxaAdd = form.taxaAdicional ? parseValor(form.taxaAdicional) / 100 : undefined
-      const rentManual = form.rentabilidadeAnual ? parseValor(form.rentabilidadeAnual) / 100 : undefined
-
-      // Calcula a taxa efetiva pra armazenar
-      const tempInv = {
-        tipoRendimento: tipoRend,
-        rentabilidadeAnual: rentManual,
-        percentualIndexador: pctIdx,
-        taxaAdicional: taxaAdd,
-      }
-      const taxaEfetiva = calcTaxaEfetiva(tempInv, taxas)
-
-      const data = {
-        nome: form.nome,
-        tipo: form.tipo,
-        instituicao: resolveInstituicao(),
-        valorAplicado: parseValor(form.valorAplicado),
-        valorAtual: parseValor(form.valorAtual || form.valorAplicado),
-        valorAtualSource: form.valorAtualSource,
-        tipoRendimento: tipoRend,
-        rentabilidadeAnual: tipoRend === 'prefixado' ? rentManual : (taxaEfetiva > 0 ? taxaEfetiva : undefined),
-        percentualIndexador: (tipoRend === 'pos_cdi' || tipoRend === 'pos_selic') ? pctIdx : undefined,
-        taxaAdicional: tipoRend === 'ipca_mais' ? taxaAdd : undefined,
-        liquidez: form.liquidez || undefined,
-        dataAplicacao: form.dataAplicacao,
-        dataVencimento: form.dataVencimento || undefined,
-        metaId: form.metaId ? parseInt(form.metaId) : undefined,
-        cor: tipoMeta?.cor ?? '#3A8580',
-        ativo: true,
-      }
-      if (isEditing && invest?.id) {
-        await editInvestimento(invest.id, data)
-      } else {
-        await addInvestimento(data)
-      }
+      sounds.save()
+      onClose()
+    } catch (e) {
+      console.error('[InvestimentoForm.handleSave]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar investimento — tente de novo')
+      sounds.error()
     }
-    onClose()
   }
 
   const formValid = form.nome && (
@@ -386,7 +396,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                 </div>
                 <p style={{ ...HELP_STYLE, marginBottom: 0 }}>
                   {form.moeda === 'USD'
-                    ? 'Ativo no exterior: valores armazenados em USD, conversão pra BRL feita automaticamente.'
+                    ? 'Ativo no exterior: valores armazenados em US$. A conversão pra BRL acontece só na soma da carteira.'
                     : 'Atualize a cotação manualmente quando quiser refletir o valor de mercado.'}
                 </p>
               </div>
@@ -410,7 +420,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                         placeholder="100" inputMode="decimal"
                         style={INPUT_STYLE} />
                     </Field>
-                    <Field label="Preço unitário (R$)">
+                    <Field label={`Preço unitário (${form.moeda === 'USD' ? 'US$' : 'R$'})`}>
                       <input value={form.primeiroAportePreco}
                         onChange={e => setForm(f => ({ ...f, primeiroAportePreco: e.target.value }))}
                         placeholder="25,40" inputMode="decimal"
@@ -421,7 +431,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                     <div style={{ marginTop: 10, padding: '8px 12px', background: '#FFFFFF', borderRadius: 8, border: '1px solid #EDE6DC', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                       <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#7A5C4F' }}>Total investido neste aporte</span>
                       <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.3px' }}>
-                        {fmt(parseValor(form.primeiroAporteQtd) * parseValor(form.primeiroAportePreco))}
+                        {form.moeda === 'USD' ? 'US$ ' : 'R$ '}{(parseValor(form.primeiroAporteQtd) * parseValor(form.primeiroAportePreco)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                     </div>
                   )}
@@ -443,8 +453,8 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                     <Mini label="Quantidade" value={(invest.quantidade ?? 0).toLocaleString('pt-BR')} />
-                    <Mini label="Preço médio" value={fmt(invest.precoMedio ?? 0)} />
-                    <Mini label="Investido" value={fmt(invest.valorAplicado)} />
+                    <Mini label="Preço médio" value={`${invest.moeda === 'USD' ? 'US$' : 'R$'} ${(invest.precoMedio ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: invest.moeda === 'USD' ? 6 : 2 })}`} />
+                    <Mini label="Investido" value={`${invest.moeda === 'USD' ? 'US$' : 'R$'} ${invest.valorAplicado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
                   </div>
                   <p style={{ ...HELP_STYLE, marginTop: 10, marginBottom: 0, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
                     <IconInfoCircle size={13} stroke={2} color="#9B7B6A" style={{ marginTop: 1, flexShrink: 0 }} />

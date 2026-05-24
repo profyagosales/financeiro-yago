@@ -1,10 +1,14 @@
+type WebkitWindow = Window & { webkitAudioContext?: typeof AudioContext }
+
 let _ctx: AudioContext | null = null
 
 function getCtx(): AudioContext | null {
   if (typeof window === 'undefined') return null
   try {
     if (!_ctx) {
-      _ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const Ctor = window.AudioContext || (window as WebkitWindow).webkitAudioContext
+      if (!Ctor) return null
+      _ctx = new Ctor()
     }
     return _ctx
   } catch {
@@ -27,7 +31,7 @@ function playTone(freq: number, type: OscillatorType, duration: number, vol = 0.
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration)
     osc.start(ctx.currentTime)
     osc.stop(ctx.currentTime + duration)
-  } catch {}
+  } catch { /* AudioContext indisponível */ }
 }
 
 export const sounds = {
@@ -56,7 +60,7 @@ export const sounds = {
 }
 
 export function haptic(style: 'light' | 'medium' | 'heavy' = 'light') {
-  try { navigator.vibrate?.(style === 'light' ? 8 : style === 'medium' ? 20 : 40) } catch {}
+  try { navigator.vibrate?.(style === 'light' ? 8 : style === 'medium' ? 20 : 40) } catch { /* Vibration API indisponível */ }
 }
 
 export function isSoundEnabled(): boolean {
@@ -64,7 +68,7 @@ export function isSoundEnabled(): boolean {
 }
 
 export function toggleSound(): void {
-  try { localStorage.setItem('fy-sound', isSoundEnabled() ? 'off' : 'on') } catch {}
+  try { localStorage.setItem('fy-sound', isSoundEnabled() ? 'off' : 'on') } catch { /* localStorage indisponível */ }
 }
 
 export function getVolume(): number {
@@ -75,5 +79,31 @@ export function getVolume(): number {
 }
 
 export function setVolume(v: number): void {
-  try { localStorage.setItem('fy-volume', String(Math.max(0, Math.min(1, v)))) } catch {}
+  try { localStorage.setItem('fy-volume', String(Math.max(0, Math.min(1, v)))) } catch { /* localStorage indisponível */ }
+}
+
+// ─── Toast de erro ──────────────────────────────────────────────────
+// Helper para feedback de erro em forms async (defesa contra Dexie/Supabase falhar)
+// Implementação via CustomEvent — escutado pelo <ErrorToast> em AppShell.
+const ERROR_TOAST_EVENT = 'fy:error-toast'
+
+export interface ErrorToastDetail {
+  message: string
+  ts: number
+}
+
+export function showErrorToast(message: string): void {
+  if (typeof window === 'undefined') return
+  const detail: ErrorToastDetail = { message, ts: Date.now() }
+  window.dispatchEvent(new CustomEvent<ErrorToastDetail>(ERROR_TOAST_EVENT, { detail }))
+}
+
+export function onErrorToast(cb: (detail: ErrorToastDetail) => void): () => void {
+  if (typeof window === 'undefined') return () => undefined
+  const handler = (e: Event) => {
+    const ce = e as CustomEvent<ErrorToastDetail>
+    cb(ce.detail)
+  }
+  window.addEventListener(ERROR_TOAST_EVENT, handler)
+  return () => window.removeEventListener(ERROR_TOAST_EVENT, handler)
 }

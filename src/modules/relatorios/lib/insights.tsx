@@ -8,7 +8,7 @@
 import {
   IconTrendingUp, IconTrendingDown, IconChartArrows, IconSparkles,
   IconAlertTriangle, IconCircleCheck, IconBulb, IconChartBar,
-  IconClockHour4, IconTarget, IconCalculator, IconCoin, IconShieldCheck,
+  IconClockHour4, IconCoin, IconShieldCheck,
   IconArrowsExchange,
   type Icon,
 } from '@tabler/icons-react'

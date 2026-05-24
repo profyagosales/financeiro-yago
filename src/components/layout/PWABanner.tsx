@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import { IconDeviceMobile, IconX } from '@tabler/icons-react'
@@ -26,11 +26,8 @@ function isDismissed(): boolean {
 export function PWABanner() {
   const { canInstall, install } = usePWAInstall()
   const location = useLocation()
-  const [dismissed, setDismissed] = useState(true)  // começa "dismissed" — re-avalia no mount
-
-  useEffect(() => {
-    setDismissed(isDismissed())
-  }, [])
+  // Lazy initializer: lê o localStorage só uma vez, sem useEffect
+  const [dismissed, setDismissed] = useState(() => isDismissed())
 
   const handleDismiss = () => {
     try { localStorage.setItem(STORAGE_KEY, String(Date.now())) } catch { /* noop */ }

@@ -112,7 +112,11 @@ export function InvestimentosMobile() {
                       <p style={{ fontSize: 10.5, color: C.muted, margin: 0, fontWeight: 500, letterSpacing: '.04em' }}>{inv.tipo}{inv.instituicao ? ` · ${inv.instituicao}` : ''}</p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: 13.5, fontWeight: 700, color: C.ink, margin: 0, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{fmt(inv.valorAtual)}</p>
+                      <p style={{ fontSize: 13.5, fontWeight: 700, color: C.ink, margin: 0, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+                        {inv.moeda === 'USD'
+                          ? `US$ ${inv.valorAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                          : fmt(inv.valorAtual)}
+                      </p>
                       <p style={{ fontSize: 10.5, fontWeight: 700, color: inv.pctRend >= 0 ? C.green : C.orange, margin: '1px 0 0' }}>
                         {inv.pctRend >= 0 ? '+' : ''}{inv.pctRend.toFixed(2)}%
                       </p>

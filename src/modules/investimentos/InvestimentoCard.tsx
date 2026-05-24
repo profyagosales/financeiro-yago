@@ -44,13 +44,18 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
     ? new Date(invest.dataVencimento + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
     : null
 
+  // Símbolo da moeda do ativo (PM/cotação aparecem nessa moeda — conversão
+  // pra BRL acontece só na soma global da carteira).
+  const simboloMoeda = invest.moeda === 'USD' ? 'US$' : 'R$'
+  const maxDecPM = invest.moeda === 'USD' ? 6 : 2
+
   // Linha de detalhes (varia por tipo)
   const detalhesLinha = isVar
     ? [
         invest.ticker,
         invest.quantidade ? `${invest.quantidade.toLocaleString('pt-BR')} ${invest.tipo === 'Cripto' ? 'unid.' : 'cotas'}` : null,
-        invest.precoMedio ? `PM R$ ${invest.precoMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : null,
-        invest.cotacaoAtual ? `Cot. R$ ${invest.cotacaoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : null,
+        invest.precoMedio ? `PM ${simboloMoeda} ${invest.precoMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: maxDecPM })}` : null,
+        invest.cotacaoAtual ? `Cot. ${simboloMoeda} ${invest.cotacaoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: maxDecPM })}` : null,
       ].filter(Boolean).join(' · ')
     : [
         // Descrição amigável do rendimento (% CDI, IPCA+X%, prefixado, etc)

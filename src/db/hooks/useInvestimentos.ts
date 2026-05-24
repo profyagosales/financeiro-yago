@@ -231,6 +231,10 @@ export async function deleteAporte(id: number) {
 //   Vendas reduzem a quantidade mas NÃO mudam o PM (regra contábil BR)
 //   valorAplicado = valor que o usuário desembolsou ainda EM POSIÇÃO
 //                 = qtd_atual × PM
+//
+// IMPORTANTE: TODOS os valores (precoMedio, valorAplicado, valorAtual,
+// cotacaoAtual) ficam armazenados na moeda do ativo (inv.moeda). A
+// conversão pra BRL acontece UMA ÚNICA VEZ em totalCarteiraBRL.
 export async function recalcInvestimentoFromAportes(investimentoId: number) {
   const inv = await db.investimentos.get(investimentoId)
   if (!inv) return
@@ -258,7 +262,10 @@ export async function recalcInvestimentoFromAportes(investimentoId: number) {
 
   await db.investimentos.update(investimentoId, {
     quantidade: Math.round(qtdEstoque * 100000000) / 100000000, // 8 casas (cripto)
-    precoMedio: Math.round(pm * 100) / 100,
+    // 8 casas no PM também — cripto sub-centavo (SHIB, PEPE) tem preço
+    // < R$ 0,01/unidade. Arredondar pra 2 casas zerava o PM e quebrava
+    // os cálculos de rendimento.
+    precoMedio: Math.round(pm * 100000000) / 100000000,
     valorAplicado: Math.round(valorAplicadoEstoque * 100) / 100,
     valorAtual: Math.round(valorAtual * 100) / 100,
     updatedAt: Date.now(),
@@ -280,11 +287,15 @@ export async function atualizarCotacao(investimentoId: number, novaCotacao: numb
 
 // ─── Cotação automática via API ──────────────────────────────────────
 // Busca cotação atual do ativo (CoinGecko pra cripto, Brapi pra B3) e
-// atualiza o investimento. Retorna a nova cotação, ou null se falhou.
+// atualiza o investimento. A cotação é gravada NA MOEDA DO ATIVO (BRL ou
+// USD) — sem isso, ativo USD teria cotação em BRL e seria reconvertido
+// pelo totalCarteiraBRL, gerando dupla conversão (~5x).
+// Retorna a nova cotação na moeda do ativo, ou null se falhou.
 export async function atualizarCotacaoAuto(investimentoId: number): Promise<number | null> {
   const inv = await db.investimentos.get(investimentoId)
   if (!inv || !inv.ticker) return null
-  const cotacao = await fetchCotacaoPorTipo(inv.tipo, inv.ticker)
+  const moeda = inv.moeda ?? 'BRL'
+  const cotacao = await fetchCotacaoPorTipo(inv.tipo, inv.ticker, moeda)
   if (cotacao === null) return null
   await atualizarCotacao(investimentoId, cotacao)
   return cotacao

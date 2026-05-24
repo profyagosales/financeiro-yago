@@ -8,7 +8,7 @@ import { useCategorias } from '@/db/hooks/useCategorias'
 import { useCartoes } from '@/db/hooks/useCartoes'
 import { marcarComoComprado } from '@/db/hooks/useDesejos'
 import { fmt } from '@/lib/format'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
   desejo: Desejo
@@ -46,50 +46,59 @@ export function ComprarForm({ desejo, onClose }: Props) {
   const handleComprar = async () => {
     if (!canComprar) return
     const valor = valorParsed
+    const descricaoTrim = form.descricao.trim()
+    if (!descricaoTrim) return
 
-    const txId = (await db.transacoes.add({
-      data: form.data,
-      valor,
-      tipo: 'despesa',
-      contaId: contaIdNum,
-      categoriaId: form.categoriaId ? parseInt(form.categoriaId) : 0,
-      descricao: form.descricao,
-      notas: `Compra registrada da lista de desejos`,
-      status: 'efetivada',
-      updatedAt: Date.now(),
-    })) as number
+    try {
+      const txId = (await db.transacoes.add({
+        data: form.data,
+        valor,
+        tipo: 'despesa',
+        contaId: contaIdNum,
+        categoriaId: form.categoriaId ? parseInt(form.categoriaId) : 0,
+        descricao: descricaoTrim,
+        notas: `Compra registrada da lista de desejos`,
+        status: 'efetivada',
+        updatedAt: Date.now(),
+      })) as number
 
-    // Atualiza saldo da conta se for via conta
-    if (form.metodo === 'conta' && contaIdNum) {
-      const conta = await db.contas.get(contaIdNum)
-      if (conta) {
-        await db.contas.update(contaIdNum, {
-          saldoAtual: conta.saldoAtual - valor,
-          updatedAt: Date.now(),
+      // Atualiza saldo da conta se for via conta
+      if (form.metodo === 'conta' && contaIdNum) {
+        const conta = await db.contas.get(contaIdNum)
+        if (conta) {
+          await db.contas.update(contaIdNum, {
+            saldoAtual: conta.saldoAtual - valor,
+            updatedAt: Date.now(),
+          })
+        }
+      }
+
+      // Se for cartão, cria lançamento no cartão
+      if (form.metodo === 'cartao' && form.cartaoId) {
+        const cartaoIdLocal = parseInt(form.cartaoId)
+        const d = new Date(form.data + 'T00:00:00')
+        await db.lancamentosCartao.add({
+          cartaoId: cartaoIdLocal,
+          descricao: descricaoTrim,
+          valor,
+          data: form.data,
+          categoriaId: form.categoriaId ? parseInt(form.categoriaId) : 0,
+          parcelaAtual: 1,
+          totalParcelas: 1,
+          mes: d.getMonth() + 1,
+          ano: d.getFullYear(),
         })
       }
-    }
 
-    // Se for cartão, cria lançamento no cartão
-    if (form.metodo === 'cartao' && form.cartaoId) {
-      const cartaoIdNum = parseInt(form.cartaoId)
-      const d = new Date(form.data + 'T00:00:00')
-      await db.lancamentosCartao.add({
-        cartaoId: cartaoIdNum,
-        descricao: form.descricao,
-        valor,
-        data: form.data,
-        categoriaId: form.categoriaId ? parseInt(form.categoriaId) : 0,
-        parcelaAtual: 1,
-        totalParcelas: 1,
-        mes: d.getMonth() + 1,
-        ano: d.getFullYear(),
-      })
+      // Marca desejo como comprado
+      await marcarComoComprado(desejo.id, txId, valor)
+      sounds.save()
+      onClose()
+    } catch (e) {
+      console.error('[ComprarForm.handleComprar]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao registrar compra — tente de novo')
+      sounds.error()
     }
-
-    // Marca desejo como comprado
-    await marcarComoComprado(desejo.id, txId, valor)
-    onClose()
   }
 
   return (
@@ -250,8 +259,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   )
 }
-
-function parseValor(v: string) { return parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0 }
 
 const INPUT_STYLE: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box',

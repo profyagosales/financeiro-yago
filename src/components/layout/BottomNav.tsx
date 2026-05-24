@@ -40,7 +40,10 @@ export function BottomNav({ onFab }: { onFab: () => void }) {
         const active = pathname === item.path
         const Icon = item.icon
         return (
-          <button key={item.path} onClick={() => { haptic('light'); sounds.navigate(); navigate(item.path) }}
+          <button key={item.path}
+            aria-label={item.label}
+            aria-current={active ? 'page' : undefined}
+            onClick={() => { haptic('light'); sounds.navigate(); navigate(item.path) }}
             style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
             <Icon size={22} stroke={active ? 2.4 : 1.6} color={active ? '#F2C745' : 'rgba(255,255,255,0.5)'} />
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: active ? 700 : 500, color: active ? '#F2C745' : 'rgba(255,255,255,0.6)' }}>{item.label}</span>
@@ -56,7 +59,9 @@ export function BottomNav({ onFab }: { onFab: () => void }) {
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               style={{ position: 'absolute', inset: -6, borderRadius: '50%', border: '2.5px solid #F1642E', pointerEvents: 'none' }} />
           )}
-          <motion.button onClick={() => { haptic('light'); sounds.modal_open(); onFab() }} whileTap={{ scale: 0.88 }} whileHover={{ scale: 1.06 }}
+          <motion.button
+            aria-label={pendentes > 0 ? `Novo lançamento (${pendentes} pendentes)` : 'Novo lançamento'}
+            onClick={() => { haptic('light'); sounds.modal_open(); onFab() }} whileTap={{ scale: 0.88 }} whileHover={{ scale: 1.06 }}
             style={{
               width: 52, height: 52, borderRadius: '50%', border: '3px solid #504E76',
               cursor: 'pointer',
@@ -78,7 +83,10 @@ export function BottomNav({ onFab }: { onFab: () => void }) {
         const active = pathname === item.path
         const Icon = item.icon
         return (
-          <button key={item.path} onClick={() => { haptic('light'); sounds.navigate(); navigate(item.path) }}
+          <button key={item.path}
+            aria-label={item.label}
+            aria-current={active ? 'page' : undefined}
+            onClick={() => { haptic('light'); sounds.navigate(); navigate(item.path) }}
             style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
             <Icon size={22} stroke={active ? 2.4 : 1.6} color={active ? '#F2C745' : 'rgba(255,255,255,0.5)'} />
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: active ? 700 : 500, color: active ? '#F2C745' : 'rgba(255,255,255,0.6)' }}>{item.label}</span>

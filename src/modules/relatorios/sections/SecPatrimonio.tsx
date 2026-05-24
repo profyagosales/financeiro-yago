@@ -1,5 +1,5 @@
 // ─── Patrimônio: area 12m + breakdown ──────────────────────────────
-import { IconCoin, IconBuildingBank, IconChartLine, IconScale, IconCreditCardOff } from '@tabler/icons-react'
+import { IconCoin, IconBuildingBank, IconChartLine, IconCreditCardOff } from '@tabler/icons-react'
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { SectionShell } from '../components/SectionShell'
 import { ChartTooltip } from '../components/ChartTooltip'

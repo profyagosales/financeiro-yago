@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
@@ -31,13 +31,11 @@ export function CartoesDesktop() {
   const [lancAno, setLancAno] = useState(ano)
   const [lancEditing, setLancEditing] = useState<LancamentoCartao | null>(null)
 
-  // Auto-seleciona cartão com maior fatura na 1ª carga
-  useEffect(() => {
-    if (selectedId === null && cartoes.length > 0) {
-      const first = cartoes[0]
-      if (first.id !== undefined) setSelectedId(first.id)
-    }
-  }, [cartoes, selectedId])
+  // Auto-seleciona cartão com maior fatura na 1ª carga (derived state pattern)
+  if (selectedId === null && cartoes.length > 0) {
+    const first = cartoes[0]
+    if (first.id !== undefined) setSelectedId(first.id)
+  }
 
   // Total de fatura do mês corrente (todos cartões somados)
   // Note: `[mes+ano]` não está indexado no schema. Usa o índice `mes`

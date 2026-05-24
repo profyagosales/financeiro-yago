@@ -3,10 +3,10 @@ import { motion } from 'framer-motion'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconShoppingCart, IconTrash, IconPlus, IconCurrencyDollar, IconCurrencyReal, IconCloudDownload } from '@tabler/icons-react'
 import type { Investimento } from '@/db/schema'
-import { useAportes, addAporte, deleteAporte, calcAportesStats } from '@/db/hooks/useInvestimentos'
+import { useAportes, addAporte, deleteAporte, calcAportesStats, useDolar } from '@/db/hooks/useInvestimentos'
 import { fetchCotacaoDolar, fetchCotacaoPorTipo } from '@/lib/cotacoes'
-import { fmt } from '@/lib/format'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { showErrorToast, sounds } from '@/lib/sounds'
+// useBodyScrollLock removido — LegacyModalShell já cuida disso
 
 interface Props {
   invest: Investimento
@@ -18,20 +18,32 @@ export function AportesModal({ invest, onClose }: Props) {
   const aportes = useAportes(invest.id)
   const today = new Date().toISOString().split('T')[0]
   const stats = calcAportesStats(aportes)
+  const dolarCache = useDolar()
 
   const isCripto = invest.tipo === 'Cripto'
+  // Moeda em que TUDO é armazenado pra esse ativo (precoUnitario, custos,
+  // cotacaoAtual, precoMedio, valorAplicado, valorAtual). Conversão pra
+  // BRL acontece UMA vez em totalCarteiraBRL.
+  const moedaAtivo: 'BRL' | 'USD' = invest.moeda ?? 'BRL'
+  const simbolo = moedaAtivo === 'USD' ? 'US$' : 'R$'
+  const simboloOposto = moedaAtivo === 'USD' ? 'R$' : 'US$'
 
-  // Modo de entrada: BRL direto, USD com câmbio, ou "investi X fiat, recebi Y unid"
-  // Pra cripto, expor todos. Pra outros, só BRL.
-  const [modo, setModo] = useState<'brl' | 'usd' | 'investido_brl' | 'investido_usd'>('brl')
+  // Modo de entrada (UI):
+  //   'nativo'         → user digita preço já na moeda do ativo
+  //   'fx'             → user digita preço na moeda oposta + cotação do dólar
+  //   'investido_nativo' → "investi X na moeda do ativo e recebi Y unidades"
+  //   'investido_fx'   → "investi X na moeda oposta + câmbio"
+  // Toggle de modo só faz sentido pra cripto (caso comum de comprar em USD
+  // mas pagar em BRL na exchange). Pra outros, sempre 'nativo'.
+  const [modo, setModo] = useState<'nativo' | 'fx' | 'investido_nativo' | 'investido_fx'>('nativo')
 
   const [form, setForm] = useState({
     data: today,
     quantidade: '',
-    precoUnitario: '',         // em BRL (campo unificado interno)
+    precoUnitario: '',         // SEMPRE na moeda escolhida pelo modo (input puro do user)
     valorInvestido: '',        // pro modo "investi X reais/dólares"
-    cotacaoDolar: '',          // pro modo USD
-    custos: '',                // corretagem + emolumentos + IOF (na moeda do ativo)
+    cotacaoDolar: dolarCache > 0 ? dolarCache.toFixed(4) : '',  // pro modo fx
+    custos: '',                // SEMPRE na moeda do ativo (input puro)
     observacao: '',
   })
 
@@ -40,41 +52,60 @@ export function AportesModal({ invest, onClose }: Props) {
 
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
 
-  // Quando seleciona modo USD, busca cotação do dólar automaticamente
+  // Quando seleciona modo fx, busca cotação do dólar automaticamente
+  // (setFetchingFx no callback async, fora do render — OK pra react-hooks)
   useEffect(() => {
-    if ((modo === 'usd' || modo === 'investido_usd') && !form.cotacaoDolar) {
-      setFetchingFx(true)
-      fetchCotacaoDolar().then(c => {
-        if (c !== null) setForm(f => ({ ...f, cotacaoDolar: c.toFixed(4) }))
-        setFetchingFx(false)
+    if ((modo === 'fx' || modo === 'investido_fx') && !form.cotacaoDolar) {
+      let alive = true
+      // Defer pra micro-task pra evitar sync setState no body do effect
+      void Promise.resolve().then(() => {
+        if (!alive) return
+        setFetchingFx(true)
+        fetchCotacaoDolar().then(c => {
+          if (!alive) return
+          if (c !== null) setForm(f => ({ ...f, cotacaoDolar: c.toFixed(4) }))
+          setFetchingFx(false)
+        })
       })
+      return () => { alive = false }
     }
-  }, [modo])
+  }, [modo, form.cotacaoDolar])
 
-  // Computa quantidade e preço unitário em BRL conforme o modo
-  function computeAporte(): { qtd: number; precoBRL: number } | null {
+  // Converte um valor da moeda OPOSTA pra moeda do ativo usando cotação USD/BRL
+  // moedaAtivo=BRL  → input em USD, multiplica pelo dólar
+  // moedaAtivo=USD  → input em BRL, divide pelo dólar
+  function fxParaMoedaAtivo(valorOposto: number, fx: number): number {
+    if (fx <= 0) return 0
+    return moedaAtivo === 'USD' ? valorOposto / fx : valorOposto * fx
+  }
+
+  // Computa quantidade + preço unitário NA MOEDA DO ATIVO (regra única
+  // do refactor: aporte.precoUnitario sempre na moeda do ativo).
+  function computeAporte(): { qtd: number; precoMoedaAtivo: number } | null {
     const qtdInput = parseValor(form.quantidade)
     const precoInput = parseValor(form.precoUnitario)
     const investido = parseValor(form.valorInvestido)
     const fx = parseValor(form.cotacaoDolar)
 
-    if (modo === 'brl') {
+    if (modo === 'nativo') {
       if (qtdInput <= 0 || precoInput <= 0) return null
-      return { qtd: qtdInput, precoBRL: precoInput }
+      return { qtd: qtdInput, precoMoedaAtivo: precoInput }
     }
-    if (modo === 'usd') {
+    if (modo === 'fx') {
+      // precoInput está na moeda OPOSTA — converter pra moeda do ativo
       if (qtdInput <= 0 || precoInput <= 0 || fx <= 0) return null
-      return { qtd: qtdInput, precoBRL: precoInput * fx }
+      return { qtd: qtdInput, precoMoedaAtivo: fxParaMoedaAtivo(precoInput, fx) }
     }
-    if (modo === 'investido_brl') {
-      // user investiu X reais e obteve Y unidades
+    if (modo === 'investido_nativo') {
+      // user investiu X na moeda do ativo e obteve Y unidades
       if (qtdInput <= 0 || investido <= 0) return null
-      return { qtd: qtdInput, precoBRL: investido / qtdInput }
+      return { qtd: qtdInput, precoMoedaAtivo: investido / qtdInput }
     }
-    if (modo === 'investido_usd') {
+    if (modo === 'investido_fx') {
+      // user investiu X na moeda OPOSTA (cotada via câmbio)
       if (qtdInput <= 0 || investido <= 0 || fx <= 0) return null
-      const investidoBRL = investido * fx
-      return { qtd: qtdInput, precoBRL: investidoBRL / qtdInput }
+      const investidoMoedaAtivo = fxParaMoedaAtivo(investido, fx)
+      return { qtd: qtdInput, precoMoedaAtivo: investidoMoedaAtivo / qtdInput }
     }
     return null
   }
@@ -83,52 +114,60 @@ export function AportesModal({ invest, onClose }: Props) {
 
   const handleAdd = async () => {
     if (!preview || !invest.id) return
+    const observacaoTrim = form.observacao.trim()
     const observacao = (() => {
-      if (modo === 'usd') return `Comprado a US$ ${parseValor(form.precoUnitario).toFixed(2)}/un · câmbio R$ ${parseValor(form.cotacaoDolar).toFixed(2)}${form.observacao ? ' · ' + form.observacao : ''}`
-      if (modo === 'investido_brl') return `Investiu R$ ${parseValor(form.valorInvestido).toFixed(2)}${form.observacao ? ' · ' + form.observacao : ''}`
-      if (modo === 'investido_usd') return `Investiu US$ ${parseValor(form.valorInvestido).toFixed(2)} · câmbio R$ ${parseValor(form.cotacaoDolar).toFixed(2)}${form.observacao ? ' · ' + form.observacao : ''}`
-      return form.observacao || undefined
+      if (modo === 'fx') return `Comprado a ${simboloOposto} ${parseValor(form.precoUnitario).toFixed(2)}/un · câmbio R$ ${parseValor(form.cotacaoDolar).toFixed(2)}${observacaoTrim ? ' · ' + observacaoTrim : ''}`
+      if (modo === 'investido_nativo') return `Investiu ${simbolo} ${parseValor(form.valorInvestido).toFixed(2)}${observacaoTrim ? ' · ' + observacaoTrim : ''}`
+      if (modo === 'investido_fx') return `Investiu ${simboloOposto} ${parseValor(form.valorInvestido).toFixed(2)} · câmbio R$ ${parseValor(form.cotacaoDolar).toFixed(2)}${observacaoTrim ? ' · ' + observacaoTrim : ''}`
+      return observacaoTrim || undefined
     })()
-    // Custos: se modo USD, converter pra BRL também
-    let custosBRL = parseValor(form.custos) || undefined
-    if (custosBRL && (modo === 'usd' || modo === 'investido_usd')) {
-      const fx = parseValor(form.cotacaoDolar)
-      if (fx > 0) custosBRL = custosBRL * fx
-    }
+    // Custos: input do user é sempre na moeda do ativo
+    const custosMoedaAtivo = parseValor(form.custos) || undefined
 
-    await addAporte({
-      investimentoId: invest.id,
-      data: form.data,
-      quantidade: preview.qtd,
-      precoUnitario: preview.precoBRL,
-      custos: custosBRL,
-      observacao,
-    })
-    setForm({ data: today, quantidade: '', precoUnitario: '', valorInvestido: '', cotacaoDolar: form.cotacaoDolar, custos: '', observacao: '' })
+    try {
+      await addAporte({
+        investimentoId: invest.id,
+        data: form.data,
+        quantidade: preview.qtd,
+        precoUnitario: preview.precoMoedaAtivo,
+        custos: custosMoedaAtivo,
+        observacao,
+      })
+      sounds.save()
+      setForm({ data: today, quantidade: '', precoUnitario: '', valorInvestido: '', cotacaoDolar: form.cotacaoDolar, custos: '', observacao: '' })
+    } catch (e) {
+      console.error('[AportesModal.handleAdd]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao adicionar aporte — tente de novo')
+      sounds.error()
+    }
   }
 
-  // Sugestão de cotação atual quando user clica "puxar do mercado"
+  // Sugestão de cotação atual quando user clica "puxar do mercado".
+  // A cotação vem na moeda do ativo (CoinGecko aceita vs_currencies=usd).
+  // Se o modo de entrada é 'fx' (preço na moeda oposta), converte.
   const handleFetchCotAtivo = async () => {
     if (!invest.ticker) return
     setFetchingCotAtivo(true)
-    const c = await fetchCotacaoPorTipo(invest.tipo, invest.ticker)
+    const c = await fetchCotacaoPorTipo(invest.tipo, invest.ticker, moedaAtivo)
     setFetchingCotAtivo(false)
-    if (c !== null) {
-      // se modo USD, converte BRL → USD
-      if (modo === 'usd') {
-        const fx = parseValor(form.cotacaoDolar)
-        if (fx > 0) setForm(f => ({ ...f, precoUnitario: (c / fx).toFixed(2) }))
-      } else if (modo === 'brl') {
-        setForm(f => ({ ...f, precoUnitario: c.toFixed(2) }))
-      }
+    if (c === null) return
+    if (modo === 'nativo') {
+      // preço no input é na moeda do ativo — preenche direto
+      setForm(f => ({ ...f, precoUnitario: c.toFixed(moedaAtivo === 'USD' ? 4 : 2) }))
+    } else if (modo === 'fx') {
+      // preço no input é na moeda OPOSTA — converte
+      const fx = parseValor(form.cotacaoDolar)
+      if (fx <= 0) return
+      const precoOposto = moedaAtivo === 'USD' ? c * fx : c / fx
+      setForm(f => ({ ...f, precoUnitario: precoOposto.toFixed(2) }))
     }
   }
 
-  // Preview do novo PM caso este aporte seja confirmado (sempre em BRL)
+  // Preview do novo PM caso este aporte seja confirmado (na moeda do ativo)
   const previewPM = (() => {
     if (!preview) return null
     const qtdTotal = stats.quantidade + preview.qtd
-    const totalInvestido = stats.totalInvestido + (preview.qtd * preview.precoBRL)
+    const totalInvestido = stats.totalInvestido + (preview.qtd * preview.precoMoedaAtivo)
     return qtdTotal > 0 ? totalInvestido / qtdTotal : 0
   })()
 
@@ -181,32 +220,34 @@ export function AportesModal({ invest, onClose }: Props) {
       }
     >
 
-        {/* KPIs derivados */}
+        {/* KPIs derivados — valores na moeda do ativo */}
         <div style={{ padding: '16px 26px', background: '#FBF8F3', borderBottom: '1px solid #EDE6DC', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 12 }}>
           <Kpi label="Quantidade total" value={stats.quantidade.toLocaleString('pt-BR')} sub={`${aportes.length} ${aportes.length === 1 ? 'compra' : 'compras'}`} cor="#504E76" />
-          <Kpi label="Preço médio" value={fmt(stats.precoMedio)} sub="calculado dos aportes" cor="#3A8580" />
-          <Kpi label="Total investido" value={fmt(stats.totalInvestido)} sub={invest.cotacaoAtual ? `posição: ${fmt(stats.quantidade * invest.cotacaoAtual)}` : 'sem cotação'} cor="#2C1A0F" />
+          <Kpi label="Preço médio" value={`${simbolo} ${stats.precoMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: moedaAtivo === 'USD' ? 4 : 2 })}`} sub="calculado dos aportes" cor="#3A8580" />
+          <Kpi label="Total investido" value={`${simbolo} ${stats.totalInvestido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} sub={invest.cotacaoAtual ? `posição: ${simbolo} ${(stats.quantidade * invest.cotacaoAtual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'sem cotação'} cor="#2C1A0F" />
         </div>
 
         {/* Form de novo aporte */}
         <div style={{ padding: '20px 26px', borderBottom: '1px solid #EDE6DC' }}>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: '0 0 12px' }}>Registrar nova compra</p>
 
-          {/* Toggle de modo (só pra cripto que tem caso comum de USD) */}
+          {/* Toggle de modo (só pra cripto que tem caso comum de comprar
+              em moeda diferente da moeda do ativo — ex: cripto USD pago
+              em BRL no PIX da exchange brasileira). */}
           {isCripto && (
             <div style={{ marginBottom: 12 }}>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.08em', textTransform: 'uppercase', margin: '0 0 6px' }}>Como você comprou?</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
-                <ModoBtn active={modo === 'brl'} onClick={() => setModo('brl')} icon={<IconCurrencyReal size={12} stroke={2.2} />}>Qtd + preço em R$</ModoBtn>
-                <ModoBtn active={modo === 'usd'} onClick={() => setModo('usd')} icon={<IconCurrencyDollar size={12} stroke={2.2} />}>Qtd + preço em US$</ModoBtn>
-                <ModoBtn active={modo === 'investido_brl'} onClick={() => setModo('investido_brl')} icon={<IconCurrencyReal size={12} stroke={2.2} />}>"Investi R$ X e recebi Y"</ModoBtn>
-                <ModoBtn active={modo === 'investido_usd'} onClick={() => setModo('investido_usd')} icon={<IconCurrencyDollar size={12} stroke={2.2} />}>"Investi US$ X e recebi Y"</ModoBtn>
+                <ModoBtn active={modo === 'nativo'} onClick={() => setModo('nativo')} icon={moedaAtivo === 'USD' ? <IconCurrencyDollar size={12} stroke={2.2} /> : <IconCurrencyReal size={12} stroke={2.2} />}>Qtd + preço em {simbolo}</ModoBtn>
+                <ModoBtn active={modo === 'fx'} onClick={() => setModo('fx')} icon={moedaAtivo === 'USD' ? <IconCurrencyReal size={12} stroke={2.2} /> : <IconCurrencyDollar size={12} stroke={2.2} />}>Qtd + preço em {simboloOposto}</ModoBtn>
+                <ModoBtn active={modo === 'investido_nativo'} onClick={() => setModo('investido_nativo')} icon={moedaAtivo === 'USD' ? <IconCurrencyDollar size={12} stroke={2.2} /> : <IconCurrencyReal size={12} stroke={2.2} />}>"Investi {simbolo} X e recebi Y"</ModoBtn>
+                <ModoBtn active={modo === 'investido_fx'} onClick={() => setModo('investido_fx')} icon={moedaAtivo === 'USD' ? <IconCurrencyReal size={12} stroke={2.2} /> : <IconCurrencyDollar size={12} stroke={2.2} />}>"Investi {simboloOposto} X e recebi Y"</ModoBtn>
               </div>
             </div>
           )}
 
-          {/* Cotação do dólar (modos USD) */}
-          {(modo === 'usd' || modo === 'investido_usd') && (
+          {/* Cotação do dólar (modos fx) */}
+          {(modo === 'fx' || modo === 'investido_fx') && (
             <Field label="Cotação do dólar no dia (R$/US$)">
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input value={form.cotacaoDolar} onChange={e => setForm(f => ({ ...f, cotacaoDolar: e.target.value }))} placeholder="5,40" inputMode="decimal" style={{ ...INPUT_STYLE, flex: 1 }} />
@@ -229,7 +270,7 @@ export function AportesModal({ invest, onClose }: Props) {
           )}
 
           {/* Modos "Quantidade + Preço" */}
-          {(modo === 'brl' || modo === 'usd') && (
+          {(modo === 'nativo' || modo === 'fx') && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
               <Field label="Data">
                 <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} style={INPUT_STYLE} />
@@ -237,7 +278,7 @@ export function AportesModal({ invest, onClose }: Props) {
               <Field label="Quantidade">
                 <input value={form.quantidade} onChange={e => setForm(f => ({ ...f, quantidade: e.target.value }))} placeholder={isCripto ? '0,00461' : '50'} inputMode="decimal" style={INPUT_STYLE} />
               </Field>
-              <Field label={modo === 'usd' ? 'Preço unit. (US$)' : 'Preço unit. (R$)'}>
+              <Field label={`Preço unit. (${modo === 'fx' ? simboloOposto : simbolo})`}>
                 <div style={{ display: 'flex', gap: 4 }}>
                   <input value={form.precoUnitario} onChange={e => setForm(f => ({ ...f, precoUnitario: e.target.value }))} placeholder="170,00" inputMode="decimal" style={{ ...INPUT_STYLE, flex: 1 }} />
                   {invest.ticker && (
@@ -255,13 +296,13 @@ export function AportesModal({ invest, onClose }: Props) {
           )}
 
           {/* Modos "Investi X e recebi Y" */}
-          {(modo === 'investido_brl' || modo === 'investido_usd') && (
+          {(modo === 'investido_nativo' || modo === 'investido_fx') && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
               <Field label="Data">
                 <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} style={INPUT_STYLE} />
               </Field>
-              <Field label={modo === 'investido_brl' ? 'Investi (R$)' : 'Investi (US$)'}>
-                <input value={form.valorInvestido} onChange={e => setForm(f => ({ ...f, valorInvestido: e.target.value }))} placeholder={modo === 'investido_usd' ? '300,00' : '1500,00'} inputMode="decimal" style={INPUT_STYLE} />
+              <Field label={`Investi (${modo === 'investido_fx' ? simboloOposto : simbolo})`}>
+                <input value={form.valorInvestido} onChange={e => setForm(f => ({ ...f, valorInvestido: e.target.value }))} placeholder={modo === 'investido_fx' ? '300,00' : '1500,00'} inputMode="decimal" style={INPUT_STYLE} />
               </Field>
               <Field label={`Recebi (${isCripto ? 'unidades' : 'cotas'})`}>
                 <input value={form.quantidade} onChange={e => setForm(f => ({ ...f, quantidade: e.target.value }))} placeholder="0,00461" inputMode="decimal" style={INPUT_STYLE} />
@@ -269,11 +310,7 @@ export function AportesModal({ invest, onClose }: Props) {
             </div>
           )}
 
-          <Field label={
-            (modo === 'usd' || modo === 'investido_usd')
-              ? 'Custos da operação (US$, opcional)'
-              : 'Custos da operação (R$, opcional)'
-          }>
+          <Field label={`Custos da operação (${simbolo}, opcional)`}>
             <input value={form.custos} onChange={e => setForm(f => ({ ...f, custos: e.target.value }))}
               placeholder="Corretagem + emolumentos + IOF"
               inputMode="decimal" style={INPUT_STYLE} />
@@ -286,15 +323,15 @@ export function AportesModal({ invest, onClose }: Props) {
             <input value={form.observacao} onChange={e => setForm(f => ({ ...f, observacao: e.target.value }))} placeholder="Ex: corretora, exchange, oferta..." style={INPUT_STYLE} />
           </Field>
 
-          {/* Preview do impacto */}
+          {/* Preview do impacto — na moeda do ativo */}
           {preview && (
             <div style={{ marginTop: 10, padding: '12px 14px', background: 'rgba(58,133,128,0.08)', border: '1px solid rgba(58,133,128,0.18)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#1E7D5A' }}>
-                  Total deste aporte (BRL)
+                  Total deste aporte ({moedaAtivo})
                 </span>
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15, fontWeight: 700, color: '#1E7D5A', letterSpacing: '-0.3px' }}>
-                  {fmt(preview.qtd * preview.precoBRL)}
+                  {simbolo} {(preview.qtd * preview.precoMoedaAtivo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -302,7 +339,7 @@ export function AportesModal({ invest, onClose }: Props) {
                   Preço médio efetivo
                 </span>
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#7A5C4F' }}>
-                  {fmt(preview.precoBRL)}/{isCripto ? 'unid.' : 'cota'}
+                  {simbolo} {preview.precoMoedaAtivo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: moedaAtivo === 'USD' ? 6 : 2 })}/{isCripto ? 'unid.' : 'cota'}
                 </span>
               </div>
               {previewPM !== null && stats.precoMedio > 0 && (
@@ -311,7 +348,7 @@ export function AportesModal({ invest, onClose }: Props) {
                     Novo PM da posição
                   </span>
                   <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#1E7D5A' }}>
-                    {fmt(previewPM)} <span style={{ fontSize: 11, fontWeight: 600, color: previewPM > stats.precoMedio ? '#C4553B' : '#1E7D5A' }}>
+                    {simbolo} {previewPM.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: moedaAtivo === 'USD' ? 6 : 2 })} <span style={{ fontSize: 11, fontWeight: 600, color: previewPM > stats.precoMedio ? '#C4553B' : '#1E7D5A' }}>
                       ({previewPM > stats.precoMedio ? '+' : ''}{((previewPM - stats.precoMedio) / stats.precoMedio * 100).toFixed(2)}%)
                     </span>
                   </span>
@@ -363,14 +400,14 @@ export function AportesModal({ invest, onClose }: Props) {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>
-                        {a.quantidade.toLocaleString('pt-BR')} × {fmt(a.precoUnitario)}
+                        {a.quantidade.toLocaleString('pt-BR')} × {simbolo} {a.precoUnitario.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: moedaAtivo === 'USD' ? 6 : 2 })}
                       </p>
                       {a.observacao && (
                         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '2px 0 0', fontStyle: 'italic' }}>{a.observacao}</p>
                       )}
                     </div>
                     <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#504E76', letterSpacing: '-0.3px' }}>
-                      {fmt(total)}
+                      {simbolo} {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                     <button onClick={() => a.id !== undefined && deleteAporte(a.id)} title="Remover aporte"
                       style={{ background: '#FAEAEA', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

@@ -4,7 +4,7 @@ import { IconX, IconCheck, IconCoins, IconTrash, IconPlus } from '@tabler/icons-
 import type { Investimento, ProventoTipo } from '@/db/schema'
 import { useProventos, addProvento, deleteProvento, calcDY12m, calcProventosMes } from '@/db/hooks/useInvestimentos'
 import { fmt } from '@/lib/format'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
   invest: Investimento
@@ -37,14 +37,22 @@ export function ProventosModal({ invest, onClose }: Props) {
   const handleAdd = async () => {
     const valor = parseValor(form.valor)
     if (!valor || !invest.id) return
-    await addProvento({
-      investimentoId: invest.id,
-      data: form.data,
-      valor,
-      tipo: form.tipo,
-      observacao: form.observacao || undefined,
-    })
-    setForm({ data: today, valor: '', tipo: form.tipo, observacao: '' })
+    const observacaoTrim = form.observacao.trim()
+    try {
+      await addProvento({
+        investimentoId: invest.id,
+        data: form.data,
+        valor,
+        tipo: form.tipo,
+        observacao: observacaoTrim || undefined,
+      })
+      sounds.save()
+      setForm({ data: today, valor: '', tipo: form.tipo, observacao: '' })
+    } catch (e) {
+      console.error('[ProventosModal.handleAdd]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao registrar provento — tente de novo')
+      sounds.error()
+    }
   }
 
   const totalRecebido = proventos.reduce((s, p) => s + p.valor, 0)

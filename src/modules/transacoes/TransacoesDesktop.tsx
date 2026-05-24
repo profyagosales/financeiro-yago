@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   IconPlus, IconSearch, IconReceipt, IconArrowUpRight, IconArrowDownRight,
-  IconBolt, IconClock, IconCalendarEvent, IconTrash, IconCheck, IconX,
+  IconClock, IconCalendarEvent, IconTrash, IconCheck, IconX,
   IconKeyboard,
 } from '@tabler/icons-react'
 import type { Transacao } from '@/db/schema'
@@ -113,12 +113,10 @@ export function TransacoesDesktop() {
     ?? txsPeriodo.find(t => t.id === selectedId)
     ?? null
 
-  // Quando seleção fica fora do filtro, limpa
-  useEffect(() => {
-    if (selectedId !== null && !txsFiltradas.some(t => t.id === selectedId)) {
-      setSelectedId(null)
-    }
-  }, [selectedId, txsFiltradas])
+  // Quando seleção fica fora do filtro, limpa (derived state pattern)
+  if (selectedId !== null && !txsFiltradas.some(t => t.id === selectedId)) {
+    setSelectedId(null)
+  }
 
   const hasActiveFilters = tipos.length > 0 || contasFiltro.length > 0 || categoriasFiltro.length > 0 || statusFiltro.length > 0 || !!search || quickToday || quickPendente || quickReceitas || quickDespesas
 

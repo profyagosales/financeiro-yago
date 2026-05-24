@@ -3,7 +3,8 @@ import { IconX, IconCheck, IconCalculator, IconLock } from '@tabler/icons-react'
 import type { Meta, MetaTipo } from '@/db/schema'
 import { addMeta, editMeta, calcularAlvoReserva, useMetas } from '@/db/hooks/useMetas'
 import { fmt } from '@/lib/format'
-import { META_TIPOS, META_ICONS, META_CORES, COBERTURA_OPTIONS, getMetaIcon } from './constants'
+import { showErrorToast, sounds } from '@/lib/sounds'
+import { META_TIPOS, META_ICONS, META_CORES, COBERTURA_OPTIONS } from './constants'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 
 interface Props {
@@ -48,9 +49,10 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
   const canSave = !!form.nome.trim() && parseValor(form.valorAlvo) > 0
 
   const handleSave = async () => {
-    if (!canSave) return
+    const nomeTrim = form.nome.trim()
+    if (!nomeTrim || parseValor(form.valorAlvo) <= 0) return
     const data = {
-      nome: form.nome,
+      nome: nomeTrim,
       tipo: form.tipo,
       valorAlvo: parseValor(form.valorAlvo),
       valorAtual: parseValor(form.valorAtual),
@@ -61,15 +63,21 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
       alvoAutoCalculado: form.tipo === 'reserva_emergencia' ? form.alvoAutoCalculado : undefined,
       ativo: true,
     }
-    if (isEditing && meta?.id) {
-      await editMeta(meta.id, data)
-    } else {
-      await addMeta(data)
+    try {
+      if (isEditing && meta?.id) {
+        await editMeta(meta.id, data)
+      } else {
+        await addMeta(data)
+      }
+      sounds.save()
+      onClose()
+    } catch (e) {
+      console.error('[MetaForm.handleSave]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar meta — tente de novo')
+      sounds.error()
     }
-    onClose()
   }
 
-  const tipoMeta = META_TIPOS.find(t => t.value === form.tipo)
   const isReserva = form.tipo === 'reserva_emergencia'
 
   return (

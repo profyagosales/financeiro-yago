@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { IconCheck, IconReceipt, IconMinus, IconPlus } from '@tabler/icons-react'
 import type { LancamentoCartao, Cartao } from '@/db/schema'
 import {
@@ -7,6 +7,7 @@ import {
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { Modal } from '@/components/ui/Modal'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
   open: boolean
@@ -17,59 +18,67 @@ interface Props {
   onClose: () => void
 }
 
+function initialLancamentoForm(lancamento?: LancamentoCartao | null) {
+  return {
+    valor: lancamento?.valor !== undefined ? String(lancamento.valor) : '',
+    descricao: lancamento?.descricao ?? '',
+    categoriaId: lancamento?.categoriaId ? String(lancamento.categoriaId) : '',
+    totalParcelas: lancamento?.totalParcelas ?? 1,
+    data: lancamento?.data ?? new Date().toISOString().split('T')[0],
+  }
+}
+
 export function LancamentoForm({ open, cartao, lancamento, mes, ano, onClose }: Props) {
   const categorias = useCategorias('despesa')
   const isEditing = !!lancamento
 
   // Em edit mode: valor é só desta parcela; descricao + categoria editáveis
   // Em add mode: valor total + nº parcelas
-  const [form, setForm] = useState({
-    valor: lancamento?.valor !== undefined ? String(lancamento.valor) : '',
-    descricao: lancamento?.descricao ?? '',
-    categoriaId: lancamento?.categoriaId ? String(lancamento.categoriaId) : '',
-    totalParcelas: lancamento?.totalParcelas ?? 1,
-    data: lancamento?.data ?? new Date().toISOString().split('T')[0],
-  })
-
-  useEffect(() => {
-    if (!open) return
-    setForm({
-      valor: lancamento?.valor !== undefined ? String(lancamento.valor) : '',
-      descricao: lancamento?.descricao ?? '',
-      categoriaId: lancamento?.categoriaId ? String(lancamento.categoriaId) : '',
-      totalParcelas: lancamento?.totalParcelas ?? 1,
-      data: lancamento?.data ?? new Date().toISOString().split('T')[0],
-    })
-  }, [open, lancamento])
+  const [form, setForm] = useState(() => initialLancamentoForm(lancamento))
+  // Derived state: reseta quando lançamento/open mudam (sem useEffect)
+  const [prevKey, setPrevKey] = useState<string>(`${open}-${lancamento?.id ?? 'new'}`)
+  const currentKey = `${open}-${lancamento?.id ?? 'new'}`
+  if (prevKey !== currentKey) {
+    setPrevKey(currentKey)
+    if (open) setForm(initialLancamentoForm(lancamento))
+  }
 
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
 
   const handleSave = async () => {
+    const descricaoTrim = form.descricao.trim()
     if (!form.valor || !form.categoriaId) return
     const valor = parseValor(form.valor)
     if (valor <= 0) return
 
-    if (isEditing && lancamento?.id !== undefined) {
-      // Edit: atualiza só esta parcela
-      await editLancamentoCartao(lancamento.id, {
-        valor,
-        descricao: form.descricao,
-        categoriaId: parseInt(form.categoriaId),
-        data: form.data,
-      })
-    } else {
-      if (cartao.id === undefined) return
-      await addLancamentoCartao({
-        cartaoId: cartao.id,
-        descricao: form.descricao,
-        valor,
-        data: form.data,
-        categoriaId: parseInt(form.categoriaId),
-        totalParcelas: form.totalParcelas,
-        mes, ano,
-      })
+    try {
+      if (isEditing && lancamento?.id !== undefined) {
+        // Edit: atualiza só esta parcela
+        await editLancamentoCartao(lancamento.id, {
+          valor,
+          descricao: descricaoTrim,
+          categoriaId: parseInt(form.categoriaId),
+          data: form.data,
+        })
+      } else {
+        if (cartao.id === undefined) return
+        await addLancamentoCartao({
+          cartaoId: cartao.id,
+          descricao: descricaoTrim,
+          valor,
+          data: form.data,
+          categoriaId: parseInt(form.categoriaId),
+          totalParcelas: form.totalParcelas,
+          mes, ano,
+        })
+      }
+      sounds.save()
+      onClose()
+    } catch (e) {
+      console.error('[LancamentoForm.handleSave]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar lançamento — tente de novo')
+      sounds.error()
     }
-    onClose()
   }
 
   return (

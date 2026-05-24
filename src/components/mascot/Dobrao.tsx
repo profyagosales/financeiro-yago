@@ -4,6 +4,16 @@ type DobraoMood = 'happy' | 'sleeping' | 'sad' | 'waving' | 'dancing' | 'celebra
 
 interface DobraoProps { mood?: DobraoMood; size?: number }
 
+/**
+ * @deprecated O mascote "Dobrão" foi descontinuado em favor de uma identidade
+ * visual mais sóbria (logo FY mono + ícones Tabler sutis em empty states).
+ *
+ * Não usar em novos lugares. Componentes que ainda referenciavam ele
+ * (EmptyState, ContasFixasDesktop) foram migrados.
+ *
+ * Mantido apenas para evitar quebrar imports em forks/branches antigos.
+ * Pode ser removido em uma futura limpeza após confirmar zero referências.
+ */
 export function Dobrao({ mood = 'happy', size = 80 }: DobraoProps) {
   const s = size
   const eyeAnim = mood === 'sleeping' ? { scaleY: 0.1 } : { scaleY: 1 }

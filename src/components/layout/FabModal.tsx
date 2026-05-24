@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   IconX, IconCamera, IconCheck, IconRepeat, IconCreditCard,
-  IconBuildingBank, IconArrowsExchange, IconFile, IconPaperclip,
+  IconBuildingBank, IconFile, IconPaperclip,
   IconClock, IconTag, IconMinus, IconPlus,
 } from '@tabler/icons-react'
 import { useCategorias } from '@/db/hooks/useCategorias'
@@ -14,7 +14,7 @@ import { todayISO, mesAnoAtual, fmt } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { BankLogo } from '@/components/ui/BankLogo'
 import { Modal } from '@/components/ui/Modal'
-import { sounds, haptic } from '@/lib/sounds'
+import { sounds, haptic, showErrorToast } from '@/lib/sounds'
 
 type TipoLanc = 'despesa' | 'receita' | 'transferencia'
 type FontePag = 'conta' | 'cartao'
@@ -90,6 +90,9 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
     if (!isValid()) return
     setSaving(true)
     const num = valorNum
+    // trim em descrição (vai pra storage)
+    const descTrim = desc.trim()
+    let ok = false
 
     try {
       if (tipo === 'transferencia' && contaId && contaDestinoId) {
@@ -99,19 +102,19 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
           data, valor: num,
           contaOrigemId: contaId, contaDestinoId,
           categoriaId: catId ?? 1,
-          descricao: desc.trim() || 'Transferência',
+          descricao: descTrim || 'Transferência',
           recorrencia: recorrente ? 'mensal' : 'unica',
         })
       } else if (fontePag === 'cartao' && cartaoId) {
         await addLancamentoCartao({
           cartaoId,
-          descricao: desc || catSelecionada?.nome || '',
+          descricao: descTrim || catSelecionada?.nome || '',
           valor: num, data, categoriaId: catId!, totalParcelas: parcelas, mes, ano,
         })
       } else if (contaId) {
         const id = await addTransacao({
           data, valor: num, tipo, contaId, categoriaId: catId!,
-          descricao: desc || catSelecionada?.nome || '',
+          descricao: descTrim || catSelecionada?.nome || '',
           status,
           tags: tags.length > 0 ? tags : undefined,
           recorrencia: recorrente ? 'mensal' : 'unica',
@@ -120,9 +123,14 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
       }
       sounds.success()
       haptic('medium')
+      ok = true
+    } catch (e) {
+      console.error('[FabModal.handleSave]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao lançar — tente de novo')
+      sounds.error()
     } finally {
       setSaving(false)
-      onClose()
+      if (ok) onClose()
     }
   }
 
@@ -192,7 +200,9 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                 borderRadius: 10, padding: '11px 14px',
                 fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#2C1A0F', outline: 'none',
               }}/>
-            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowAttach(s => !s)} title="Anexar arquivo"
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowAttach(s => !s)}
+              title="Anexar arquivo"
+              aria-label={preview ? 'Arquivo anexado — alternar painel de anexo' : 'Anexar arquivo'}
               style={{
                 width: 44, height: 44, borderRadius: 10,
                 border: preview ? '2px solid #3A8580' : '1.5px solid #EDE6DC',
@@ -359,6 +369,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                       display: 'flex', alignItems: 'center', gap: 10,
                     }}>
                       <button onClick={() => setParcelas(p => Math.max(1, p - 1))}
+                        aria-label="Diminuir parcelas"
                         style={{ width: 32, height: 32, borderRadius: 8, background: '#FFFFFF', border: '1px solid #EDE6DC', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <IconMinus size={14} stroke={2.2} color="#7A5C4F"/>
                       </button>
@@ -374,6 +385,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                         )}
                       </div>
                       <button onClick={() => setParcelas(p => Math.min(48, p + 1))}
+                        aria-label="Aumentar parcelas"
                         style={{ width: 32, height: 32, borderRadius: 8, background: tipoMeta.cor, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 2px 8px ${tipoMeta.cor}40` }}>
                         <IconPlus size={14} stroke={2.4} color="#FFFFFF"/>
                       </button>
@@ -575,12 +587,12 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function ContaSelector({ label, contas, value, onChange, accentCor }: {
+function ContaSelector({ label, contas, value, onChange }: {
   label: string
   contas: { id?: number; nome: string; cor: string; logo?: string }[]
   value: number | null
   onChange: (v: number) => void
-  accentCor: string
+  accentCor?: string
 }) {
   return (
     <div>

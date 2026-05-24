@@ -9,7 +9,6 @@ import { ReservaCard } from './ReservaCard'
 import { AporteForm } from './AporteForm'
 import { OrcamentoSection } from './OrcamentoSection'
 import { InvestimentoForm } from '../investimentos/InvestimentoForm'
-import { useOrcamentos } from '@/db/hooks/useOrcamentos'
 import { fmt } from '@/lib/format'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { MetaComputed } from '@/db/hooks/useMetas'
@@ -22,7 +21,6 @@ const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", f
 
 export function MetasDesktop() {
   const { reserva, compras, aposentadoria, outros } = useMetasPorTipo()
-  const orcamentos = useOrcamentos()
 
   const [editingMeta, setEditingMeta] = useState<Meta | null>(null)
   const [creatingTipo, setCreatingTipo] = useState<MetaTipo | null>(null)

@@ -164,8 +164,12 @@ export function useDashboardData(): DashboardData {
   const sparkReceitas = serieMeses.map(m => m.receitas)
   const sparkDespesas = serieMeses.map(m => m.despesas)
   const sparkSaldo = serieMeses.map(m => m.saldo)
-  let acc = 0
-  const sparkAcumulado = serieMeses.map(m => { acc += m.saldo; return acc })
+  // Acumulado: reduce em vez de mutação (rule react-hooks/immutability)
+  const sparkAcumulado = serieMeses.reduce<number[]>((arr, m) => {
+    const prev = arr.length > 0 ? arr[arr.length - 1] : 0
+    arr.push(prev + m.saldo)
+    return arr
+  }, [])
 
   // Tendências
   const prev = serie12m[serie12m.length - 2]

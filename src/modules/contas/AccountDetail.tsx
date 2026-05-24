@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import {
   IconPlus, IconHistory, IconEdit, IconTrash, IconArrowUpRight, IconArrowDownRight,
-  IconCalendar, IconArrowsUpDown, IconWallet, IconReceipt,
+  IconArrowsUpDown, IconWallet, IconReceipt,
 } from '@tabler/icons-react'
 import type { Conta, Transacao, Categoria } from '@/db/schema'
 import { db } from '@/db/schema'

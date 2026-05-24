@@ -4,7 +4,15 @@ import { useAuthStore } from '@/store/auth'
 import { db, seedCategories, wipeAllData, wipeTransactionsOnly, wipeInvestmentsOnly } from '@/db/schema'
 import { usePWAInstall } from '@/hooks/usePWAInstall'
 import { addTransacao } from '@/db/hooks/useTransacoes'
-import { useCategorias } from '@/db/hooks/useCategorias'
+import {
+  useCategorias,
+  addCategoria,
+  editCategoria,
+  deleteCategoria,
+  countTransacoesByCategoria,
+  isSeedCategoria,
+} from '@/db/hooks/useCategorias'
+import type { Categoria } from '@/db/schema'
 import { useContas } from '@/db/hooks/useContas'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
@@ -14,8 +22,8 @@ import {
   IconRefresh, IconChevronRight, IconCheck, IconTableImport, IconShieldLock,
   IconDeviceMobileMessage, IconDatabase, IconInfoCircle, IconFile, IconTrendingUp,
   IconUser, IconBrandGithub, IconTrash, IconAlertTriangle, IconSettings, IconClock,
-  IconVolume, IconAccessible, IconCurrencyReal, IconTarget, IconBell, IconBellRinging,
-  IconLogout, IconMail,
+  IconVolume, IconAccessible, IconBell, IconBellRinging,
+  IconLogout, IconMail, IconTags, IconPlus, IconX, IconPencil,
 } from '@tabler/icons-react'
 import { getPermissaoEstado, pedirPermissao, notificarTeste, verificarPendencias, type PermissaoEstado } from '@/lib/notifications'
 import { isPushSupported, isSubscribed, subscribePush, unsubscribePush } from '@/lib/pushSubscribe'
@@ -199,7 +207,8 @@ function PerfilSection() {
 // ─── NOTIFICAÇÕES ────────────────────────────────────────────────────
 function NotificacoesSection() {
   const prefs = useAppPreferences()
-  const [permissao, setPermissao] = useState<PermissaoEstado>('default')
+  // Lazy initializer: lê estado da permissão direto, sem useEffect
+  const [permissao, setPermissao] = useState<PermissaoEstado>(() => getPermissaoEstado())
   const [testing, setTesting] = useState(false)
   const [pushOn, setPushOn] = useState(false)
   const [pushBusy, setPushBusy] = useState(false)
@@ -213,9 +222,11 @@ function NotificacoesSection() {
     setTimeout(() => setTestingPush(false), 2500)
   }
 
+  // Sync inicial async (isSubscribed retorna Promise) — só pushOn, permissao já tem lazy init acima
   useEffect(() => {
-    setPermissao(getPermissaoEstado())
-    void isSubscribed().then(setPushOn)
+    let alive = true
+    void isSubscribed().then(v => { if (alive) setPushOn(v) })
+    return () => { alive = false }
   }, [])
 
   const togglePush = async (v: boolean) => {
@@ -741,7 +752,7 @@ type CSVRow = { data: string; descricao: string; valor: number; tipo: 'receita' 
 function parseCSVDate(s: string): string {
   s = s.trim()
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
-  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/)
+  const m = s.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/)
   if (m) {
     const d = m[1].padStart(2,'0'), mo = m[2].padStart(2,'0')
     const a = m[3].length === 2 ? `20${m[3]}` : m[3]
@@ -1221,6 +1232,422 @@ const CURRENCY_PREFIX: React.CSSProperties = {
   fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#9B7B6A',
 }
 
+// ─── CATEGORIAS (CRUD) ───────────────────────────────────────────────
+const CAT_COLOR_PALETTE = [
+  '#C4553B', // peach/coral
+  '#E89527', // amber
+  '#3A8580', // teal
+  '#3D7EB5', // blue
+  '#8B4BC8', // purple
+  '#D94F8A', // pink
+  '#1E7D5A', // green-deep
+  '#9B7B6A', // taupe
+] as const
+
+function CategoriasSection() {
+  const categorias = useCategorias()
+  const [adding, setAdding] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ cat: Categoria; uses: number } | null>(null)
+
+  return (
+    <div>
+      <p style={{ ...HELP_STYLE, marginBottom: 14 }}>
+        Crie suas próprias categorias além das padrão. As <strong>15 categorias seed</strong>
+        (Alimentação, Moradia, etc.) não podem ser apagadas — mas você pode renomear e mudar a cor.
+      </p>
+
+      {/* Botão "Adicionar nova" — vira form inline */}
+      {!adding ? (
+        <motion.button
+          onClick={() => { setAdding(true); setEditingId(null) }}
+          whileTap={{ scale: 0.97 }}
+          style={{
+            width: '100%',
+            padding: '12px 14px',
+            background: 'linear-gradient(135deg, rgba(241,100,46,0.08), rgba(196,85,59,0.04))',
+            border: '1.5px dashed rgba(196,85,59,0.35)',
+            borderRadius: 12,
+            cursor: 'pointer',
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
+            fontSize: 13,
+            fontWeight: 700,
+            color: '#A8442B',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            marginBottom: 14,
+          }}
+        >
+          <IconPlus size={15} stroke={2.4} /> Adicionar categoria
+        </motion.button>
+      ) : (
+        <CategoriaForm
+          onCancel={() => setAdding(false)}
+          onSave={async (data) => {
+            await addCategoria(data)
+            setAdding(false)
+          }}
+        />
+      )}
+
+      {/* Lista */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {categorias.length === 0 && (
+          <p style={{ ...HELP_STYLE, textAlign: 'center', padding: '20px 0', margin: 0 }}>
+            Nenhuma categoria ainda. Use "Recriar categorias padrão" em Dados.
+          </p>
+        )}
+        {categorias.map((cat, idx) => {
+          const isSeed = isSeedCategoria(cat)
+          const isEditing = editingId === cat.id
+          return (
+            <div key={cat.id} style={{
+              borderTop: idx === 0 ? 'none' : '0.5px solid #F5F0E8',
+            }}>
+              {isEditing ? (
+                <div style={{ padding: '10px 0' }}>
+                  <CategoriaForm
+                    initial={cat}
+                    lockTipo
+                    onCancel={() => setEditingId(null)}
+                    onSave={async (data) => {
+                      // tipo lock — não envia
+                      const { tipo: _tipo, ...rest } = data
+                      void _tipo
+                      await editCategoria(cat.id!, rest)
+                      setEditingId(null)
+                    }}
+                  />
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 0' }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    background: cat.cor,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <CategoryIcon nome={cat.nome} cor={cat.cor} size={32} radius={8} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <p style={{
+                        fontFamily: "'Plus Jakarta Sans',sans-serif",
+                        fontSize: 14, fontWeight: 600, color: '#2C1A0F', margin: 0,
+                      }}>{cat.nome}</p>
+                      {isSeed && (
+                        <span style={{
+                          fontFamily: "'Plus Jakarta Sans',sans-serif",
+                          fontSize: 9, fontWeight: 700, letterSpacing: '.06em',
+                          textTransform: 'uppercase', color: '#9B7B6A',
+                          background: '#F5F0E8',
+                          padding: '2px 6px', borderRadius: 5,
+                        }}>Padrão</span>
+                      )}
+                    </div>
+                    <p style={{
+                      fontFamily: "'Plus Jakarta Sans',sans-serif",
+                      fontSize: 11, color: '#9B7B6A', margin: '2px 0 0',
+                    }}>{cat.tipo === 'receita' ? 'Receita' : 'Despesa'}</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                    <button
+                      onClick={() => { setEditingId(cat.id!); setAdding(false) }}
+                      style={ICON_BTN}
+                      aria-label={`Editar ${cat.nome}`}
+                    >
+                      <IconPencil size={14} stroke={2} color="#7A5C4F" />
+                    </button>
+                    {!isSeed && (
+                      <button
+                        onClick={async () => {
+                          const uses = await countTransacoesByCategoria(cat.id!)
+                          setDeleteConfirm({ cat, uses })
+                        }}
+                        style={ICON_BTN}
+                        aria-label={`Apagar ${cat.nome}`}
+                      >
+                        <IconTrash size={14} stroke={2} color="#C4553B" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Delete confirm */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setDeleteConfirm(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)', backdropFilter: 'blur(8px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: '#FFFDF9', borderRadius: 22, padding: '26px 24px', maxWidth: 400, width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(196,85,59,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <IconTrash size={22} stroke={1.8} color="#C4553B" />
+                </div>
+                <div>
+                  <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 19, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px' }}>
+                    Apagar "{deleteConfirm.cat.nome}"?
+                  </h3>
+                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 4 }}>
+                    Ação não pode ser desfeita.
+                  </p>
+                </div>
+              </div>
+              {deleteConfirm.uses > 0 ? (
+                <div style={{
+                  padding: '10px 12px',
+                  background: 'rgba(212,160,23,0.10)',
+                  border: '1px solid rgba(212,160,23,0.30)',
+                  borderRadius: 10,
+                  marginBottom: 16,
+                  display: 'flex',
+                  gap: 8,
+                  alignItems: 'flex-start',
+                }}>
+                  <IconAlertTriangle size={14} stroke={2} color="#A8730F" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <p style={{
+                    fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    fontSize: 12.5,
+                    color: '#7A5410',
+                    margin: 0,
+                    lineHeight: 1.5,
+                    fontWeight: 600,
+                  }}>
+                    Esta categoria tem <strong>{deleteConfirm.uses} {deleteConfirm.uses === 1 ? 'transação' : 'transações'}</strong> vinculada{deleteConfirm.uses === 1 ? '' : 's'} — {deleteConfirm.uses === 1 ? 'ela ficará' : 'elas ficarão'} sem categoria.
+                  </p>
+                </div>
+              ) : (
+                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', lineHeight: 1.5, marginBottom: 16 }}>
+                  Nenhuma transação usa essa categoria. Pode apagar tranquilo.
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setDeleteConfirm(null)}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #E8E0D5', background: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <motion.button whileTap={{ scale: 0.97 }}
+                  onClick={async () => {
+                    await deleteCategoria(deleteConfirm.cat.id!)
+                    setDeleteConfirm(null)
+                  }}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: '#C4553B', color: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(196,85,59,0.3)' }}>
+                  Apagar
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+interface CategoriaFormData {
+  nome: string
+  tipo: 'receita' | 'despesa'
+  cor: string
+}
+
+function CategoriaForm({
+  initial,
+  lockTipo,
+  onSave,
+  onCancel,
+}: {
+  initial?: Categoria
+  lockTipo?: boolean
+  onSave: (data: CategoriaFormData & { icone: string }) => Promise<void>
+  onCancel: () => void
+}) {
+  const [nome, setNome] = useState(initial?.nome ?? '')
+  const [tipo, setTipo] = useState<'receita' | 'despesa'>(
+    (initial?.tipo as 'receita' | 'despesa') ?? 'despesa'
+  )
+  const [cor, setCor] = useState(initial?.cor ?? CAT_COLOR_PALETTE[0])
+  const [busy, setBusy] = useState(false)
+
+  const canSave = nome.trim().length >= 2 && !busy
+
+  const handleSave = async () => {
+    if (!canSave) return
+    setBusy(true)
+    try {
+      await onSave({ nome: nome.trim(), tipo, cor, icone: initial?.icone ?? '' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div style={{
+      background: '#FBF8F3',
+      border: '1px solid #EDE6DC',
+      borderRadius: 14,
+      padding: '14px 16px',
+      marginBottom: 14,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+    }}>
+      {/* Header com preview */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: 11,
+          background: cor,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+          transition: 'background .15s',
+        }}>
+          <CategoryIcon nome={nome || 'Nova'} cor={cor} size={32} radius={8} />
+        </div>
+        <p style={{
+          fontFamily: "'Fraunces',Georgia,serif",
+          fontSize: 15, fontWeight: 700, color: '#2C1A0F', margin: 0,
+        }}>{initial ? 'Editar categoria' : 'Nova categoria'}</p>
+      </div>
+
+      {/* Nome */}
+      <div>
+        <p style={LABEL_STYLE}>Nome</p>
+        <input
+          value={nome}
+          onChange={e => setNome(e.target.value)}
+          placeholder="Ex: Academia, Pets, Viagens..."
+          maxLength={32}
+          autoFocus={!initial}
+          style={{
+            width: '100%',
+            boxSizing: 'border-box',
+            background: '#FFFFFF',
+            border: '1.5px solid #EDE6DC',
+            borderRadius: 10,
+            padding: '10px 12px',
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
+            fontSize: 14,
+            fontWeight: 600,
+            color: '#2C1A0F',
+            outline: 'none',
+          }}
+        />
+      </div>
+
+      {/* Tipo */}
+      <div>
+        <p style={LABEL_STYLE}>Tipo {lockTipo && <span style={{ color: '#9B7B6A', textTransform: 'none', letterSpacing: 0, fontWeight: 500 }}>· bloqueado para não quebrar transações</span>}</p>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {(['despesa', 'receita'] as const).map(t => {
+            const active = tipo === t
+            const accent = t === 'despesa' ? '#C4553B' : '#3A8580'
+            return (
+              <button
+                key={t}
+                onClick={() => !lockTipo && setTipo(t)}
+                disabled={lockTipo && !active}
+                style={{
+                  flex: 1,
+                  padding: '8px 0',
+                  borderRadius: 10,
+                  border: active ? `1.5px solid ${accent}` : '1.5px solid #EDE6DC',
+                  background: active ? `${accent}15` : '#FFFFFF',
+                  color: active ? accent : '#9B7B6A',
+                  fontFamily: "'Plus Jakarta Sans',sans-serif",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: (lockTipo && !active) ? 'not-allowed' : 'pointer',
+                  textTransform: 'capitalize',
+                  opacity: (lockTipo && !active) ? 0.4 : 1,
+                  transition: 'all .15s',
+                }}
+              >
+                {t}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Cor */}
+      <div>
+        <p style={LABEL_STYLE}>Cor</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {CAT_COLOR_PALETTE.map(c => {
+            const active = cor === c
+            return (
+              <button
+                key={c}
+                onClick={() => setCor(c)}
+                aria-label={`Cor ${c}`}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  background: c,
+                  border: active ? '2.5px solid #2C1A0F' : '2.5px solid transparent',
+                  boxShadow: active
+                    ? `0 0 0 2px #FBF8F3, 0 2px 8px ${c}66`
+                    : '0 1px 3px rgba(44,26,15,0.08)',
+                  cursor: 'pointer',
+                  padding: 0,
+                  transition: 'transform .12s, box-shadow .12s',
+                  transform: active ? 'scale(1.05)' : 'scale(1)',
+                }}
+              />
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+        <button onClick={onCancel} disabled={busy}
+          style={{
+            padding: '9px 16px', borderRadius: 10,
+            border: '1.5px solid #E8E0D5', background: 'white',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12.5, fontWeight: 700,
+            color: '#7A5C4F', cursor: busy ? 'not-allowed' : 'pointer',
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+          }}>
+          <IconX size={13} stroke={2.4} /> Cancelar
+        </button>
+        <motion.button onClick={handleSave} disabled={!canSave} whileTap={canSave ? { scale: 0.97 } : {}}
+          style={{
+            padding: '9px 18px', borderRadius: 10, border: 'none',
+            background: canSave ? 'linear-gradient(135deg, #D4643A, #C4553B)' : '#E8E0D5',
+            color: canSave ? 'white' : '#9B7B6A',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12.5, fontWeight: 700,
+            cursor: canSave ? 'pointer' : 'not-allowed',
+            boxShadow: canSave ? '0 4px 12px rgba(196,85,59,0.3)' : 'none',
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+          }}>
+          <IconCheck size={13} stroke={2.6} /> {busy ? 'Salvando…' : initial ? 'Salvar' : 'Criar'}
+        </motion.button>
+      </div>
+    </div>
+  )
+}
+
+const ICON_BTN: React.CSSProperties = {
+  width: 30, height: 30,
+  borderRadius: 8,
+  border: 'none',
+  background: 'transparent',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'background .15s',
+}
+
 // ═══ PAGE ═════════════════════════════════════════════════════════════
 export function Page() {
   const { lock, signOut, email } = useAuthStore()
@@ -1431,6 +1858,11 @@ export function Page() {
         <Row icon={<IconDeviceFloppy size={18} color="#3A8580" stroke={1.8} />} label="Exportar transações CSV" sub="Compatível com Excel" onClick={handleCSV} />
         <ImportCSVSection />
         <Row icon={<IconRefresh size={18} color="#9B7B6A" stroke={1.8} />} label="Recriar categorias padrão" sub="Restaura as 14 categorias originais" onClick={() => seedCategories()} />
+      </Section>
+
+      {/* CATEGORIAS */}
+      <Section title="Categorias" icon={<IconTags size={18} color="#8B4BC8" stroke={1.8} />}>
+        <CategoriasSection />
       </Section>
 
       {/* ZONA DE PERIGO */}

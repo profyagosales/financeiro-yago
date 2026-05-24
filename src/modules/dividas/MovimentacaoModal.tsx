@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
-import { IconX, IconCheck, IconTrash, IconCash, IconDiscount, IconCircleCheck, IconAdjustments, IconAlertTriangle } from '@tabler/icons-react'
+import { IconX, IconCheck, IconTrash, IconCash, IconDiscount, IconCircleCheck, IconAdjustments } from '@tabler/icons-react'
 import type { Divida, MovimentacaoTipo } from '@/db/schema'
 import { useMovimentacoes, addMovimentacao, deleteMovimentacao, MOVIMENTACAO_LABEL, MOVIMENTACAO_COR, calcMovimentacoesTotais } from '@/db/hooks/useDividas'
 import { fmt } from '@/lib/format'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
   // Recebe o computed para ter acesso a saldoDevedor, etc.
@@ -46,56 +46,64 @@ export function MovimentacaoModal({ divida, onClose }: Props) {
     if (!divida.id) return
     const valor = parseValor(form.valor)
     const descontoVal = parseValor(form.descontoValor)
+    const observacaoTrim = form.observacao.trim()
 
-    if (tab === 'amortizacao') {
-      if (valor <= 0) return
-      await addMovimentacao({
-        dividaId: divida.id,
-        data: form.data,
-        tipo: 'amortizacao',
-        valor,
-        reduzParcelas: form.reduzParcelas ? parseInt(form.reduzParcelas) : undefined,
-        observacao: form.observacao || undefined,
-      })
-    } else if (tab === 'desconto') {
-      if (valor <= 0) return
-      await addMovimentacao({
-        dividaId: divida.id,
-        data: form.data,
-        tipo: 'desconto',
-        valor,
-        observacao: form.observacao || undefined,
-      })
-    } else if (tab === 'quitacao') {
-      if (valor <= 0) return
-      // Quitação: registra valor pago + opcionalmente um desconto separado
-      await addMovimentacao({
-        dividaId: divida.id,
-        data: form.data,
-        tipo: 'quitacao',
-        valor,
-        observacao: form.observacao || `Quitação total`,
-      })
-      if (descontoVal > 0) {
+    try {
+      if (tab === 'amortizacao') {
+        if (valor <= 0) return
+        await addMovimentacao({
+          dividaId: divida.id,
+          data: form.data,
+          tipo: 'amortizacao',
+          valor,
+          reduzParcelas: form.reduzParcelas ? parseInt(form.reduzParcelas) : undefined,
+          observacao: observacaoTrim || undefined,
+        })
+      } else if (tab === 'desconto') {
+        if (valor <= 0) return
         await addMovimentacao({
           dividaId: divida.id,
           data: form.data,
           tipo: 'desconto',
-          valor: descontoVal,
-          observacao: 'Desconto na quitação',
+          valor,
+          observacao: observacaoTrim || undefined,
+        })
+      } else if (tab === 'quitacao') {
+        if (valor <= 0) return
+        // Quitação: registra valor pago + opcionalmente um desconto separado
+        await addMovimentacao({
+          dividaId: divida.id,
+          data: form.data,
+          tipo: 'quitacao',
+          valor,
+          observacao: observacaoTrim || `Quitação total`,
+        })
+        if (descontoVal > 0) {
+          await addMovimentacao({
+            dividaId: divida.id,
+            data: form.data,
+            tipo: 'desconto',
+            valor: descontoVal,
+            observacao: 'Desconto na quitação',
+          })
+        }
+      } else if (tab === 'ajuste') {
+        if (valor === 0) return
+        await addMovimentacao({
+          dividaId: divida.id,
+          data: form.data,
+          tipo: 'ajuste',
+          valor, // pode ser negativo (correção a favor) ou positivo (juros cobrados)
+          observacao: observacaoTrim || undefined,
         })
       }
-    } else if (tab === 'ajuste') {
-      if (valor === 0) return
-      await addMovimentacao({
-        dividaId: divida.id,
-        data: form.data,
-        tipo: 'ajuste',
-        valor, // pode ser negativo (correção a favor) ou positivo (juros cobrados)
-        observacao: form.observacao || undefined,
-      })
+      sounds.save()
+      setForm({ data: today, valor: '', descontoValor: '', reduzParcelas: '', observacao: '' })
+    } catch (e) {
+      console.error('[MovimentacaoModal.handleAdd]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao registrar movimentação — tente de novo')
+      sounds.error()
     }
-    setForm({ data: today, valor: '', descontoValor: '', reduzParcelas: '', observacao: '' })
   }
 
   const currentTab = TABS.find(t => t.value === tab)!

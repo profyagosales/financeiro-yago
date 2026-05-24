@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useRef } from 'react'
+import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   IconTrash, IconPaperclip, IconArrowUpRight, IconArrowDownRight,
@@ -27,7 +27,6 @@ export function TransactionDetail({ tx, onClose }: Props) {
   const categorias = useCategorias()
   const contas = useContas()
   const cat = categorias.find(c => c.id === tx.categoriaId)
-  const conta = contas.find(c => c.id === tx.contaId)
 
   const anexos = useLiveQuery(
     () => tx.id !== undefined ? db.anexos.where('transacaoId').equals(tx.id).toArray() : Promise.resolve([]),
@@ -335,7 +334,12 @@ function Label({ children }: { children: React.ReactNode }) {
 function EditableTextField({ label, value, onSave, placeholder }: { label: string; value: string; onSave: (v: string) => void; placeholder?: string }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(value)
-  useEffect(() => setVal(value), [value])
+  // Sincroniza estado local quando a prop externa muda — pattern oficial React 19 (derived state durante render)
+  const [prevValue, setPrevValue] = useState(value)
+  if (prevValue !== value) {
+    setPrevValue(value)
+    setVal(value)
+  }
 
   return (
     <div>
@@ -380,7 +384,11 @@ function EditableTextField({ label, value, onSave, placeholder }: { label: strin
 function EditableValueField({ label, value, onSave }: { label: string; value: number; onSave: (v: number) => void }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(String(value))
-  useEffect(() => setVal(String(value)), [value])
+  const [prevValue, setPrevValue] = useState(value)
+  if (prevValue !== value) {
+    setPrevValue(value)
+    setVal(String(value))
+  }
 
   const parse = (s: string) => parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0
   const save = () => {
@@ -588,7 +596,11 @@ function EditableStatusField({ label, value, onSave }: { label: string; value: s
 
 function EditableNotesField({ label, value, onSave }: { label: string; value: string; onSave: (v: string) => void }) {
   const [val, setVal] = useState(value)
-  useEffect(() => setVal(value), [value])
+  const [prevValue, setPrevValue] = useState(value)
+  if (prevValue !== value) {
+    setPrevValue(value)
+    setVal(value)
+  }
   return (
     <div>
       <Label>{label}</Label>

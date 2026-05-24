@@ -1,7 +1,6 @@
 // ─── Investimentos: donut por classe + performers + vencimentos ─────
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 import {
   IconChartLine, IconTrendingUp, IconTrendingDown, IconCalendarTime,
@@ -205,7 +204,7 @@ export function SecInvestimentos({ d }: Props) {
   )
 }
 
-function PerfRow({ item, positive }: { item: { id: number; nome: string; tipo: string; pctRendimento: number; ganho: number; cor: string }; positive?: boolean }) {
+function PerfRow({ item }: { item: { id: number; nome: string; tipo: string; pctRendimento: number; ganho: number; cor: string }; positive?: boolean }) {
   const cor = item.pctRendimento >= 0 ? '#1E7D5A' : '#A8442B'
   return (
     <div style={{

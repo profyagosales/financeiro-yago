@@ -3,7 +3,6 @@
 // score de saúde + KPIs + top categorias + insights chips.
 
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
 import {
   IconTarget, IconArrowUpRight, IconArrowDownRight,
   IconCoin, IconScale, IconBulb,

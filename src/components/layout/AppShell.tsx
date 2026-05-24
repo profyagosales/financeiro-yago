@@ -8,10 +8,67 @@ import { PWABanner } from './PWABanner'
 import { useUIStore } from '@/store/ui'
 import { useAutoLock } from '@/hooks/useAutoLock'
 import { useNotificationCheck } from '@/hooks/useNotificationCheck'
-import { IconPlus } from '@tabler/icons-react'
+import { IconPlus, IconAlertTriangle, IconX } from '@tabler/icons-react'
 import { initSyncEngine } from '@/lib/sync'
 import { setupSyncHooks } from '@/db/hooks/setupSyncHooks'
 import { migrateStatusToCanonical } from '@/db/hooks/useTransacoes'
+import { garantirPagamentosFuturosTodas } from '@/db/hooks/useContasFixas'
+import { onErrorToast } from '@/lib/sounds'
+
+// ─── ErrorToast: escuta CustomEvent disparado por showErrorToast() ───
+// Renderiza o último erro por ~4s, com fade-out. Posiciona acima do
+// BottomNav em mobile e canto inferior direito em desktop.
+function ErrorToast() {
+  const [msg, setMsg] = useState<string | null>(null)
+  useEffect(() => {
+    return onErrorToast(detail => {
+      setMsg(detail.message)
+      const t = setTimeout(() => setMsg(null), 4000)
+      return () => clearTimeout(t)
+    })
+  }, [])
+  return (
+    <AnimatePresence>
+      {msg && (
+        <motion.div
+          role="alert"
+          aria-live="assertive"
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 80, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+          style={{
+            position: 'fixed',
+            bottom: 'calc(80px + env(safe-area-inset-bottom))',
+            left: '50%', transform: 'translateX(-50%)',
+            zIndex: 350,
+            background: 'linear-gradient(135deg, #C4553B, #A8442B)',
+            color: '#FFFFFF', borderRadius: 14,
+            padding: '12px 14px 12px 14px',
+            display: 'flex', alignItems: 'center', gap: 10,
+            boxShadow: '0 12px 32px rgba(168,68,43,0.45)',
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
+            maxWidth: 'calc(100vw - 32px)',
+            minWidth: 260,
+          }}>
+          <IconAlertTriangle size={18} stroke={2.2} color="#FFD3A8" style={{ flexShrink: 0 }} />
+          <p style={{ flex: 1, fontSize: 13, fontWeight: 600, margin: 0, lineHeight: 1.4 }}>{msg}</p>
+          <button
+            onClick={() => setMsg(null)}
+            aria-label="Fechar aviso"
+            style={{
+              background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: 8,
+              width: 26, height: 26, cursor: 'pointer', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#FFFFFF',
+            }}>
+            <IconX size={13} stroke={2.2} />
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
 
 // Rotas que controlam a própria altura (master-detail / fixed layout)
 // → main não adiciona paddingBottom: 80 (que é pra clearance do FAB/nav mobile)
@@ -67,10 +124,14 @@ export function AppShell() {
 
   // ── Sync engine: instala hooks + boot única vez por sessão ──
   // ── Migrations idempotentes (status legados → canônico) ──
+  // ── Renovação de pagamentos fixos (idempotente): garante 12 meses
+  //    futuros pra cada conta fixa ativa. Sem isso, conta cadastrada
+  //    há > 12 meses pararia de aparecer na lista mensal.
   useEffect(() => {
     setupSyncHooks()
     void initSyncEngine()
     void migrateStatusToCanonical()
+    void garantirPagamentosFuturosTodas()
   }, [])
 
   // ── PWA shortcut: ?action=new abre o FAB ──
@@ -197,6 +258,10 @@ export function AppShell() {
       </AnimatePresence>
 
       <PWABanner />
+
+      {/* Error toast — single host renderizado em AppShell.
+          Disparado por qualquer handleSave/handleAdd async via showErrorToast() */}
+      <ErrorToast />
 
       {/* SW update prompt: toast persistente quando uma nova versão do
           PWA está pronta. Click "Atualizar" ativa o SW novo e dá reload. */}

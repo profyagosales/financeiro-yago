@@ -1,7 +1,6 @@
 // ─── SectionShell: container padrão de cada seção de Relatórios ─────
 import { motion } from 'framer-motion'
 import { forwardRef, type ReactNode } from 'react'
-import { IconChevronRight } from '@tabler/icons-react'
 
 interface SectionShellProps {
   id: string                  // âncora pra scrollIntoView

@@ -3,6 +3,7 @@ import { IconX, IconCheck, IconInfoCircle } from '@tabler/icons-react'
 import type { Divida, DividaTipo } from '@/db/schema'
 import { addDivida, editDivida } from '@/db/hooks/useDividas'
 import { useCategorias } from '@/db/hooks/useCategorias'
+import { showErrorToast, sounds } from '@/lib/sounds'
 import { TIPOS, TIPO_META } from './constants'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 
@@ -44,16 +45,18 @@ export function DividaForm({ divida, onClose }: Props) {
   const canSave = !!form.nome.trim() && parseValor(form.valorTotal) > 0 && parseValor(form.valorParcela) > 0
 
   const handleSave = async () => {
-    if (!canSave) return
+    const nomeTrim = form.nome.trim()
+    const instituicaoTrim = form.instituicao.trim()
+    if (!nomeTrim || parseValor(form.valorTotal) <= 0 || parseValor(form.valorParcela) <= 0) return
     const parcelasTotalN = parseInt0(form.parcelasTotal)
     const parcelasPagasN = parseInt0(form.parcelasPagas)
     const valorParcelaN = parseValor(form.valorParcela)
     const valorPagoCalculado = parcelasPagasN * valorParcelaN
 
     const data = {
-      nome: form.nome,
+      nome: nomeTrim,
       tipo: form.tipo,
-      instituicao: form.instituicao || undefined,
+      instituicao: instituicaoTrim || undefined,
       valorTotal: parseValor(form.valorTotal),
       valorPago: valorPagoCalculado,
       valorParcela: valorParcelaN,
@@ -67,12 +70,19 @@ export function DividaForm({ divida, onClose }: Props) {
       ativo: true,
     }
 
-    if (isEditing && divida?.id) {
-      await editDivida(divida.id, data)
-    } else {
-      await addDivida(data)
+    try {
+      if (isEditing && divida?.id) {
+        await editDivida(divida.id, data)
+      } else {
+        await addDivida(data)
+      }
+      sounds.save()
+      onClose()
+    } catch (e) {
+      console.error('[DividaForm.handleSave]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar dívida — tente de novo')
+      sounds.error()
     }
-    onClose()
   }
 
   return (

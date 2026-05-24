@@ -11,7 +11,7 @@ import {
   IconBell, IconCalendarEvent,
   IconArrowUpRight, IconArrowDownRight, IconChevronRight,
   IconBuildingBank, IconArrowsExchange, IconTarget, IconSparkles,
-  IconCircleCheck, IconTrendingUp, IconTrendingDown,
+  IconTrendingUp, IconTrendingDown,
   IconCreditCard,
 } from '@tabler/icons-react'
 import { fmt, fmtDate } from '@/lib/format'
@@ -67,7 +67,6 @@ export function DashboardMobile() {
   const navigate = useNavigate()
   const displayName = useDisplayName()
   const greet = saudacao()
-  const { openFab } = useUIStore()
 
   // "Tem dados?" → decide entre Onboarding e Layout normal
   const isEmpty = d.saldoContas === 0

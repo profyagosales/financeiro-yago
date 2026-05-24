@@ -1,7 +1,7 @@
 // ─── Próximos 7 dias: timeline horizontal compacta ──────────────────
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { IconCalendarTime, IconCircleCheck } from '@tabler/icons-react'
+import { IconCircleCheck } from '@tabler/icons-react'
 import { fmt } from '@/lib/format'
 import type { ProximoEvento } from '../lib/useDashboardData'
 

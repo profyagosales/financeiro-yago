@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { IconCheck, IconCreditCard } from '@tabler/icons-react'
 import type { Cartao } from '@/db/schema'
 import { addCartao, editCartao } from '@/db/hooks/useCartoes'
@@ -7,6 +7,7 @@ import { LogoUploader } from '@/components/ui/LogoUploader'
 import { RealCardVisual } from '@/components/ui/RealCardVisual'
 import { BandeiraLogo, BANDEIRAS_DISPONIVEIS } from '@/components/ui/BandeiraLogo'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { showErrorToast, sounds } from '@/lib/sounds'
 import { CORES_CARTAO } from './constants'
 
 interface Props {
@@ -15,11 +16,9 @@ interface Props {
   onClose: () => void
 }
 
-export function CartaoForm({ open, cartao, onClose }: Props) {
-  const isEditing = !!cartao
-  const isMobile = useIsMobile()
-
-  const [form, setForm] = useState({
+// Helper: monta initial state do form a partir do cartão
+function initialFormState(cartao?: Cartao | null) {
+  return {
     nome: cartao?.nome ?? '',
     bandeira: cartao?.bandeira ?? 'visa',
     limite: cartao?.limite !== undefined ? String(cartao.limite) : '',
@@ -29,45 +28,68 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
     logo: cartao?.logo,
     titular: cartao?.titular ?? 'Yago Salese',
     ultimosDigitos: cartao?.ultimosDigitos ?? '',
-  })
+  }
+}
 
-  useEffect(() => {
-    if (!open) return
-    setForm({
-      nome: cartao?.nome ?? '',
-      bandeira: cartao?.bandeira ?? 'visa',
-      limite: cartao?.limite !== undefined ? String(cartao.limite) : '',
-      diaFechamento: cartao?.diaFechamento ? String(cartao.diaFechamento) : '1',
-      diaVencimento: cartao?.diaVencimento ? String(cartao.diaVencimento) : '10',
-      cor: cartao?.cor ?? '#820AD1',
-      logo: cartao?.logo,
-      titular: cartao?.titular ?? 'Yago Salese',
-      ultimosDigitos: cartao?.ultimosDigitos ?? '',
-    })
-  }, [open, cartao])
+export function CartaoForm({ open, cartao, onClose }: Props) {
+  const isEditing = !!cartao
+  const isMobile = useIsMobile()
+
+  const [form, setForm] = useState(() => initialFormState(cartao))
+  // Derived state: reseta form quando o cartão (ou open) muda — pattern oficial React
+  const [prevKey, setPrevKey] = useState<string>(`${open}-${cartao?.id ?? 'new'}`)
+  const currentKey = `${open}-${cartao?.id ?? 'new'}`
+  if (prevKey !== currentKey) {
+    setPrevKey(currentKey)
+    if (open) setForm(initialFormState(cartao))
+  }
 
   const parseValor = (v: string) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0
 
+  // Clampea um input de dia (1..31). Aceita string vazia (deixa o user
+  // apagar o campo enquanto digita); só clampea quando há número válido.
+  const clampDia = (v: string): string => {
+    const digits = v.replace(/[^\d]/g, '').slice(0, 2)
+    if (digits === '') return ''
+    const n = parseInt(digits, 10)
+    if (isNaN(n)) return ''
+    return String(Math.min(31, Math.max(1, n)))
+  }
+
+  const diaFechamentoNum = parseInt(form.diaFechamento) || 0
+  const diaVencimentoNum = parseInt(form.diaVencimento) || 0
+  const diasIguais = diaFechamentoNum > 0 && diaFechamentoNum === diaVencimentoNum
+
   const handleSave = async () => {
-    if (!form.nome || !form.limite) return
+    // .trim() em strings que vão pra storage + defesa em profundidade
+    const nomeTrim = form.nome.trim()
+    const titularTrim = form.titular.trim()
+    if (!nomeTrim || !form.limite) return
     const data = {
-      nome: form.nome,
+      nome: nomeTrim,
       bandeira: form.bandeira,
       limite: parseValor(form.limite),
       diaFechamento: parseInt(form.diaFechamento) || 1,
       diaVencimento: parseInt(form.diaVencimento) || 10,
       cor: form.cor,
       logo: form.logo,
-      titular: form.titular || undefined,
+      titular: titularTrim || undefined,
       ultimosDigitos: form.ultimosDigitos.length === 4 ? form.ultimosDigitos : undefined,
       ativo: true,
     }
-    if (isEditing && cartao?.id) {
-      await editCartao(cartao.id, data)
-    } else {
-      await addCartao(data)
+    try {
+      if (isEditing && cartao?.id) {
+        await editCartao(cartao.id, data)
+      } else {
+        await addCartao(data)
+      }
+      sounds.save()
+      onClose()
+    } catch (e) {
+      console.error('[CartaoForm.handleSave]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar cartão — tente de novo')
+      sounds.error()
     }
-    onClose()
   }
 
   const previewNome = form.nome || 'Seu cartão'
@@ -206,7 +228,7 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
             <Field label="Dia fechamento">
               <input
                 value={form.diaFechamento}
-                onChange={e => setForm(f => ({ ...f, diaFechamento: e.target.value.replace(/[^\d]/g, '').slice(0, 2) }))}
+                onChange={e => setForm(f => ({ ...f, diaFechamento: clampDia(e.target.value) }))}
                 placeholder="1" inputMode="numeric"
                 style={INPUT_STYLE}
               />
@@ -214,12 +236,25 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
             <Field label="Dia vencimento">
               <input
                 value={form.diaVencimento}
-                onChange={e => setForm(f => ({ ...f, diaVencimento: e.target.value.replace(/[^\d]/g, '').slice(0, 2) }))}
+                onChange={e => setForm(f => ({ ...f, diaVencimento: clampDia(e.target.value) }))}
                 placeholder="10" inputMode="numeric"
                 style={INPUT_STYLE}
               />
             </Field>
           </div>
+          {/* Aviso: dias iguais não fazem sentido (fatura abre e vence no
+              mesmo dia → ciclo de 0 dia). Não bloqueia o save, só sinaliza. */}
+          {diasIguais && (
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11.5, fontWeight: 600,
+              color: '#A8730F', background: 'rgba(212,160,23,0.12)',
+              border: '1px solid rgba(212,160,23,0.32)',
+              borderRadius: 10, padding: '8px 12px',
+              margin: '-8px 0 0', lineHeight: 1.4,
+            }}>
+              Fechamento e vencimento devem ser dias diferentes — senão a fatura abre e vence no mesmo dia.
+            </p>
+          )}
 
           {/* Cor */}
           <Field label="Cor do cartão">

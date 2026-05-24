@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { createElement, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconEdit, IconTrash, IconPlus, IconTrophy, IconLink, IconCalendarEvent } from '@tabler/icons-react'
 import type { MetaComputed } from '@/db/hooks/useMetas'
@@ -14,15 +14,23 @@ interface Props {
 
 export function MetaCard({ meta, onEdit, onAporte, onDelete }: Props) {
   const [hover, setHover] = useState(false)
-  const Icon = getMetaIcon(meta.icone)
   const tipoMeta = META_TIPO_BY.get(meta.tipo ?? 'outros')
   const atingida = meta.progressoPct >= 100
   const falta = Math.max(0, meta.valorAlvo - meta.valorAtualTotal)
   const corBarra = atingida ? '#3A8580' : meta.cor
 
-  const diasRestantes = meta.prazo
-    ? Math.ceil((new Date(meta.prazo + 'T00:00:00').getTime() - Date.now()) / 86400000)
-    : null
+  // Render do ícone via createElement (evita rule react-hooks/static-components)
+  const iconNode = useMemo(
+    () => createElement(getMetaIcon(meta.icone), { size: 22, stroke: 1.8, color: '#FFFFFF' }),
+    [meta.icone],
+  )
+
+  // Captura "agora" uma vez no mount via lazy initializer — Date.now() fora do render
+  const [nowMs] = useState(() => Date.now())
+  const diasRestantes = useMemo(() => {
+    if (!meta.prazo) return null
+    return Math.ceil((new Date(meta.prazo + 'T00:00:00').getTime() - nowMs) / 86400000)
+  }, [meta.prazo, nowMs])
   const aporteMensal = diasRestantes && diasRestantes > 0 && falta > 0
     ? falta / Math.max(1, diasRestantes / 30)
     : null
@@ -49,7 +57,7 @@ export function MetaCard({ meta, onEdit, onAporte, onDelete }: Props) {
           background: meta.cor, display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
         }}>
-          <Icon size={22} stroke={1.8} color="#FFFFFF" />
+          {iconNode}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>

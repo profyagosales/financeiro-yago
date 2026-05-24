@@ -1,5 +1,4 @@
 // ─── InvestimentosResumo: card compacto de investimentos ────────────
-import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
   IconTrendingUp, IconTrendingDown, IconCoin, IconChevronRight, IconShieldCheck,
@@ -167,7 +166,7 @@ export function InvestimentosResumo({
   )
 }
 
-function PerfMini({ label, item, positive }: { label: string; item: { nome: string; pctMes: number; tipo: string; cor: string }; positive?: boolean }) {
+function PerfMini({ label, item }: { label: string; item: { nome: string; pctMes: number; tipo: string; cor: string }; positive?: boolean }) {
   return (
     <div style={{
       padding: '10px 12px', background: '#FBF8F3', borderRadius: 12, border: '1px solid #EDE6DC',

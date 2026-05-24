@@ -4,11 +4,11 @@
 // CTA específico "Nova conta fixa" no header (não duplica FAB de
 // transação porque cria template recorrente, não transação avulsa).
 
-import { useState, useMemo, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import {
   IconPlus, IconChevronLeft, IconChevronRight, IconCheck, IconClock,
-  IconAlertTriangle, IconCircleCheck, IconTrash, IconPencil, IconCalendarTime,
+  IconAlertTriangle, IconCircleCheck, IconTrash,
   IconBuildingBank, IconCreditCard, IconRepeat, IconCalendarDue,
 } from '@tabler/icons-react'
 import { useContasFixas, usePagamentosFixos, addContaFixa, editContaFixa, marcarPago, marcarPendente, deleteContaFixa } from '@/db/hooks/useContasFixas'
@@ -20,7 +20,7 @@ import { fmt } from '@/lib/format'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { IconX } from '@tabler/icons-react'
-import { sounds, haptic } from '@/lib/sounds'
+import { sounds, haptic, showErrorToast } from '@/lib/sounds'
 
 // ─── Tokens ────────────────────────────────────────────────────────
 const C = {
@@ -50,7 +50,6 @@ const ITEM = {
   show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 200, damping: 24 } },
 }
 
-const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 const MESES_FULL = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
 // ─── Page ──────────────────────────────────────────────────────────
@@ -623,8 +622,11 @@ function ContaFixaForm({ open, editing, mes: _mes, ano: _ano, onClose, onDelete 
   const [contaId, setContaId] = useState<number | null>(editing?.contaId ?? null)
   const [cartaoId, setCartaoId] = useState<number | null>(editing?.cartaoId ?? null)
 
-  // Resetar form quando editing mudar
-  useEffect(() => {
+  // Resetar form quando editing mudar — derived state pattern (sem useEffect)
+  const [prevEditingKey, setPrevEditingKey] = useState<number | null>(editing?.id ?? null)
+  const editingKey = editing?.id ?? null
+  if (prevEditingKey !== editingKey) {
+    setPrevEditingKey(editingKey)
     setNome(editing?.nome ?? '')
     setValor(editing?.valor.toString() ?? '')
     setDiaVencimento(editing?.diaVencimento ?? 10)
@@ -632,13 +634,14 @@ function ContaFixaForm({ open, editing, mes: _mes, ano: _ano, onClose, onDelete 
     setPaymentMethod(editing?.cartaoId ? 'cartao' : 'conta')
     setContaId(editing?.contaId ?? null)
     setCartaoId(editing?.cartaoId ?? null)
-  }, [editing])
+  }
 
   const handleSave = async () => {
+    const nomeTrim = nome.trim()
     const valorNum = parseFloat(valor.replace(',', '.'))
-    if (!nome.trim() || !valorNum || !categoriaId) return
+    if (!nomeTrim || !valorNum || !categoriaId) return
     const data = {
-      nome: nome.trim(),
+      nome: nomeTrim,
       valor: valorNum,
       diaVencimento,
       categoriaId,
@@ -649,10 +652,16 @@ function ContaFixaForm({ open, editing, mes: _mes, ano: _ano, onClose, onDelete 
       ativo: true,
       updatedAt: Date.now(),
     } as Omit<ContaFixa, 'id' | 'syncId'>
-    if (editing) await editContaFixa(editing.id!, data)
-    else await addContaFixa(data)
-    sounds.success(); haptic('medium')
-    onClose()
+    try {
+      if (editing) await editContaFixa(editing.id!, data)
+      else await addContaFixa(data)
+      sounds.success(); haptic('medium')
+      onClose()
+    } catch (e) {
+      console.error('[ContaFixaForm.handleSave]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar conta fixa — tente de novo')
+      sounds.error()
+    }
   }
 
   const canSave = !!nome.trim() && parseFloat(valor.replace(',', '.')) > 0 && categoriaId !== null

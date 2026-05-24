@@ -1,3 +1,4 @@
+import { createElement, useMemo } from 'react'
 import {
   ForkKnife, House, Car, Heartbeat, Star, GraduationCap,
   TShirt, MonitorPlay, ChartLineUp, Wallet, Laptop,
@@ -50,15 +51,19 @@ function getIcon(nome: string): React.ElementType {
 }
 
 export function CategoryIcon({ nome, cor, size = 48, radius = 16 }: CategoryIconProps) {
-  const Icon = getIcon(nome)
   const iconSize = Math.round(size * 0.48)
+  // Render do ícone via createElement (evita rule react-hooks/static-components)
+  const iconNode = useMemo(
+    () => createElement(getIcon(nome), { size: iconSize, color: 'white', weight: 'duotone' }),
+    [nome, iconSize],
+  )
   return (
     <div style={{
       width: size, height: size, borderRadius: radius,
       background: cor, display: 'flex', alignItems: 'center',
       justifyContent: 'center', flexShrink: 0,
     }}>
-      <Icon size={iconSize} color="white" weight="duotone" />
+      {iconNode}
     </div>
   )
 }

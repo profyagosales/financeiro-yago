@@ -6,6 +6,7 @@ import {
   useInvestimentos, useTotalInvestimentos,
   deleteInvestimento, aplicarRentabilidadeAutoTodos,
   atualizarCotacoesTodos, ensureDolarLoaded, fetchDolarECache,
+  converterParaBRL,
 } from '@/db/hooks/useInvestimentos'
 import { useMetas } from '@/db/hooks/useMetas'
 import type { Investimento, InvestimentoTipo } from '@/db/schema'
@@ -66,12 +67,13 @@ export function InvestimentosDesktop() {
     })
   }, [filtrados])
 
-  // Distribuição por classe (Renda Fixa / Variável / Cripto / Caixa)
+  // Distribuição por classe (Renda Fixa / Variável / Cripto / Caixa) —
+  // converte tudo pra BRL pra somar sem misturar moedas.
   const distribuicaoClasse = useMemo(() => {
     const acc: Record<'fixa'|'variavel'|'cripto'|'caixa', number> = { fixa: 0, variavel: 0, cripto: 0, caixa: 0 }
     investimentos.forEach(i => {
       const tm = TIPO_META.get(i.tipo)
-      if (tm) acc[tm.classe] += i.valorAtual
+      if (tm) acc[tm.classe] += converterParaBRL(i.valorAtual, i.moeda ?? 'BRL')
     })
     return acc
   }, [investimentos])
@@ -245,7 +247,8 @@ export function InvestimentosDesktop() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {grupos.map(([tipo, items]) => {
             const tm = TIPO_META.get(tipo)
-            const subtotal = items.reduce((s, i) => s + i.valorAtual, 0)
+            // Subtotal convertido pra BRL (cada item pode estar em USD ou BRL).
+            const subtotal = items.reduce((s, i) => s + converterParaBRL(i.valorAtual, i.moeda ?? 'BRL'), 0)
             return (
               <section key={tipo}>
                 <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>

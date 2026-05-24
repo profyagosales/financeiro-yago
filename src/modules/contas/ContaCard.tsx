@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { IconEdit, IconTrash, IconPlus, IconHistory, IconArrowUpRight, IconArrowDownRight, IconMinus } from '@tabler/icons-react'
+import { IconEdit, IconTrash, IconPlus, IconHistory, IconArrowUpRight, IconArrowDownRight } from '@tabler/icons-react'
 import type { Conta } from '@/db/schema'
 import { fmt } from '@/lib/format'
 import { BankLogo } from '@/components/ui/BankLogo'

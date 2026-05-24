@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { IconChartBar } from '@tabler/icons-react'
 import { fmt } from '@/lib/format'
-import { ProgressBar } from '@/components/ui/ProgressBar'
 
 interface OrcamentoMesProps {
   receitas: number
@@ -22,7 +21,6 @@ export function OrcamentoMes({
   diaAtual, diasNoMes,
 }: OrcamentoMesProps) {
   const navigate = useNavigate()
-  const totalComprometido = despesasGastas + comprometidoFixas + comprometidoParcelas
   const pctGasto = receitas > 0 ? (despesasGastas / receitas) * 100 : 0
   const pctFixas = receitas > 0 ? (comprometidoFixas / receitas) * 100 : 0
   const pctParcelas = receitas > 0 ? (comprometidoParcelas / receitas) * 100 : 0

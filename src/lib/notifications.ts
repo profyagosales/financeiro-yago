@@ -101,7 +101,6 @@ const TAG_FATURA = (cartaoId: number) => `fatura-${cartaoId}`
 
 export async function verificarPendencias(prefs: NotificationPrefs = NOTIF_PREFS_DEFAULT): Promise<{ total: number; notificadas: number }> {
   const hoje = new Date()
-  const hojeStr = hoje.toISOString().split('T')[0]
   const mes = hoje.getMonth() + 1
   const ano = hoje.getFullYear()
   let totalPendencias = 0

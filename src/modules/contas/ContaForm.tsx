@@ -1,11 +1,38 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { IconCheck, IconBuildingBank, IconPlus, IconHistory, IconTrash } from '@tabler/icons-react'
 import type { Conta } from '@/db/schema'
 import { Modal } from '@/components/ui/Modal'
 import { BankLogo } from '@/components/ui/BankLogo'
 import { LogoUploader } from '@/components/ui/LogoUploader'
 import { fmt } from '@/lib/format'
+import { showErrorToast, sounds } from '@/lib/sounds'
 import { BANK_PRESETS, TIPOS_CONTA, CORES_CONTA } from './constants'
+
+// Helper local (não usa state) — extrai preset do banco baseado no nome
+const matchPreset = (nome: string) => {
+  const lower = nome.toLowerCase()
+  return BANK_PRESETS.find(b => lower.includes(b.key) || lower === b.nome.toLowerCase())
+}
+
+function initialContaForm(conta?: Conta | null) {
+  if (!conta) {
+    return {
+      nome: '', tipo: 'corrente' as Conta['tipo'], saldoInicial: '', cor: '#C4553B',
+      logo: undefined as string | undefined,
+      bankKey: '' as string, customNome: false,
+    }
+  }
+  const preset = matchPreset(conta.nome)
+  return {
+    nome: conta.nome,
+    tipo: conta.tipo,
+    saldoInicial: String(conta.saldoInicial),
+    cor: conta.cor,
+    logo: conta.logo,
+    bankKey: preset?.key ?? 'outro',
+    customNome: !preset || preset.nome.toLowerCase() !== conta.nome.toLowerCase(),
+  }
+}
 
 interface Props {
   open: boolean
@@ -20,43 +47,15 @@ interface Props {
 export function ContaForm({ open, conta, onClose, onSave, onDelete }: Props) {
   const isEditing = !!conta
 
-  // Encontra preset do banco baseado no nome (pra modo edit)
-  const matchPreset = (nome: string) => {
-    const lower = nome.toLowerCase()
-    return BANK_PRESETS.find(b => lower.includes(b.key) || lower === b.nome.toLowerCase())
+  const [form, setForm] = useState(() => initialContaForm(conta))
+
+  // Derived state: reseta form quando conta/open mudam (pattern oficial React)
+  const [prevKey, setPrevKey] = useState<string>(`${open}-${conta?.id ?? 'new'}`)
+  const currentKey = `${open}-${conta?.id ?? 'new'}`
+  if (prevKey !== currentKey) {
+    setPrevKey(currentKey)
+    if (open) setForm(initialContaForm(conta))
   }
-
-  const [form, setForm] = useState({
-    nome: conta?.nome ?? '',
-    tipo: conta?.tipo ?? 'corrente',
-    saldoInicial: conta?.saldoInicial !== undefined ? String(conta.saldoInicial) : '',
-    cor: conta?.cor ?? '#C4553B',
-    logo: conta?.logo,
-    bankKey: '' as string,
-    customNome: false,  // quando true, não auto-sobrescreve o nome com o preset
-  })
-
-  // Inicialização do form no edit / abrir
-  useEffect(() => {
-    if (!open) return
-    if (conta) {
-      const preset = matchPreset(conta.nome)
-      setForm({
-        nome: conta.nome,
-        tipo: conta.tipo,
-        saldoInicial: String(conta.saldoInicial),
-        cor: conta.cor,
-        logo: conta.logo,
-        bankKey: preset?.key ?? 'outro',
-        customNome: !preset || preset.nome.toLowerCase() !== conta.nome.toLowerCase(),
-      })
-    } else {
-      setForm({
-        nome: '', tipo: 'corrente', saldoInicial: '', cor: '#C4553B', logo: undefined,
-        bankKey: '', customNome: false,
-      })
-    }
-  }, [open, conta])
 
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
   const saldoNum = parseValor(form.saldoInicial)
@@ -72,18 +71,26 @@ export function ContaForm({ open, conta, onClose, onSave, onDelete }: Props) {
   }
 
   const handleSave = async () => {
-    if (!form.nome) return
-    await onSave({
-      nome: form.nome,
-      tipo: form.tipo,
-      saldoInicial: saldoNum,
-      saldoAtual: isEditing ? (conta?.saldoAtual ?? saldoNum) : saldoNum,
-      cor: form.cor,
-      icone: '',
-      logo: form.logo,
-      ativo: true,
-    })
-    onClose()
+    const nomeTrim = form.nome.trim()
+    if (!nomeTrim) return
+    try {
+      await onSave({
+        nome: nomeTrim,
+        tipo: form.tipo,
+        saldoInicial: saldoNum,
+        saldoAtual: isEditing ? (conta?.saldoAtual ?? saldoNum) : saldoNum,
+        cor: form.cor,
+        icone: '',
+        logo: form.logo,
+        ativo: true,
+      })
+      sounds.save()
+      onClose()
+    } catch (e) {
+      console.error('[ContaForm.handleSave]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar conta — tente de novo')
+      sounds.error()
+    }
   }
 
   const previewNome = form.nome || 'Sua conta'

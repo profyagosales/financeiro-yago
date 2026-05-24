@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard, IconBuildingBank, IconCreditCard, IconArrowsExchange,
   IconRepeat, IconTarget, IconChartBar,
-  IconSettings, IconChevronLeft, IconChevronRight, IconLogout, IconChartLine, IconCash, IconHeart,
+  IconSettings, IconChevronRight, IconLogout, IconChartLine, IconCash, IconHeart,
 } from '@tabler/icons-react'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
 import { useCartoes } from '@/db/hooks/useCartoes'
@@ -92,7 +92,7 @@ function getCollapsed() {
   try { return localStorage.getItem('sb-collapsed') === '1' } catch { return false }
 }
 function setCollapsedPref(v: boolean) {
-  try { localStorage.setItem('sb-collapsed', v ? '1' : '0') } catch {}
+  try { localStorage.setItem('sb-collapsed', v ? '1' : '0') } catch { /* localStorage indisponível */ }
 }
 
 export function Sidebar() {
@@ -209,6 +209,8 @@ export function Sidebar() {
                     key={item.path}
                     onClick={() => navigate(item.path)}
                     title={collapsed ? item.label : undefined}
+                    aria-label={item.label}
+                    aria-current={active ? 'page' : undefined}
                     whileHover={{ background: active ? ACTIVE_BG : HOVER_BG }}
                     style={{
                       width: '100%',
@@ -300,6 +302,8 @@ export function Sidebar() {
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 title={collapsed ? item.label : undefined}
+                aria-label={item.label}
+                aria-current={active ? 'page' : undefined}
                 whileHover={{ background: active ? ACTIVE_BG : HOVER_BG }}
                 style={{
                   width: '100%',
@@ -337,6 +341,7 @@ export function Sidebar() {
           <motion.button
             onClick={lock}
             title={collapsed ? 'Bloquear' : undefined}
+            aria-label="Bloquear sessão"
             whileHover={{ background: HOVER_BG }}
             style={{
               width: '100%',
@@ -372,6 +377,8 @@ export function Sidebar() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.93 }}
         title={collapsed ? 'Expandir' : 'Recolher'}
+        aria-label={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+        aria-expanded={!collapsed}
         style={{
           position: 'absolute',
           right: -13,

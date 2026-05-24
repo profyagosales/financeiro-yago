@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  IconCalendar, IconWallet, IconCategory, IconAdjustmentsHorizontal,
+  IconCalendar, IconWallet, IconCategory,
   IconRefresh, IconChevronDown, IconCheck,
 } from '@tabler/icons-react'
 import { usePeriodo, type PeriodoPreset } from '../lib/usePeriodo'

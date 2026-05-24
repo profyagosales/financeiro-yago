@@ -7,9 +7,8 @@ import { useCategorias } from '@/db/hooks/useCategorias'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { BandeiraLogo } from '@/components/ui/BandeiraLogo'
 import { fmt } from '@/lib/format'
-import { Dobrao } from '@/components/mascot/Dobrao'
 import type { Categoria, Conta, Cartao, ContaFixa } from '@/db/schema'
-import { IconPlus, IconX, IconTrash, IconCheck, IconEdit, IconChevronLeft, IconChevronRight, IconAlertTriangle, IconCircleCheck, IconCalendarDue, IconTrendingUp, IconCalendar, IconFlame, IconBuildingBank, IconCreditCard } from '@tabler/icons-react'
+import { IconPlus, IconX, IconTrash, IconCheck, IconEdit, IconChevronLeft, IconChevronRight, IconAlertTriangle, IconCircleCheck, IconCalendarDue, IconTrendingUp, IconCalendar, IconFlame, IconBuildingBank, IconCreditCard, IconCalendarRepeat } from '@tabler/icons-react'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 // ─── Typography tokens ───────────────────────────────────────────────
@@ -201,7 +200,15 @@ export function ContasFixasDesktop() {
       {/* ─── MAIN: 2 COLUNAS ────────────────────────────────────── */}
       {contasFixas.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', padding: 40 }}>
-          <Dobrao mood="sleeping" size={100} />
+          <div
+            style={{
+              width: 104, height: 104, borderRadius: 30,
+              background: 'linear-gradient(135deg, rgba(241,100,46,0.10), rgba(196,85,59,0.04))',
+              border: '1px solid rgba(196,85,59,0.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+            <IconCalendarRepeat size={52} stroke={1.4} color="#C4553B" style={{ opacity: 0.55 }} />
+          </div>
           <p style={{ ...DISPLAY as object, fontSize: 22, color: '#2C1A0F', marginTop: 18 }}>Nenhuma conta fixa</p>
           <p style={{ ...SUB as object, fontSize: 14, marginTop: 6, textAlign: 'center', maxWidth: 320 }}>
             Aluguel, internet, streaming, assinaturas... toda despesa que se repete todo mês.

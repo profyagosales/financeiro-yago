@@ -2,6 +2,8 @@
 // Chip dourado com 8 pads de contato. Usado em RealCardVisual pra
 // renderizar cartão de crédito realista.
 
+import { useId } from 'react'
+
 interface CardChipProps {
   size?: number      // largura do chip (proporcional)
   variant?: 'gold' | 'silver'
@@ -11,8 +13,9 @@ export function CardChip({ size = 36, variant = 'gold' }: CardChipProps) {
   // Proporção 18x13 do chip, escalonando proporcionalmente
   const w = size
   const h = Math.round(size * 13 / 18)
-  const padId = `chip-pad-${variant}-${Math.random().toString(36).slice(2, 7)}`
-  const gradId = `chip-grad-${variant}-${Math.random().toString(36).slice(2, 7)}`
+  // useId garante uniqueness sem Math.random (pure render)
+  const uid = useId().replace(/:/g, '')
+  const gradId = `chip-grad-${variant}-${uid}`
 
   const colorStart = variant === 'gold' ? '#F2C745' : '#C8C8D0'
   const colorMid   = variant === 'gold' ? '#D4A017' : '#8C8C95'

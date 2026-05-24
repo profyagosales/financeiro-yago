@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Dobrao } from '@/components/mascot/Dobrao'
+import { IconReceipt2 } from '@tabler/icons-react'
 
 type EmptyStateType =
   | 'contas'
@@ -33,7 +33,22 @@ const ILLUSTRATIONS: Record<EmptyStateType, React.ReactNode> = {
       <rect x="36" y="48" width="8" height="4" rx="2" fill="white" opacity="0.5" />
     </svg>
   ),
-  transacoes: <Dobrao mood="sleeping" size={72} />,
+  transacoes: (
+    <div
+      style={{
+        width: 80,
+        height: 80,
+        borderRadius: 24,
+        background: 'linear-gradient(135deg, rgba(241,100,46,0.10), rgba(196,85,59,0.06))',
+        border: '1px solid rgba(196,85,59,0.10)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <IconReceipt2 size={40} stroke={1.4} color="#C4553B" style={{ opacity: 0.55 }} />
+    </div>
+  ),
   metas: (
     <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
       <circle cx="40" cy="40" r="36" fill="#EBF5F0" />
@@ -70,7 +85,28 @@ const ILLUSTRATIONS: Record<EmptyStateType, React.ReactNode> = {
       />
     </svg>
   ),
-  default: <Dobrao mood="sleeping" size={72} />,
+  default: (
+    <div
+      style={{
+        width: 80,
+        height: 80,
+        borderRadius: 24,
+        background: '#FAF6F0',
+        border: '1px solid #EDE6DC',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <img
+        src="/brand/mark-mono-dark.svg"
+        alt=""
+        width={48}
+        height={48}
+        style={{ opacity: 0.3, userSelect: 'none', pointerEvents: 'none' }}
+      />
+    </div>
+  ),
 }
 
 interface EmptyStateProps {

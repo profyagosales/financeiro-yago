@@ -5,6 +5,7 @@ import type { Meta } from '@/db/schema'
 import { aportarMeta } from '@/db/hooks/useMetas'
 import { useContas } from '@/db/hooks/useContas'
 import { BankLogo } from '@/components/ui/BankLogo'
+import { showErrorToast, sounds } from '@/lib/sounds'
 
 interface Props {
   meta: Meta
@@ -27,8 +28,15 @@ export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
 
   const handleAporte = async () => {
     if (!canSubmit || !meta.id) return
-    await aportarMeta(meta.id, v, contaOrigemId ? { contaOrigemId } : undefined)
-    onClose()
+    try {
+      await aportarMeta(meta.id, v, contaOrigemId ? { contaOrigemId } : undefined)
+      sounds.save()
+      onClose()
+    } catch (e) {
+      console.error('[AporteForm.handleAporte]', e)
+      showErrorToast(e instanceof Error ? e.message : 'Erro ao aportar — tente de novo')
+      sounds.error()
+    }
   }
 
   return (
