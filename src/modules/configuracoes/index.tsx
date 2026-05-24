@@ -18,6 +18,7 @@ import {
   IconLogout, IconMail,
 } from '@tabler/icons-react'
 import { getPermissaoEstado, pedirPermissao, notificarTeste, verificarPendencias, type PermissaoEstado } from '@/lib/notifications'
+import { isPushSupported, isSubscribed, subscribePush, unsubscribePush } from '@/lib/pushSubscribe'
 import { useEffect } from 'react'
 import {
   useTaxasBenchmark, setTaxasBenchmark,
@@ -181,10 +182,30 @@ function NotificacoesSection() {
   const prefs = useAppPreferences()
   const [permissao, setPermissao] = useState<PermissaoEstado>('default')
   const [testing, setTesting] = useState(false)
+  const [pushOn, setPushOn] = useState(false)
+  const [pushBusy, setPushBusy] = useState(false)
+  const pushAvailable = isPushSupported()
 
   useEffect(() => {
     setPermissao(getPermissaoEstado())
+    void isSubscribed().then(setPushOn)
   }, [])
+
+  const togglePush = async (v: boolean) => {
+    setPushBusy(true)
+    try {
+      if (v) {
+        const r = await subscribePush()
+        if (r.ok) setPushOn(true)
+        else alert(r.reason ?? 'Falha ao ativar push')
+      } else {
+        await unsubscribePush()
+        setPushOn(false)
+      }
+    } finally {
+      setPushBusy(false)
+    }
+  }
 
   const handlePedir = async () => {
     const r = await pedirPermissao()
@@ -303,10 +324,24 @@ function NotificacoesSection() {
         />
       </div>
 
+      {/* Push real (background) */}
+      {pushAvailable && permissao === 'granted' && (
+        <>
+          <p style={{ ...LABEL_STYLE, marginTop: 18 }}>Push em background</p>
+          <NotifToggle
+            icon={<IconBellRinging size={15} color="#3D7EB5" stroke={2} />}
+            label="Receber com app fechado"
+            sub="Edge Function envia push diário às 08:00 (BRT) sobre contas a vencer"
+            checked={pushOn}
+            onChange={v => { if (!pushBusy) void togglePush(v) }}
+          />
+        </>
+      )}
+
       <p style={{ ...HELP_STYLE, marginTop: 14, marginBottom: 0 }}>
         <IconInfoCircle size={11} stroke={2} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
-        O app verifica pendências quando você abre + a cada 1 hora enquanto fica aberto.
-        Notificações em <strong>background com app fechado</strong> exigiriam servidor (push real) — fica pra futura iteração.
+        Verificação local roda quando você abre + a cada hora.
+        {pushAvailable && pushOn && ' Push em background ativo — chega no iPhone (PWA instalado) e Mac mesmo com app fechado.'}
       </p>
     </div>
   )

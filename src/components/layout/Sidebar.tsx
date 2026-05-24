@@ -12,6 +12,7 @@ import { mesAnoAtual } from '@/lib/format'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/schema'
 import { useAuthStore } from '@/store/auth'
+import { SyncIndicator } from './SyncIndicator'
 
 // ─── Paleta ──────────────────────────────────────────────────────
 const BG           = '#504E76'
@@ -385,6 +386,8 @@ export function Sidebar() {
               </motion.button>
             )
           })}
+
+          <SyncIndicator collapsed={collapsed} />
 
           <motion.button
             onClick={lock}

@@ -7,6 +7,7 @@ import {
   IconEye, IconDownload,
 } from '@tabler/icons-react'
 import type { Transacao, Categoria, Conta, Anexo } from '@/db/schema'
+import { addAnexo, deleteAnexo, useAnexoSrc } from '@/db/hooks/useAnexos'
 import { db } from '@/db/schema'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContas } from '@/db/hooks/useContas'
@@ -60,23 +61,11 @@ export function TransactionDetail({ tx, onClose }: Props) {
   // Anexos
   const handleAddAnexo = async (file: File) => {
     if (!file || tx.id === undefined) return
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const dados = reader.result as string
-      await db.anexos.add({
-        transacaoId: tx.id!,
-        tipo: file.type,
-        nomeArquivo: file.name,
-        dados,
-        tamanho: file.size,
-        criadoEm: new Date().toISOString(),
-      })
-    }
-    reader.readAsDataURL(file)
+    await addAnexo(tx.id, file)
   }
 
   const handleDeleteAnexo = async (id: number) => {
-    await db.anexos.delete(id)
+    await deleteAnexo(id)
   }
 
   // Tags
@@ -627,20 +616,21 @@ function AnexoRow({ anexo, onDelete }: { anexo: Anexo; onDelete: () => void }) {
   const sizeKB = (anexo.tamanho / 1024).toFixed(0)
   const [preview, setPreview] = useState(false)
   useBodyScrollLock(preview)
+  const src = useAnexoSrc(anexo)
 
   const handleVer = () => {
+    if (!src) return
     if (isImg || isPdf) {
-      // Abre lightbox interno (data URLs são bloqueadas em window.open por alguns browsers)
       setPreview(true)
     } else {
-      // Outros tipos: força download
       handleBaixar()
     }
   }
 
   const handleBaixar = () => {
+    if (!src) return
     const a = document.createElement('a')
-    a.href = anexo.dados
+    a.href = src
     a.download = anexo.nomeArquivo
     document.body.appendChild(a)
     a.click()
@@ -655,7 +645,7 @@ function AnexoRow({ anexo, onDelete }: { anexo: Anexo; onDelete: () => void }) {
         borderRadius: 10,
       }}>
         {isImg ? (
-          <img src={anexo.dados} alt={anexo.nomeArquivo}
+          <img src={src ?? ''} alt={anexo.nomeArquivo}
             onClick={handleVer}
             style={{ width: 36, height: 36, borderRadius: 7, objectFit: 'cover', flexShrink: 0, cursor: 'pointer' }}/>
         ) : (
@@ -716,10 +706,10 @@ function AnexoRow({ anexo, onDelete }: { anexo: Anexo; onDelete: () => void }) {
           {/* Conteúdo */}
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 1000, maxHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isImg ? (
-              <img src={anexo.dados} alt={anexo.nomeArquivo}
+              <img src={src ?? ''} alt={anexo.nomeArquivo}
                 style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: 10, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}/>
             ) : (
-              <iframe src={anexo.dados} title={anexo.nomeArquivo}
+              <iframe src={src ?? ''} title={anexo.nomeArquivo}
                 style={{ width: '100%', height: '85vh', border: 'none', borderRadius: 10, background: '#FFFFFF', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}/>
             )}
           </div>

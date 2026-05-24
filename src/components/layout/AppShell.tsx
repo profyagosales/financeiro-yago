@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect } from 'react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { FabModal } from './FabModal'
@@ -8,6 +9,8 @@ import { useUIStore } from '@/store/ui'
 import { useAutoLock } from '@/hooks/useAutoLock'
 import { useNotificationCheck } from '@/hooks/useNotificationCheck'
 import { IconPlus } from '@tabler/icons-react'
+import { initSyncEngine } from '@/lib/sync'
+import { setupSyncHooks } from '@/db/hooks/setupSyncHooks'
 
 // Rotas que controlam a própria altura (master-detail / fixed layout)
 // → main não adiciona paddingBottom: 80 (que é pra clearance do FAB/nav mobile)
@@ -60,6 +63,12 @@ export function AppShell() {
   const location = useLocation()
   useAutoLock()
   useNotificationCheck()
+
+  // ── Sync engine: instala hooks + boot única vez por sessão ──
+  useEffect(() => {
+    setupSyncHooks()
+    void initSyncEngine()
+  }, [])
 
   return (
     <div className="grain" style={{ display: 'flex', height: '100dvh', background: '#FFFFFF', overflow: 'hidden' }}>

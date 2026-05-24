@@ -111,6 +111,25 @@ export const TAXAS_BENCHMARK_DEFAULT: TaxasBenchmark = {
   atualizadoEm: Date.now(),
 }
 
+// ─── Sync mapping (NOVO v11) ─────────────────────────────────────────
+// Mapeia local_id (integer Dexie) ↔ remote_id (uuid Supabase) por tabela.
+// Persistido pra sobreviver reload do app.
+export interface SyncMapping {
+  id?: number
+  tableName: string
+  localId: number
+  remoteId: string                    // uuid do Supabase
+  syncedAt: number                    // last successful sync
+}
+
+// Key-value pra metadados do sync (last pull timestamp por tabela, etc)
+export interface SyncMeta {
+  id?: number
+  key: string                         // 'lastPull:contas', 'lastPush:transacoes', etc
+  value: string
+  updatedAt: number
+}
+
 // ─── DividaMovimentacao (NOVO v8) ────────────────────────────────────
 // Eventos que afetam o saldo da dívida além das parcelas regulares:
 // - amortização extraordinária (paga valor extra, abate principal)
@@ -240,7 +259,18 @@ export interface Desejo {
 // ─── Orcamento (mantido) ─────────────────────────────────────────────
 export interface Orcamento { id?: number; categoriaId: number; valorLimite: number; periodo: string; rollover: boolean; inicio?: string; fim?: string; syncId?: string }
 // ─── Anexo (mantido) ─────────────────────────────────────────────────
-export interface Anexo { id?: number; transacaoId: number; tipo: string; nomeArquivo: string; dados: string; tamanho: number; criadoEm: string }
+export interface Anexo {
+  id?: number
+  transacaoId: number
+  tipo: string
+  nomeArquivo: string
+  dados?: string                  // base64 — cache local; NÃO sincroniza (vai pro Storage)
+  storagePath?: string            // path no bucket 'anexos': {userId}/{uuid}.{ext}
+  tamanho: number
+  criadoEm: string
+  syncId?: string
+  updatedAt: number
+}
 
 // ═══ Database ════════════════════════════════════════════════════════
 class FinanceiroYagoDB extends Dexie {
@@ -269,6 +299,9 @@ class FinanceiroYagoDB extends Dexie {
   appConfig!: Table<AppConfig>
   // Nova tabela v10
   investimentosMovimentacoes!: Table<InvestimentoMovimentacao>
+  // Novas tabelas v11 (sync engine)
+  syncMappings!: Table<SyncMapping>
+  syncMeta!: Table<SyncMeta>
 
   constructor() {
     super('FinanceiroYago')
@@ -492,6 +525,63 @@ class FinanceiroYagoDB extends Dexie {
       // NOVA
       investimentosMovimentacoes: '++id, investimentoId, data, tipo, syncId',
     })
+
+    // v11 — Sync engine (mapping local_id ↔ remote uuid + metadata)
+    this.version(11).stores({
+      contas: '++id, tipo, ativo, syncId',
+      categorias: '++id, tipo, syncId',
+      transacoes: '++id, data, tipo, contaId, categoriaId, status, syncId',
+      cartoes: '++id, ativo, syncId',
+      lancamentosCartao: '++id, cartaoId, [cartaoId+mes+ano], mes, ano, parcelaPaiId, syncId',
+      contasFixas: '++id, ativo, categoriaId, syncId',
+      pagamentosFixos: '++id, contaFixaId, [contaFixaId+mes+ano], [mes+ano], syncId',
+      metas: '++id, ativo, tipo, syncId',
+      patrimonio: '++id, tipo, syncId',
+      orcamentos: '++id, categoriaId, syncId',
+      anexos: '++id, transacaoId',
+      investimentos: '++id, tipo, metaId, ativo, syncId',
+      dividas: '++id, tipo, contaFixaId, ativo, syncId',
+      desejos: '++id, status, prioridade, transacaoId, syncId',
+      investimentosProventos: '++id, investimentoId, data, tipo, syncId',
+      investimentosAportes: '++id, investimentoId, data, syncId',
+      dividasMovimentacoes: '++id, dividaId, data, tipo, syncId',
+      appConfig: '++id, &key',
+      investimentosMovimentacoes: '++id, investimentoId, data, tipo, syncId',
+      // NOVAS pra sync
+      syncMappings: '++id, &[tableName+localId], &[tableName+remoteId], tableName',
+      syncMeta: '++id, &key',
+    })
+
+    // v12 — Anexos no Storage: índice em storagePath + updatedAt
+    this.version(12).stores({
+      contas: '++id, tipo, ativo, syncId',
+      categorias: '++id, tipo, syncId',
+      transacoes: '++id, data, tipo, contaId, categoriaId, status, syncId',
+      cartoes: '++id, ativo, syncId',
+      lancamentosCartao: '++id, cartaoId, [cartaoId+mes+ano], mes, ano, parcelaPaiId, syncId',
+      contasFixas: '++id, ativo, categoriaId, syncId',
+      pagamentosFixos: '++id, contaFixaId, [contaFixaId+mes+ano], [mes+ano], syncId',
+      metas: '++id, ativo, tipo, syncId',
+      patrimonio: '++id, tipo, syncId',
+      orcamentos: '++id, categoriaId, syncId',
+      anexos: '++id, transacaoId, storagePath, updatedAt',
+      investimentos: '++id, tipo, metaId, ativo, syncId',
+      dividas: '++id, tipo, contaFixaId, ativo, syncId',
+      desejos: '++id, status, prioridade, transacaoId, syncId',
+      investimentosProventos: '++id, investimentoId, data, tipo, syncId',
+      investimentosAportes: '++id, investimentoId, data, syncId',
+      dividasMovimentacoes: '++id, dividaId, data, tipo, syncId',
+      appConfig: '++id, &key',
+      investimentosMovimentacoes: '++id, investimentoId, data, tipo, syncId',
+      syncMappings: '++id, &[tableName+localId], &[tableName+remoteId], tableName',
+      syncMeta: '++id, &key',
+    }).upgrade(async tx => {
+      const all = await tx.table('anexos').toArray()
+      const now = Date.now()
+      for (const a of all) {
+        if (!a.updatedAt) await tx.table('anexos').update(a.id, { updatedAt: now })
+      }
+    })
   }
 }
 
@@ -521,6 +611,8 @@ export async function wipeAllData() {
     db.dividasMovimentacoes.clear(),
     db.investimentosMovimentacoes.clear(),
     db.appConfig.clear(),
+    db.syncMappings.clear(),
+    db.syncMeta.clear(),
   ])
 }
 
