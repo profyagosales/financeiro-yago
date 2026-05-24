@@ -17,7 +17,8 @@ import { useCartoes } from '@/db/hooks/useCartoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import type { ContaFixa } from '@/db/schema'
 import { fmt } from '@/lib/format'
-import { StackScreen } from '@/components/layout/StackScreen'
+import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
+import { IconX } from '@tabler/icons-react'
 import { sounds, haptic } from '@/lib/sounds'
 
 // ─── Tokens ────────────────────────────────────────────────────────
@@ -391,26 +392,20 @@ export function ContasFixasMobile() {
         )}
       </motion.div>
 
-      {/* FORM (criar/editar) */}
-      <StackScreen
+      {/* FORM (criar/editar) — bottom sheet padrão LegacyModalShell */}
+      <ContaFixaForm
         open={adding || editingId !== null}
+        editing={editing}
+        mes={view.mes}
+        ano={view.ano}
         onClose={() => { setAdding(false); setEditingId(null) }}
-        title={editing ? editing.nome : 'Nova conta fixa'}
-        eyebrow={editing ? 'Editar' : 'Criar'}
-      >
-        <ContaFixaForm
-          editing={editing}
-          mes={view.mes}
-          ano={view.ano}
-          onClose={() => { setAdding(false); setEditingId(null) }}
-          onDelete={editing ? async () => {
-            if (!confirm(`Excluir "${editing.nome}"?`)) return
-            await deleteContaFixa(editing.id!)
-            sounds.success(); haptic('heavy')
-            setEditingId(null)
-          } : undefined}
-        />
-      </StackScreen>
+        onDelete={editing ? async () => {
+          if (!confirm(`Excluir "${editing.nome}"?`)) return
+          await deleteContaFixa(editing.id!)
+          sounds.success(); haptic('heavy')
+          setEditingId(null)
+        } : undefined}
+      />
     </div>
   )
 }
@@ -594,7 +589,8 @@ function ContasFixasEmptyState({ onAdd }: { onAdd: () => void }) {
 
 // ─── FORM (StackScreen content) ─────────────────────────────────────
 
-function ContaFixaForm({ editing, mes, ano, onClose, onDelete }: {
+function ContaFixaForm({ open, editing, mes: _mes, ano: _ano, onClose, onDelete }: {
+  open: boolean
   editing: ContaFixa | null
   mes: number; ano: number
   onClose: () => void
@@ -612,6 +608,17 @@ function ContaFixaForm({ editing, mes, ano, onClose, onDelete }: {
   )
   const [contaId, setContaId] = useState<number | null>(editing?.contaId ?? null)
   const [cartaoId, setCartaoId] = useState<number | null>(editing?.cartaoId ?? null)
+
+  // Resetar form quando editing mudar
+  useEffect(() => {
+    setNome(editing?.nome ?? '')
+    setValor(editing?.valor.toString() ?? '')
+    setDiaVencimento(editing?.diaVencimento ?? 10)
+    setCategoriaId(editing?.categoriaId ?? null)
+    setPaymentMethod(editing?.cartaoId ? 'cartao' : 'conta')
+    setContaId(editing?.contaId ?? null)
+    setCartaoId(editing?.cartaoId ?? null)
+  }, [editing])
 
   const handleSave = async () => {
     const valorNum = parseFloat(valor.replace(',', '.'))
@@ -637,11 +644,76 @@ function ContaFixaForm({ editing, mes, ano, onClose, onDelete }: {
   const canSave = !!nome.trim() && parseFloat(valor.replace(',', '.')) > 0 && categoriaId !== null
 
   return (
-    <div style={{
-      padding: '20px 18px',
-      background: `linear-gradient(180deg, ${C.bgTop} 0%, ${C.bgMid} 40%, ${C.bgBottom} 100%)`,
-      minHeight: '100%',
-    }}>
+    <LegacyModalShell open={open} onClose={onClose} maxWidth={560}
+      header={
+        <div style={{
+          padding: '16px 22px', borderBottom: '1px solid rgba(44,26,15,0.08)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{
+              fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700,
+              color: C.ink, margin: 0, letterSpacing: '-0.4px',
+            }}>{editing ? 'Editar conta fixa' : 'Nova conta fixa'}</h2>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11.5, color: C.muted, margin: '2px 0 0',
+            }}>{editing ? 'Atualize as informações' : 'Aluguel, internet, assinaturas…'}</p>
+          </div>
+          <button onClick={onClose} aria-label="Fechar" style={{
+            background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: 10,
+            width: 34, height: 34, cursor: 'pointer', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <IconX size={16} stroke={2} color={C.inkSoft} />
+          </button>
+        </div>
+      }
+      footer={
+        <div style={{ padding: '14px 22px', display: 'flex', gap: 8 }}>
+          {onDelete && (
+            <button onClick={onDelete}
+              style={{
+                padding: '11px 16px',
+                background: 'rgba(196,85,59,0.08)',
+                color: C.orange,
+                border: '1px solid rgba(196,85,59,0.25)',
+                borderRadius: 12, cursor: 'pointer',
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontSize: 12.5, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+              }}>
+              <IconTrash size={13} stroke={2.2} /> Excluir
+            </button>
+          )}
+          <button onClick={onClose} style={{
+            flex: onDelete ? undefined : 1,
+            padding: '11px 18px',
+            background: 'rgba(255,255,255,0.7)', color: C.inkSoft,
+            border: '1px solid rgba(255,255,255,0.85)',
+            borderRadius: 12, cursor: 'pointer',
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
+            fontSize: 12.5, fontWeight: 700,
+          }}>
+            Cancelar
+          </button>
+          <button onClick={handleSave} disabled={!canSave}
+            style={{
+              flex: 1,
+              padding: '11px 18px',
+              background: canSave ? `linear-gradient(135deg, ${C.orangeBri}, ${C.orange})` : 'rgba(155,123,106,0.2)',
+              color: canSave ? '#FFFFFF' : C.muted,
+              border: 'none', borderRadius: 12,
+              cursor: canSave ? 'pointer' : 'default',
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontSize: 13, fontWeight: 700,
+              boxShadow: canSave ? '0 6px 16px rgba(196,85,59,0.36)' : 'none',
+            }}>
+            {editing ? 'Salvar' : 'Criar'}
+          </button>
+        </div>
+      }
+    >
+    <div style={{ padding: '20px 18px' }}>
       {/* Nome */}
       <Field label="Nome">
         <input value={nome} onChange={e => setNome(e.target.value)}
@@ -784,38 +856,8 @@ function ContaFixaForm({ editing, mes, ano, onClose, onDelete }: {
         </Field>
       )}
 
-      {/* Ações */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 20 }}>
-        <button onClick={handleSave} disabled={!canSave}
-          style={{
-            padding: '14px 16px',
-            background: canSave ? `linear-gradient(135deg, ${C.orangeBri}, ${C.orange})` : 'rgba(155,123,106,0.2)',
-            color: canSave ? '#FFFFFF' : C.muted,
-            border: 'none', borderRadius: 14,
-            cursor: canSave ? 'pointer' : 'default',
-            fontFamily: "'Plus Jakarta Sans',sans-serif",
-            fontSize: 14, fontWeight: 700, letterSpacing: '.01em',
-            boxShadow: canSave ? '0 8px 22px rgba(196,85,59,0.42)' : 'none',
-          }}>
-          {editing ? 'Salvar alterações' : 'Criar conta fixa'}
-        </button>
-        {onDelete && (
-          <button onClick={onDelete}
-            style={{
-              padding: '12px 16px',
-              background: 'rgba(196,85,59,0.08)',
-              color: C.orange,
-              border: '1px solid rgba(196,85,59,0.25)',
-              borderRadius: 14, cursor: 'pointer',
-              fontFamily: "'Plus Jakarta Sans',sans-serif",
-              fontSize: 13, fontWeight: 700,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
-            <IconTrash size={14} stroke={2.2} /> Excluir
-          </button>
-        )}
-      </div>
     </div>
+    </LegacyModalShell>
   )
 }
 
