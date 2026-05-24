@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { IconPlus, IconChartLine, IconRefresh, IconArrowUpRight, IconArrowDownRight } from '@tabler/icons-react'
+import { IconPlus, IconChartLine, IconRefresh, IconArrowUpRight, IconArrowDownRight, IconTrash } from '@tabler/icons-react'
 import { fmt } from '@/lib/format'
 import {
   useInvestimentos, useTotalInvestimentos,
@@ -11,6 +11,8 @@ import type { Investimento, InvestimentoTipo } from '@/db/schema'
 import { TIPOS, TIPO_META, CLASSE_COR, CLASSE_LABEL } from './constants'
 import { InvestimentoCard } from './InvestimentoCard'
 import { InvestimentoForm } from './InvestimentoForm'
+import { ProventosModal } from './ProventosModal'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 export function Page() {
   const investimentos = useInvestimentos()
@@ -20,6 +22,10 @@ export function Page() {
   const [filterTipo, setFilterTipo] = useState<InvestimentoTipo | null>(null)
   const [editing, setEditing] = useState<Investimento | null>(null)
   const [adding, setAdding] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<Investimento | null>(null)
+  const [proventosFor, setProventosFor] = useState<Investimento | null>(null)
+
+  useBodyScrollLock(confirmDelete !== null)
 
   // Aplica rentabilidade auto na carga inicial
   useEffect(() => { aplicarRentabilidadeAutoTodos() }, [])
@@ -70,14 +76,8 @@ export function Page() {
   const rendimentoPct = aplicado > 0 ? (rendimento / aplicado) * 100 : 0
   const rendimentoPositivo = rendimento >= 0
 
-  const handleDelete = async (id: number) => {
-    if (confirm('Tem certeza que quer excluir este investimento? Ele será desativado mas o histórico permanece.')) {
-      await deleteInvestimento(id)
-    }
-  }
-
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: 32, width: '100%' }}>
+    <div style={{ padding: 32, width: '100%' }}>
 
       {/* ─── Header ─── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
@@ -241,7 +241,8 @@ export function Page() {
                       invest={inv}
                       meta={inv.metaId !== undefined ? metaById.get(inv.metaId) : null}
                       onEdit={() => setEditing(inv)}
-                      onDelete={() => inv.id !== undefined && handleDelete(inv.id)}
+                      onDelete={() => setConfirmDelete(inv)}
+                      onProventos={() => setProventosFor(inv)}
                     />
                   ))}
                 </div>
@@ -251,7 +252,7 @@ export function Page() {
         </div>
       )}
 
-      {/* ─── Modal Add/Edit ─── */}
+      {/* ─── Modais ─── */}
       <AnimatePresence>
         {(adding || editing) && (
           <InvestimentoForm
@@ -259,8 +260,47 @@ export function Page() {
             onClose={() => { setAdding(false); setEditing(null) }}
           />
         )}
+
+        {proventosFor && (
+          <ProventosModal
+            invest={proventosFor}
+            onClose={() => setProventosFor(null)}
+          />
+        )}
+
+        {confirmDelete && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setConfirmDelete(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)', backdropFilter: 'blur(8px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: '#FFFDF9', borderRadius: 22, padding: '28px 24px', maxWidth: 380, width: '100%', textAlign: 'center', boxShadow: '0 24px 64px rgba(13,6,4,0.4)' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: '#FAF0EE', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <IconTrash size={26} color="#C4553B" stroke={1.8} />
+              </div>
+              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.5px', margin: '0 0 8px' }}>Excluir "{confirmDelete.nome}"?</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginBottom: 22, lineHeight: 1.5 }}>
+                O investimento será desativado. Histórico de proventos será mantido caso reative depois.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setConfirmDelete(null)}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #E8E0D5', background: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <motion.button whileTap={{ scale: 0.97 }}
+                  onClick={async () => {
+                    if (confirmDelete.id !== undefined) await deleteInvestimento(confirmDelete.id)
+                    setConfirmDelete(null)
+                  }}
+                  style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: '#C4553B', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer', boxShadow: '0 4px 12px rgba(196,85,59,0.3)' }}>
+                  Excluir
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }
 

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Investimento, type InvestimentoTipo } from '../schema'
+import { db, type Investimento, type InvestimentoTipo, type InvestimentoProvento } from '../schema'
 
 export function useInvestimentos() {
   return useLiveQuery(() => db.investimentos.filter(i => i.ativo).toArray(), []) ?? []
@@ -81,4 +81,65 @@ export const TIPOS_ALTA_LIQUIDEZ: InvestimentoTipo[] = ['Poupança', 'Caixinha',
 
 export function isAltaLiquidez(inv: Pick<Investimento, 'tipo' | 'liquidez'>) {
   return TIPOS_ALTA_LIQUIDEZ.includes(inv.tipo) && (inv.liquidez === 'diaria' || inv.liquidez === undefined)
+}
+
+// ─── Classificação por modelo de cálculo ─────────────────────────────
+// Renda variável usa quantidade × cotacaoAtual; renda fixa usa rentabilidade.
+export const TIPOS_RENDA_VARIAVEL: InvestimentoTipo[] = ['Ação', 'FII', 'ETF', 'Cripto']
+export const TIPOS_RENDA_FIXA: InvestimentoTipo[] = ['CDB', 'Tesouro']
+export const TIPOS_PROVENTO: InvestimentoTipo[] = ['Ação', 'FII', 'ETF'] // costuma pagar dividendos
+
+export function isRendaVariavel(tipo: InvestimentoTipo): boolean {
+  return TIPOS_RENDA_VARIAVEL.includes(tipo)
+}
+export function isRendaFixa(tipo: InvestimentoTipo): boolean {
+  return TIPOS_RENDA_FIXA.includes(tipo)
+}
+export function aceitaProventos(tipo: InvestimentoTipo): boolean {
+  return TIPOS_PROVENTO.includes(tipo)
+}
+
+// ─── Proventos (dividendos, JCP, aluguéis de FII, etc) ───────────────
+export function useProventos(investimentoId: number | undefined) {
+  return useLiveQuery(
+    () => investimentoId === undefined
+      ? Promise.resolve([])
+      : db.investimentosProventos.where('investimentoId').equals(investimentoId).reverse().sortBy('data'),
+    [investimentoId],
+  ) ?? []
+}
+
+export function useAllProventos() {
+  return useLiveQuery(() => db.investimentosProventos.toArray(), []) ?? []
+}
+
+export async function addProvento(data: Omit<InvestimentoProvento, 'id' | 'syncId' | 'updatedAt'>) {
+  return db.investimentosProventos.add({ ...data, updatedAt: Date.now() })
+}
+
+export async function deleteProvento(id: number) {
+  return db.investimentosProventos.delete(id)
+}
+
+// Dividend Yield 12m = soma dos proventos dos últimos 365d / valorAtual
+export function calcDY12m(proventos: InvestimentoProvento[], valorAtual: number): number {
+  if (valorAtual <= 0) return 0
+  const cutoff = Date.now() - 365 * 24 * 60 * 60 * 1000
+  const totalAno = proventos
+    .filter(p => new Date(p.data + 'T00:00:00').getTime() >= cutoff)
+    .reduce((s, p) => s + p.valor, 0)
+  return (totalAno / valorAtual) * 100
+}
+
+// Total recebido em proventos no mês corrente
+export function calcProventosMes(proventos: InvestimentoProvento[]): number {
+  const now = new Date()
+  const mes = now.getMonth()
+  const ano = now.getFullYear()
+  return proventos
+    .filter(p => {
+      const d = new Date(p.data + 'T00:00:00')
+      return d.getMonth() === mes && d.getFullYear() === ano
+    })
+    .reduce((s, p) => s + p.valor, 0)
 }

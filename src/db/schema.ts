@@ -48,7 +48,7 @@ export interface Investimento {
   valorAplicado: number
   valorAtual: number
   valorAtualSource: ValorAtualSource    // hibrido: 'auto' aplica rentabilidade / 'manual' fixo
-  rentabilidadeAnual?: number           // 0.12 = 12% ao ano
+  rentabilidadeAnual?: number           // 0.12 = 12% ao ano (renda fixa)
   benchmark?: InvestimentoBenchmark
   liquidez?: InvestimentoLiquidez
   dataAplicacao: string                 // YYYY-MM-DD
@@ -58,6 +58,27 @@ export interface Investimento {
   icone?: string
   ativo: boolean
   ultimaAtualizacaoAuto?: number        // timestamp da última aplicação auto
+  // ─── Renda variável (Ações, FIIs, ETFs, Cripto) ───────────────────
+  quantidade?: number                   // X cotas/ações/moedas
+  precoMedio?: number                   // preço médio de compra por unidade
+  cotacaoAtual?: number                 // cotação atual por unidade (manual)
+  ticker?: string                       // BBAS3, HGLG11, BTC, etc (opcional)
+  syncId?: string
+  updatedAt: number
+}
+
+// ─── InvestimentoProvento (NOVO v6) ──────────────────────────────────
+// Registro de proventos recebidos (dividendos de ações, aluguéis de FII,
+// JCP, rendimentos de cripto staking, etc).
+export type ProventoTipo = 'dividendo' | 'jcp' | 'aluguel' | 'rendimento' | 'bonificacao' | 'outros'
+
+export interface InvestimentoProvento {
+  id?: number
+  investimentoId: number
+  data: string                          // YYYY-MM-DD do recebimento
+  valor: number                         // R$ líquido recebido
+  tipo: ProventoTipo
+  observacao?: string
   syncId?: string
   updatedAt: number
 }
@@ -133,6 +154,8 @@ class FinanceiroYagoDB extends Dexie {
   investimentos!: Table<Investimento>
   dividas!: Table<Divida>
   desejos!: Table<Desejo>
+  // Novas tabelas v6
+  investimentosProventos!: Table<InvestimentoProvento>
 
   constructor() {
     super('FinanceiroYago')
@@ -229,6 +252,26 @@ class FinanceiroYagoDB extends Dexie {
           await tx.table('metas').update(meta.id!, { tipo: 'outros' })
         }
       }
+    })
+
+    // v6 — Proventos de investimentos (renda variável: FII, ações, etc)
+    this.version(6).stores({
+      contas: '++id, tipo, ativo, syncId',
+      categorias: '++id, tipo, syncId',
+      transacoes: '++id, data, tipo, contaId, categoriaId, status, syncId',
+      cartoes: '++id, ativo, syncId',
+      lancamentosCartao: '++id, cartaoId, [cartaoId+mes+ano], mes, ano, parcelaPaiId, syncId',
+      contasFixas: '++id, ativo, categoriaId, syncId',
+      pagamentosFixos: '++id, contaFixaId, [contaFixaId+mes+ano], [mes+ano], syncId',
+      metas: '++id, ativo, tipo, syncId',
+      patrimonio: '++id, tipo, syncId',
+      orcamentos: '++id, categoriaId, syncId',
+      anexos: '++id, transacaoId',
+      investimentos: '++id, tipo, metaId, ativo, syncId',
+      dividas: '++id, tipo, contaFixaId, ativo, syncId',
+      desejos: '++id, status, prioridade, transacaoId, syncId',
+      // NOVA
+      investimentosProventos: '++id, investimentoId, data, tipo, syncId',
     })
   }
 }
