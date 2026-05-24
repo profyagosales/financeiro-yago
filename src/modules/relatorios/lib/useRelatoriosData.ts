@@ -119,8 +119,10 @@ export function useRelatoriosData() {
     // Projeção 12m (usa série histórica 12m + saldo base = saldoContas)
     const projecao = projecaoSaldo(serie12m, 6, saldoContas - serie12m.reduce((s, p) => s + p.saldo, 0))
 
-    // Indicadores
-    const parcelaDividas = dividas.reduce((s, d) => s + (d.valorParcela || 0), 0)
+    // Indicadores — só dívidas ATIVAS (não quitadas) entram no burden mensal.
+    const parcelaDividas = dividas
+      .filter(d => d.parcelasPagas < d.parcelasTotal)
+      .reduce((s, d) => s + (d.valorParcela || 0), 0)
     const indc = indicadores({
       receitasMensal: totais.receitasMensalMedia,
       despesasMensal: totais.despesasMensalMedia,

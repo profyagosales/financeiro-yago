@@ -275,11 +275,15 @@ export function projecaoSaldo(
       const label = dt.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
       const incremento = saldoMedio + tendencia * i
       cur += incremento
+      // Bandas: ±12% e ±15% ABSOLUTOS pra não inverter em saldos negativos
+      // (`cur * 1.12` de -R$1000 daria -R$1120, pior que pessimista).
+      const range12 = Math.abs(cur) * 0.12
+      const range15 = Math.abs(cur) * 0.15
       proj.push({
         mes, ano, label,
         esperado: cur,
-        otimista: cur * 1.12,
-        pessimista: cur * 0.85,
+        otimista: cur + range12,
+        pessimista: cur - range15,
         isProjetado: true,
       })
     }

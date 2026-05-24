@@ -87,14 +87,18 @@ export function projecao30d(opts: ProjecaoOpts): Projecao30d {
   const despesaEsperadaVariavel = Math.max(0, despesasMediaMensal * frac - comprometidoRestante)
   const saldoFimMes = saldoAtual + receitaEsperada - comprometidoRestante - despesaEsperadaVariavel
   const saldoProjetado30d = saldoFimMes  // simplificação: 30 dias ~= fim do mês
+  // Banda otimista/pessimista: +-10% ABSOLUTOS sobre o saldo projetado.
+  // Antes era `* 1.1` / `* 0.8` que INVERTE pra saldos negativos
+  // (otimista de -R$1000 virava -R$1100, pior do que pessimista).
+  const range = Math.abs(saldoProjetado30d) * 0.1
   return {
     saldoAtual,
     comprometidoRestante,
     receitaEsperada,
     saldoFimMes,
     saldoProjetado30d,
-    otimista: saldoProjetado30d * 1.1,
-    pessimista: saldoProjetado30d * 0.8,
+    otimista: saldoProjetado30d + range,
+    pessimista: saldoProjetado30d - range,
   }
 }
 
@@ -153,14 +157,18 @@ export function calcSaudeScore(opts: ScoreOpts): SaudeScore {
     reserva = 50
   }
 
-  // 2. Taxa de economia (savings rate)
+  // 2. Taxa de economia (savings rate). Função monotônica:
+  //   pct ≥ 30%      → 100 (ótimo)
+  //   0% < pct < 30% → linear 0→100
+  //   pct ≤ 0%       → 0 (gastando o que ganha ou mais)
+  // Antes a curva era não-monotônica: pct=0 dava 0, mas pct=-1 dava 49
+  // (resultado de `50 + pct` sem clamp linear) → bug clássico.
   let economia = 0
   if (opts.receitasMes > 0) {
     const pct = ((opts.receitasMes - opts.despesasMes) / opts.receitasMes) * 100
-    // 30% é ótimo. Escala: 0 → 0, 30 → 100, 100 → 100. Abaixo de 0 = penalidade.
     if (pct >= 30) economia = 100
-    else if (pct >= 0) economia = (pct / 30) * 100
-    else economia = Math.max(0, 50 + pct)  // se -50% gasta, vira 0
+    else if (pct > 0) economia = (pct / 30) * 100
+    else economia = 0
   }
 
   // 3. Endividamento (parcela / receita)

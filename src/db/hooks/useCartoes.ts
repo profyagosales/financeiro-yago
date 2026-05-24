@@ -21,8 +21,12 @@ export function useTotalFatura(cartaoId: number, mes: number, ano: number) {
   return l.reduce((s, i) => s + i.valor, 0)
 }
 export function useAllLancamentosAtivos() {
+  // Lançamentos AINDA na vida útil (parcela atual <= total).
+  // Bug histórico: o filtro `parcelaAtual < total || total === 1` EXCLUÍA
+  // a última parcela (parcelaAtual === totalParcelas && total > 1) → limite
+  // usado vinha subestimado, alertas de "cartão > 80%" não disparavam.
   return useLiveQuery(
-    () => db.lancamentosCartao.filter(l => l.parcelaAtual < l.totalParcelas || l.totalParcelas === 1).toArray(),
+    () => db.lancamentosCartao.filter(l => l.parcelaAtual <= l.totalParcelas).toArray(),
     []
   ) ?? []
 }
@@ -31,30 +35,36 @@ export async function addLancamentoCartao(data: {
   categoriaId: number; totalParcelas: number; mes: number; ano: number
 }) {
   const { totalParcelas, valor, ...base } = data
-  const valorParcela = valor / totalParcelas
+  // Distribuição de centavos: trunca cada parcela a 2 casas e joga o resto
+  // na ÚLTIMA parcela. Sem isso, 100 / 3 dava 3× 33,33 = 99,99 (perda).
+  const valorParcelaArredondado = Math.round((valor / totalParcelas) * 100) / 100
+  const valorUltima = Math.round((valor - valorParcelaArredondado * (totalParcelas - 1)) * 100) / 100
 
-  // If today is on or after the card's closing date, first installment
-  // belongs to next month's bill (current cycle already closed).
+  // Se a DATA da compra é >= dia de fechamento do cartão, a primeira
+  // parcela cai na fatura do mês seguinte. Usa a data da compra (não hoje),
+  // permitindo lançar compras retroativas no mês de fatura correto.
   const cartao = await db.cartoes.get(data.cartaoId)
   let startMes = base.mes
   let startAno = base.ano
   if (cartao) {
-    const today = new Date().getDate()
-    if (today >= cartao.diaFechamento) {
+    const diaCompra = new Date(data.data + 'T00:00:00').getDate()
+    if (diaCompra >= cartao.diaFechamento) {
       startMes = base.mes + 1
       if (startMes > 12) { startMes = 1; startAno = base.ano + 1 }
     }
   }
 
+  const valorParcelaPara = (p: number) => p === totalParcelas ? valorUltima : valorParcelaArredondado
+
   const firstId = await db.lancamentosCartao.add({
-    ...base, valor: valorParcela, parcelaAtual: 1, totalParcelas, mes: startMes, ano: startAno,
+    ...base, valor: valorParcelaPara(1), parcelaAtual: 1, totalParcelas, mes: startMes, ano: startAno,
   })
   for (let p = 2; p <= totalParcelas; p++) {
     let m = startMes + p - 1
     let a = startAno
     while (m > 12) { m -= 12; a += 1 }
     await db.lancamentosCartao.add({
-      ...base, valor: valorParcela, parcelaAtual: p, totalParcelas, mes: m, ano: a, parcelaPaiId: firstId as number,
+      ...base, valor: valorParcelaPara(p), parcelaAtual: p, totalParcelas, mes: m, ano: a, parcelaPaiId: firstId as number,
     })
   }
   return firstId

@@ -366,8 +366,11 @@ export function useDashboardData(): DashboardData {
   const reservaCobertura = reservaAlvo > 0 ? (reservaAtual / reservaAlvo) * 100 : 0
   const reservaMeses = despesasMediaMensal > 0 ? reservaAtual / despesasMediaMensal : 0
 
-  // Score
-  const parcelaDividaMensal = dividas.reduce((s, d) => s + (d.valorParcela || 0), 0)
+  // Score — só conta dívidas ATIVAS (não quitadas). Antes incluía dívidas
+  // quitadas e o burden de endividamento ficava deprimido sem motivo.
+  const parcelaDividaMensal = dividas
+    .filter(d => d.parcelasPagas < d.parcelasTotal)
+    .reduce((s, d) => s + (d.valorParcela || 0), 0)
   const score = calcSaudeScore({
     reservaAtual,
     reservaAlvo,
