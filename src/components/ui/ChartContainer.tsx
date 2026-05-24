@@ -1,63 +1,67 @@
 // ─── ChartContainer ────────────────────────────────────────────────
-// Wrapper pro Recharts que só renderiza o gráfico quando o container
-// tem dimensões reais (> 0). Sem isso, o ResponsiveContainer do Recharts
-// pode disparar warning "width(-1) height(-1)" no primeiro paint quando
-// o pai ainda não estabilizou (lazy load, modal recém-aberto, grid child
-// sem minWidth: 0, etc).
+// Wrapper pra gráficos do Recharts que ELIMINA o warning persistente:
+//   "The width(-1) and height(-1) of chart should be greater than 0"
 //
-// Uso típico (substitui o padrão antigo `<div style={...}><Responsive...>`):
+// CAUSA do warning: ResponsiveContainer do Recharts inicializa com
+// `containerWidth=-1, containerHeight=-1` por padrão e clona o gráfico
+// filho com esses valores ANTES da primeira medição via ResizeObserver.
+// O AreaChart/PieChart valida no mount e printa o warning.
+//
+// SOLUÇÃO: pular o ResponsiveContainer. Medimos o div wrapper nós mesmos
+// via ResizeObserver e clonamos o chart filho com `width` e `height`
+// NUMÉRICOS reais. O chart só monta depois que temos dimensions > 0,
+// então nunca recebe -1.
+//
+// Uso:
 //   <ChartContainer height={280}>
 //     <AreaChart data={...}>...</AreaChart>
 //   </ChartContainer>
-//
-// Internamente usa ResizeObserver pra detectar quando dimensions ≥ 1px.
-// `minWidth: 0` aplicado no wrapper (defesa em flex/grid children).
 
-import { useEffect, useRef, useState, type ReactElement } from 'react'
-import { ResponsiveContainer } from 'recharts'
+import { cloneElement, useEffect, useRef, useState, type ReactElement } from 'react'
 
 interface Props {
   height: number
-  /** Conteúdo: deve ser UM filho React (ex: <AreaChart>, <PieChart>) */
-  children: ReactElement
-  /** debounce em ms passado ao ResponsiveContainer (default 0) */
-  debounce?: number
+  /** Único filho — AreaChart, PieChart, ComposedChart, BarChart, etc. */
+  children: ReactElement<{ width?: number; height?: number }>
   /** Inline style extra no wrapper */
   style?: React.CSSProperties
 }
 
-export function ChartContainer({ height, children, debounce = 50, style }: Props) {
+export function ChartContainer({ height, children, style }: Props) {
   const ref = useRef<HTMLDivElement>(null)
-  const [ready, setReady] = useState(false)
+  const [dims, setDims] = useState<{ w: number; h: number }>({ w: 0, h: 0 })
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const check = () => {
+    const measure = () => {
       const r = el.getBoundingClientRect()
-      if (r.width > 0 && r.height > 0) setReady(true)
+      // Só atualiza se mudou de fato — evita re-render desnecessário
+      setDims(prev => {
+        const w = Math.floor(r.width)
+        const h = Math.floor(r.height)
+        if (prev.w === w && prev.h === h) return prev
+        return { w, h }
+      })
     }
-    check()
+    measure()
     if (typeof ResizeObserver === 'undefined') {
-      // Fallback: requestAnimationFrame até medir
-      const raf = requestAnimationFrame(check)
+      const raf = requestAnimationFrame(measure)
       return () => cancelAnimationFrame(raf)
     }
-    const obs = new ResizeObserver(check)
+    const obs = new ResizeObserver(measure)
     obs.observe(el)
     return () => obs.disconnect()
   }, [])
+
+  const canRender = dims.w > 0 && dims.h > 0
 
   return (
     <div
       ref={ref}
       style={{ width: '100%', height, minWidth: 0, position: 'relative', ...style }}
     >
-      {ready && (
-        <ResponsiveContainer width="100%" height="100%" debounce={debounce}>
-          {children}
-        </ResponsiveContainer>
-      )}
+      {canRender && cloneElement(children, { width: dims.w, height: dims.h })}
     </div>
   )
 }
