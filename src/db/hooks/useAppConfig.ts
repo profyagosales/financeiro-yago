@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type TaxasBenchmark, TAXAS_BENCHMARK_DEFAULT } from '../schema'
 
 const KEY_TAXAS = 'taxas_benchmark'
+const KEY_BRAPI = 'brapi_token'
 
 // ─── Taxas de benchmark (CDI, Selic, IPCA) ───────────────────────────
 // Persistidas no IndexedDB. Usadas para cálculo de rendimento de
@@ -32,6 +33,30 @@ export async function setTaxasBenchmark(taxas: Partial<TaxasBenchmark>) {
     await db.appConfig.add({ key: KEY_TAXAS, value: novo, updatedAt: Date.now() })
   }
   return novo
+}
+
+// ─── Token do Brapi (cotações B3) ────────────────────────────────────
+// Brapi exige autenticação no plano free desde 2024.
+// User pega o token gratuito em https://brapi.dev (1000 req/dia).
+
+export function useBrapiToken(): string {
+  const row = useLiveQuery(() => db.appConfig.where('key').equals(KEY_BRAPI).first(), [])
+  return (row?.value as string) ?? ''
+}
+
+export async function getBrapiToken(): Promise<string> {
+  const row = await db.appConfig.where('key').equals(KEY_BRAPI).first()
+  return (row?.value as string) ?? ''
+}
+
+export async function setBrapiToken(token: string) {
+  const existing = await db.appConfig.where('key').equals(KEY_BRAPI).first()
+  const value = token.trim()
+  if (existing?.id) {
+    await db.appConfig.update(existing.id, { value, updatedAt: Date.now() })
+  } else {
+    await db.appConfig.add({ key: KEY_BRAPI, value, updatedAt: Date.now() })
+  }
 }
 
 // ─── Cálculo da taxa efetiva anual de um investimento ─────────────────

@@ -9,7 +9,7 @@ import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContas } from '@/db/hooks/useContas'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { IconLock, IconDeviceFloppy, IconBrandChrome, IconDeviceMobile, IconBrandApple, IconRefresh, IconChevronRight, IconCheck, IconTableImport, IconShieldLock, IconDeviceMobileMessage, IconDatabase, IconInfoCircle, IconFile, IconTrendingUp } from '@tabler/icons-react'
-import { useTaxasBenchmark, setTaxasBenchmark } from '@/db/hooks/useAppConfig'
+import { useTaxasBenchmark, setTaxasBenchmark, useBrapiToken, setBrapiToken } from '@/db/hooks/useAppConfig'
 
 function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -264,6 +264,85 @@ function PWASection() {
   )
 }
 
+function BrapiTokenSection() {
+  const tokenAtual = useBrapiToken()
+  const [token, setToken] = useState(tokenAtual)
+  const [saved, setSaved] = useState(false)
+  const [show, setShow] = useState(false)
+
+  // Sincroniza quando carrega
+  // (não use useEffect aqui pra não conflitar com digitação)
+
+  const handleSave = async () => {
+    await setBrapiToken(token)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  return (
+    <div>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', lineHeight: 1.5, marginBottom: 14 }}>
+        <strong>Brapi.dev</strong> é a API gratuita usada pra buscar cotações de ações, FIIs, ETFs e câmbio USD/BRL.
+        Desde 2024 exige token de autenticação (free: 1.000 requisições/dia).
+      </p>
+
+      <div style={{
+        background: '#FAF6F0', border: '1px solid #EDE6DC', borderRadius: 10,
+        padding: '10px 12px', marginBottom: 14,
+      }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: 0, lineHeight: 1.5 }}>
+          <strong>1.</strong> Acesse <a href="https://brapi.dev" target="_blank" rel="noreferrer" style={{ color: '#3D7EB5', textDecoration: 'underline' }}>brapi.dev</a> e crie conta gratuita<br/>
+          <strong>2.</strong> Copie o token no dashboard (começa com letras + números)<br/>
+          <strong>3.</strong> Cole aqui embaixo e salve
+        </p>
+      </div>
+
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: '0 0 6px' }}>Token Brapi</p>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        <input
+          value={token}
+          onChange={e => setToken(e.target.value)}
+          placeholder="abc123XYZ..."
+          type={show ? 'text' : 'password'}
+          style={{
+            flex: 1, boxSizing: 'border-box',
+            background: '#FBF8F3', border: '1.5px solid #EDE6DC',
+            borderRadius: 10, padding: '10px 12px',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 500,
+            color: '#2C1A0F', outline: 'none',
+            letterSpacing: show ? 'normal' : '0.2em',
+          }}
+        />
+        <button onClick={() => setShow(s => !s)}
+          style={{ background: '#F5F0E8', border: 'none', borderRadius: 10, padding: '0 14px', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#7A5C4F' }}>
+          {show ? 'Ocultar' : 'Mostrar'}
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: tokenAtual ? '#3A8580' : '#C4553B', margin: 0, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          {tokenAtual
+            ? <><IconCheck size={12} stroke={2.5} /> Token configurado</>
+            : <><IconInfoCircle size={12} stroke={2} /> Sem token: cotações de B3 desativadas (cripto continua funcionando)</>}
+        </p>
+        <motion.button onClick={handleSave} whileTap={{ scale: 0.97 }}
+          style={{
+            background: saved ? '#3A8580' : 'linear-gradient(135deg, #D4643A, #C4553B)',
+            color: 'white', border: 'none', borderRadius: 12,
+            padding: '10px 18px', cursor: 'pointer',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 4px 12px rgba(196,85,59,0.3)',
+            transition: 'background .2s',
+            flexShrink: 0,
+          }}>
+          {saved ? <><IconCheck size={14} stroke={2.5} /> Salvo!</> : 'Salvar token'}
+        </motion.button>
+      </div>
+    </div>
+  )
+}
+
 function TaxasMercadoSection() {
   const taxas = useTaxasBenchmark()
   const [form, setForm] = useState({
@@ -394,6 +473,10 @@ export function Page() {
 
       <Section title="Instalação PWA" icon={<IconDeviceMobileMessage size={18} color="#3D7EB5" stroke={1.8} />}>
         <PWASection />
+      </Section>
+
+      <Section title="Integrações (APIs de cotação)" icon={<IconTrendingUp size={18} color="#504E76" stroke={1.8} />}>
+        <BrapiTokenSection />
       </Section>
 
       <Section title="Taxas de mercado" icon={<IconTrendingUp size={18} color="#3A8580" stroke={1.8} />}>

@@ -1,7 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Investimento, type InvestimentoTipo, type InvestimentoProvento, type InvestimentoAporte, type InvestimentoMovimentacao } from '../schema'
-import { getTaxasBenchmark, calcTaxaEfetiva } from './useAppConfig'
-import { fetchCotacaoPorTipo, fetchCotacaoDolar } from '@/lib/cotacoes'
+import { getTaxasBenchmark, calcTaxaEfetiva, getBrapiToken } from './useAppConfig'
+import { fetchCotacaoPorTipo, fetchCotacaoDolar, registerBrapiTokenGetter } from '@/lib/cotacoes'
+
+// Registra getter do token Brapi (resolve dependência circular: lib/cotacoes
+// não pode importar de db/hooks diretamente).
+registerBrapiTokenGetter(getBrapiToken)
 
 export function useInvestimentos() {
   return useLiveQuery(() => db.investimentos.filter(i => i.ativo).toArray(), []) ?? []

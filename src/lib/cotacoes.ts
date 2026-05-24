@@ -89,10 +89,26 @@ export async function fetchCotacaoCripto(ticker: string): Promise<number | null>
 }
 
 // ─── AÇÕES / FIIS / ETFS — Brapi.dev ─────────────────────────────────
+// Brapi exige token (free 1000 req/dia em brapi.dev). Token é resolvido
+// dinamicamente via getBrapiToken() do useAppConfig pra não criar
+// dependência circular import.
+
+let _brapiTokenGetter: (() => Promise<string>) | null = null
+export function registerBrapiTokenGetter(fn: () => Promise<string>) {
+  _brapiTokenGetter = fn
+}
+
+async function getBrapiTokenSafe(): Promise<string> {
+  try {
+    if (_brapiTokenGetter) return await _brapiTokenGetter()
+  } catch { /* noop */ }
+  return ''
+}
+
 /**
  * Busca cotação de ativo da B3 em BRL.
  * @param ticker  Símbolo do ativo (PETR4, HGLG11, BOVA11, etc)
- * @returns       Cotação em BRL, ou null
+ * @returns       Cotação em BRL, ou null se erro/sem token
  */
 export async function fetchCotacaoAtivoBR(ticker: string): Promise<number | null> {
   const upper = ticker.trim().toUpperCase()
@@ -101,8 +117,11 @@ export async function fetchCotacaoAtivoBR(ticker: string): Promise<number | null
   const cached = getCached(cacheKey)
   if (cached !== null) return cached
 
+  const token = await getBrapiTokenSafe()
+  if (!token) return null  // sem token, Brapi retorna 401
+
   try {
-    const res = await fetch(`https://brapi.dev/api/quote/${upper}?range=1d&interval=1d`)
+    const res = await fetch(`https://brapi.dev/api/quote/${upper}?range=1d&interval=1d&token=${encodeURIComponent(token)}`)
     if (!res.ok) return null
     const json = await res.json() as { results?: Array<{ regularMarketPrice?: number }> }
     const value = json.results?.[0]?.regularMarketPrice
@@ -117,6 +136,8 @@ export async function fetchCotacaoAtivoBR(ticker: string): Promise<number | null
 // ─── Câmbio USD/BRL ──────────────────────────────────────────────────
 /**
  * Busca cotação do dólar comercial em BRL via Brapi.
+ * Tenta Brapi (com token) primeiro; se falhar, faz fallback em AwesomeAPI
+ * (gratuita, sem token, CORS aberto).
  * @returns Cotação USD→BRL, ou null
  */
 export async function fetchCotacaoDolar(): Promise<number | null> {
@@ -124,13 +145,31 @@ export async function fetchCotacaoDolar(): Promise<number | null> {
   const cached = getCached(cacheKey)
   if (cached !== null) return cached
 
+  // 1. Tenta Brapi (se houver token)
+  const token = await getBrapiTokenSafe()
+  if (token) {
+    try {
+      const res = await fetch(`https://brapi.dev/api/v2/currency?currency=USD-BRL&token=${encodeURIComponent(token)}`)
+      if (res.ok) {
+        const json = await res.json() as { currency?: Array<{ bidPrice?: string | number }> }
+        const raw = json.currency?.[0]?.bidPrice
+        const value = typeof raw === 'string' ? parseFloat(raw) : raw
+        if (typeof value === 'number' && !isNaN(value)) {
+          setCached(cacheKey, value)
+          return value
+        }
+      }
+    } catch { /* tenta fallback */ }
+  }
+
+  // 2. Fallback: AwesomeAPI (gratuita, sem auth, CORS ok)
   try {
-    const res = await fetch('https://brapi.dev/api/v2/currency?currency=USD-BRL')
+    const res = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL')
     if (!res.ok) return null
-    const json = await res.json() as { currency?: Array<{ bidPrice?: string | number }> }
-    const raw = json.currency?.[0]?.bidPrice
-    const value = typeof raw === 'string' ? parseFloat(raw) : raw
-    if (typeof value !== 'number' || isNaN(value)) return null
+    const json = await res.json() as Record<string, { bid?: string }>
+    const raw = json.USDBRL?.bid
+    const value = raw ? parseFloat(raw) : null
+    if (value === null || isNaN(value)) return null
     setCached(cacheKey, value)
     return value
   } catch {
