@@ -8,7 +8,7 @@ import {
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContas } from '@/db/hooks/useContas'
 import { useCartoes, addLancamentoCartao } from '@/db/hooks/useCartoes'
-import { addTransacao } from '@/db/hooks/useTransacoes'
+import { addTransacao, addTransferencia } from '@/db/hooks/useTransacoes'
 import { addAnexo } from '@/db/hooks/useAnexos'
 import { todayISO, mesAnoAtual, fmt } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
@@ -47,7 +47,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
 
   // Recorrência, status, tags
   const [recorrente, setRecorrente] = useState(false)
-  const [status, setStatus] = useState<'confirmado' | 'pendente'>('confirmado')
+  const [status, setStatus] = useState<'efetivada' | 'pendente'>('efetivada')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
 
@@ -93,17 +93,14 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
 
     try {
       if (tipo === 'transferencia' && contaId && contaDestinoId) {
-        await addTransacao({
-          data, valor: num, tipo: 'despesa', contaId, categoriaId: catId ?? 1,
-          descricao: `Transferência → ${contas.find(c => c.id === contaDestinoId)?.nome}`,
-          status: 'confirmado',
+        // addTransferencia gera transferId UUID e cria o PAR vinculado.
+        // Editar/deletar uma delas propaga pra outra automaticamente.
+        await addTransferencia({
+          data, valor: num,
+          contaOrigemId: contaId, contaDestinoId,
+          categoriaId: catId ?? 1,
+          descricao: desc.trim() || 'Transferência',
           recorrencia: recorrente ? 'mensal' : 'unica',
-        })
-        await addTransacao({
-          data, valor: num, tipo: 'receita', contaId: contaDestinoId, categoriaId: catId ?? 1,
-          descricao: `Transferência ← ${contas.find(c => c.id === contaId)?.nome}`,
-          status: 'confirmado',
-          recorrencia: 'unica',
         })
       } else if (fontePag === 'cartao' && cartaoId) {
         await addLancamentoCartao({
@@ -422,16 +419,16 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
               <div>
                 <FieldLabel>Status</FieldLabel>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <button onClick={() => setStatus('confirmado')}
+                  <button onClick={() => setStatus('efetivada')}
                     style={{
-                      background: status === 'confirmado' ? 'rgba(58,133,128,0.14)' : 'transparent',
-                      color: status === 'confirmado' ? '#1E7D5A' : '#9B7B6A',
-                      border: `1.5px solid ${status === 'confirmado' ? '#3A8580' : '#EDE6DC'}`,
+                      background: status === 'efetivada' ? 'rgba(58,133,128,0.14)' : 'transparent',
+                      color: status === 'efetivada' ? '#1E7D5A' : '#9B7B6A',
+                      border: `1.5px solid ${status === 'efetivada' ? '#3A8580' : '#EDE6DC'}`,
                       borderRadius: 22, padding: '6px 12px', cursor: 'pointer',
                       fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
                       display: 'inline-flex', alignItems: 'center', gap: 5,
                     }}>
-                    <IconCheck size={12} stroke={2.4}/> Confirmado
+                    <IconCheck size={12} stroke={2.4}/> Efetivada
                   </button>
                   <button onClick={() => setStatus('pendente')}
                     style={{

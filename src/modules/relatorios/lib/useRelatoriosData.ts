@@ -43,13 +43,15 @@ export function useRelatoriosData() {
   const metas = useMetasComputed()
   const reserva = useReservaEmergencia()
 
-  // Transações do período filtrado
+  // Transações do período filtrado. SEMPRE exclui transferências
+  // (transferId) — elas criam dupla entrada (despesa+receita) que
+  // inflaria todos os totais e médias deste módulo.
   const txsPeriodo = useLiveQuery(() => {
     let q = db.transacoes.where('data').between(intervalo.start, intervalo.end, true, true)
     if (state.contaId !== null) q = q.filter(t => t.contaId === state.contaId)
     if (state.categoriaId !== null) q = q.filter(t => t.categoriaId === state.categoriaId)
     if (state.tipo !== 'todos') q = q.filter(t => t.tipo === state.tipo)
-    return q.toArray()
+    return q.filter(t => !t.transferId).toArray()
   }, [intervalo.start, intervalo.end, state.contaId, state.categoriaId, state.tipo]) ?? []
 
   // Transações do período anterior (pra comparativo)
@@ -58,17 +60,19 @@ export function useRelatoriosData() {
     if (state.contaId !== null) q = q.filter(t => t.contaId === state.contaId)
     if (state.categoriaId !== null) q = q.filter(t => t.categoriaId === state.categoriaId)
     if (state.tipo !== 'todos') q = q.filter(t => t.tipo === state.tipo)
-    return q.toArray()
+    return q.filter(t => !t.transferId).toArray()
   }, [intervalo.prev.start, intervalo.prev.end, state.contaId, state.categoriaId, state.tipo]) ?? []
 
   // Série 12m fixa (sempre últimos 12 meses, independente do filtro)
-  // — usada pra projeções e sazonalidade
+  // — usada pra projeções e sazonalidade. Exclui transferências.
   const txs12m = useLiveQuery(() => {
     const hoje = new Date()
     const startDate = new Date(hoje.getFullYear(), hoje.getMonth() - 11, 1)
     const start = startDate.toISOString().slice(0, 10)
     const end = hoje.toISOString().slice(0, 10)
-    return db.transacoes.where('data').between(start, end, true, true).toArray()
+    return db.transacoes.where('data').between(start, end, true, true)
+      .filter(t => !t.transferId)
+      .toArray()
   }, []) ?? []
 
   // Pagamentos fixos do mês atual (referência)

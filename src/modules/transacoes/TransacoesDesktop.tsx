@@ -45,7 +45,7 @@ export function TransacoesDesktop() {
   // Bulk selection
   const [bulkMode, setBulkMode] = useState(false)
   const [bulkSelected, setBulkSelected] = useState<Set<number>>(new Set())
-  const [bulkAction, setBulkAction] = useState<'delete' | 'pago' | 'pendente' | null>(null)
+  const [bulkAction, setBulkAction] = useState<'delete' | 'efetivada' | 'pendente' | null>(null)
 
   // Seleção (detail)
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -193,8 +193,8 @@ export function TransacoesDesktop() {
     setBulkMode(false)
     setBulkAction(null)
   }
-  const handleBulkStatus = async (status: 'pago' | 'pendente') => {
-    for (const id of bulkSelected) await editTransacao(id, { status: status === 'pago' ? 'efetivada' : 'pendente' })
+  const handleBulkStatus = async (status: 'efetivada' | 'pendente') => {
+    for (const id of bulkSelected) await editTransacao(id, { status })
     setBulkSelected(new Set())
     setBulkMode(false)
     setBulkAction(null)
@@ -306,9 +306,8 @@ export function TransacoesDesktop() {
         <Dropdown
           label="Status"
           items={[
-            { value: 'efetivada', label: 'Confirmado', cor: '#1E7D5A' },
-            { value: 'pago',      label: 'Pago',       cor: '#1E7D5A' },
-            { value: 'pendente',  label: 'Pendente',   cor: '#D4A017' },
+            { value: 'efetivada', label: 'Efetivada', cor: '#1E7D5A' },
+            { value: 'pendente',  label: 'Pendente',  cor: '#D4A017' },
           ]}
           selected={statusFiltro}
           onChange={setStatusFiltro}
@@ -394,14 +393,14 @@ export function TransacoesDesktop() {
               {bulkSelected.size} {bulkSelected.size === 1 ? 'selecionada' : 'selecionadas'}
             </span>
             <div style={{ flex: 1 }} />
-            <button onClick={() => handleBulkStatus('pago')}
+            <button onClick={() => handleBulkStatus('efetivada')}
               style={{
                 background: 'rgba(58,133,128,0.22)', color: '#A7E0DC', border: '1px solid rgba(58,133,128,0.4)',
                 borderRadius: 10, padding: '6px 12px', cursor: 'pointer',
                 fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
                 display: 'inline-flex', alignItems: 'center', gap: 5,
               }}>
-              <IconCheck size={12} stroke={2.4}/> Marcar como pago
+              <IconCheck size={12} stroke={2.4}/> Marcar como efetivada
             </button>
             <button onClick={() => handleBulkStatus('pendente')}
               style={{

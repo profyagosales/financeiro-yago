@@ -149,11 +149,14 @@ export function useDashboardData(): DashboardData {
   const investimentos = useInvestimentos()
   const ultimasTxs = useTransacoes(8)
 
-  // Série 12m + 6m
+  // Série 12m + 6m. EXCLUI transferências (transferId definido) porque
+  // elas criam dupla entrada (despesa+receita) que inflaria os totais.
   const txsAno = useLiveQuery(() => {
     const inicio = `${ano - 1}-01-01`
     const fim = `${ano}-12-31`
-    return db.transacoes.where('data').between(inicio, fim, true, true).toArray()
+    return db.transacoes.where('data').between(inicio, fim, true, true)
+      .filter(t => !t.transferId)
+      .toArray()
   }, [ano]) ?? []
 
   const serie12m = serieUltimosMeses(txsAno, 12, mes, ano)
@@ -193,20 +196,22 @@ export function useDashboardData(): DashboardData {
     diaAtual: hoje,
   })
 
-  // Top 5 despesas
+  // Top 5 despesas — exclui transferências
   const top5Despesas = [...txsMes]
-    .filter(t => t.tipo === 'despesa')
+    .filter(t => t.tipo === 'despesa' && !t.transferId)
     .sort((a, b) => b.valor - a.valor)
     .slice(0, 5)
 
-  // Top categorias (com delta vs média 3m anterior)
+  // Top categorias (com delta vs média 3m anterior). Exclui transferências.
   const ultMeses3 = serie12m.slice(-4, -1)  // exclui mês atual
   const txs3m = useLiveQuery(async () => {
     if (ultMeses3.length === 0) return []
     const ini = `${ultMeses3[0].ano}-${String(ultMeses3[0].mes).padStart(2, '0')}-01`
     const ultimo = ultMeses3[ultMeses3.length - 1]
     const fim = `${ultimo.ano}-${String(ultimo.mes).padStart(2, '0')}-31`
-    return db.transacoes.where('data').between(ini, fim, true, true).filter(t => t.tipo === 'despesa').toArray()
+    return db.transacoes.where('data').between(ini, fim, true, true)
+      .filter(t => t.tipo === 'despesa' && !t.transferId)
+      .toArray()
   }, [ano, mes]) ?? []
 
   const mediaCategoria3m = new Map<number, number>()

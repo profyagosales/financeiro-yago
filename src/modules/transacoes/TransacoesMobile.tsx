@@ -540,7 +540,7 @@ function MobileTxDetail({ tx, onClose }: { tx: Transacao; onClose: () => void })
 
   const togglePago = async () => {
     if (!tx.id) return
-    const novoStatus = tx.status === 'pago' ? 'pendente' : 'pago'
+    const novoStatus = tx.status === 'efetivada' ? 'pendente' : 'efetivada'
     await editTransacao(tx.id, { status: novoStatus })
     sounds.success(); haptic('medium')
   }

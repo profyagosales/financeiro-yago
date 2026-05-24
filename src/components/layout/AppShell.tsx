@@ -11,6 +11,7 @@ import { useNotificationCheck } from '@/hooks/useNotificationCheck'
 import { IconPlus } from '@tabler/icons-react'
 import { initSyncEngine } from '@/lib/sync'
 import { setupSyncHooks } from '@/db/hooks/setupSyncHooks'
+import { migrateStatusToCanonical } from '@/db/hooks/useTransacoes'
 
 // Rotas que controlam a própria altura (master-detail / fixed layout)
 // → main não adiciona paddingBottom: 80 (que é pra clearance do FAB/nav mobile)
@@ -65,9 +66,11 @@ export function AppShell() {
   useNotificationCheck()
 
   // ── Sync engine: instala hooks + boot única vez por sessão ──
+  // ── Migrations idempotentes (status legados → canônico) ──
   useEffect(() => {
     setupSyncHooks()
     void initSyncEngine()
+    void migrateStatusToCanonical()
   }, [])
 
   return (
