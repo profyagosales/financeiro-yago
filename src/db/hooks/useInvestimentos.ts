@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Investimento, type InvestimentoTipo, type InvestimentoProvento, type InvestimentoAporte } from '../schema'
 import { getTaxasBenchmark, calcTaxaEfetiva } from './useAppConfig'
+import { fetchCotacaoPorTipo } from '@/lib/cotacoes'
 
 export function useInvestimentos() {
   return useLiveQuery(() => db.investimentos.filter(i => i.ativo).toArray(), []) ?? []
@@ -211,6 +212,32 @@ export async function atualizarCotacao(investimentoId: number, novaCotacao: numb
     valorAtual,
     updatedAt: Date.now(),
   })
+}
+
+// ─── Cotação automática via API ──────────────────────────────────────
+// Busca cotação atual do ativo (CoinGecko pra cripto, Brapi pra B3) e
+// atualiza o investimento. Retorna a nova cotação, ou null se falhou.
+export async function atualizarCotacaoAuto(investimentoId: number): Promise<number | null> {
+  const inv = await db.investimentos.get(investimentoId)
+  if (!inv || !inv.ticker) return null
+  const cotacao = await fetchCotacaoPorTipo(inv.tipo, inv.ticker)
+  if (cotacao === null) return null
+  await atualizarCotacao(investimentoId, cotacao)
+  return cotacao
+}
+
+// Atualiza cotação de todos os ativos de renda variável que têm ticker.
+// Retorna { sucesso, falhou } contagem.
+export async function atualizarCotacoesTodos(): Promise<{ sucesso: number; falhou: number }> {
+  const all = await db.investimentos.filter(i => i.ativo && isRendaVariavel(i.tipo) && !!i.ticker).toArray()
+  let sucesso = 0, falhou = 0
+  for (const inv of all) {
+    if (inv.id === undefined) continue
+    const r = await atualizarCotacaoAuto(inv.id)
+    if (r !== null) sucesso += 1
+    else falhou += 1
+  }
+  return { sucesso, falhou }
 }
 
 // Stats consolidados a partir dos aportes (útil para o modal de aportes)

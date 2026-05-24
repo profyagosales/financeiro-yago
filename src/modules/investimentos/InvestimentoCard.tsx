@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { IconEdit, IconTrash, IconRefresh, IconLock, IconLink, IconArrowUpRight, IconArrowDownRight, IconCoins, IconCash, IconShoppingCart } from '@tabler/icons-react'
+import { IconEdit, IconTrash, IconRefresh, IconLock, IconLink, IconArrowUpRight, IconArrowDownRight, IconCoins, IconCash, IconShoppingCart, IconCloudDownload } from '@tabler/icons-react'
+import { atualizarCotacaoAuto } from '@/db/hooks/useInvestimentos'
 import type { Investimento, Meta } from '@/db/schema'
 import { fmt } from '@/lib/format'
 import { TIPO_META, LIQUIDEZ_LABEL } from './constants'
@@ -18,6 +19,8 @@ interface Props {
 
 export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, onAportes }: Props) {
   const [hover, setHover] = useState(false)
+  const [fetchingCotacao, setFetchingCotacao] = useState(false)
+  const [cotacaoFeedback, setCotacaoFeedback] = useState<'ok' | 'err' | null>(null)
   const tipoMeta = TIPO_META.get(invest.tipo)
   const Icon = tipoMeta?.Icon
   const cor = invest.cor ?? tipoMeta?.cor ?? '#7A5C4F'
@@ -151,10 +154,47 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
 
         {/* Valores */}
         <div style={{ textAlign: 'right' }}>
-          <p style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700,
-            color: '#2C1A0F', letterSpacing: '-0.3px', margin: 0,
-          }}>{fmt(invest.valorAtual)}</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, justifyContent: 'flex-end' }}>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700,
+              color: '#2C1A0F', letterSpacing: '-0.3px', margin: 0,
+            }}>{fmt(invest.valorAtual)}</p>
+            {/* Botão atualizar cotação (renda variável com ticker) */}
+            {isVar && invest.ticker && invest.id !== undefined && (
+              <button
+                onClick={async () => {
+                  setFetchingCotacao(true)
+                  setCotacaoFeedback(null)
+                  const r = await atualizarCotacaoAuto(invest.id!)
+                  setFetchingCotacao(false)
+                  setCotacaoFeedback(r !== null ? 'ok' : 'err')
+                  setTimeout(() => setCotacaoFeedback(null), 1800)
+                }}
+                title={`Buscar cotação atual de ${invest.ticker} via ${invest.tipo === 'Cripto' ? 'CoinGecko' : 'Brapi'}`}
+                disabled={fetchingCotacao}
+                style={{
+                  background: cotacaoFeedback === 'ok' ? 'rgba(58,133,128,0.15)'
+                          : cotacaoFeedback === 'err' ? 'rgba(196,85,59,0.15)'
+                          : 'rgba(80,78,118,0.1)',
+                  border: 'none', borderRadius: 6,
+                  width: 22, height: 22, padding: 0,
+                  cursor: fetchingCotacao ? 'default' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'background .2s',
+                }}>
+                <motion.span
+                  animate={fetchingCotacao ? { rotate: 360 } : { rotate: 0 }}
+                  transition={fetchingCotacao ? { repeat: Infinity, duration: 0.8, ease: 'linear' } : { duration: 0.2 }}
+                  style={{ display: 'inline-flex' }}>
+                  <IconCloudDownload size={12} stroke={2}
+                    color={cotacaoFeedback === 'ok' ? '#1E7D5A'
+                         : cotacaoFeedback === 'err' ? '#C4553B'
+                         : '#504E76'} />
+                </motion.span>
+              </button>
+            )}
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginTop: 2 }}>
             <span style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,

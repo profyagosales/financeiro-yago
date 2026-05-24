@@ -5,6 +5,7 @@ import { fmt } from '@/lib/format'
 import {
   useInvestimentos, useTotalInvestimentos,
   deleteInvestimento, aplicarRentabilidadeAutoTodos,
+  atualizarCotacoesTodos,
 } from '@/db/hooks/useInvestimentos'
 import { useMetas } from '@/db/hooks/useMetas'
 import type { Investimento, InvestimentoTipo } from '@/db/schema'
@@ -26,6 +27,8 @@ export function Page() {
   const [confirmDelete, setConfirmDelete] = useState<Investimento | null>(null)
   const [proventosFor, setProventosFor] = useState<Investimento | null>(null)
   const [aportesFor, setAportesFor] = useState<Investimento | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshMsg, setRefreshMsg] = useState<string | null>(null)
 
   useBodyScrollLock(confirmDelete !== null)
 
@@ -87,15 +90,34 @@ export function Page() {
           <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>Investimentos</h1>
         </div>
         <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
-          <button onClick={() => aplicarRentabilidadeAutoTodos()}
-            title="Aplicar rentabilidade mensal nos investimentos em modo automático"
+          <button onClick={async () => {
+              setRefreshing(true)
+              setRefreshMsg(null)
+              await aplicarRentabilidadeAutoTodos()
+              const r = await atualizarCotacoesTodos()
+              setRefreshing(false)
+              const parts: string[] = []
+              if (r.sucesso > 0) parts.push(`${r.sucesso} cotação${r.sucesso !== 1 ? 'ões' : ''} atualizada${r.sucesso !== 1 ? 's' : ''}`)
+              if (r.falhou > 0) parts.push(`${r.falhou} falhou`)
+              setRefreshMsg(parts.length > 0 ? parts.join(' · ') : 'Rendimentos atualizados')
+              setTimeout(() => setRefreshMsg(null), 3000)
+            }}
+            title="Aplicar rentabilidade mensal (renda fixa) + buscar cotações (renda variável)"
+            disabled={refreshing}
             style={{
               background: '#FFFFFF', color: '#7A5C4F', border: '1.5px solid #EDE6DC',
-              borderRadius: 12, padding: '10px 16px', cursor: 'pointer',
+              borderRadius: 12, padding: '10px 16px', cursor: refreshing ? 'default' : 'pointer',
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
               display: 'flex', alignItems: 'center', gap: 6,
+              opacity: refreshing ? 0.7 : 1,
             }}>
-            <IconRefresh size={14} stroke={2} /> Atualizar
+            <motion.span
+              animate={refreshing ? { rotate: 360 } : { rotate: 0 }}
+              transition={refreshing ? { repeat: Infinity, duration: 0.8, ease: 'linear' } : { duration: 0.2 }}
+              style={{ display: 'inline-flex' }}>
+              <IconRefresh size={14} stroke={2} />
+            </motion.span>
+            {refreshing ? 'Atualizando…' : (refreshMsg ?? 'Atualizar tudo')}
           </button>
           <button onClick={() => setAdding(true)}
             style={{
