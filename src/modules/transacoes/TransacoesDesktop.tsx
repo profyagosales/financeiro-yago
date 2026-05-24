@@ -90,10 +90,13 @@ export function TransacoesDesktop() {
     return r.sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
   }, [txsPeriodo, quickToday, quickPendente, quickReceitas, quickDespesas, hojeStr, tipos, contasFiltro, categoriasFiltro, statusFiltro, search, categorias, contas])
 
-  // Stats do período
+  // Stats do período — exclui transferências (transferId) pra não
+  // inflar receitas/despesas. Uma transferência R$1k entre contas próprias
+  // contaria 2x (despesa origem + receita destino) sem o filtro.
   const stats = useMemo(() => {
-    const rec = txsFiltradas.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
-    const des = txsFiltradas.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
+    const semTransfer = txsFiltradas.filter(t => !t.transferId)
+    const rec = semTransfer.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
+    const des = semTransfer.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
     return { receitas: rec, despesas: des, saldo: rec - des, total: txsFiltradas.length }
   }, [txsFiltradas])
 

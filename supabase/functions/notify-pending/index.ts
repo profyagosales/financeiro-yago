@@ -388,8 +388,11 @@ Deno.serve(async (req: Request) => {
     authedUserId = userData.user.id
   }
 
-  const subsQuery = sbAdmin.from('push_subscriptions').select('*')
-  if (authedUserId) subsQuery.eq('user_id', authedUserId)
+  // Reatribui (não muta) — defesa contra upgrade do supabase-js v3 que
+  // pode tornar PostgrestFilterBuilder imutável. Hoje em v2 retorna `this`,
+  // mas confiar nisso é frágil.
+  let subsQuery = sbAdmin.from('push_subscriptions').select('*')
+  if (authedUserId) subsQuery = subsQuery.eq('user_id', authedUserId)
   const { data: subs, error: subsErr } = await subsQuery
   if (subsErr) return jsonResp({ error: subsErr.message }, 500, origin)
 

@@ -216,8 +216,9 @@ export async function gerarRelatorioContas(opts: PDFOptions = {}): Promise<Blob>
 
     if (txs.length === 0) continue
 
-    const entradas = txs.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
-    const saidas = txs.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
+    // Totais excluem transferências (transferId) pra não inflar 2x
+    const entradas = txs.filter(t => t.tipo === 'receita' && !t.transferId).reduce((s, t) => s + t.valor, 0)
+    const saidas = txs.filter(t => t.tipo === 'despesa' && !t.transferId).reduce((s, t) => s + t.valor, 0)
 
     // Header da conta
     doc.setFillColor(...COR.fundo)
@@ -474,8 +475,9 @@ export async function gerarRelatorioTransacoes(opts: PDFOptions = {}): Promise<B
   const catMap = new Map(cats.map(c => [c.id, c.nome]))
   const contaMap = new Map(contas.map(c => [c.id, c.nome]))
 
-  const entradas = txs.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
-  const saidas = txs.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
+  // Header global do extrato: exclui transferências pra não dobrar totais
+  const entradas = txs.filter(t => t.tipo === 'receita' && !t.transferId).reduce((s, t) => s + t.valor, 0)
+  const saidas = txs.filter(t => t.tipo === 'despesa' && !t.transferId).reduce((s, t) => s + t.valor, 0)
   const saldo = entradas - saidas
 
   const doc = new jsPDF('p', 'mm', 'a4')

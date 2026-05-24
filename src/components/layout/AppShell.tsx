@@ -18,14 +18,22 @@ import { onErrorToast } from '@/lib/sounds'
 // ─── ErrorToast: escuta CustomEvent disparado por showErrorToast() ───
 // Renderiza o último erro por ~4s, com fade-out. Posiciona acima do
 // BottomNav em mobile e canto inferior direito em desktop.
+// Em rajada de erros, cancela o timer anterior antes de agendar o
+// próximo — sem isso, T1 ainda ativo zerava msg de erro novo antes
+// do seu próprio prazo.
 function ErrorToast() {
   const [msg, setMsg] = useState<string | null>(null)
   useEffect(() => {
-    return onErrorToast(detail => {
+    let timerId: ReturnType<typeof setTimeout> | null = null
+    const unsub = onErrorToast(detail => {
+      if (timerId) clearTimeout(timerId)
       setMsg(detail.message)
-      const t = setTimeout(() => setMsg(null), 4000)
-      return () => clearTimeout(t)
+      timerId = setTimeout(() => setMsg(null), 4000)
     })
+    return () => {
+      unsub()
+      if (timerId) clearTimeout(timerId)
+    }
   }, [])
   return (
     <AnimatePresence>
@@ -156,31 +164,49 @@ export function AppShell() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
     let mounted = true
+    let updateFoundListener: (() => void) | null = null
+    let stateChangeListener: (() => void) | null = null
+    let installingSw: ServiceWorker | null = null
+    let registration: ServiceWorkerRegistration | null = null
+
     navigator.serviceWorker.getRegistration().then(reg => {
       if (!reg || !mounted) return
-      // Já tem um SW waiting? (versão nova pronta pra ativar)
+      registration = reg
       if (reg.waiting && navigator.serviceWorker.controller) {
         setSwUpdate(reg.waiting)
       }
-      // Escuta novas instalações
-      reg.addEventListener('updatefound', () => {
+      updateFoundListener = () => {
         const nw = reg.installing
         if (!nw) return
-        nw.addEventListener('statechange', () => {
+        installingSw = nw
+        stateChangeListener = () => {
           if (nw.state === 'installed' && navigator.serviceWorker.controller) {
             setSwUpdate(nw)
           }
-        })
-      })
+        }
+        nw.addEventListener('statechange', stateChangeListener)
+      }
+      reg.addEventListener('updatefound', updateFoundListener)
     })
-    // Reload assim que o SW novo virar controlador
+
     let reloading = false
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const onControllerChange = () => {
       if (reloading) return
       reloading = true
       window.location.reload()
-    })
-    return () => { mounted = false }
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
+
+    return () => {
+      mounted = false
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange)
+      if (registration && updateFoundListener) {
+        registration.removeEventListener('updatefound', updateFoundListener)
+      }
+      if (installingSw && stateChangeListener) {
+        installingSw.removeEventListener('statechange', stateChangeListener)
+      }
+    }
   }, [])
 
   const applyUpdate = () => {

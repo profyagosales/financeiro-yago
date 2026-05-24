@@ -160,7 +160,9 @@ export async function verificarPendencias(prefs: NotificationPrefs = NOTIF_PREFS
       .where('data').aboveOrEqual(`${ano}-${String(mes).padStart(2, '0')}-01`)
       .toArray()
     const gastosPorCat = new Map<number, number>()
-    txs.filter(t => t.tipo === 'despesa').forEach(t => {
+    // Exclui transferências: a despesa-perna na conta origem usaria a
+    // categoria default e dispararia "orçamento estourado" falsamente.
+    txs.filter(t => t.tipo === 'despesa' && !t.transferId).forEach(t => {
       gastosPorCat.set(t.categoriaId, (gastosPorCat.get(t.categoriaId) ?? 0) + t.valor)
     })
     const cats = await db.categorias.toArray()

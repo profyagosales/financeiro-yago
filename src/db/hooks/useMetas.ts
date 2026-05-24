@@ -107,10 +107,12 @@ export async function deleteMeta(id: number) {
 }
 
 // ─── Cálculo do alvo da Reserva de Emergência ────────────────────────
-// alvo = média das despesas dos últimos 6 meses × meses de cobertura
+// alvo = média das despesas dos últimos 6 meses × meses de cobertura.
+// Exclui transferências (transferId): elas geram despesa na conta-origem
+// mas não são gasto real — inflariam o alvo.
 export async function calcularAlvoReserva(mesesCobertura: 3 | 6 | 12): Promise<number> {
   const todasDespesas = await db.transacoes
-    .filter(t => t.tipo === 'despesa')
+    .filter(t => t.tipo === 'despesa' && !t.transferId)
     .toArray()
   if (todasDespesas.length === 0) return 0
 

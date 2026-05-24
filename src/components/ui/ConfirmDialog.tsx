@@ -15,7 +15,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { IconAlertTriangle } from '@tabler/icons-react'
 
 interface Props {
@@ -36,12 +36,20 @@ export function ConfirmDialog({
   destructive = false,
   onConfirm, onClose,
 }: Props) {
+  const [busy, setBusy] = useState(false)
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    setBusy(false)  // reset ao abrir
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !busy) onClose() }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [open, onClose, busy])
+
+  const handleConfirm = async () => {
+    if (busy) return
+    setBusy(true)
+    try { await onConfirm() } finally { setBusy(false) }
+  }
 
   return createPortal(
     <AnimatePresence>
@@ -87,25 +95,27 @@ export function ConfirmDialog({
               }}>{body}</div>
             )}
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={onClose}
+              <button onClick={onClose} disabled={busy}
                 style={{
                   flex: 1, padding: '12px 0', borderRadius: 12,
                   border: '1.5px solid #E8E0D5', background: '#FFFFFF',
                   fontFamily: "'Plus Jakarta Sans',sans-serif",
-                  fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer',
+                  fontSize: 13, fontWeight: 700, color: '#7A5C4F',
+                  cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1,
                 }}>{cancelLabel}</button>
-              <button onClick={() => void onConfirm()}
+              <button onClick={handleConfirm} disabled={busy}
                 style={{
                   flex: 1, padding: '12px 0', borderRadius: 12, border: 'none',
                   background: destructive
                     ? 'linear-gradient(135deg, #C4553B, #A8442B)'
                     : 'linear-gradient(135deg, #504E76, #3D3B5F)',
                   fontFamily: "'Plus Jakarta Sans',sans-serif",
-                  fontSize: 13, fontWeight: 700, color: '#FFFFFF', cursor: 'pointer',
+                  fontSize: 13, fontWeight: 700, color: '#FFFFFF',
+                  cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1,
                   boxShadow: destructive
                     ? '0 6px 16px rgba(196,85,59,0.4)'
                     : '0 6px 16px rgba(80,78,118,0.4)',
-                }}>{confirmLabel}</button>
+                }}>{busy ? 'Processando…' : confirmLabel}</button>
             </div>
           </motion.div>
         </motion.div>

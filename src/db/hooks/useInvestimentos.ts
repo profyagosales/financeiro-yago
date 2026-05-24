@@ -34,14 +34,20 @@ export function useTotalInvestimentos() {
   return { total: totalBRL, aplicado: aplicadoBRL, rendimento: rendimentoBRL }
 }
 
+// ─── Tags determinísticas pra rastrear Transacao espelho ─────────────
+// Usadas em addInvestimento + addAporte pra ligar a Transacao de débito
+// criada na conta origem. Permite reverter saldo no delete sem mexer
+// no schema (descricao é livre, e os tags são únicos por entidade).
+const tagInvest = (id: number) => `[invest:${id}]`
+const tagAporte = (id: number) => `[aporte:${id}]`
+
 export async function addInvestimento(
   data: Omit<Investimento, 'id' | 'syncId' | 'updatedAt'>,
   opts?: { contaOrigemId?: number; categoriaId?: number },
 ) {
   const id = await db.investimentos.add({ ...data, updatedAt: Date.now() })
-  // Se origem informada, debita conta com transação de despesa categoria
-  // "Investimentos". Mantém patrimônio consistente: saldo_conta - valor +
-  // investimento_valor = total inalterado.
+  // Se origem informada, debita conta com Transacao categoria "Investimentos".
+  // Tag determinística na descricao permite reverter no delete.
   if (opts?.contaOrigemId && data.valorAplicado > 0) {
     const catInvest = await db.categorias.filter(c => c.tipo === 'despesa' && c.nome.toLowerCase().includes('investimento')).first()
     const catId = opts.categoriaId ?? catInvest?.id ?? 1
@@ -52,7 +58,7 @@ export async function addInvestimento(
       tipo: 'despesa',
       contaId: opts.contaOrigemId,
       categoriaId: catId,
-      descricao: `Aplicação em ${data.nome}`,
+      descricao: `Aplicação em ${data.nome} ${tagInvest(id as number)}`,
       status: 'efetivada',
       recorrencia: 'unica',
     })
@@ -65,6 +71,14 @@ export async function editInvestimento(id: number, data: Partial<Investimento>) 
 }
 
 export async function deleteInvestimento(id: number) {
+  // Reverte a Transacao espelho (se existir): deletar a tx restaura o
+  // saldo da conta automaticamente via deleteTransacao.
+  const tag = tagInvest(id)
+  const espelho = await db.transacoes.filter(t => t.descricao.includes(tag)).first()
+  if (espelho?.id) {
+    const { deleteTransacao } = await import('./useTransacoes')
+    await deleteTransacao(espelho.id)
+  }
   return db.investimentos.update(id, { ativo: false, updatedAt: Date.now() })
 }
 
@@ -191,9 +205,10 @@ export async function addAporte(
   data: Omit<InvestimentoAporte, 'id' | 'syncId' | 'updatedAt'>,
   opts?: { contaOrigemId?: number; categoriaId?: number },
 ) {
-  const id = await db.investimentosAportes.add({ ...data, updatedAt: Date.now() })
+  const id = await db.investimentosAportes.add({ ...data, updatedAt: Date.now() }) as number
   await recalcInvestimentoFromAportes(data.investimentoId)
-  // Debita conta se origem informada
+  // Debita conta se origem informada. Tag determinística [aporte:{id}]
+  // permite reverter a Transacao no deleteAporte.
   if (opts?.contaOrigemId) {
     const inv = await db.investimentos.get(data.investimentoId)
     const valorTotal = data.quantidade * data.precoUnitario + (data.custos ?? 0)
@@ -207,7 +222,7 @@ export async function addAporte(
         tipo: 'despesa',
         contaId: opts.contaOrigemId,
         categoriaId: catId,
-        descricao: `Aporte em ${inv?.nome ?? 'investimento'}`,
+        descricao: `Aporte em ${inv?.nome ?? 'investimento'} ${tagAporte(id)}`,
         status: 'efetivada',
         recorrencia: 'unica',
       })
@@ -219,6 +234,13 @@ export async function addAporte(
 export async function deleteAporte(id: number) {
   const aporte = await db.investimentosAportes.get(id)
   if (!aporte) return
+  // Reverte Transacao espelho (se criada via opts.contaOrigemId).
+  const tag = tagAporte(id)
+  const espelho = await db.transacoes.filter(t => t.descricao.includes(tag)).first()
+  if (espelho?.id) {
+    const { deleteTransacao } = await import('./useTransacoes')
+    await deleteTransacao(espelho.id)
+  }
   await db.investimentosAportes.delete(id)
   await recalcInvestimentoFromAportes(aporte.investimentoId)
 }

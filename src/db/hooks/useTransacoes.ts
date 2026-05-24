@@ -204,5 +204,34 @@ export async function editTransacaoComSaldo(id: number, novosDados: Partial<Tran
     }
   }
 
+  // Transferência: se mudou valor ou data, propaga pra irmã (espelho).
+  // Sem isso, editar via EditableValueField uma das pernas dessincroniza
+  // o par e o saldo das contas fica inconsistente.
+  if (original.transferId && (novosDados.valor !== undefined || novosDados.data !== undefined)) {
+    const irmas = await db.transacoes
+      .filter(t => t.transferId === original.transferId && t.id !== id)
+      .toArray()
+    for (const irma of irmas) {
+      if (irma.id == null) continue
+      const updates: Partial<Transacao> = {}
+      if (novosDados.valor !== undefined) updates.valor = novosDados.valor
+      if (novosDados.data !== undefined) updates.data = novosDados.data
+      // Recursão controlada: cascateia mas a irmã não vai cascatear de volta
+      // porque o updatedAt já vai bater. Saldo da conta da irmã é ajustado aqui.
+      const oldIrma = await db.transacoes.get(irma.id)
+      if (!oldIrma) continue
+      const contaIrma = await db.contas.get(oldIrma.contaId)
+      if (contaIrma && novosDados.valor !== undefined) {
+        const deltaReverter = oldIrma.tipo === 'receita' ? -oldIrma.valor : oldIrma.valor
+        const deltaAplicar  = oldIrma.tipo === 'receita' ? novosDados.valor : -novosDados.valor
+        await db.contas.update(oldIrma.contaId, {
+          saldoAtual: contaIrma.saldoAtual + deltaReverter + deltaAplicar,
+          updatedAt: Date.now(),
+        })
+      }
+      await db.transacoes.update(irma.id, { ...updates, updatedAt: Date.now() })
+    }
+  }
+
   return db.transacoes.update(id, { ...novosDados, updatedAt: Date.now() })
 }

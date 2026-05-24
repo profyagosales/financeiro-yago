@@ -105,10 +105,12 @@ export function TransacoesMobile() {
     return r.sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
   }, [txs, search, tipoFiltro, categorias, contas])
 
-  // Stats compactas
+  // Stats compactas — exclui transferências (transferId) pra evitar
+  // contagem dupla (despesa origem + receita destino do mesmo R$).
   const stats = useMemo(() => {
-    const rec = txsFiltradas.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
-    const des = txsFiltradas.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
+    const semTransfer = txsFiltradas.filter(t => !t.transferId)
+    const rec = semTransfer.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
+    const des = semTransfer.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
     return { receitas: rec, despesas: des, saldo: rec - des, count: txsFiltradas.length }
   }, [txsFiltradas])
 
@@ -607,13 +609,13 @@ function MobileTxDetail({ tx, onClose }: { tx: Transacao; onClose: () => void })
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '3px 9px', borderRadius: 999,
-              background: tx.status === 'pago' ? 'rgba(30,125,90,0.14)' : 'rgba(212,160,23,0.16)',
-              color: tx.status === 'pago' ? C.green : C.gold,
+              background: tx.status === 'efetivada' ? 'rgba(30,125,90,0.14)' : 'rgba(212,160,23,0.16)',
+              color: tx.status === 'efetivada' ? C.green : C.gold,
               fontFamily: "'Plus Jakarta Sans',sans-serif",
               fontSize: 11, fontWeight: 700,
             }}>
-              {tx.status === 'pago' ? <IconCheck size={11} stroke={2.4} /> : <IconClock size={11} stroke={2.4} />}
-              {tx.status === 'pago' ? 'Pago' : 'Pendente'}
+              {tx.status === 'efetivada' ? <IconCheck size={11} stroke={2.4} /> : <IconClock size={11} stroke={2.4} />}
+              {tx.status === 'efetivada' ? 'Efetivada' : 'Pendente'}
             </span>
           }
           divider
@@ -629,15 +631,15 @@ function MobileTxDetail({ tx, onClose }: { tx: Transacao; onClose: () => void })
           onClick={togglePago}
           style={{
             padding: '14px 16px',
-            background: tx.status === 'pago'
+            background: tx.status === 'efetivada'
               ? `rgba(155,123,106,0.14)`
               : `linear-gradient(135deg, ${C.green}, ${C.green}d0)`,
-            color: tx.status === 'pago' ? C.inkSoft : '#FFFFFF',
+            color: tx.status === 'efetivada' ? C.inkSoft : '#FFFFFF',
             border: 'none', borderRadius: 14, cursor: 'pointer',
             fontFamily: "'Plus Jakarta Sans',sans-serif",
             fontSize: 14, fontWeight: 700, letterSpacing: '.01em',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            boxShadow: tx.status === 'pago' ? 'none' : '0 8px 22px rgba(30,125,90,0.32)',
+            boxShadow: tx.status === 'efetivada' ? 'none' : '0 8px 22px rgba(30,125,90,0.32)',
           }}>
           {tx.status === 'efetivada' ? <IconClock size={16} stroke={2.2} /> : <IconCheck size={16} stroke={2.4} />}
           {tx.status === 'efetivada' ? 'Marcar como pendente' : 'Marcar como efetivada'}

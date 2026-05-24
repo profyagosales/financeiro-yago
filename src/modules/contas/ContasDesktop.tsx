@@ -61,8 +61,11 @@ export function ContasDesktop() {
     () => db.transacoes.where('data').between(inicioMes, fimMes, true, true).toArray(),
     [inicioMes, fimMes],
   ) ?? []
-  const recMes = txsMes.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
-  const desMes = txsMes.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
+  // Métricas do header excluem transferências (transferId): elas viram
+  // par despesa+receita entre contas próprias e inflariam totais 2x.
+  const txsMesSemTransfer = txsMes.filter(t => !t.transferId)
+  const recMes = txsMesSemTransfer.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
+  const desMes = txsMesSemTransfer.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
   const deltaMes = recMes - desMes
 
   // Sparklines por conta (últimas 14 datapoints — diário)

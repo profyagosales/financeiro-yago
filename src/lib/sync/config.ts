@@ -24,32 +24,9 @@ export interface TableConfig {
   onConflictColumn?: string
 }
 
-// Ordem de sync (topológica — pais antes de filhos)
-// Tudo que NÃO tem FK pra outra tabela vai no início.
-export const SYNC_ORDER: string[] = [
-  // Sem dependências
-  'categorias',
-  'contas',
-  'cartoes',
-  'metas',
-  'appConfig',
-  // 1 nível de dependência
-  'orcamentos',
-  'transacoes',
-  'cartoes_lancamentos',  // alias pra lancamentosCartao
-  'contasFixas',
-  'investimentos',
-  // 2 níveis
-  'pagamentosFixos',
-  'investimentosAportes',
-  'investimentosProventos',
-  'investimentosMovimentacoes',
-  'dividas',
-  'desejos',
-  // 3 níveis
-  'dividasMovimentacoes',
-  'anexos',
-]
+// (Doc histórico — substituído por SYNC_TABLES_ORDERED no final do arquivo,
+// que é o que push/pull realmente usam. Mantido só pra ler ordem topológica
+// rapidamente em revisões.)
 
 export const TABLES: Record<string, TableConfig> = {
   categorias: {
@@ -108,12 +85,6 @@ export const TABLES: Record<string, TableConfig> = {
     remoteTable: 'pagamentos_fixos',
     dexie: () => db.pagamentosFixos,
     fks: { contaFixaId: 'contasFixas' },
-  },
-  metasOnly: {  // alias unused
-    localTable: 'metas',
-    remoteTable: 'metas',
-    dexie: () => db.metas,
-    fks: {},
   },
   orcamentos: {
     localTable: 'orcamentos',
