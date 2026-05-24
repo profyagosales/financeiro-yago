@@ -38,9 +38,9 @@ export function SecGastos({ d }: Props) {
           gap: 24, alignItems: 'flex-start',
         }} className="gastos-grid">
           {/* Donut + total no centro */}
-          <div>
-            <div style={{ position: 'relative', height: 280 }}>
-              <ResponsiveContainer>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ position: 'relative', width: '100%', height: 280, minWidth: 0 }}>
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={cats} dataKey="valor" innerRadius={75} outerRadius={115}
                     paddingAngle={2} stroke="none"

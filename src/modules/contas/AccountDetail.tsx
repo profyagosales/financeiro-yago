@@ -233,8 +233,8 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
               color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px',
             }}>Saldo nos últimos 30 dias</h3>
           </header>
-          <div style={{ width: '100%', height: 180 }}>
-            <ResponsiveContainer>
+          <div style={{ width: '100%', height: 180, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
                 <defs>
                   <linearGradient id={`grad-${conta.id}`} x1="0" y1="0" x2="0" y2="1">

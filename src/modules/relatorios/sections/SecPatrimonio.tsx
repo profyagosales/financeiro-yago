@@ -35,9 +35,9 @@ export function SecPatrimonio({ d }: Props) {
         display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 24,
       }} className="patrim-grid">
         {/* Chart */}
-        <div>
-          <div style={{ width: '100%', height: 260 }}>
-            <ResponsiveContainer>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ width: '100%', height: 260, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
                 <defs>
                   <linearGradient id="patrim-grad" x1="0" y1="0" x2="0" y2="1">

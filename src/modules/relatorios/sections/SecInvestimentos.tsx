@@ -55,8 +55,8 @@ export function SecInvestimentos({ d }: Props) {
         display: 'grid', gridTemplateColumns: 'minmax(280px, 360px) 1fr', gap: 24, alignItems: 'flex-start',
       }} className="invest-grid">
         {/* Donut */}
-        <div style={{ position: 'relative', height: 280 }}>
-          <ResponsiveContainer>
+        <div style={{ position: 'relative', width: '100%', height: 280, minWidth: 0 }}>
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={distrib} dataKey="total" nameKey="tipo"
                 innerRadius={75} outerRadius={115} paddingAngle={2} stroke="none"
