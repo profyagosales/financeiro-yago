@@ -109,6 +109,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 function PerfilSection() {
   const profile = useUserProfile()
   const [form, setForm] = useState({
+    displayName: profile.displayName ?? '',
     renda: profile.rendaMensal ? String(profile.rendaMensal).replace('.', ',') : '',
     metaPct: profile.metaPoupancaPct ? String(profile.metaPoupancaPct * 100) : '',
   })
@@ -118,6 +119,7 @@ function PerfilSection() {
 
   const handleSave = async () => {
     await setUserProfile({
+      displayName: form.displayName.trim() || undefined,
       rendaMensal: parse(form.renda),
       metaPoupancaPct: parse(form.metaPct) / 100,
     })
@@ -132,9 +134,21 @@ function PerfilSection() {
   return (
     <div>
       <p style={{ ...HELP_STYLE, marginBottom: 14 }}>
-        Sua renda é usada para calcular % comprometido com despesas/dívidas no Dashboard
-        e dimensionar a reserva de emergência. A meta de poupança aparece como referência em Metas.
+        Como prefere ser chamado aparece na saudação do Dashboard. Sua renda é usada para
+        calcular % comprometido e dimensionar a reserva de emergência.
       </p>
+
+      {/* Nome de exibição */}
+      <div style={{ marginBottom: 14 }}>
+        <p style={LABEL_STYLE}>Como prefere ser chamado</p>
+        <div style={INPUT_GROUP}>
+          <input value={form.displayName}
+            onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}
+            placeholder="Seu nome"
+            maxLength={32}
+            style={INPUT_BARE} />
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 14 }}>
         <div>

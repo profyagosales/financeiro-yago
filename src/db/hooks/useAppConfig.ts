@@ -61,10 +61,18 @@ export async function setBrapiToken(token: string) {
   }
 }
 
-// ─── Perfil financeiro (renda + meta de poupança) ────────────────────
+// ─── Perfil financeiro (renda + meta de poupança + identidade) ───────
 export interface UserProfile {
+  displayName?: string              // Como prefere ser chamado
   rendaMensal?: number              // R$ líquida
   metaPoupancaPct?: number          // 0.20 = 20%
+}
+
+// Hook helper: retorna nome pra saudação. Sem fallback automático
+// pro email (era confuso quando email não bate com nome real).
+export function useDisplayName(): string {
+  const profile = useUserProfile()
+  return profile.displayName?.trim() ?? ''
 }
 
 export function useUserProfile(): UserProfile {

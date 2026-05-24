@@ -7,7 +7,7 @@ import { OdometroSaldo } from '@/components/ui/OdometroSaldo'
 import { DeltaPill } from '@/components/ui/DeltaPill'
 import { Sparkline } from '@/components/ui/Sparkline'
 import { useUIStore } from '@/store/ui'
-import { useAuthStore } from '@/store/auth'
+import { useDisplayName } from '@/db/hooks/useAppConfig'
 import {
   saudacao,
 } from '../lib/useDashboardData'
@@ -34,10 +34,9 @@ export function HeroBar({
 }: HeroBarProps) {
   const navigate = useNavigate()
   const { openFab } = useUIStore()
-  const email = useAuthStore(s => s.email)
+  const displayName = useDisplayName()
   const greet = saudacao()
   const statusCor = corStatus(status)
-  const firstName = (email ?? '').split('@')[0].split('.')[0].replace(/^\w/, c => c.toUpperCase())
 
   return (
     <motion.section
@@ -70,16 +69,32 @@ export function HeroBar({
         {/* LEFT: saudação + saldo */}
         <div>
           {/* Saudação */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
             <span style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif",
               fontSize: 12, fontWeight: 600,
               color: 'rgba(255,255,255,0.75)',
               letterSpacing: '.02em',
             }}>
-              {greet.texto}{firstName ? `, ${firstName}` : ''}
+              {greet.texto}{displayName ? `, ${displayName}` : ''}
             </span>
             <span style={{ fontSize: 14 }}>{greet.emoji}</span>
+            {!displayName && (
+              <button onClick={() => navigate('/configuracoes')}
+                style={{
+                  background: 'rgba(255,255,255,0.12)',
+                  border: '1px solid rgba(255,255,255,0.22)',
+                  borderRadius: 999,
+                  padding: '3px 10px',
+                  fontFamily: "'Plus Jakarta Sans',sans-serif",
+                  fontSize: 10.5, fontWeight: 600,
+                  color: 'rgba(255,255,255,0.85)',
+                  cursor: 'pointer',
+                  letterSpacing: '.02em',
+                }}>
+                Diga seu nome →
+              </button>
+            )}
           </div>
 
           {/* Saldo título */}
