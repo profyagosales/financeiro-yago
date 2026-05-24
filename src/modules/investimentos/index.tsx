@@ -12,6 +12,7 @@ import { TIPOS, TIPO_META, CLASSE_COR, CLASSE_LABEL } from './constants'
 import { InvestimentoCard } from './InvestimentoCard'
 import { InvestimentoForm } from './InvestimentoForm'
 import { ProventosModal } from './ProventosModal'
+import { AportesModal } from './AportesModal'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 export function Page() {
@@ -24,6 +25,7 @@ export function Page() {
   const [adding, setAdding] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<Investimento | null>(null)
   const [proventosFor, setProventosFor] = useState<Investimento | null>(null)
+  const [aportesFor, setAportesFor] = useState<Investimento | null>(null)
 
   useBodyScrollLock(confirmDelete !== null)
 
@@ -243,6 +245,7 @@ export function Page() {
                       onEdit={() => setEditing(inv)}
                       onDelete={() => setConfirmDelete(inv)}
                       onProventos={() => setProventosFor(inv)}
+                      onAportes={() => setAportesFor(inv)}
                     />
                   ))}
                 </div>
@@ -265,6 +268,13 @@ export function Page() {
           <ProventosModal
             invest={proventosFor}
             onClose={() => setProventosFor(null)}
+          />
+        )}
+
+        {aportesFor && (
+          <AportesModal
+            invest={aportesFor}
+            onClose={() => setAportesFor(null)}
           />
         )}
 

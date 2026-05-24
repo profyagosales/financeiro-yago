@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { IconEdit, IconTrash, IconRefresh, IconLock, IconLink, IconArrowUpRight, IconArrowDownRight, IconCoins, IconCash } from '@tabler/icons-react'
+import { IconEdit, IconTrash, IconRefresh, IconLock, IconLink, IconArrowUpRight, IconArrowDownRight, IconCoins, IconCash, IconShoppingCart } from '@tabler/icons-react'
 import type { Investimento, Meta } from '@/db/schema'
 import { fmt } from '@/lib/format'
 import { TIPO_META, LIQUIDEZ_LABEL } from './constants'
@@ -12,9 +12,10 @@ interface Props {
   onEdit: () => void
   onDelete: () => void
   onProventos?: () => void
+  onAportes?: () => void
 }
 
-export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos }: Props) {
+export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, onAportes }: Props) {
   const [hover, setHover] = useState(false)
   const tipoMeta = TIPO_META.get(invest.tipo)
   const Icon = tipoMeta?.Icon
@@ -166,8 +167,20 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos }
           </div>
         </div>
 
-        {/* Ações: botão Proventos sempre visível (para tipos que aceitam), demais no hover */}
+        {/* Ações: Aportar (renda variável) + Proventos (FII/Ação/ETF) + edit/delete hover */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+          {isVar && onAportes && (
+            <button onClick={onAportes} title="Registrar compra / ver aportes"
+              style={{
+                background: 'rgba(80,78,118,0.12)', color: '#504E76',
+                border: '1px solid rgba(80,78,118,0.3)', borderRadius: 9,
+                padding: '6px 10px', cursor: 'pointer',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+              }}>
+              <IconShoppingCart size={12} stroke={2.4} /> Aportar
+            </button>
+          )}
           {podeProventos && onProventos && (
             <button onClick={onProventos} title="Registrar/ver proventos"
               style={{

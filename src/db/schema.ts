@@ -67,6 +67,20 @@ export interface Investimento {
   updatedAt: number
 }
 
+// ─── InvestimentoAporte (NOVO v7) ────────────────────────────────────
+// Cada compra individual de um ativo de renda variável.
+// Quantidade total e preço médio são derivados desta tabela.
+export interface InvestimentoAporte {
+  id?: number
+  investimentoId: number
+  data: string                          // YYYY-MM-DD da compra
+  quantidade: number                    // cotas/ações/moedas adquiridas
+  precoUnitario: number                 // R$ por unidade naquela compra
+  observacao?: string
+  syncId?: string
+  updatedAt: number
+}
+
 // ─── InvestimentoProvento (NOVO v6) ──────────────────────────────────
 // Registro de proventos recebidos (dividendos de ações, aluguéis de FII,
 // JCP, rendimentos de cripto staking, etc).
@@ -156,6 +170,8 @@ class FinanceiroYagoDB extends Dexie {
   desejos!: Table<Desejo>
   // Novas tabelas v6
   investimentosProventos!: Table<InvestimentoProvento>
+  // Nova tabela v7
+  investimentosAportes!: Table<InvestimentoAporte>
 
   constructor() {
     super('FinanceiroYago')
@@ -272,6 +288,45 @@ class FinanceiroYagoDB extends Dexie {
       desejos: '++id, status, prioridade, transacaoId, syncId',
       // NOVA
       investimentosProventos: '++id, investimentoId, data, tipo, syncId',
+    })
+
+    // v7 — Aportes (compras individuais) → derivam quantidade e preço médio
+    this.version(7).stores({
+      contas: '++id, tipo, ativo, syncId',
+      categorias: '++id, tipo, syncId',
+      transacoes: '++id, data, tipo, contaId, categoriaId, status, syncId',
+      cartoes: '++id, ativo, syncId',
+      lancamentosCartao: '++id, cartaoId, [cartaoId+mes+ano], mes, ano, parcelaPaiId, syncId',
+      contasFixas: '++id, ativo, categoriaId, syncId',
+      pagamentosFixos: '++id, contaFixaId, [contaFixaId+mes+ano], [mes+ano], syncId',
+      metas: '++id, ativo, tipo, syncId',
+      patrimonio: '++id, tipo, syncId',
+      orcamentos: '++id, categoriaId, syncId',
+      anexos: '++id, transacaoId',
+      investimentos: '++id, tipo, metaId, ativo, syncId',
+      dividas: '++id, tipo, contaFixaId, ativo, syncId',
+      desejos: '++id, status, prioridade, transacaoId, syncId',
+      investimentosProventos: '++id, investimentoId, data, tipo, syncId',
+      // NOVA
+      investimentosAportes: '++id, investimentoId, data, syncId',
+    }).upgrade(async tx => {
+      // Migração: investimentos de renda variável que já têm quantidade+precoMedio
+      // ganham um "aporte inicial" sintético para preservar o histórico.
+      const RV: string[] = ['Ação', 'FII', 'ETF', 'Cripto']
+      const invs = await tx.table('investimentos').toArray()
+      for (const inv of invs) {
+        if (!inv.id) continue
+        if (!RV.includes(inv.tipo)) continue
+        if (!inv.quantidade || !inv.precoMedio) continue
+        await tx.table('investimentosAportes').add({
+          investimentoId: inv.id,
+          data: inv.dataAplicacao,
+          quantidade: inv.quantidade,
+          precoUnitario: inv.precoMedio,
+          observacao: 'Aporte inicial (migração)',
+          updatedAt: Date.now(),
+        })
+      }
     })
   }
 }

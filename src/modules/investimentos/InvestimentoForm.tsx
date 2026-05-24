@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { IconX, IconCheck, IconRefresh, IconLock, IconBuildingBank, IconPlus } from '@tabler/icons-react'
+import { IconX, IconCheck, IconRefresh, IconLock, IconBuildingBank, IconPlus, IconInfoCircle } from '@tabler/icons-react'
 import type { Investimento, InvestimentoTipo, InvestimentoBenchmark, InvestimentoLiquidez } from '@/db/schema'
-import { addInvestimento, editInvestimento, isRendaVariavel, isRendaFixa } from '@/db/hooks/useInvestimentos'
+import { addInvestimento, editInvestimento, isRendaVariavel, isRendaFixa, addAporte, useAportes } from '@/db/hooks/useInvestimentos'
 import { useMetas } from '@/db/hooks/useMetas'
 import { useContas } from '@/db/hooks/useContas'
 import { TIPOS, BENCHMARKS, LIQUIDEZ_OPTIONS, TIPO_META } from './constants'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { fmt } from '@/lib/format'
 
 interface Props {
   invest?: Investimento | null
@@ -32,6 +33,9 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
     return initialInstFromConta ? 'conta' : 'outra'
   })
 
+  // Aportes já registrados (modo edição)
+  const aportes = useAportes(invest?.id)
+
   const [form, setForm] = useState({
     nome: invest?.nome ?? '',
     tipo: invest?.tipo ?? 'CDB' as InvestimentoTipo,
@@ -45,11 +49,12 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
     rentabilidadeAnual: invest?.rentabilidadeAnual ? String(invest.rentabilidadeAnual * 100) : '',
     benchmark: invest?.benchmark ?? '' as InvestimentoBenchmark | '',
     liquidez: invest?.liquidez ?? '' as InvestimentoLiquidez | '',
-    // Renda variável
-    quantidade: invest?.quantidade ? String(invest.quantidade) : '',
-    precoMedio: invest?.precoMedio ? String(invest.precoMedio) : '',
+    // Renda variável — PRIMEIRO aporte (apenas na criação) e cotação
+    primeiroAporteData: today,
+    primeiroAporteQtd: '',
+    primeiroAportePreco: '',
     cotacaoAtual: invest?.cotacaoAtual ? String(invest.cotacaoAtual) : '',
-    // Datas
+    // Datas (renda fixa)
     dataAplicacao: invest?.dataAplicacao ?? today,
     dataVencimento: invest?.dataVencimento ?? '',
     metaId: invest?.metaId !== undefined
@@ -61,20 +66,6 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
   const isVar = isRendaVariavel(form.tipo)
   const isFix = isRendaFixa(form.tipo)
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
-
-  // Auto-cálculo: renda variável recalcula valorAplicado e valorAtual de quantidade×preço
-  useEffect(() => {
-    if (!isVar) return
-    const qtd = parseValor(form.quantidade)
-    const pm = parseValor(form.precoMedio)
-    const cot = parseValor(form.cotacaoAtual)
-    if (qtd > 0 && pm > 0) {
-      setForm(f => ({ ...f, valorAplicado: String((qtd * pm).toFixed(2)) }))
-    }
-    if (qtd > 0 && cot > 0) {
-      setForm(f => ({ ...f, valorAtual: String((qtd * cot).toFixed(2)), valorAtualSource: 'manual' }))
-    }
-  }, [form.quantidade, form.precoMedio, form.cotacaoAtual, isVar])
 
   // Quando muda valor aplicado e ainda não tem valor atual setado, espelha (renda fixa)
   useEffect(() => {
@@ -98,40 +89,94 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
 
   const handleSave = async () => {
     if (!form.nome) return
-    // Validação: renda variável precisa de quantidade + preço médio
-    if (isVar && (!form.quantidade || !form.precoMedio)) return
-    // Renda fixa precisa de valor aplicado
+    // Renda variável (criação): precisa do primeiro aporte
+    if (isVar && !isEditing && (!form.primeiroAporteQtd || !form.primeiroAportePreco)) return
+    // Renda fixa: precisa de valor aplicado
     if (!isVar && !form.valorAplicado) return
 
-    const data = {
-      nome: form.nome,
-      tipo: form.tipo,
-      instituicao: resolveInstituicao(),
-      ticker: isVar && form.ticker ? form.ticker.toUpperCase() : undefined,
-      valorAplicado: parseValor(form.valorAplicado),
-      valorAtual: parseValor(form.valorAtual || form.valorAplicado),
-      valorAtualSource: isVar ? 'manual' as const : form.valorAtualSource,
-      rentabilidadeAnual: !isVar && form.rentabilidadeAnual ? parseValor(form.rentabilidadeAnual) / 100 : undefined,
-      benchmark: !isVar && form.benchmark ? form.benchmark : undefined,
-      liquidez: !isVar && form.liquidez ? form.liquidez : undefined,
-      quantidade: isVar && form.quantidade ? parseValor(form.quantidade) : undefined,
-      precoMedio: isVar && form.precoMedio ? parseValor(form.precoMedio) : undefined,
-      cotacaoAtual: isVar && form.cotacaoAtual ? parseValor(form.cotacaoAtual) : undefined,
-      dataAplicacao: form.dataAplicacao,
-      dataVencimento: !isVar && form.dataVencimento ? form.dataVencimento : undefined,
-      metaId: form.metaId ? parseInt(form.metaId) : undefined,
-      cor: tipoMeta?.cor ?? '#3A8580',
-      ativo: true,
-    }
-    if (isEditing && invest?.id) {
-      await editInvestimento(invest.id, data)
+    if (isVar) {
+      // Cotação informada (ou usa preço do primeiro aporte como fallback)
+      const cot = parseValor(form.cotacaoAtual)
+      const qtdNova = parseValor(form.primeiroAporteQtd)
+      const precoNovo = parseValor(form.primeiroAportePreco)
+
+      if (isEditing && invest?.id) {
+        // Edição: só atualiza dados gerais + cotação (aportes ficam no AportesModal)
+        await editInvestimento(invest.id, {
+          nome: form.nome,
+          tipo: form.tipo,
+          instituicao: resolveInstituicao(),
+          ticker: form.ticker ? form.ticker.toUpperCase() : undefined,
+          cotacaoAtual: cot > 0 ? cot : undefined,
+          metaId: form.metaId ? parseInt(form.metaId) : undefined,
+          cor: tipoMeta?.cor ?? '#3A8580',
+        })
+        // Se cotação mudou, recalcula valorAtual
+        if (cot > 0 && invest.quantidade) {
+          await editInvestimento(invest.id, {
+            valorAtual: Math.round(invest.quantidade * cot * 100) / 100,
+          })
+        }
+      } else {
+        // Criação: cria investimento + primeiro aporte. recalcInvestimentoFromAportes faz o resto.
+        const initialValor = qtdNova * precoNovo
+        const valorAtualInicial = cot > 0 ? qtdNova * cot : initialValor
+        const id = await addInvestimento({
+          nome: form.nome,
+          tipo: form.tipo,
+          instituicao: resolveInstituicao(),
+          ticker: form.ticker ? form.ticker.toUpperCase() : undefined,
+          valorAplicado: initialValor,
+          valorAtual: valorAtualInicial,
+          valorAtualSource: 'manual',
+          quantidade: qtdNova,
+          precoMedio: precoNovo,
+          cotacaoAtual: cot > 0 ? cot : undefined,
+          dataAplicacao: form.primeiroAporteData,
+          metaId: form.metaId ? parseInt(form.metaId) : undefined,
+          cor: tipoMeta?.cor ?? '#3A8580',
+          ativo: true,
+        })
+        await addAporte({
+          investimentoId: id as number,
+          data: form.primeiroAporteData,
+          quantidade: qtdNova,
+          precoUnitario: precoNovo,
+          observacao: 'Aporte inicial',
+        })
+      }
     } else {
-      await addInvestimento(data)
+      // Renda fixa: comportamento clássico
+      const data = {
+        nome: form.nome,
+        tipo: form.tipo,
+        instituicao: resolveInstituicao(),
+        valorAplicado: parseValor(form.valorAplicado),
+        valorAtual: parseValor(form.valorAtual || form.valorAplicado),
+        valorAtualSource: form.valorAtualSource,
+        rentabilidadeAnual: form.rentabilidadeAnual ? parseValor(form.rentabilidadeAnual) / 100 : undefined,
+        benchmark: form.benchmark || undefined,
+        liquidez: form.liquidez || undefined,
+        dataAplicacao: form.dataAplicacao,
+        dataVencimento: form.dataVencimento || undefined,
+        metaId: form.metaId ? parseInt(form.metaId) : undefined,
+        cor: tipoMeta?.cor ?? '#3A8580',
+        ativo: true,
+      }
+      if (isEditing && invest?.id) {
+        await editInvestimento(invest.id, data)
+      } else {
+        await addInvestimento(data)
+      }
     }
     onClose()
   }
 
-  const formValid = form.nome && (isVar ? (form.quantidade && form.precoMedio) : form.valorAplicado)
+  const formValid = form.nome && (
+    isVar
+      ? (isEditing ? true : (form.primeiroAporteQtd && form.primeiroAportePreco))
+      : form.valorAplicado
+  )
 
   return (
     <motion.div
@@ -275,34 +320,16 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
           {/* ─── CAMPOS POR TIPO ──────────────────────────────────── */}
           {isVar ? (
             <>
-              {/* Renda variável: quantidade, preço médio, cotação atual */}
+              {/* Renda variável: ticker + cotação + (criação: primeiro aporte / edição: resumo) */}
               <div style={{ background: 'rgba(80,78,118,0.06)', border: '1px solid rgba(80,78,118,0.15)', borderRadius: 12, padding: '14px 16px' }}>
-                <p style={{ ...LABEL_STYLE, color: '#504E76', margin: '0 0 12px' }}>📊 Posição</p>
 
-                <Field label="Ticker (opcional)">
-                  <input
-                    value={form.ticker}
-                    onChange={e => setForm(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
-                    placeholder={form.tipo === 'FII' ? 'HGLG11' : form.tipo === 'Ação' ? 'PETR4' : form.tipo === 'Cripto' ? 'BTC' : 'TICKER'}
-                    style={{ ...INPUT_STYLE, textTransform: 'uppercase' }}
-                  />
-                </Field>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 12 }}>
-                  <Field label="Quantidade">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <Field label="Ticker (opcional)">
                     <input
-                      value={form.quantidade}
-                      onChange={e => setForm(f => ({ ...f, quantidade: e.target.value }))}
-                      placeholder="100" inputMode="decimal"
-                      style={INPUT_STYLE}
-                    />
-                  </Field>
-                  <Field label="Preço médio (R$)">
-                    <input
-                      value={form.precoMedio}
-                      onChange={e => setForm(f => ({ ...f, precoMedio: e.target.value }))}
-                      placeholder="25,40" inputMode="decimal"
-                      style={INPUT_STYLE}
+                      value={form.ticker}
+                      onChange={e => setForm(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
+                      placeholder={form.tipo === 'FII' ? 'HGLG11' : form.tipo === 'Ação' ? 'PETR4' : form.tipo === 'Cripto' ? 'BTC' : 'TICKER'}
+                      style={{ ...INPUT_STYLE, textTransform: 'uppercase' }}
                     />
                   </Field>
                   <Field label="Cotação atual (R$)">
@@ -314,29 +341,72 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                     />
                   </Field>
                 </div>
-
-                {form.quantidade && form.precoMedio && (
-                  <div style={{ marginTop: 12, padding: '10px 12px', background: '#FFFFFF', borderRadius: 10, border: '1px solid #EDE6DC', display: 'flex', gap: 24, alignItems: 'baseline', flexWrap: 'wrap' }}>
-                    <Mini label="Investido" value={`R$ ${parseValor(form.valorAplicado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
-                    {form.cotacaoAtual && (
-                      <>
-                        <Mini label="Posição atual" value={`R$ ${parseValor(form.valorAtual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} cor="#3A8580" />
-                        <Mini label="Resultado"
-                          value={(() => {
-                            const r = parseValor(form.valorAtual) - parseValor(form.valorAplicado)
-                            const pct = parseValor(form.valorAplicado) > 0 ? (r / parseValor(form.valorAplicado)) * 100 : 0
-                            return `${r >= 0 ? '+' : ''}R$ ${r.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)`
-                          })()}
-                          cor={parseValor(form.valorAtual) >= parseValor(form.valorAplicado) ? '#1E7D5A' : '#C4553B'}
-                        />
-                      </>
-                    )}
-                  </div>
-                )}
-                <p style={{ ...HELP_STYLE, marginTop: 10 }}>
-                  Atualize a cotação manualmente quando quiser refletir o valor de mercado. Para registrar dividendos/aluguéis recebidos, use o botão "Proventos" no card depois.
+                <p style={{ ...HELP_STYLE, marginBottom: 0 }}>
+                  Atualize a cotação manualmente quando quiser refletir o valor de mercado.
                 </p>
               </div>
+
+              {/* MODO CRIAÇÃO: primeiro aporte */}
+              {!isEditing && (
+                <div style={{ background: '#FBF8F3', border: '1px solid #EDE6DC', borderRadius: 12, padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <span style={{ ...LABEL_STYLE, color: '#2C1A0F', margin: 0 }}>Primeiro aporte</span>
+                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A' }}>(compra inicial)</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                    <Field label="Data">
+                      <input type="date" value={form.primeiroAporteData}
+                        onChange={e => setForm(f => ({ ...f, primeiroAporteData: e.target.value }))}
+                        style={INPUT_STYLE} />
+                    </Field>
+                    <Field label="Quantidade">
+                      <input value={form.primeiroAporteQtd}
+                        onChange={e => setForm(f => ({ ...f, primeiroAporteQtd: e.target.value }))}
+                        placeholder="100" inputMode="decimal"
+                        style={INPUT_STYLE} />
+                    </Field>
+                    <Field label="Preço unitário (R$)">
+                      <input value={form.primeiroAportePreco}
+                        onChange={e => setForm(f => ({ ...f, primeiroAportePreco: e.target.value }))}
+                        placeholder="25,40" inputMode="decimal"
+                        style={INPUT_STYLE} />
+                    </Field>
+                  </div>
+                  {form.primeiroAporteQtd && form.primeiroAportePreco && (
+                    <div style={{ marginTop: 10, padding: '8px 12px', background: '#FFFFFF', borderRadius: 8, border: '1px solid #EDE6DC', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#7A5C4F' }}>Total investido neste aporte</span>
+                      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.3px' }}>
+                        {fmt(parseValor(form.primeiroAporteQtd) * parseValor(form.primeiroAportePreco))}
+                      </span>
+                    </div>
+                  )}
+                  <p style={{ ...HELP_STYLE, marginTop: 10, marginBottom: 0, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                    <IconInfoCircle size={13} stroke={2} color="#9B7B6A" style={{ marginTop: 1, flexShrink: 0 }}/>
+                    Depois você pode registrar novos aportes pelo botão <strong style={{ color: '#7A5C4F' }}>"Aportar"</strong> no card. Preço médio e quantidade total são calculados automaticamente.
+                  </p>
+                </div>
+              )}
+
+              {/* MODO EDIÇÃO: resumo da posição read-only */}
+              {isEditing && invest && (
+                <div style={{ background: '#FBF8F3', border: '1px solid #EDE6DC', borderRadius: 12, padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ ...LABEL_STYLE, color: '#2C1A0F', margin: 0 }}>Posição atual</span>
+                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#9B7B6A' }}>
+                      {aportes.length} {aportes.length === 1 ? 'aporte' : 'aportes'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                    <Mini label="Quantidade" value={(invest.quantidade ?? 0).toLocaleString('pt-BR')} />
+                    <Mini label="Preço médio" value={fmt(invest.precoMedio ?? 0)} />
+                    <Mini label="Investido" value={fmt(invest.valorAplicado)} />
+                  </div>
+                  <p style={{ ...HELP_STYLE, marginTop: 10, marginBottom: 0, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                    <IconInfoCircle size={13} stroke={2} color="#9B7B6A" style={{ marginTop: 1, flexShrink: 0 }} />
+                    Quantidade e preço médio são calculados a partir dos aportes. Gerencie pelo botão <strong style={{ color: '#7A5C4F' }}>"Aportar"</strong> no card.
+                  </p>
+                </div>
+              )}
             </>
           ) : (
             <>

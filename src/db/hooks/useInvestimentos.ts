@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Investimento, type InvestimentoTipo, type InvestimentoProvento } from '../schema'
+import { db, type Investimento, type InvestimentoTipo, type InvestimentoProvento, type InvestimentoAporte } from '../schema'
 
 export function useInvestimentos() {
   return useLiveQuery(() => db.investimentos.filter(i => i.ativo).toArray(), []) ?? []
@@ -142,4 +142,74 @@ export function calcProventosMes(proventos: InvestimentoProvento[]): number {
       return d.getMonth() === mes && d.getFullYear() === ano
     })
     .reduce((s, p) => s + p.valor, 0)
+}
+
+// ─── Aportes (compras individuais) ─────────────────────────────────
+// Renda variável: cada compra vira um aporte. Quantidade total e preço
+// médio são DERIVADOS desta tabela (fonte da verdade).
+export function useAportes(investimentoId: number | undefined) {
+  return useLiveQuery(
+    () => investimentoId === undefined
+      ? Promise.resolve([])
+      : db.investimentosAportes.where('investimentoId').equals(investimentoId).reverse().sortBy('data'),
+    [investimentoId],
+  ) ?? []
+}
+
+export async function addAporte(data: Omit<InvestimentoAporte, 'id' | 'syncId' | 'updatedAt'>) {
+  const id = await db.investimentosAportes.add({ ...data, updatedAt: Date.now() })
+  await recalcInvestimentoFromAportes(data.investimentoId)
+  return id
+}
+
+export async function deleteAporte(id: number) {
+  const aporte = await db.investimentosAportes.get(id)
+  if (!aporte) return
+  await db.investimentosAportes.delete(id)
+  await recalcInvestimentoFromAportes(aporte.investimentoId)
+}
+
+// Recalcula quantidade, precoMedio, valorAplicado e valorAtual a partir
+// dos aportes. Chamado automaticamente em add/delete.
+export async function recalcInvestimentoFromAportes(investimentoId: number) {
+  const inv = await db.investimentos.get(investimentoId)
+  if (!inv) return
+  const aportes = await db.investimentosAportes.where('investimentoId').equals(investimentoId).toArray()
+  if (aportes.length === 0) return
+
+  const qtdTotal = aportes.reduce((s, a) => s + a.quantidade, 0)
+  const totalInvestido = aportes.reduce((s, a) => s + a.quantidade * a.precoUnitario, 0)
+  const pm = qtdTotal > 0 ? totalInvestido / qtdTotal : 0
+  // valorAtual = quantidade × cotação atual (se houver), senão usa PM
+  const cotacao = inv.cotacaoAtual && inv.cotacaoAtual > 0 ? inv.cotacaoAtual : pm
+  const valorAtual = qtdTotal * cotacao
+
+  await db.investimentos.update(investimentoId, {
+    quantidade: Math.round(qtdTotal * 100000000) / 100000000, // 8 casas (cripto)
+    precoMedio: Math.round(pm * 100) / 100,
+    valorAplicado: Math.round(totalInvestido * 100) / 100,
+    valorAtual: Math.round(valorAtual * 100) / 100,
+    updatedAt: Date.now(),
+  })
+}
+
+// Atualiza apenas a cotação (sem mexer em aportes) e recalcula valor atual
+export async function atualizarCotacao(investimentoId: number, novaCotacao: number) {
+  const inv = await db.investimentos.get(investimentoId)
+  if (!inv) return
+  const qtd = inv.quantidade ?? 0
+  const valorAtual = Math.round(qtd * novaCotacao * 100) / 100
+  await db.investimentos.update(investimentoId, {
+    cotacaoAtual: novaCotacao,
+    valorAtual,
+    updatedAt: Date.now(),
+  })
+}
+
+// Stats consolidados a partir dos aportes (útil para o modal de aportes)
+export function calcAportesStats(aportes: InvestimentoAporte[]) {
+  const qtd = aportes.reduce((s, a) => s + a.quantidade, 0)
+  const investido = aportes.reduce((s, a) => s + a.quantidade * a.precoUnitario, 0)
+  const pm = qtd > 0 ? investido / qtd : 0
+  return { quantidade: qtd, totalInvestido: investido, precoMedio: pm }
 }
