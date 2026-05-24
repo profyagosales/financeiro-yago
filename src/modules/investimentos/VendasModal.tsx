@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconShoppingBag, IconTrash, IconPlus, IconArrowUpRight, IconArrowDownRight, IconCloudDownload } from '@tabler/icons-react'
 import type { Investimento } from '@/db/schema'
 import { useMovimentacoesInvest, registrarVenda, registrarResgate, deleteMovimentacaoInvest, calcVendasStats, isRendaVariavel } from '@/db/hooks/useInvestimentos'
@@ -13,7 +14,7 @@ interface Props {
 }
 
 export function VendasModal({ invest, onClose }: Props) {
-  useBodyScrollLock(true)
+  // body scroll lock agora é responsabilidade do LegacyModalShell
   const movs = useMovimentacoesInvest(invest.id)
   const today = new Date().toISOString().split('T')[0]
   const stats = calcVendasStats(movs)
@@ -104,23 +105,8 @@ export function VendasModal({ invest, onClose }: Props) {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)',
-        backdropFilter: 'blur(8px)', zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-      }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 240, damping: 28 }}
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#FFFFFF', borderRadius: 24,
-          width: '100%', maxWidth: 620, maxHeight: '90vh',
-          overflowY: 'auto', boxShadow: '0 24px 64px rgba(28,10,5,0.4)',
-        }}>
+    <LegacyModalShell open onClose={onClose} maxWidth={620} zIndex={100}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <div style={{
           padding: '22px 26px', borderBottom: '1px solid #EDE6DC',
@@ -151,7 +137,7 @@ export function VendasModal({ invest, onClose }: Props) {
 
         {/* KPIs */}
         {movs.length > 0 && (
-          <div style={{ padding: '14px 26px', background: '#FBF8F3', borderBottom: '1px solid #EDE6DC', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          <div style={{ padding: '14px 26px', background: '#FBF8F3', borderBottom: '1px solid #EDE6DC', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
             <MiniKpi label={isVar ? 'Vendido' : 'Resgatado'} value={isVar ? `${stats.qtdVendida.toLocaleString('pt-BR')}` : `${stats.totalVendas}`} sub={isVar ? `${stats.totalVendas} ${stats.totalVendas === 1 ? 'venda' : 'vendas'}` : 'resgates'} cor="#A8442B" />
             <MiniKpi label="Total recebido" value={`${simbolo} ${stats.totalRecebido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} sub="líquido de custos" cor="#7A5C4F" />
             <MiniKpi label="Resultado realizado" value={`${stats.resultadoRealizado >= 0 ? '+' : ''}${simbolo} ${Math.abs(stats.resultadoRealizado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} sub={stats.resultadoRealizado >= 0 ? 'lucro' : 'prejuízo'} cor={stats.resultadoRealizado >= 0 ? '#1E7D5A' : '#C4553B'} />
@@ -165,7 +151,7 @@ export function VendasModal({ invest, onClose }: Props) {
           </p>
 
           {isVar ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
               <Field label="Data">
                 <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} style={INPUT_STYLE} />
               </Field>
@@ -347,8 +333,8 @@ export function VendasModal({ invest, onClose }: Props) {
             <IconCheck size={15} stroke={2.4} /> Fechar
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </LegacyModalShell>
   )
 }
 

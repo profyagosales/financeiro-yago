@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconShoppingCart, IconTrash, IconPlus, IconCurrencyDollar, IconCurrencyReal, IconCloudDownload } from '@tabler/icons-react'
 import type { Investimento } from '@/db/schema'
 import { useAportes, addAporte, deleteAporte, calcAportesStats } from '@/db/hooks/useInvestimentos'
@@ -13,7 +14,7 @@ interface Props {
 }
 
 export function AportesModal({ invest, onClose }: Props) {
-  useBodyScrollLock(true)
+  // body scroll lock agora é responsabilidade do LegacyModalShell
   const aportes = useAportes(invest.id)
   const today = new Date().toISOString().split('T')[0]
   const stats = calcAportesStats(aportes)
@@ -132,23 +133,8 @@ export function AportesModal({ invest, onClose }: Props) {
   })()
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)',
-        backdropFilter: 'blur(8px)', zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-      }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 240, damping: 28 }}
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#FFFFFF', borderRadius: 24,
-          width: '100%', maxWidth: 620, maxHeight: '90vh',
-          overflowY: 'auto', boxShadow: '0 24px 64px rgba(28,10,5,0.4)',
-        }}>
+    <LegacyModalShell open onClose={onClose} maxWidth={620} zIndex={100}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <div style={{
           padding: '22px 26px', borderBottom: '1px solid #EDE6DC',
@@ -178,7 +164,7 @@ export function AportesModal({ invest, onClose }: Props) {
         </div>
 
         {/* KPIs derivados */}
-        <div style={{ padding: '16px 26px', background: '#FBF8F3', borderBottom: '1px solid #EDE6DC', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <div style={{ padding: '16px 26px', background: '#FBF8F3', borderBottom: '1px solid #EDE6DC', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 12 }}>
           <Kpi label="Quantidade total" value={stats.quantidade.toLocaleString('pt-BR')} sub={`${aportes.length} ${aportes.length === 1 ? 'compra' : 'compras'}`} cor="#504E76" />
           <Kpi label="Preço médio" value={fmt(stats.precoMedio)} sub="calculado dos aportes" cor="#3A8580" />
           <Kpi label="Total investido" value={fmt(stats.totalInvestido)} sub={invest.cotacaoAtual ? `posição: ${fmt(stats.quantidade * invest.cotacaoAtual)}` : 'sem cotação'} cor="#2C1A0F" />
@@ -226,7 +212,7 @@ export function AportesModal({ invest, onClose }: Props) {
 
           {/* Modos "Quantidade + Preço" */}
           {(modo === 'brl' || modo === 'usd') && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
               <Field label="Data">
                 <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} style={INPUT_STYLE} />
               </Field>
@@ -252,7 +238,7 @@ export function AportesModal({ invest, onClose }: Props) {
 
           {/* Modos "Investi X e recebi Y" */}
           {(modo === 'investido_brl' || modo === 'investido_usd') && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
               <Field label="Data">
                 <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} style={INPUT_STYLE} />
               </Field>
@@ -395,8 +381,8 @@ export function AportesModal({ invest, onClose }: Props) {
             <IconCheck size={15} stroke={2.4} /> Fechar
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </LegacyModalShell>
   )
 }
 

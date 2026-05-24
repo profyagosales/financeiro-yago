@@ -88,7 +88,7 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
 
           {/* Bandeira */}
           <Field label="Bandeira do cartão">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 8 }}>
               {BANDEIRAS_DISPONIVEIS.map(b => {
                 const active = form.bandeira === b.value
                 return (
@@ -166,7 +166,7 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
           </Field>
 
           {/* Dias */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
             <Field label="Dia fechamento">
               <input
                 value={form.diaFechamento}

@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
 import { IconX, IconCheck, IconCalculator, IconLock } from '@tabler/icons-react'
 import type { Meta, MetaTipo } from '@/db/schema'
 import { addMeta, editMeta, calcularAlvoReserva, useMetas } from '@/db/hooks/useMetas'
 import { fmt } from '@/lib/format'
 import { META_TIPOS, META_ICONS, META_CORES, COBERTURA_OPTIONS, getMetaIcon } from './constants'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 
 interface Props {
   meta?: Meta | null
@@ -14,7 +13,7 @@ interface Props {
 }
 
 export function MetaForm({ meta, presetTipo, onClose }: Props) {
-  useBodyScrollLock(true)
+  // body scroll lock agora é responsabilidade do LegacyModalShell
   const metas = useMetas()
   const isEditing = !!meta
 
@@ -73,23 +72,8 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
   const isReserva = form.tipo === 'reserva_emergencia'
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)',
-        backdropFilter: 'blur(8px)', zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-      }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 240, damping: 28 }}
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#FFFFFF', borderRadius: 24,
-          width: '100%', maxWidth: 620, maxHeight: '90vh',
-          overflowY: 'auto', boxShadow: '0 24px 64px rgba(28,10,5,0.4)',
-        }}>
+    <LegacyModalShell open onClose={onClose} maxWidth={620} zIndex={100}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <div style={{
           padding: '24px 28px', borderBottom: '1px solid #EDE6DC',
@@ -302,8 +286,8 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
             {isEditing ? 'Salvar alterações' : 'Criar meta'}
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </LegacyModalShell>
   )
 }
 

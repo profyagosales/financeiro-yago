@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { IconX, IconCheck, IconInfoCircle } from '@tabler/icons-react'
 import type { Divida, DividaTipo } from '@/db/schema'
 import { addDivida, editDivida } from '@/db/hooks/useDividas'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { TIPOS, TIPO_META } from './constants'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 
 interface Props {
   divida?: Divida | null
@@ -13,7 +12,7 @@ interface Props {
 }
 
 export function DividaForm({ divida, onClose }: Props) {
-  useBodyScrollLock(true)
+  // body scroll lock agora é responsabilidade do LegacyModalShell
   const categorias = useCategorias('despesa')
   const today = new Date().toISOString().split('T')[0]
   const isEditing = !!divida
@@ -75,23 +74,8 @@ export function DividaForm({ divida, onClose }: Props) {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)',
-        backdropFilter: 'blur(8px)', zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-      }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 240, damping: 28 }}
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#FFFFFF', borderRadius: 24,
-          width: '100%', maxWidth: 620, maxHeight: '90vh',
-          overflowY: 'auto', boxShadow: '0 24px 64px rgba(28,10,5,0.4)',
-        }}>
+    <LegacyModalShell open onClose={onClose} maxWidth={620} zIndex={100}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <div style={{
           padding: '24px 28px', borderBottom: '1px solid #EDE6DC',
@@ -282,8 +266,8 @@ export function DividaForm({ divida, onClose }: Props) {
             {isEditing ? 'Salvar alterações' : 'Adicionar dívida'}
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </LegacyModalShell>
   )
 }
 

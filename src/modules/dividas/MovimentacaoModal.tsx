@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconTrash, IconCash, IconDiscount, IconCircleCheck, IconAdjustments, IconAlertTriangle } from '@tabler/icons-react'
 import type { Divida, MovimentacaoTipo } from '@/db/schema'
 import { useMovimentacoes, addMovimentacao, deleteMovimentacao, MOVIMENTACAO_LABEL, MOVIMENTACAO_COR, calcMovimentacoesTotais } from '@/db/hooks/useDividas'
@@ -22,7 +22,7 @@ const TABS: { value: Tab; label: string; icon: typeof IconCash; cor: string; des
 ]
 
 export function MovimentacaoModal({ divida, onClose }: Props) {
-  useBodyScrollLock(true)
+  // body scroll lock agora é responsabilidade do LegacyModalShell
   const movs = useMovimentacoes(divida.id)
   const today = new Date().toISOString().split('T')[0]
 
@@ -101,23 +101,8 @@ export function MovimentacaoModal({ divida, onClose }: Props) {
   const currentTab = TABS.find(t => t.value === tab)!
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)',
-        backdropFilter: 'blur(8px)', zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-      }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 240, damping: 28 }}
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#FFFFFF', borderRadius: 24,
-          width: '100%', maxWidth: 640, maxHeight: '90vh',
-          overflowY: 'auto', boxShadow: '0 24px 64px rgba(28,10,5,0.4)',
-        }}>
+    <LegacyModalShell open onClose={onClose} maxWidth={640} zIndex={100}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <div style={{
           padding: '22px 26px', borderBottom: '1px solid #EDE6DC',
@@ -148,7 +133,7 @@ export function MovimentacaoModal({ divida, onClose }: Props) {
 
         {/* Resumo de movimentações já feitas */}
         {movs.length > 0 && (
-          <div style={{ padding: '14px 26px', background: '#FBF8F3', borderBottom: '1px solid #EDE6DC', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          <div style={{ padding: '14px 26px', background: '#FBF8F3', borderBottom: '1px solid #EDE6DC', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
             <MiniKpi label="Amortizado" value={fmt(totais.amortizado)} cor="#3A8580" />
             <MiniKpi label="Descontos" value={fmt(totais.descontos)} cor="#A8730F" />
             <MiniKpi label="Adiantado" value={`${totais.parcelasAdiantadas} ${totais.parcelasAdiantadas === 1 ? 'parcela' : 'parcelas'}`} cor="#504E76" />
@@ -193,7 +178,7 @@ export function MovimentacaoModal({ divida, onClose }: Props) {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 10 }}>
             <Field label="Data">
               <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} style={INPUT_STYLE} />
             </Field>
@@ -341,8 +326,8 @@ export function MovimentacaoModal({ divida, onClose }: Props) {
             <IconCheck size={14} stroke={2.4} /> Fechar
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </LegacyModalShell>
   )
 }
 

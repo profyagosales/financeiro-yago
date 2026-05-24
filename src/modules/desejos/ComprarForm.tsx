@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconShoppingCart } from '@tabler/icons-react'
 import type { Desejo } from '@/db/schema'
 import { db } from '@/db/schema'
@@ -17,7 +17,7 @@ interface Props {
 
 // Marca um desejo como comprado e cria a transação correspondente.
 export function ComprarForm({ desejo, onClose }: Props) {
-  useBodyScrollLock(true)
+  // body scroll lock agora é responsabilidade do LegacyModalShell
   const today = new Date().toISOString().split('T')[0]
   const contas = useContas()
   const cartoes = useCartoes()
@@ -92,23 +92,8 @@ export function ComprarForm({ desejo, onClose }: Props) {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)',
-        backdropFilter: 'blur(8px)', zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-      }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 240, damping: 28 }}
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#FFFFFF', borderRadius: 24,
-          width: '100%', maxWidth: 560, maxHeight: '90vh',
-          overflowY: 'auto', boxShadow: '0 24px 64px rgba(28,10,5,0.4)',
-        }}>
+    <LegacyModalShell open onClose={onClose} maxWidth={560} zIndex={100}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <div style={{
           padding: '24px 28px', borderBottom: '1px solid #EDE6DC',
@@ -144,7 +129,7 @@ export function ComprarForm({ desejo, onClose }: Props) {
         <div style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Valor + Data */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
             <Field label="Valor pago (R$)">
               <input
                 autoFocus
@@ -171,7 +156,7 @@ export function ComprarForm({ desejo, onClose }: Props) {
 
           {/* Método de pagamento */}
           <Field label="Como pagou?">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 8 }}>
               <button onClick={() => setForm(f => ({ ...f, metodo: 'conta' }))}
                 style={{
                   background: form.metodo === 'conta' ? '#3A8580' : '#FBF8F3',
@@ -247,8 +232,8 @@ export function ComprarForm({ desejo, onClose }: Props) {
             <IconCheck size={16} stroke={2.5} /> Registrar compra
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </LegacyModalShell>
   )
 }
 

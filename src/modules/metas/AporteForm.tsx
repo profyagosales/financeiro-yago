@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconCurrencyReal, IconChartLine } from '@tabler/icons-react'
 import type { Meta } from '@/db/schema'
 import { aportarMeta } from '@/db/hooks/useMetas'
@@ -15,7 +15,7 @@ interface Props {
 //   1. Aporte direto na meta (incrementa meta.valorAtual)
 //   2. Vincular investimento real (abre InvestimentoForm com presetMetaId)
 export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
-  useBodyScrollLock(true)
+  // body scroll lock agora é responsabilidade do LegacyModalShell
   const [valor, setValor] = useState('')
   const [path, setPath] = useState<'direto' | null>(null)
 
@@ -29,23 +29,8 @@ export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.55)',
-        backdropFilter: 'blur(8px)', zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-      }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 240, damping: 28 }}
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#FFFFFF', borderRadius: 24,
-          width: '100%', maxWidth: 520,
-          boxShadow: '0 24px 64px rgba(28,10,5,0.4)',
-        }}>
+    <LegacyModalShell open onClose={onClose} maxWidth={520} zIndex={100}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         <div style={{
           padding: '24px 28px', borderBottom: '1px solid #EDE6DC',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -141,8 +126,8 @@ export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
             </div>
           )}
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </LegacyModalShell>
   )
 }
 
