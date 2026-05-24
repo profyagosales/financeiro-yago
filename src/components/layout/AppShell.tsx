@@ -5,6 +5,7 @@ import { BottomNav } from './BottomNav'
 import { FabModal } from './FabModal'
 import { PWABanner } from './PWABanner'
 import { useUIStore } from '@/store/ui'
+import { useAutoLock } from '@/hooks/useAutoLock'
 import { IconPlus } from '@tabler/icons-react'
 
 // Rotas que controlam a própria altura (master-detail / fixed layout)
@@ -56,6 +57,7 @@ function BackgroundMesh() {
 export function AppShell() {
   const { fabOpen, fabDefaultContaId, openFab, closeFab } = useUIStore()
   const location = useLocation()
+  useAutoLock()
 
   return (
     <div className="grain" style={{ display: 'flex', height: '100dvh', background: '#FFFFFF', overflow: 'hidden' }}>

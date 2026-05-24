@@ -497,6 +497,51 @@ class FinanceiroYagoDB extends Dexie {
 
 export const db = new FinanceiroYagoDB()
 
+// ═══ Wipe / Reset ═════════════════════════════════════════════════════
+// Funções perigosas pra zona de perigo de Configurações.
+export async function wipeAllData() {
+  // Apaga tudo, incluindo configs. User vai precisar reseed categorias.
+  await Promise.all([
+    db.contas.clear(),
+    db.categorias.clear(),
+    db.transacoes.clear(),
+    db.cartoes.clear(),
+    db.lancamentosCartao.clear(),
+    db.contasFixas.clear(),
+    db.pagamentosFixos.clear(),
+    db.metas.clear(),
+    db.patrimonio.clear(),
+    db.orcamentos.clear(),
+    db.anexos.clear(),
+    db.investimentos.clear(),
+    db.dividas.clear(),
+    db.desejos.clear(),
+    db.investimentosProventos.clear(),
+    db.investimentosAportes.clear(),
+    db.dividasMovimentacoes.clear(),
+    db.investimentosMovimentacoes.clear(),
+    db.appConfig.clear(),
+  ])
+}
+
+export async function wipeTransactionsOnly() {
+  await Promise.all([
+    db.transacoes.clear(),
+    db.lancamentosCartao.clear(),
+    db.pagamentosFixos.clear(),
+    db.anexos.clear(),
+  ])
+}
+
+export async function wipeInvestmentsOnly() {
+  await Promise.all([
+    db.investimentos.clear(),
+    db.investimentosProventos.clear(),
+    db.investimentosAportes.clear(),
+    db.investimentosMovimentacoes.clear(),
+  ])
+}
+
 // ═══ Seeds ════════════════════════════════════════════════════════════
 let _seeding = false
 export async function seedCategories() {

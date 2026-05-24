@@ -3,6 +3,8 @@ import { db, type TaxasBenchmark, TAXAS_BENCHMARK_DEFAULT } from '../schema'
 
 const KEY_TAXAS = 'taxas_benchmark'
 const KEY_BRAPI = 'brapi_token'
+const KEY_PROFILE = 'user_profile'
+const KEY_PREFS = 'app_preferences'
 
 // ─── Taxas de benchmark (CDI, Selic, IPCA) ───────────────────────────
 // Persistidas no IndexedDB. Usadas para cálculo de rendimento de
@@ -56,6 +58,62 @@ export async function setBrapiToken(token: string) {
     await db.appConfig.update(existing.id, { value, updatedAt: Date.now() })
   } else {
     await db.appConfig.add({ key: KEY_BRAPI, value, updatedAt: Date.now() })
+  }
+}
+
+// ─── Perfil financeiro (renda + meta de poupança) ────────────────────
+export interface UserProfile {
+  rendaMensal?: number              // R$ líquida
+  metaPoupancaPct?: number          // 0.20 = 20%
+}
+
+export function useUserProfile(): UserProfile {
+  const row = useLiveQuery(() => db.appConfig.where('key').equals(KEY_PROFILE).first(), [])
+  return (row?.value as UserProfile) ?? {}
+}
+
+export async function setUserProfile(profile: Partial<UserProfile>) {
+  const existing = await db.appConfig.where('key').equals(KEY_PROFILE).first()
+  const atual = (existing?.value as UserProfile) ?? {}
+  const value: UserProfile = { ...atual, ...profile }
+  if (existing?.id) {
+    await db.appConfig.update(existing.id, { value, updatedAt: Date.now() })
+  } else {
+    await db.appConfig.add({ key: KEY_PROFILE, value, updatedAt: Date.now() })
+  }
+}
+
+// ─── Preferências do app ─────────────────────────────────────────────
+export interface AppPreferences {
+  autoLockMin?: number              // 0 = nunca, 1/5/15/30 = minutos
+  soundEnabled?: boolean            // default true
+  reducedMotion?: boolean           // default false
+}
+
+export const PREFS_DEFAULT: AppPreferences = {
+  autoLockMin: 0,
+  soundEnabled: true,
+  reducedMotion: false,
+}
+
+export function useAppPreferences(): AppPreferences {
+  const row = useLiveQuery(() => db.appConfig.where('key').equals(KEY_PREFS).first(), [])
+  return { ...PREFS_DEFAULT, ...((row?.value as AppPreferences) ?? {}) }
+}
+
+export async function setAppPreferences(prefs: Partial<AppPreferences>) {
+  const existing = await db.appConfig.where('key').equals(KEY_PREFS).first()
+  const atual = (existing?.value as AppPreferences) ?? PREFS_DEFAULT
+  const value: AppPreferences = { ...atual, ...prefs }
+  if (existing?.id) {
+    await db.appConfig.update(existing.id, { value, updatedAt: Date.now() })
+  } else {
+    await db.appConfig.add({ key: KEY_PREFS, value, updatedAt: Date.now() })
+  }
+  // Bridge: o módulo legacy lib/sounds.ts lê fy-sound em localStorage.
+  // Espelha aqui pra que toggles na config sejam respeitados imediatamente.
+  if (prefs.soundEnabled !== undefined) {
+    try { localStorage.setItem('fy-sound', prefs.soundEnabled ? 'on' : 'off') } catch { /* noop */ }
   }
 }
 
