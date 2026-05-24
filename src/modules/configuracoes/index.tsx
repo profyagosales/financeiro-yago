@@ -8,7 +8,8 @@ import { addTransacao } from '@/db/hooks/useTransacoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContas } from '@/db/hooks/useContas'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { IconLock, IconDeviceFloppy, IconBrandChrome, IconDeviceMobile, IconBrandApple, IconRefresh, IconChevronRight, IconCheck, IconTableImport, IconShieldLock, IconDeviceMobileMessage, IconDatabase, IconInfoCircle, IconFile } from '@tabler/icons-react'
+import { IconLock, IconDeviceFloppy, IconBrandChrome, IconDeviceMobile, IconBrandApple, IconRefresh, IconChevronRight, IconCheck, IconTableImport, IconShieldLock, IconDeviceMobileMessage, IconDatabase, IconInfoCircle, IconFile, IconTrendingUp } from '@tabler/icons-react'
+import { useTaxasBenchmark, setTaxasBenchmark } from '@/db/hooks/useAppConfig'
 
 function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -263,6 +264,84 @@ function PWASection() {
   )
 }
 
+function TaxasMercadoSection() {
+  const taxas = useTaxasBenchmark()
+  const [form, setForm] = useState({
+    cdi: (taxas.cdi * 100).toFixed(2),
+    selic: (taxas.selic * 100).toFixed(2),
+    ipca: (taxas.ipca * 100).toFixed(2),
+  })
+  const [saved, setSaved] = useState(false)
+
+  // Sincroniza quando taxas mudam (ex: hot reload, sync)
+  // Não usamos useEffect pra evitar conflito enquanto digita
+
+  const parse = (s: string) => parseFloat(s.replace(',', '.')) || 0
+
+  const handleSave = async () => {
+    await setTaxasBenchmark({
+      cdi: parse(form.cdi) / 100,
+      selic: parse(form.selic) / 100,
+      ipca: parse(form.ipca) / 100,
+    })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const dataAtual = new Date(taxas.atualizadoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+
+  return (
+    <div>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', lineHeight: 1.5, marginBottom: 14 }}>
+        Usado para calcular o rendimento de investimentos pós-fixados (% CDI, % Selic) e híbridos (IPCA+X%).
+        Atualize aqui sempre que o COPOM ou o IBGE divulgar novos valores.
+      </p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 14 }}>
+        <TaxaInput label="CDI" value={form.cdi} onChange={v => setForm(f => ({ ...f, cdi: v }))} />
+        <TaxaInput label="Selic" value={form.selic} onChange={v => setForm(f => ({ ...f, selic: v }))} />
+        <TaxaInput label="IPCA (12m)" value={form.ipca} onChange={v => setForm(f => ({ ...f, ipca: v }))} />
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: 0 }}>
+          Última atualização: <strong style={{ color: '#7A5C4F' }}>{dataAtual}</strong>
+        </p>
+        <motion.button onClick={handleSave} whileTap={{ scale: 0.97 }}
+          style={{
+            background: saved ? '#3A8580' : 'linear-gradient(135deg, #D4643A, #C4553B)',
+            color: 'white', border: 'none', borderRadius: 12,
+            padding: '10px 18px', cursor: 'pointer',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 4px 12px rgba(196,85,59,0.3)',
+            transition: 'background .2s',
+          }}>
+          {saved ? <><IconCheck size={14} stroke={2.5} /> Salvo!</> : 'Salvar taxas'}
+        </motion.button>
+      </div>
+    </div>
+  )
+}
+
+function TaxaInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: '0 0 6px' }}>{label}</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FBF8F3', border: '1.5px solid #EDE6DC', borderRadius: 10, padding: '8px 12px' }}>
+        <input
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="10,65"
+          inputMode="decimal"
+          style={{ border: 'none', background: 'transparent', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', flex: 1, outline: 'none', width: '100%', minWidth: 0, letterSpacing: '-0.3px' }}
+        />
+        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#9B7B6A' }}>% a.a.</span>
+      </div>
+    </div>
+  )
+}
+
 export function Page() {
   const { lock } = useAuthStore()
   const [msg, setMsg] = useState('')
@@ -315,6 +394,10 @@ export function Page() {
 
       <Section title="Instalação PWA" icon={<IconDeviceMobileMessage size={18} color="#3D7EB5" stroke={1.8} />}>
         <PWASection />
+      </Section>
+
+      <Section title="Taxas de mercado" icon={<IconTrendingUp size={18} color="#3A8580" stroke={1.8} />}>
+        <TaxasMercadoSection />
       </Section>
 
       <Section title="Dados" icon={<IconDatabase size={18} color="#9B7B6A" stroke={1.8} />}>

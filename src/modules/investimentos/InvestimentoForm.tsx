@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { IconX, IconCheck, IconRefresh, IconLock, IconBuildingBank, IconPlus, IconInfoCircle } from '@tabler/icons-react'
-import type { Investimento, InvestimentoTipo, InvestimentoBenchmark, InvestimentoLiquidez } from '@/db/schema'
+import { IconX, IconCheck, IconRefresh, IconLock, IconBuildingBank, IconPlus, IconInfoCircle, IconTrendingUp } from '@tabler/icons-react'
+import type { Investimento, InvestimentoTipo, InvestimentoLiquidez, TipoRendimento } from '@/db/schema'
 import { addInvestimento, editInvestimento, isRendaVariavel, isRendaFixa, addAporte, useAportes } from '@/db/hooks/useInvestimentos'
+import { useTaxasBenchmark, calcTaxaEfetiva } from '@/db/hooks/useAppConfig'
 import { useMetas } from '@/db/hooks/useMetas'
 import { useContas } from '@/db/hooks/useContas'
-import { TIPOS, BENCHMARKS, LIQUIDEZ_OPTIONS, TIPO_META } from './constants'
+import { TIPOS, LIQUIDEZ_OPTIONS, TIPO_META } from './constants'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { fmt } from '@/lib/format'
 
@@ -35,6 +36,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
 
   // Aportes já registrados (modo edição)
   const aportes = useAportes(invest?.id)
+  const taxas = useTaxasBenchmark()
 
   const [form, setForm] = useState({
     nome: invest?.nome ?? '',
@@ -45,9 +47,11 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
     valorAplicado: invest?.valorAplicado ? String(invest.valorAplicado) : '',
     valorAtual: invest?.valorAtual ? String(invest.valorAtual) : '',
     valorAtualSource: invest?.valorAtualSource ?? 'auto' as 'auto' | 'manual',
-    // Renda fixa
-    rentabilidadeAnual: invest?.rentabilidadeAnual ? String(invest.rentabilidadeAnual * 100) : '',
-    benchmark: invest?.benchmark ?? '' as InvestimentoBenchmark | '',
+    // Renda fixa — modalidade de rendimento
+    tipoRendimento: (invest?.tipoRendimento ?? 'pos_cdi') as TipoRendimento,
+    rentabilidadeAnual: invest?.rentabilidadeAnual ? String((invest.rentabilidadeAnual * 100).toFixed(2)) : '',
+    percentualIndexador: invest?.percentualIndexador ? String((invest.percentualIndexador * 100).toFixed(0)) : '100',
+    taxaAdicional: invest?.taxaAdicional ? String((invest.taxaAdicional * 100).toFixed(2)) : '',
     liquidez: invest?.liquidez ?? '' as InvestimentoLiquidez | '',
     // Renda variável — PRIMEIRO aporte (apenas na criação) e cotação
     primeiroAporteData: today,
@@ -146,7 +150,21 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
         })
       }
     } else {
-      // Renda fixa: comportamento clássico
+      // Renda fixa: usa tipoRendimento para calcular taxa efetiva
+      const tipoRend = form.tipoRendimento
+      const pctIdx = form.percentualIndexador ? parseValor(form.percentualIndexador) / 100 : undefined
+      const taxaAdd = form.taxaAdicional ? parseValor(form.taxaAdicional) / 100 : undefined
+      const rentManual = form.rentabilidadeAnual ? parseValor(form.rentabilidadeAnual) / 100 : undefined
+
+      // Calcula a taxa efetiva pra armazenar
+      const tempInv = {
+        tipoRendimento: tipoRend,
+        rentabilidadeAnual: rentManual,
+        percentualIndexador: pctIdx,
+        taxaAdicional: taxaAdd,
+      }
+      const taxaEfetiva = calcTaxaEfetiva(tempInv, taxas)
+
       const data = {
         nome: form.nome,
         tipo: form.tipo,
@@ -154,8 +172,10 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
         valorAplicado: parseValor(form.valorAplicado),
         valorAtual: parseValor(form.valorAtual || form.valorAplicado),
         valorAtualSource: form.valorAtualSource,
-        rentabilidadeAnual: form.rentabilidadeAnual ? parseValor(form.rentabilidadeAnual) / 100 : undefined,
-        benchmark: form.benchmark || undefined,
+        tipoRendimento: tipoRend,
+        rentabilidadeAnual: tipoRend === 'prefixado' ? rentManual : (taxaEfetiva > 0 ? taxaEfetiva : undefined),
+        percentualIndexador: (tipoRend === 'pos_cdi' || tipoRend === 'pos_selic') ? pctIdx : undefined,
+        taxaAdicional: tipoRend === 'ipca_mais' ? taxaAdd : undefined,
         liquidez: form.liquidez || undefined,
         dataAplicacao: form.dataAplicacao,
         dataVencimento: form.dataVencimento || undefined,
@@ -469,28 +489,94 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                 </p>
               </Field>
 
-              {/* Rentabilidade (só faz sentido para renda fixa com taxa fixa) */}
+              {/* Rendimento (renda fixa) — modalidade adaptativa */}
               {isFix && (
                 <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                    <Field label="Rentabilidade anual (%)">
-                      <input
-                        value={form.rentabilidadeAnual}
-                        onChange={e => setForm(f => ({ ...f, rentabilidadeAnual: e.target.value }))}
-                        placeholder="12,5" inputMode="decimal"
-                        style={INPUT_STYLE}
-                      />
-                    </Field>
-                    <Field label="Benchmark">
-                      <select
-                        value={form.benchmark}
-                        onChange={e => setForm(f => ({ ...f, benchmark: e.target.value as InvestimentoBenchmark }))}
-                        style={INPUT_STYLE}>
-                        <option value="">— Selecione —</option>
-                        {BENCHMARKS.map(b => <option key={b} value={b}>{b}</option>)}
-                      </select>
-                    </Field>
-                  </div>
+                  <Field label="Como esse investimento rende?">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 10 }}>
+                      <ModalidadeBtn active={form.tipoRendimento === 'pos_cdi'} onClick={() => setForm(f => ({ ...f, tipoRendimento: 'pos_cdi' }))}>
+                        % CDI
+                      </ModalidadeBtn>
+                      <ModalidadeBtn active={form.tipoRendimento === 'pos_selic'} onClick={() => setForm(f => ({ ...f, tipoRendimento: 'pos_selic' }))}>
+                        % Selic
+                      </ModalidadeBtn>
+                      <ModalidadeBtn active={form.tipoRendimento === 'prefixado'} onClick={() => setForm(f => ({ ...f, tipoRendimento: 'prefixado' }))}>
+                        Prefixado
+                      </ModalidadeBtn>
+                      <ModalidadeBtn active={form.tipoRendimento === 'ipca_mais'} onClick={() => setForm(f => ({ ...f, tipoRendimento: 'ipca_mais' }))}>
+                        IPCA + X%
+                      </ModalidadeBtn>
+                      <ModalidadeBtn active={form.tipoRendimento === 'prefixado_ipca'} onClick={() => setForm(f => ({ ...f, tipoRendimento: 'prefixado_ipca' }))}>
+                        IPCA (cheio)
+                      </ModalidadeBtn>
+                    </div>
+
+                    {/* Campos do modo selecionado */}
+                    {(form.tipoRendimento === 'pos_cdi' || form.tipoRendimento === 'pos_selic') && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input
+                          value={form.percentualIndexador}
+                          onChange={e => setForm(f => ({ ...f, percentualIndexador: e.target.value }))}
+                          placeholder="102"
+                          inputMode="decimal"
+                          style={{ ...INPUT_STYLE, width: 90, textAlign: 'right' }}
+                        />
+                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#7A5C4F' }}>
+                          % do {form.tipoRendimento === 'pos_cdi' ? 'CDI' : 'Selic'}
+                          {' '}
+                          ({((form.tipoRendimento === 'pos_cdi' ? taxas.cdi : taxas.selic) * 100).toFixed(2)}% a.a.)
+                        </span>
+                      </div>
+                    )}
+
+                    {form.tipoRendimento === 'prefixado' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input
+                          value={form.rentabilidadeAnual}
+                          onChange={e => setForm(f => ({ ...f, rentabilidadeAnual: e.target.value }))}
+                          placeholder="12,5"
+                          inputMode="decimal"
+                          style={{ ...INPUT_STYLE, width: 110, textAlign: 'right' }}
+                        />
+                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#7A5C4F' }}>
+                          % a.a. fixo (não muda)
+                        </span>
+                      </div>
+                    )}
+
+                    {form.tipoRendimento === 'ipca_mais' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#7A5C4F' }}>
+                          IPCA ({(taxas.ipca * 100).toFixed(2)}% a.a.) +
+                        </span>
+                        <input
+                          value={form.taxaAdicional}
+                          onChange={e => setForm(f => ({ ...f, taxaAdicional: e.target.value }))}
+                          placeholder="5,45"
+                          inputMode="decimal"
+                          style={{ ...INPUT_STYLE, width: 90, textAlign: 'right' }}
+                        />
+                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#7A5C4F' }}>
+                          % a.a.
+                        </span>
+                      </div>
+                    )}
+
+                    {form.tipoRendimento === 'prefixado_ipca' && (
+                      <p style={{ ...HELP_STYLE, marginBottom: 0 }}>
+                        Rende exatamente a inflação (IPCA). Taxa atual: {(taxas.ipca * 100).toFixed(2)}% a.a.
+                      </p>
+                    )}
+
+                    {/* Preview da taxa efetiva */}
+                    <TaxaEfetivaPreview
+                      tipoRendimento={form.tipoRendimento}
+                      percentualIndexador={form.percentualIndexador ? parseValor(form.percentualIndexador) / 100 : undefined}
+                      taxaAdicional={form.taxaAdicional ? parseValor(form.taxaAdicional) / 100 : undefined}
+                      rentabilidadeAnual={form.rentabilidadeAnual ? parseValor(form.rentabilidadeAnual) / 100 : undefined}
+                      taxas={taxas}
+                    />
+                  </Field>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                     <Field label="Liquidez">
@@ -559,6 +645,58 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span style={LABEL_STYLE}>{label}</span>
       {children}
     </label>
+  )
+}
+
+function ModalidadeBtn({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      style={{
+        background: active ? '#3A8580' : '#FBF8F3',
+        border: `1.5px solid ${active ? '#3A8580' : '#EDE6DC'}`,
+        borderRadius: 10, padding: '8px 10px', cursor: 'pointer',
+        fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+        color: active ? '#FFFFFF' : '#7A5C4F',
+        textAlign: 'center', transition: 'all .15s',
+      }}>
+      {children}
+    </button>
+  )
+}
+
+function TaxaEfetivaPreview({ tipoRendimento, percentualIndexador, taxaAdicional, rentabilidadeAnual, taxas }: {
+  tipoRendimento: TipoRendimento
+  percentualIndexador?: number
+  taxaAdicional?: number
+  rentabilidadeAnual?: number
+  taxas: { cdi: number; selic: number; ipca: number; atualizadoEm: number }
+}) {
+  const taxa = calcTaxaEfetiva({ tipoRendimento, percentualIndexador, taxaAdicional, rentabilidadeAnual }, taxas)
+  if (taxa <= 0) return null
+  const mensal = Math.pow(1 + taxa, 1 / 12) - 1
+  return (
+    <div style={{
+      marginTop: 12, padding: '10px 14px',
+      background: 'rgba(58,133,128,0.08)', border: '1px solid rgba(58,133,128,0.18)',
+      borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12,
+    }}>
+      <div>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#1E7D5A', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <IconTrendingUp size={12} stroke={2.4} />Taxa efetiva
+        </p>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '3px 0 0' }}>
+          R$ 1.000 viraria <strong style={{ color: '#1E7D5A' }}>{(1000 * Math.pow(1 + taxa, 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong> em 12 meses
+        </p>
+      </div>
+      <div style={{ textAlign: 'right' }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: '#1E7D5A', letterSpacing: '-0.3px', margin: 0 }}>
+          {(taxa * 100).toFixed(2)}% <span style={{ fontSize: 11, fontWeight: 600, color: '#7A5C4F' }}>a.a.</span>
+        </p>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '2px 0 0' }}>
+          ~{(mensal * 100).toFixed(2)}% ao mês
+        </p>
+      </div>
+    </div>
   )
 }
 

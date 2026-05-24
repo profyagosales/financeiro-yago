@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Investimento, type InvestimentoTipo, type InvestimentoProvento, type InvestimentoAporte } from '../schema'
+import { getTaxasBenchmark, calcTaxaEfetiva } from './useAppConfig'
 
 export function useInvestimentos() {
   return useLiveQuery(() => db.investimentos.filter(i => i.ativo).toArray(), []) ?? []
@@ -45,23 +46,29 @@ export async function deleteInvestimento(id: number) {
 
 // ─── Auto-update da rentabilidade (modo híbrido) ─────────────────────
 // Aplica a rentabilidade proporcional aos meses decorridos desde a última atualização.
-// Só roda se valorAtualSource === 'auto' e houver rentabilidadeAnual.
+// Usa taxa efetiva calculada a partir de tipoRendimento + taxas vigentes
+// (CDI/Selic/IPCA) para pós-fixados e híbridos. Cai pra rentabilidadeAnual
+// fixa pra prefixados ou casos legados.
 export async function aplicarRentabilidadeAuto(id: number) {
   const inv = await db.investimentos.get(id)
   if (!inv) return
   if (inv.valorAtualSource !== 'auto') return
-  if (!inv.rentabilidadeAnual) return
+
+  const taxas = await getTaxasBenchmark()
+  const taxaEfetiva = calcTaxaEfetiva(inv, taxas)
+  if (!taxaEfetiva || taxaEfetiva <= 0) return
 
   const last = inv.ultimaAtualizacaoAuto ?? new Date(inv.dataAplicacao + 'T00:00:00').getTime()
   const now = Date.now()
   const monthsElapsed = (now - last) / (1000 * 60 * 60 * 24 * 30.44)
   if (monthsElapsed < 1) return // só atualiza após 1 mês completo
 
-  const monthlyRate = Math.pow(1 + inv.rentabilidadeAnual, 1 / 12) - 1
+  const monthlyRate = Math.pow(1 + taxaEfetiva, 1 / 12) - 1
   const novoValor = inv.valorAtual * Math.pow(1 + monthlyRate, monthsElapsed)
 
   await db.investimentos.update(id, {
     valorAtual: Math.round(novoValor * 100) / 100,
+    rentabilidadeAnual: taxaEfetiva, // mantém atualizado pra exibição
     ultimaAtualizacaoAuto: now,
     updatedAt: Date.now(),
   })
@@ -69,7 +76,7 @@ export async function aplicarRentabilidadeAuto(id: number) {
 
 export async function aplicarRentabilidadeAutoTodos() {
   const all = await db.investimentos
-    .filter(i => i.ativo && i.valorAtualSource === 'auto' && !!i.rentabilidadeAnual)
+    .filter(i => i.ativo && i.valorAtualSource === 'auto')
     .toArray()
   for (const inv of all) {
     if (inv.id !== undefined) await aplicarRentabilidadeAuto(inv.id)

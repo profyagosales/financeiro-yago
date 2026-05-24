@@ -5,6 +5,7 @@ import type { Investimento, Meta } from '@/db/schema'
 import { fmt } from '@/lib/format'
 import { TIPO_META, LIQUIDEZ_LABEL } from './constants'
 import { useProventos, calcDY12m, calcProventosMes, aceitaProventos, isRendaVariavel } from '@/db/hooks/useInvestimentos'
+import { descreverRendimento } from '@/db/hooks/useAppConfig'
 
 interface Props {
   invest: Investimento
@@ -48,8 +49,8 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
         invest.cotacaoAtual ? `Cot. R$ ${invest.cotacaoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : null,
       ].filter(Boolean).join(' · ')
     : [
-        invest.rentabilidadeAnual ? `${(invest.rentabilidadeAnual * 100).toFixed(2)}% a.a.` : null,
-        invest.benchmark,
+        // Descrição amigável do rendimento (% CDI, IPCA+X%, prefixado, etc)
+        descreverRendimento(invest),
         invest.liquidez ? LIQUIDEZ_LABEL[invest.liquidez] : null,
       ].filter(Boolean).join(' · ')
 

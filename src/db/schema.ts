@@ -40,6 +40,14 @@ export type InvestimentoBenchmark = 'CDI' | 'Selic' | 'IPCA+' | 'Prefixado' | 'A
 export type InvestimentoLiquidez = 'diaria' | 'no_vencimento' | '30d' | '90d' | '180d' | '365d'
 export type ValorAtualSource = 'auto' | 'manual'
 
+// Modelo de rendimento da renda fixa:
+//   prefixado    → taxa fixa anual (12% a.a.) — não importa o que aconteça no mercado
+//   pos_cdi      → % do CDI (ex: 102% do CDI vigente)
+//   pos_selic    → % da Selic
+//   ipca_mais    → IPCA + X% a.a. (híbrido)
+//   prefixado_ipca → IPCA cheio (sem adicional)
+export type TipoRendimento = 'prefixado' | 'pos_cdi' | 'pos_selic' | 'ipca_mais' | 'prefixado_ipca'
+
 export interface Investimento {
   id?: number
   nome: string
@@ -48,8 +56,11 @@ export interface Investimento {
   valorAplicado: number
   valorAtual: number
   valorAtualSource: ValorAtualSource    // hibrido: 'auto' aplica rentabilidade / 'manual' fixo
-  rentabilidadeAnual?: number           // 0.12 = 12% ao ano (renda fixa)
-  benchmark?: InvestimentoBenchmark
+  rentabilidadeAnual?: number           // taxa efetiva anual EM DECIMAL (0.12 = 12% ao ano)
+                                        //   - prefixado: a taxa em si
+                                        //   - pos_*: calculada (% indexador × taxa do indexador)
+                                        //   - ipca_mais: aproximada (IPCA + adicional)
+  benchmark?: InvestimentoBenchmark     // (legacy) — usar tipoRendimento
   liquidez?: InvestimentoLiquidez
   dataAplicacao: string                 // YYYY-MM-DD
   dataVencimento?: string               // YYYY-MM-DD
@@ -58,6 +69,10 @@ export interface Investimento {
   icone?: string
   ativo: boolean
   ultimaAtualizacaoAuto?: number        // timestamp da última aplicação auto
+  // ─── Modelo de rendimento (renda fixa) ────────────────────────────
+  tipoRendimento?: TipoRendimento
+  percentualIndexador?: number          // 1.02 = 102%; usado em pos_cdi/pos_selic
+  taxaAdicional?: number                // 0.0545 = 5,45% a.a.; usado em ipca_mais
   // ─── Renda variável (Ações, FIIs, ETFs, Cripto) ───────────────────
   quantidade?: number                   // X cotas/ações/moedas
   precoMedio?: number                   // preço médio de compra por unidade
@@ -65,6 +80,30 @@ export interface Investimento {
   ticker?: string                       // BBAS3, HGLG11, BTC, etc (opcional)
   syncId?: string
   updatedAt: number
+}
+
+// ─── AppConfig (NOVO v9) ─────────────────────────────────────────────
+// Key-value pra configurações globais (taxas de mercado, preferências).
+export interface AppConfig {
+  id?: number
+  key: string                           // 'taxas_benchmark', 'tema', etc
+  value: unknown                        // JSON serializável
+  updatedAt: number
+}
+
+// Taxas de mercado correntes (atualizadas pelo usuário em Configurações)
+export interface TaxasBenchmark {
+  cdi: number       // 0.1065 = 10,65% a.a.
+  selic: number     // 0.1075 = 10,75% a.a.
+  ipca: number      // 0.0445 = 4,45% a.a.
+  atualizadoEm: number  // timestamp
+}
+
+export const TAXAS_BENCHMARK_DEFAULT: TaxasBenchmark = {
+  cdi: 0.1065,   // valores aproximados maio/2026
+  selic: 0.1075,
+  ipca: 0.0445,
+  atualizadoEm: Date.now(),
 }
 
 // ─── DividaMovimentacao (NOVO v8) ────────────────────────────────────
@@ -194,6 +233,8 @@ class FinanceiroYagoDB extends Dexie {
   investimentosAportes!: Table<InvestimentoAporte>
   // Nova tabela v8
   dividasMovimentacoes!: Table<DividaMovimentacao>
+  // Nova tabela v9
+  appConfig!: Table<AppConfig>
 
   constructor() {
     super('FinanceiroYago')
@@ -368,8 +409,30 @@ class FinanceiroYagoDB extends Dexie {
       desejos: '++id, status, prioridade, transacaoId, syncId',
       investimentosProventos: '++id, investimentoId, data, tipo, syncId',
       investimentosAportes: '++id, investimentoId, data, syncId',
-      // NOVA
       dividasMovimentacoes: '++id, dividaId, data, tipo, syncId',
+    })
+
+    // v9 — AppConfig (taxas de mercado, preferências)
+    this.version(9).stores({
+      contas: '++id, tipo, ativo, syncId',
+      categorias: '++id, tipo, syncId',
+      transacoes: '++id, data, tipo, contaId, categoriaId, status, syncId',
+      cartoes: '++id, ativo, syncId',
+      lancamentosCartao: '++id, cartaoId, [cartaoId+mes+ano], mes, ano, parcelaPaiId, syncId',
+      contasFixas: '++id, ativo, categoriaId, syncId',
+      pagamentosFixos: '++id, contaFixaId, [contaFixaId+mes+ano], [mes+ano], syncId',
+      metas: '++id, ativo, tipo, syncId',
+      patrimonio: '++id, tipo, syncId',
+      orcamentos: '++id, categoriaId, syncId',
+      anexos: '++id, transacaoId',
+      investimentos: '++id, tipo, metaId, ativo, syncId',
+      dividas: '++id, tipo, contaFixaId, ativo, syncId',
+      desejos: '++id, status, prioridade, transacaoId, syncId',
+      investimentosProventos: '++id, investimentoId, data, tipo, syncId',
+      investimentosAportes: '++id, investimentoId, data, syncId',
+      dividasMovimentacoes: '++id, dividaId, data, tipo, syncId',
+      // NOVA
+      appConfig: '++id, &key',
     })
   }
 }
