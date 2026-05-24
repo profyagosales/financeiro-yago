@@ -1242,7 +1242,7 @@ export function Page() {
             position: relative;
             min-height: 100dvh;
             padding-top: calc(20px + env(safe-area-inset-top));
-            padding-bottom: calc(110px + env(safe-area-inset-bottom));
+            padding-bottom: calc(120px + env(safe-area-inset-bottom));
             padding-left: 16px;
             padding-right: 16px;
             background: linear-gradient(180deg, #FFE2C7 0%, #FFF1DE 35%, #FFE9D7 100%);

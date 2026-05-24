@@ -224,7 +224,6 @@ Modal.Footer = function ModalFooter({ children, align = 'end' }: { children: Rea
   const justify = align === 'between' ? 'space-between' : align === 'start' ? 'flex-start' : 'flex-end'
   return (
     <div className="modal-footer-shell" style={{
-      padding: '14px 22px',
       borderTop: '1px solid rgba(44,26,15,0.08)',
       display: 'flex', justifyContent: justify, alignItems: 'center', gap: 10,
       flexShrink: 0,
@@ -233,12 +232,15 @@ Modal.Footer = function ModalFooter({ children, align = 'end' }: { children: Rea
       <style>{`
         .modal-footer-shell {
           background: #FFFFFF;
+          padding: 14px 22px;
         }
         @media (max-width: 767px) {
           .modal-footer-shell {
             background: rgba(255,233,215,0.96);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+            padding: 14px 22px;
+            padding-bottom: calc(22px + env(safe-area-inset-bottom));
           }
         }
       `}</style>

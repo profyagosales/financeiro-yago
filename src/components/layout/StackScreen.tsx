@@ -141,11 +141,11 @@ export function StackScreen({
               {children}
             </div>
 
-            {/* FOOTER fixo (safe-area-inset-bottom) */}
+            {/* FOOTER fixo (safe-area-inset-bottom + base buffer) */}
             {footer && (
               <div style={{
                 flexShrink: 0,
-                paddingBottom: 'env(safe-area-inset-bottom)',
+                paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
                 background: 'rgba(255,233,215,0.96)',
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',

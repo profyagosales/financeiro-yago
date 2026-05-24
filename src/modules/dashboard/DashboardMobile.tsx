@@ -110,7 +110,7 @@ export function DashboardMobile() {
           position: 'relative',
           padding: '16px 18px',
           paddingTop: 'calc(20px + env(safe-area-inset-top))',
-          paddingBottom: 'calc(100px + env(safe-area-inset-bottom))',
+          paddingBottom: 'calc(120px + env(safe-area-inset-bottom))',
           display: 'flex', flexDirection: 'column',
           gap: 18,
         }}

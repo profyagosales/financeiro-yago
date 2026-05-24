@@ -117,11 +117,11 @@ export function LegacyModalShell({
               {children}
             </div>
 
-            {/* FOOTER fixo com safe-area-inset-bottom */}
+            {/* FOOTER fixo com safe-area-inset-bottom + base buffer */}
             {footer && (
               <div style={{
                 flexShrink: 0,
-                paddingBottom: isMobile ? 'env(safe-area-inset-bottom)' : 0,
+                paddingBottom: isMobile ? 'calc(12px + env(safe-area-inset-bottom))' : 0,
                 background: isMobile
                   ? 'rgba(255,233,215,0.96)'
                   : '#FFFFFF',
