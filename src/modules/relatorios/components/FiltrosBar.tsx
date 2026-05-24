@@ -30,22 +30,15 @@ export function FiltrosBar({ periodoLabel }: { periodoLabel: string }) {
   const catSel = categorias.find(c => c.id === state.categoriaId) ?? null
 
   return (
-    <div style={{
-      position: 'sticky',
-      top: 0, zIndex: 50,
-      padding: '14px 0',
-      marginBottom: 16,
-    }}>
+    <div>
       <motion.div
         initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
         style={{
-          background: 'rgba(255,255,255,0.78)',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-          border: '1px solid rgba(237,230,220,0.7)',
-          borderRadius: 20,
-          padding: '12px 14px',
-          boxShadow: '0 8px 28px rgba(44,26,15,0.08)',
+          background: '#FFFFFF',
+          border: '1px solid #EDE6DC',
+          borderRadius: 16,
+          padding: '10px 12px',
+          boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 14px rgba(44,26,15,0.06)',
           display: 'flex', alignItems: 'center', gap: 10,
           flexWrap: 'wrap',
         }}>

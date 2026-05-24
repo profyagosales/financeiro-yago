@@ -71,11 +71,43 @@ export function Page() {
           dívidas, metas e projeta o futuro com base nos seus padrões.</p>
       </div>
 
-      {/* Filtros sticky */}
-      <FiltrosBar periodoLabel={d.intervalo.label} />
+      {/* Shelf sticky: filtros + nav num único bloco com bg sólido */}
+      <div className="rel-sticky-shelf">
+        <div className="rel-shelf-inner">
+          <FiltrosBar periodoLabel={d.intervalo.label} />
+          <div style={{ height: 10 }} />
+          <SectionNav sections={NAV} />
+        </div>
+        {/* Fade inferior pra transição suave com o conteúdo */}
+        <div className="rel-shelf-fade" aria-hidden />
+      </div>
 
-      {/* Nav sticky de seções */}
-      <SectionNav sections={NAV} />
+      <style>{`
+        .rel-sticky-shelf {
+          position: sticky;
+          top: 0;
+          z-index: 50;
+          margin: 16px 0 24px;
+        }
+        .rel-shelf-inner {
+          background: linear-gradient(180deg, #FBF8F3 0%, #FBF8F3 88%, rgba(251,248,243,0.96) 100%);
+          padding: 14px 14px 12px;
+          border-radius: 22px;
+          /* Halo sutil em volta para destacar do conteúdo abaixo */
+          box-shadow:
+            0 2px 0 rgba(237,230,220,0.6),
+            0 10px 28px rgba(44,26,15,0.06);
+          /* Linha sutil de moldura */
+          border: 1px solid rgba(237,230,220,0.85);
+        }
+        .rel-shelf-fade {
+          position: absolute;
+          left: 0; right: 0; top: 100%;
+          height: 18px;
+          background: linear-gradient(180deg, rgba(251,248,243,0.85), rgba(251,248,243,0));
+          pointer-events: none;
+        }
+      `}</style>
 
       {/* Pilha de seções */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>

@@ -30,7 +30,7 @@ export const SectionShell = forwardRef<HTMLElement, SectionShellProps>(function 
       viewport={{ once: true, margin: '-80px' }}
       transition={{ type: 'spring', stiffness: 200, damping: 26, delay }}
       style={{
-        scrollMarginTop: 100,  // pra sticky nav não cobrir
+        scrollMarginTop: 170,  // pra sticky shelf (filtros + nav) não cobrir
       }}
     >
       {/* Header da seção */}

@@ -42,23 +42,16 @@ export function SectionNav({ sections }: SectionNavProps) {
   }
 
   return (
-    <div style={{
-      position: 'sticky',
-      top: 78,                  // abaixo do FiltrosBar
-      zIndex: 40,
-      marginBottom: 18,
-    }}>
+    <div>
       <motion.div
         ref={scrollRef}
         initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
         style={{
-          background: 'rgba(255,255,255,0.72)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          border: '1px solid rgba(237,230,220,0.7)',
+          background: '#FFFFFF',
+          border: '1px solid #EDE6DC',
           borderRadius: 999,
-          padding: '6px 8px',
-          boxShadow: '0 6px 22px rgba(44,26,15,0.06)',
+          padding: '5px 8px',
+          boxShadow: '0 1px 3px rgba(44,26,15,0.05), 0 4px 14px rgba(44,26,15,0.05)',
           display: 'flex', gap: 4,
           overflowX: 'auto',
           scrollbarWidth: 'none',
