@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import {
-  IconBell, IconPlus, IconChartLine, IconCalendarEvent,
+  IconBell, IconCalendarEvent,
   IconArrowUpRight, IconArrowDownRight, IconChevronRight,
   IconBuildingBank, IconArrowsExchange, IconTarget, IconSparkles,
   IconCircleCheck, IconTrendingUp, IconTrendingDown,
@@ -206,22 +206,6 @@ export function DashboardMobile() {
           )}
         </motion.section>
 
-        {/* QUICK ACTIONS — 2 botões pill grandes */}
-        <motion.section variants={ITEM}
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <QuickActionPill
-            icon={<IconPlus size={17} stroke={2.6} />}
-            label="Lançar"
-            onClick={() => openFab()}
-            primary
-          />
-          <QuickActionPill
-            icon={<IconChartLine size={17} stroke={2.2} />}
-            label="Análise"
-            onClick={() => navigate('/relatorios')}
-          />
-        </motion.section>
-
         {/* CONTEÚDO: empty OU regular */}
         {isEmpty
           ? <OnboardingGrid />
@@ -229,39 +213,6 @@ export function DashboardMobile() {
         }
       </motion.div>
     </div>
-  )
-}
-
-// ─── Quick action pill ──────────────────────────────────────────────
-
-function QuickActionPill({ icon, label, onClick, primary }: {
-  icon: React.ReactNode; label: string; onClick: () => void; primary?: boolean
-}) {
-  return (
-    <motion.button
-      onClick={onClick}
-      whileTap={{ scale: 0.97 }}
-      style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        padding: '14px 18px',
-        background: primary
-          ? `linear-gradient(135deg, ${C.orangeBri}, ${C.orange})`
-          : 'rgba(255,255,255,0.7)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: primary ? 'none' : `1px solid rgba(255,255,255,0.8)`,
-        borderRadius: 16,
-        color: primary ? '#FFFFFF' : C.ink,
-        cursor: 'pointer',
-        fontFamily: "'Plus Jakarta Sans',sans-serif",
-        fontSize: 14, fontWeight: 700, letterSpacing: '.01em',
-        boxShadow: primary
-          ? '0 10px 26px rgba(196,85,59,0.4)'
-          : '0 4px 14px rgba(196,85,59,0.1)',
-      }}>
-      {icon}
-      {label}
-    </motion.button>
   )
 }
 
