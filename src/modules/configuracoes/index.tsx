@@ -1237,6 +1237,26 @@ export function Page() {
         .cfg-page {
           padding: clamp(16px, 4vw, 32px);
         }
+        .cfg-header {
+          display: flex; align-items: center; justify-content: space-between;
+          margin-bottom: 24px; padding-bottom: 18px;
+          border-bottom: 1px solid #EDE6DC;
+          gap: 16px;
+        }
+        .cfg-title {
+          font-family: 'Fraunces', Georgia, serif;
+          font-weight: 700; font-size: 38px;
+          color: #2C1A0F; margin: 0;
+          letter-spacing: -1.5px;
+          line-height: 1;
+        }
+        .cfg-version {
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 11px; font-weight: 600;
+          color: #9B7B6A; margin: 0;
+          letter-spacing: .04em; text-transform: uppercase;
+          flex-shrink: 0;
+        }
         @media (max-width: 767px) {
           .cfg-page {
             position: relative;
@@ -1258,13 +1278,28 @@ export function Page() {
             pointer-events: none;
             z-index: 0;
           }
+          .cfg-header {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
+          }
+          .cfg-title {
+            font-size: 30px;
+            letter-spacing: -1px;
+          }
+          /* Versão redundante com o nav — esconde no mobile pra dar respiro */
+          .cfg-version {
+            display: none;
+          }
         }
       `}</style>
 
       {/* Header (mesmo padrão das outras páginas) */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>
-        <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, fontSize: 38, color: '#2C1A0F', margin: 0, letterSpacing: '-1.5px' }}>Configurações</h1>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A', margin: 0, letterSpacing: '.04em', textTransform: 'uppercase' }}>Financeiro do Yago · v1.0</p>
+      <div className="cfg-header">
+        <h1 className="cfg-title">Configurações</h1>
+        <p className="cfg-version">Financeiro do Yago · v1.0</p>
       </div>
 
       <AnimatePresence>
