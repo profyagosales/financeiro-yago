@@ -542,41 +542,105 @@ function PinSection() {
 // ─── PWA ─────────────────────────────────────────────────────────────
 function PWASection() {
   const { canInstall, install } = usePWAInstall()
-  const [showGuide, setShowGuide] = useState(false)
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  const isMac = /Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as { standalone?: boolean }).standalone === true
+
+  if (isStandalone) {
+    return (
+      <div style={{
+        padding: '14px 16px', background: 'rgba(58,133,128,0.1)',
+        border: '1px solid rgba(58,133,128,0.25)', borderRadius: 12,
+        display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        <IconCheck size={20} stroke={2.4} color="#1E7D5A" />
+        <div>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#1E7D5A', margin: 0 }}>App instalado!</p>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', margin: '3px 0 0' }}>Rodando em modo standalone.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {canInstall && (
-        <Row icon={<IconDeviceMobile size={18} color="#3D7EB5" stroke={1.8} />} label="Instalar como app" sub="Adicionar à tela inicial" onClick={install}
-          right={<div style={{ background: '#C4553B', color: 'white', padding: '5px 12px', borderRadius: 20, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700 }}>Instalar</div>} />
+        <button onClick={install}
+          style={{
+            background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: 'white', border: 'none',
+            borderRadius: 12, padding: '14px 18px', cursor: 'pointer',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            boxShadow: '0 4px 16px rgba(196,85,59,0.35)',
+          }}>
+          <IconDeviceMobile size={18} stroke={2} /> Instalar agora (Chrome/Edge)
+        </button>
       )}
-      <Row icon={isIOS ? <IconBrandApple size={18} color="#2C1A0F" stroke={1.8} /> : <IconBrandChrome size={18} color="#E89527" stroke={1.8} />}
-        label="Como instalar o PWA" sub="Guia passo a passo" onClick={() => setShowGuide(o => !o)} />
-      <AnimatePresence>
-        {showGuide && (() => {
-          const guide = isIOS
-            ? { title: 'No iPhone / iPad (Safari)', steps: ['Abra este site no Safari', 'Toque no ícone de compartilhar (barra inferior)', 'Toque em "Adicionar à Tela de Início"', 'Toque em "Adicionar" — pronto!'] }
-            : { title: 'No Chrome (Android / Desktop)', steps: ['Abra no Chrome', 'Toque no menu (3 pontos)', 'Toque em "Instalar app" ou "Adicionar à tela inicial"', 'Confirme — o app aparece na tela inicial'] }
-          return (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
-              <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F', margin: '0 0 4px' }}>{guide.title}:</p>
-                {guide.steps.map((s, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#C4553B', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: 'white' }}>{i+1}</span>
-                    </div>
-                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#2C1A0F', margin: 0 }}>{s}</p>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )
-        })()}
-      </AnimatePresence>
-    </>
+
+      {/* Guia iOS */}
+      {(isIOS || isMac) && (
+        <div style={GUIDE_BOX}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <IconBrandApple size={18} stroke={1.8} color="#2C1A0F" />
+            <p style={GUIDE_TITLE}>iPhone, iPad ou Mac (Safari)</p>
+          </div>
+          {[
+            'Abra este site no Safari (não funciona em outros browsers no iOS)',
+            'Toque no ícone de compartilhar (quadrado com seta) na barra de baixo',
+            'Role pra baixo e toque em "Adicionar à Tela de Início"',
+            'Confirme o nome "Financeiro" e toque em "Adicionar"',
+            'O ícone aparece na tela inicial e abre em tela cheia, como app nativo',
+          ].map((s, i) => <GuideStep key={i} n={i + 1} text={s} />)}
+        </div>
+      )}
+
+      {/* Guia Chrome/Edge desktop e Android */}
+      {!isIOS && (
+        <div style={GUIDE_BOX}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <IconBrandChrome size={18} stroke={1.8} color="#E89527" />
+            <p style={GUIDE_TITLE}>Chrome / Edge (Desktop ou Android)</p>
+          </div>
+          {[
+            'Abra o site no Chrome ou Edge',
+            'Desktop: clique no ícone de "instalar app" na barra de endereço (ao lado da estrela)',
+            'Android: toque no menu de 3 pontos → "Instalar app" ou "Adicionar à tela inicial"',
+            'Confirme — o app abre em janela própria, sem barra de navegação',
+          ].map((s, i) => <GuideStep key={i} n={i + 1} text={s} />)}
+        </div>
+      )}
+
+      <div style={{
+        padding: '10px 12px', background: '#FAF6F0', border: '1px solid #EDE6DC',
+        borderRadius: 10, display: 'flex', gap: 8, alignItems: 'flex-start',
+      }}>
+        <IconInfoCircle size={14} color="#9B7B6A" stroke={2} style={{ flexShrink: 0, marginTop: 2 }}/>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: 0, lineHeight: 1.5 }}>
+          <strong>Por que instalar?</strong> Acesso direto pela tela inicial, abre em tela cheia (sem URL/abas), funciona offline (cache local), notificações futuras. Seus dados ficam no dispositivo.
+        </p>
+      </div>
+    </div>
   )
+}
+
+function GuideStep({ n, text }: { n: number; text: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}>
+      <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#C4553B', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: 'white' }}>{n}</span>
+      </div>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#2C1A0F', margin: 0, lineHeight: 1.4 }}>{text}</p>
+    </div>
+  )
+}
+
+const GUIDE_BOX: React.CSSProperties = {
+  background: '#FBF8F3', border: '1px solid #EDE6DC', borderRadius: 12,
+  padding: '14px 16px',
+}
+const GUIDE_TITLE: React.CSSProperties = {
+  fontFamily: "'Fraunces',Georgia,serif", fontSize: 15, fontWeight: 700,
+  color: '#2C1A0F', margin: 0,
 }
 
 // ─── BRAPI TOKEN ─────────────────────────────────────────────────────

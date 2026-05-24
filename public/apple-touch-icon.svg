@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <!-- Sem borderRadius pq iOS adiciona automaticamente -->
+  <rect width="180" height="180" fill="#C4553B"/>
+  <circle cx="90" cy="98" r="60" fill="#D4653B"/>
+  <circle cx="90" cy="98" r="48" stroke="#B84D33" stroke-width="3" fill="none"/>
+  <circle cx="75" cy="90" r="10" fill="#2C1A0F"/>
+  <circle cx="105" cy="90" r="10" fill="#2C1A0F"/>
+  <circle cx="78" cy="86" r="3" fill="white"/>
+  <circle cx="108" cy="86" r="3" fill="white"/>
+  <path d="M71 114 Q90 128 109 114" stroke="#2C1A0F" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <rect x="60" y="32" width="60" height="30" rx="11" fill="#2C1A0F"/>
+  <rect x="48" y="60" width="84" height="14" rx="7" fill="#2C1A0F"/>
+  <text x="90" y="55" text-anchor="middle" fill="#D4A017" font-family="Georgia, serif" font-size="18" font-weight="bold">R$</text>
+</svg>

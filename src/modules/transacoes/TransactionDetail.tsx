@@ -4,12 +4,14 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import {
   IconTrash, IconPaperclip, IconArrowUpRight, IconArrowDownRight,
   IconArrowsExchange, IconCheck, IconClock, IconTag, IconX, IconUpload,
+  IconEye, IconDownload,
 } from '@tabler/icons-react'
 import type { Transacao, Categoria, Conta, Anexo } from '@/db/schema'
 import { db } from '@/db/schema'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useContas } from '@/db/hooks/useContas'
 import { editTransacaoComSaldo, deleteTransacao } from '@/db/hooks/useTransacoes'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { fmt } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { BankLogo } from '@/components/ui/BankLogo'
@@ -621,33 +623,108 @@ function EditableNotesField({ label, value, onSave }: { label: string; value: st
 
 function AnexoRow({ anexo, onDelete }: { anexo: Anexo; onDelete: () => void }) {
   const isImg = anexo.tipo.startsWith('image/')
+  const isPdf = anexo.tipo === 'application/pdf'
   const sizeKB = (anexo.tamanho / 1024).toFixed(0)
+  const [preview, setPreview] = useState(false)
+  useBodyScrollLock(preview)
+
+  const handleVer = () => {
+    if (isImg || isPdf) {
+      // Abre lightbox interno (data URLs são bloqueadas em window.open por alguns browsers)
+      setPreview(true)
+    } else {
+      // Outros tipos: força download
+      handleBaixar()
+    }
+  }
+
+  const handleBaixar = () => {
+    const a = document.createElement('a')
+    a.href = anexo.dados
+    a.download = anexo.nomeArquivo
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      padding: '8px 10px', background: '#FBF8F3', border: '1px solid #EDE6DC',
-      borderRadius: 10,
-    }}>
-      {isImg ? (
-        <img src={anexo.dados} alt={anexo.nomeArquivo}
-          style={{ width: 36, height: 36, borderRadius: 7, objectFit: 'cover', flexShrink: 0 }}/>
-      ) : (
-        <div style={{ width: 36, height: 36, borderRadius: 7, background: 'rgba(122,92,79,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <IconPaperclip size={16} stroke={2} color="#7A5C4F" />
+    <>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 10px', background: '#FBF8F3', border: '1px solid #EDE6DC',
+        borderRadius: 10,
+      }}>
+        {isImg ? (
+          <img src={anexo.dados} alt={anexo.nomeArquivo}
+            onClick={handleVer}
+            style={{ width: 36, height: 36, borderRadius: 7, objectFit: 'cover', flexShrink: 0, cursor: 'pointer' }}/>
+        ) : (
+          <div onClick={handleVer}
+            style={{ width: 36, height: 36, borderRadius: 7, background: isPdf ? 'rgba(196,85,59,0.15)' : 'rgba(122,92,79,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer' }}>
+            <IconPaperclip size={16} stroke={2} color={isPdf ? '#C4553B' : '#7A5C4F'} />
+          </div>
+        )}
+        <button onClick={handleVer}
+          style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#2C1A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {anexo.nomeArquivo}
+          </p>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '2px 0 0' }}>
+            {sizeKB} KB · {anexo.tipo.split('/')[1]?.toUpperCase() ?? 'arquivo'}
+          </p>
+        </button>
+        {(isImg || isPdf) && (
+          <button onClick={handleVer} title="Visualizar"
+            style={{ background: 'rgba(58,133,128,0.12)', border: 'none', borderRadius: 7, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconEye size={13} stroke={2} color="#1E7D5A" />
+          </button>
+        )}
+        <button onClick={handleBaixar} title="Baixar"
+          style={{ background: 'rgba(61,126,181,0.12)', border: 'none', borderRadius: 7, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <IconDownload size={13} stroke={2} color="#3D7EB5" />
+        </button>
+        <button onClick={onDelete} title="Remover"
+          style={{ background: '#FAEAEA', border: 'none', borderRadius: 7, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <IconTrash size={13} stroke={2} color="#C4553B" />
+        </button>
+      </div>
+
+      {/* Lightbox preview */}
+      {preview && (
+        <div onClick={() => setPreview(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(13,6,4,0.92)', zIndex: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          {/* Toolbar */}
+          <div style={{
+            position: 'absolute', top: 16, left: 16, right: 16,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }} onClick={e => e.stopPropagation()}>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 12 }}>
+              {anexo.nomeArquivo} <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 6 }}>· {sizeKB} KB</span>
+            </p>
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <button onClick={handleBaixar} title="Baixar"
+                style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 9, padding: '8px 12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#FFFFFF' }}>
+                <IconDownload size={14} stroke={2} /> Baixar
+              </button>
+              <button onClick={() => setPreview(false)} title="Fechar"
+                style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 9, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconX size={16} stroke={2} color="#FFFFFF" />
+              </button>
+            </div>
+          </div>
+
+          {/* Conteúdo */}
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 1000, maxHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {isImg ? (
+              <img src={anexo.dados} alt={anexo.nomeArquivo}
+                style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: 10, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}/>
+            ) : (
+              <iframe src={anexo.dados} title={anexo.nomeArquivo}
+                style={{ width: '100%', height: '85vh', border: 'none', borderRadius: 10, background: '#FFFFFF', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}/>
+            )}
+          </div>
         </div>
       )}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#2C1A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {anexo.nomeArquivo}
-        </p>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '2px 0 0' }}>
-          {sizeKB} KB
-        </p>
-      </div>
-      <button onClick={onDelete} title="Remover"
-        style={{ background: '#FAEAEA', border: 'none', borderRadius: 7, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <IconTrash size={13} stroke={2} color="#C4553B" />
-      </button>
-    </div>
+    </>
   )
 }

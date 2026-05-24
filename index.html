@@ -2,16 +2,46 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#FAF6F0" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Financeiro do Yago" />
+
+    <!-- Identidade -->
     <title>Financeiro do Yago</title>
+    <meta name="description" content="App financeiro pessoal — controle de contas, cartões, investimentos, dívidas e metas. Offline-first." />
+
+    <!-- Viewport / mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5" />
+    <meta name="theme-color" content="#C4553B" />
+    <meta name="color-scheme" content="light" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- iOS / Safari PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Financeiro" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.svg" />
+
+    <!-- Open Graph (share preview) -->
+    <meta property="og:title" content="Financeiro do Yago" />
+    <meta property="og:description" content="Seu app financeiro pessoal premium." />
+    <meta property="og:image" content="/icon-512.svg" />
+    <meta property="og:type" content="website" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Service worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () { /* dev: silencia */ })
+        })
+      }
+    </script>
   </body>
 </html>

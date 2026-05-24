@@ -9,10 +9,11 @@ import { useCategorias } from '@/db/hooks/useCategorias'
 import { fmt } from '@/lib/format'
 import { db } from '@/db/schema'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
+import { IconChevronLeft, IconChevronRight, IconFileTypePdf } from '@tabler/icons-react'
 import { TabInvestimentos } from './TabInvestimentos'
 import { TabDividas } from './TabDividas'
 import { TabPatrimonio } from './TabPatrimonio'
+import { PDFExportModal } from './PDFExportModal'
 import { TabDesejos } from './TabDesejos'
 
 // ─── Design tokens ───────────────────────────────────────────────────────────
@@ -475,6 +476,7 @@ export function Page() {
   const [mes, setMes] = useState(now.getMonth() + 1)
   const [ano, setAno] = useState(now.getFullYear())
   const [activeTab, setActiveTab] = useState<TabId>('visao-geral')
+  const [pdfOpen, setPdfOpen] = useState(false)
 
   const transacoes = useTransacoesByMes(mes, ano)
   const txAnterior = useMesAnterior(mes, ano)
@@ -499,10 +501,18 @@ export function Page() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ width: '100%', paddingBottom: 32 }}>
 
       {/* Header */}
-      <div style={{ padding: '32px 32px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, borderBottom: '1px solid #EDE6DC' }}>
-        <div>
-          <h1 style={{ ...DISPLAY, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Relatórios</h1>
-        </div>
+      <div style={{ padding: '32px 32px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, borderBottom: '1px solid #EDE6DC' }}>
+        <h1 style={{ ...DISPLAY, fontSize: 38, color: '#2C1A0F', letterSpacing: '-1.5px' }}>Relatórios</h1>
+        <button onClick={() => setPdfOpen(true)}
+          style={{
+            background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none',
+            borderRadius: 12, padding: '11px 18px', cursor: 'pointer',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 4px 16px rgba(196,85,59,0.35)',
+          }}>
+          <IconFileTypePdf size={16} stroke={2.5} /> Exportar PDF
+        </button>
       </div>
 
       {/* Month navigator */}
@@ -570,6 +580,10 @@ export function Page() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {pdfOpen && <PDFExportModal onClose={() => setPdfOpen(false)} />}
+      </AnimatePresence>
     </motion.div>
   )
 }

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="96" fill="#C4553B"/>
+  <circle cx="256" cy="280" r="172" fill="#D4653B"/>
+  <circle cx="256" cy="280" r="140" stroke="#B84D33" stroke-width="8" fill="none"/>
+  <!-- Olhos -->
+  <circle cx="212" cy="256" r="28" fill="#2C1A0F"/>
+  <circle cx="300" cy="256" r="28" fill="#2C1A0F"/>
+  <circle cx="222" cy="246" r="9" fill="white"/>
+  <circle cx="310" cy="246" r="9" fill="white"/>
+  <!-- Sorriso -->
+  <path d="M200 320 Q256 366 312 320" stroke="#2C1A0F" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <!-- Chapéu -->
+  <rect x="172" y="92" width="168" height="84" rx="32" fill="#2C1A0F"/>
+  <rect x="138" y="172" width="236" height="44" rx="22" fill="#2C1A0F"/>
+  <!-- Símbolo R$ no chapéu -->
+  <text x="256" y="158" text-anchor="middle" fill="#D4A017" font-family="Georgia, serif" font-size="54" font-weight="bold">R$</text>
+</svg>
