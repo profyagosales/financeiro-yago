@@ -72,33 +72,48 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
   const isReserva = form.tipo === 'reserva_emergencia'
 
   return (
-    <LegacyModalShell open onClose={onClose} maxWidth={620} zIndex={100}>
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
+    <LegacyModalShell open onClose={onClose} maxWidth={620} zIndex={100}
+      header={
         <div style={{
-          padding: '24px 28px', borderBottom: '1px solid #EDE6DC',
+          padding: '18px 22px',
+          borderBottom: '1px solid rgba(44,26,15,0.08)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          position: 'sticky', top: 0, background: '#FFFFFF', zIndex: 2,
+          gap: 12,
         }}>
-          <div>
-            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.6px' }}>
-              {isEditing ? 'Editar meta' : 'Nova meta'}
-            </h2>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 4 }}>
-              Defina um objetivo financeiro e acompanhe seu progresso
-            </p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{
+              fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700,
+              color: '#2C1A0F', margin: 0, letterSpacing: '-0.5px',
+            }}>{isEditing ? 'Editar meta' : 'Nova meta'}</h2>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F',
+              margin: '2px 0 0',
+            }}>Defina um objetivo financeiro e acompanhe seu progresso</p>
           </div>
-          <button onClick={onClose} style={{
-            background: '#F5F0E8', border: 'none', borderRadius: 10,
-            width: 32, height: 32, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          <button onClick={onClose} aria-label="Fechar" style={{
+            background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: 10,
+            width: 34, height: 34, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
             <IconX size={16} stroke={2} color="#7A5C4F" />
           </button>
         </div>
-
+      }
+      footer={
+        <div style={{
+          padding: '14px 22px',
+          display: 'flex', justifyContent: 'flex-end', gap: 10,
+        }}>
+          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
+          <button onClick={handleSave} style={PRIMARY_BTN}>
+            <IconCheck size={16} stroke={2.5} />
+            {isEditing ? 'Salvar' : 'Criar meta'}
+          </button>
+        </div>
+      }
+    >
         {/* Body */}
-        <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
           {/* Tipo selector */}
           <Field label="Tipo de meta">
@@ -273,20 +288,6 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
             </div>
           </Field>
         </div>
-
-        {/* Footer */}
-        <div style={{
-          padding: '16px 28px', borderTop: '1px solid #EDE6DC',
-          display: 'flex', justifyContent: 'flex-end', gap: 10,
-          position: 'sticky', bottom: 0, background: '#FFFFFF',
-        }}>
-          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleSave} style={PRIMARY_BTN}>
-            <IconCheck size={16} stroke={2.5} />
-            {isEditing ? 'Salvar alterações' : 'Criar meta'}
-          </button>
-        </div>
-      </div>
     </LegacyModalShell>
   )
 }

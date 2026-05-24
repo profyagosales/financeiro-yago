@@ -52,35 +52,53 @@ export function ProventosModal({ invest, onClose }: Props) {
   const mesAtual = calcProventosMes(proventos)
 
   return (
-    <LegacyModalShell open onClose={onClose} maxWidth={600} zIndex={100}>
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
+    <LegacyModalShell open onClose={onClose} maxWidth={600} zIndex={100}
+      header={
         <div style={{
-          padding: '22px 26px', borderBottom: '1px solid #EDE6DC',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-          position: 'sticky', top: 0, background: '#FFFFFF', zIndex: 2,
+          padding: '16px 22px', borderBottom: '1px solid rgba(44,26,15,0.08)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
         }}>
-          <div style={{ display: 'flex', gap: 14, alignItems: 'center', flex: 1 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(58,133,128,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <IconCoins size={22} stroke={1.8} color="#1E7D5A" />
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1, minWidth: 0 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 11, background: 'rgba(58,133,128,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <IconCoins size={19} stroke={1.8} color="#1E7D5A" />
             </div>
-            <div>
-              <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.5px' }}>
-                Proventos
-              </h2>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 2 }}>
-                {invest.nome}{invest.ticker ? ` · ${invest.ticker}` : ''}
-              </p>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{
+                fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700,
+                color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px',
+              }}>Proventos</h2>
+              <p style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11.5, color: '#7A5C4F', margin: '2px 0 0',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{invest.nome}{invest.ticker ? ` · ${invest.ticker}` : ''}</p>
             </div>
           </div>
-          <button onClick={onClose} style={{
-            background: '#F5F0E8', border: 'none', borderRadius: 10,
-            width: 32, height: 32, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          <button onClick={onClose} aria-label="Fechar" style={{
+            background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: 10,
+            width: 34, height: 34, cursor: 'pointer', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <IconX size={16} stroke={2} color="#7A5C4F" />
           </button>
         </div>
+      }
+      footer={
+        <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{
+            background: 'linear-gradient(135deg, #F1642E, #C4553B)', color: '#FFFFFF',
+            border: 'none', borderRadius: 12, padding: '11px 22px', cursor: 'pointer',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            boxShadow: '0 8px 22px rgba(196,85,59,0.42)',
+          }}>
+            <IconCheck size={15} stroke={2.4} /> Fechar
+          </button>
+        </div>
+      }
+    >
 
         {/* KPIs */}
         <div style={{ padding: '16px 26px', background: '#FBF8F3', borderBottom: '1px solid #EDE6DC', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 12 }}>
@@ -194,23 +212,6 @@ export function ProventosModal({ invest, onClose }: Props) {
           )}
         </div>
 
-        {/* Footer */}
-        <div style={{
-          padding: '14px 26px', borderTop: '1px solid #EDE6DC',
-          display: 'flex', justifyContent: 'flex-end',
-          position: 'sticky', bottom: 0, background: '#FFFFFF',
-        }}>
-          <button onClick={onClose}
-            style={{
-              background: 'transparent', color: '#7A5C4F', border: '1.5px solid #EDE6DC',
-              borderRadius: 12, padding: '11px 24px', cursor: 'pointer',
-              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-            }}>
-            <IconCheck size={15} stroke={2.4} /> Fechar
-          </button>
-        </div>
-      </div>
     </LegacyModalShell>
   )
 }

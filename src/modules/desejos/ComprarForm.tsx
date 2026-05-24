@@ -92,38 +92,49 @@ export function ComprarForm({ desejo, onClose }: Props) {
   }
 
   return (
-    <LegacyModalShell open onClose={onClose} maxWidth={560} zIndex={100}>
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
+    <LegacyModalShell open onClose={onClose} maxWidth={560} zIndex={100}
+      header={
         <div style={{
-          padding: '24px 28px', borderBottom: '1px solid #EDE6DC',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '14px 22px', borderBottom: '1px solid rgba(44,26,15,0.08)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
             <div style={{
-              width: 44, height: 44, borderRadius: 12,
+              width: 38, height: 38, borderRadius: 11,
               background: 'linear-gradient(135deg, #3A8580, #2C7470)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
-              <IconShoppingCart size={22} stroke={1.8} color="#FFFFFF" />
+              <IconShoppingCart size={19} stroke={1.8} color="#FFFFFF" />
             </div>
-            <div>
-              <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.5px' }}>
-                Comprei "{desejo.nome}"
-              </h2>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 3 }}>
-                Vamos registrar como transação real
-              </p>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{
+                fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700,
+                color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>Comprei "{desejo.nome}"</h2>
+              <p style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '2px 0 0',
+              }}>Vamos registrar como transação</p>
             </div>
           </div>
-          <button onClick={onClose} style={{
-            background: '#F5F0E8', border: 'none', borderRadius: 10,
-            width: 32, height: 32, cursor: 'pointer',
+          <button onClick={onClose} aria-label="Fechar" style={{
+            background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: 10,
+            width: 34, height: 34, cursor: 'pointer', flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <IconX size={16} stroke={2} color="#7A5C4F" />
           </button>
         </div>
+      }
+      footer={
+        <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
+          <button onClick={handleComprar} style={PRIMARY_BTN}>
+            <IconCheck size={16} stroke={2.5} /> Registrar
+          </button>
+        </div>
+      }
+    >
 
         {/* Body */}
         <div style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -221,18 +232,6 @@ export function ComprarForm({ desejo, onClose }: Props) {
             />
           </Field>
         </div>
-
-        {/* Footer */}
-        <div style={{
-          padding: '16px 28px', borderTop: '1px solid #EDE6DC',
-          display: 'flex', justifyContent: 'flex-end', gap: 10,
-        }}>
-          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleComprar} style={PRIMARY_BTN}>
-            <IconCheck size={16} stroke={2.5} /> Registrar compra
-          </button>
-        </div>
-      </div>
     </LegacyModalShell>
   )
 }

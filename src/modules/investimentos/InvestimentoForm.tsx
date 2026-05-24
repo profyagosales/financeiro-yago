@@ -202,30 +202,37 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
   )
 
   return (
-    <LegacyModalShell open onClose={onClose} maxWidth={640} zIndex={100}>
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
+    <LegacyModalShell open onClose={onClose} maxWidth={640} zIndex={100}
+      header={
         <div style={{
-          padding: '24px 28px', borderBottom: '1px solid #EDE6DC',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          position: 'sticky', top: 0, background: '#FFFFFF', zIndex: 2,
+          padding: '18px 22px', borderBottom: '1px solid rgba(44,26,15,0.08)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
         }}>
-          <div>
-            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.6px' }}>
-              {isEditing ? 'Editar investimento' : 'Novo investimento'}
-            </h2>
-          </div>
-          <button onClick={onClose} style={{
-            background: '#F5F0E8', border: 'none', borderRadius: 10,
-            width: 32, height: 32, cursor: 'pointer',
+          <h2 style={{
+            fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700,
+            color: '#2C1A0F', margin: 0, letterSpacing: '-0.5px', flex: 1, minWidth: 0,
+          }}>{isEditing ? 'Editar investimento' : 'Novo investimento'}</h2>
+          <button onClick={onClose} aria-label="Fechar" style={{
+            background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: 10,
+            width: 34, height: 34, cursor: 'pointer', flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <IconX size={16} stroke={2} color="#7A5C4F" />
           </button>
         </div>
-
+      }
+      footer={
+        <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
+          <button onClick={handleSave} style={PRIMARY_BTN}>
+            <IconCheck size={16} stroke={2.5} />
+            {isEditing ? 'Salvar' : 'Adicionar'}
+          </button>
+        </div>
+      }
+    >
         {/* Body */}
-        <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
           {/* Nome */}
           <Field label="Nome">
@@ -632,25 +639,6 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
             </select>
           </Field>
         </div>
-
-        {/* Footer */}
-        <div style={{
-          padding: '16px 28px', borderTop: '1px solid #EDE6DC',
-          display: 'flex', justifyContent: 'flex-end', gap: 10,
-          position: 'sticky', bottom: 0, background: '#FFFFFF',
-        }}>
-          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleSave} disabled={!formValid}
-            style={{
-              ...PRIMARY_BTN,
-              opacity: formValid ? 1 : 0.5,
-              cursor: formValid ? 'pointer' : 'not-allowed',
-            }}>
-            <IconCheck size={16} stroke={2.5} />
-            {isEditing ? 'Salvar alterações' : 'Adicionar investimento'}
-          </button>
-        </div>
-      </div>
     </LegacyModalShell>
   )
 }

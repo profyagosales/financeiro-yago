@@ -223,14 +223,25 @@ Modal.Body = function ModalBody({ children, style }: { children: React.ReactNode
 Modal.Footer = function ModalFooter({ children, align = 'end' }: { children: React.ReactNode; align?: 'end' | 'between' | 'start' }) {
   const justify = align === 'between' ? 'space-between' : align === 'start' ? 'flex-start' : 'flex-end'
   return (
-    <div style={{
-      padding: '16px 28px',
-      borderTop: '1px solid #EDE6DC',
+    <div className="modal-footer-shell" style={{
+      padding: '14px 22px',
+      borderTop: '1px solid rgba(44,26,15,0.08)',
       display: 'flex', justifyContent: justify, alignItems: 'center', gap: 10,
-      background: '#FFFFFF',
       flexShrink: 0,
     }}>
       {children}
+      <style>{`
+        .modal-footer-shell {
+          background: #FFFFFF;
+        }
+        @media (max-width: 767px) {
+          .modal-footer-shell {
+            background: rgba(255,233,215,0.96);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+          }
+        }
+      `}</style>
     </div>
   )
 }

@@ -55,29 +55,38 @@ export function DesejoForm({ desejo, presetPrioridade, onClose }: Props) {
   }
 
   return (
-    <LegacyModalShell open onClose={onClose} maxWidth={620} zIndex={100}>
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
+    <LegacyModalShell open onClose={onClose} maxWidth={620} zIndex={100}
+      header={
         <div style={{
-          padding: '24px 28px', borderBottom: '1px solid #EDE6DC',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          position: 'sticky', top: 0, background: '#FFFFFF', zIndex: 2,
+          padding: '18px 22px', borderBottom: '1px solid rgba(44,26,15,0.08)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
         }}>
-          <div>
-            <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.6px' }}>
-              {isEditing ? 'Editar desejo' : 'Novo desejo'}
-            </h2>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 4 }}>
-              Adicione algo que você quer ou precisa comprar
-            </p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{
+              fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700,
+              color: '#2C1A0F', margin: 0, letterSpacing: '-0.5px',
+            }}>{isEditing ? 'Editar desejo' : 'Novo desejo'}</h2>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', margin: '2px 0 0',
+            }}>Adicione algo que você quer ou precisa comprar</p>
           </div>
-          <button onClick={onClose} style={CLOSE_BTN}>
+          <button onClick={onClose} aria-label="Fechar" style={CLOSE_BTN}>
             <IconX size={16} stroke={2} color="#7A5C4F" />
           </button>
         </div>
-
+      }
+      footer={
+        <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
+          <button onClick={handleSave} style={PRIMARY_BTN}>
+            <IconCheck size={16} stroke={2.5} />
+            {isEditing ? 'Salvar' : 'Adicionar'}
+          </button>
+        </div>
+      }
+    >
         {/* Body */}
-        <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
           {/* Nome */}
           <Field label="O que você quer?">
@@ -179,20 +188,6 @@ export function DesejoForm({ desejo, presetPrioridade, onClose }: Props) {
             </div>
           </Field>
         </div>
-
-        {/* Footer */}
-        <div style={{
-          padding: '16px 28px', borderTop: '1px solid #EDE6DC',
-          display: 'flex', justifyContent: 'flex-end', gap: 10,
-          position: 'sticky', bottom: 0, background: '#FFFFFF',
-        }}>
-          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleSave} style={PRIMARY_BTN}>
-            <IconCheck size={16} stroke={2.5} />
-            {isEditing ? 'Salvar alterações' : 'Adicionar desejo'}
-          </button>
-        </div>
-      </div>
     </LegacyModalShell>
   )
 }
