@@ -4,14 +4,13 @@ import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
 import { mesAnoAtual, fmt } from '@/lib/format'
 import {
   IconBuildingBank, IconRepeat, IconTarget,
-  IconTrendingUp, IconChartBar, IconSettings, IconChevronRight
+  IconChartBar, IconSettings, IconChevronRight
 } from '@tabler/icons-react'
 
 const ITEMS = [
   { path: '/contas', Icon: IconBuildingBank, label: 'Contas', cor: '#3D7EB5', bg: '#EBF3FB' },
   { path: '/contas-fixas', Icon: IconRepeat, label: 'Contas Fixas', cor: '#E89527', bg: '#FDF4E3' },
   { path: '/metas', Icon: IconTarget, label: 'Metas & Orçamento', cor: '#1E7D5A', bg: '#E3F4EC' },
-  { path: '/patrimonio', Icon: IconTrendingUp, label: 'Patrimônio', cor: '#7C5CBF', bg: '#EEE8FA' },
   { path: '/relatorios', Icon: IconChartBar, label: 'Relatórios', cor: '#C4553B', bg: '#FAF0EE' },
   { path: '/configuracoes', Icon: IconSettings, label: 'Configurações', cor: '#9B7B6A', bg: '#F5F0E8' },
 ]

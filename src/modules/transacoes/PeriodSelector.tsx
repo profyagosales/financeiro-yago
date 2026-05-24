@@ -147,13 +147,13 @@ export function PeriodSelector({ period, onChange }: Props) {
                     <button key={p.key}
                       onClick={() => { onChange(p); setOpen(false) }}
                       style={{
-                        width: '100%', background: active ? '#FBEEEA' : 'transparent',
+                        width: '100%', background: active ? 'rgba(80,78,118,0.08)' : 'transparent',
                         border: 'none', cursor: 'pointer',
                         padding: '9px 12px', borderRadius: 8,
                         textAlign: 'left',
                         fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12,
                         fontWeight: active ? 700 : 600,
-                        color: active ? '#C4553B' : '#2C1A0F',
+                        color: active ? '#3D3B5F' : '#2C1A0F',
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       }}
                       onMouseEnter={e => { if (!active) (e.currentTarget.style.background = '#FBF8F3') }}
@@ -204,7 +204,7 @@ export function PeriodSelector({ period, onChange }: Props) {
                     onChange({ key: 'custom', label: `${customStart} a ${customEnd}`, start: customStart, end: customEnd })
                     setOpen(false); setShowCustom(false)
                   }}
-                    style={{ flex: 1, background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '8px 12px', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, boxShadow: '0 3px 10px rgba(196,85,59,0.32)' }}>
+                    style={{ flex: 1, background: 'linear-gradient(135deg, #2A1E3F, #504E76)', color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '8px 12px', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, boxShadow: '0 6px 16px rgba(42,30,63,0.4)' }}>
                     Aplicar
                   </button>
                 </div>

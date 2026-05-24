@@ -6,7 +6,6 @@ type EmptyStateType =
   | 'cartoes'
   | 'transacoes'
   | 'metas'
-  | 'patrimonio'
   | 'relatorios'
   | 'default'
 
@@ -53,16 +52,6 @@ const ILLUSTRATIONS: Record<EmptyStateType, React.ReactNode> = {
       />
       <circle cx="40" cy="40" r="10" fill="#3A8580" opacity="0.2" />
       <circle cx="40" cy="40" r="4" fill="#3A8580" />
-    </svg>
-  ),
-  patrimonio: (
-    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-      <circle cx="40" cy="40" r="36" fill="#FAF0EE" />
-      <rect x="24" y="42" width="32" height="18" rx="3" fill="#EDE6DC" />
-      <rect x="30" y="48" width="8" height="12" rx="2" fill="#9B7B6A" opacity="0.4" />
-      <rect x="42" y="52" width="8" height="8" rx="2" fill="#C4553B" opacity="0.3" />
-      <polygon points="20,42 40,22 60,42" fill="#C4553B" opacity="0.4" />
-      <rect x="36" y="28" width="8" height="6" rx="1" fill="white" opacity="0.5" />
     </svg>
   ),
   relatorios: (

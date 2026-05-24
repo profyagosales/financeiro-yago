@@ -61,11 +61,11 @@ export function Page() {
         </div>
         <button onClick={() => setCreatingPrio('media')}
           style={{
-            background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none',
+            background: 'linear-gradient(135deg, #2A1E3F, #504E76)', color: '#FFFFFF', border: 'none',
             borderRadius: 12, padding: '11px 18px', cursor: 'pointer',
             fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
             display: 'flex', alignItems: 'center', gap: 6,
-            boxShadow: '0 4px 16px rgba(196,85,59,0.35)', flexShrink: 0,
+            boxShadow: '0 8px 22px rgba(42,30,63,0.42)', flexShrink: 0,
           }}>
           <IconPlus size={16} stroke={2.5} /> Novo desejo
         </button>
@@ -74,7 +74,7 @@ export function Page() {
       {/* KPIs (padrão filled — consistente com /metas, /cartoes, /contas-fixas) */}
       {(abertos.length > 0 || comprados.length > 0) && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
-          <Kpi icon={<IconHeart size={14} stroke={2} />} label="Em aberto" value={String(abertos.length)} sub={totalEstimadoAbertos > 0 ? `${fmt(totalEstimadoAbertos)} estimado` : 'sem valor estimado'} cor="#C4553B" bg="#FAF0EE" border="rgba(196,85,59,0.18)" />
+          <Kpi icon={<IconHeart size={14} stroke={2} />} label="Em aberto" value={String(abertos.length)} sub={totalEstimadoAbertos > 0 ? `${fmt(totalEstimadoAbertos)} estimado` : 'sem valor estimado'} cor="#504E76" bg="rgba(80,78,118,0.08)" border="rgba(80,78,118,0.22)" />
           <Kpi icon={<IconShoppingCart size={14} stroke={2} />} label="Comprados" value={String(comprados.length)} sub={totalGastoComprados > 0 ? `${fmt(totalGastoComprados)} gasto` : 'nenhum ainda'} cor="#3A8580" bg="#EBF5F0" border="rgba(58,133,128,0.18)" />
           <Kpi icon={<IconPigMoney size={14} stroke={2} />} label="Economia" value={fmt(economiaTotal)} sub="vs estimado" cor="#A8730F" bg="#FDF4E3" border="rgba(212,160,23,0.2)" />
           <Kpi icon={<IconCircleMinus size={14} stroke={2} />} label="Desistidos" value={String(desistidos.length)} sub={desistidos.length === 0 ? 'nenhum' : 'arquivados'} cor="#7A5C4F" bg="#F5F0E8" border="rgba(122,92,79,0.18)" />
@@ -262,7 +262,7 @@ function Kpi({ icon, label, value, sub, cor, bg, border }: { icon: React.ReactNo
 function TabBtn({ children, active, count, onClick }: { children: React.ReactNode; active: boolean; count?: number; onClick: () => void }) {
   return (
     <button onClick={onClick} style={{
-      background: active ? '#C4553B' : 'transparent',
+      background: active ? '#2A1E3F' : 'transparent',
       color: active ? '#FFFFFF' : '#7A5C4F',
       border: 'none', borderRadius: 9,
       padding: '8px 16px', cursor: 'pointer',
@@ -270,7 +270,7 @@ function TabBtn({ children, active, count, onClick }: { children: React.ReactNod
       display: 'inline-flex', alignItems: 'center', gap: 6,
       letterSpacing: '.02em',
       transition: 'all .15s',
-      boxShadow: active ? '0 2px 8px rgba(196,85,59,0.32)' : 'none',
+      boxShadow: active ? '0 4px 12px rgba(42,30,63,0.4)' : 'none',
     }}>
       {children}
       {count !== undefined && (
@@ -292,9 +292,9 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
     }}>
       <div style={{
         width: 64, height: 64, borderRadius: 20,
-        background: 'linear-gradient(135deg, #D4643A, #C4553B)',
+        background: 'linear-gradient(135deg, #2A1E3F, #504E76)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 8px 24px rgba(196,85,59,0.3)',
+        boxShadow: '0 10px 28px rgba(42,30,63,0.4)',
       }}>
         <IconHeart size={32} stroke={1.6} color="#FFFFFF" />
       </div>
@@ -307,11 +307,11 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
         </p>
       </div>
       <button onClick={onCreate} style={{
-        background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none',
+        background: 'linear-gradient(135deg, #2A1E3F, #504E76)', color: '#FFFFFF', border: 'none',
         borderRadius: 12, padding: '11px 20px', cursor: 'pointer',
         fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
         display: 'flex', alignItems: 'center', gap: 6,
-        boxShadow: '0 4px 16px rgba(196,85,59,0.35)', marginTop: 4,
+        boxShadow: '0 8px 22px rgba(42,30,63,0.42)', marginTop: 4,
       }}>
         <IconPlus size={16} stroke={2.5} /> Adicionar primeiro desejo
       </button>

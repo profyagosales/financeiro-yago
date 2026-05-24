@@ -1,6 +1,6 @@
 // ─── Chip EMV dourado SVG ─────────────────────────────────────────────
-// Replicado do CardLogo da Sidebar — chip dourado com 8 pads de contato.
-// Pode ser usado em qualquer cartão real renderizado.
+// Chip dourado com 8 pads de contato. Usado em RealCardVisual pra
+// renderizar cartão de crédito realista.
 
 interface CardChipProps {
   size?: number      // largura do chip (proporcional)

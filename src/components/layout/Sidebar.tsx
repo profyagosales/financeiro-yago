@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   IconLayoutDashboard, IconBuildingBank, IconCreditCard, IconArrowsExchange,
-  IconRepeat, IconTarget, IconTrendingUp, IconChartBar,
+  IconRepeat, IconTarget, IconChartBar,
   IconSettings, IconChevronLeft, IconChevronRight, IconLogout, IconChartLine, IconCash, IconHeart,
 } from '@tabler/icons-react'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
@@ -84,7 +84,6 @@ const MENU = [
     items: [
       { path: '/investimentos', icon: IconChartLine,  label: 'Investimentos', badgeKey: null },
       { path: '/dividas',       icon: IconCash,       label: 'Dívidas',       badgeKey: null },
-      { path: '/patrimonio',    icon: IconTrendingUp, label: 'Visão Geral',   badgeKey: null },
     ],
   },
 ]

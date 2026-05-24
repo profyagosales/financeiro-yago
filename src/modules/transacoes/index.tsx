@@ -234,11 +234,11 @@ export function Page() {
             <InlineStat label="Saldo" value={fmt(stats.saldo)} cor={stats.saldo >= 0 ? '#2C1A0F' : '#C4553B'} />
             <button onClick={() => openFab()}
               style={{
-                background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none',
+                background: 'linear-gradient(135deg, #2A1E3F, #504E76)', color: '#FFFFFF', border: 'none',
                 borderRadius: 12, padding: '11px 18px', cursor: 'pointer',
                 fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
                 display: 'flex', alignItems: 'center', gap: 6,
-                boxShadow: '0 4px 16px rgba(196,85,59,0.35)', marginLeft: 8,
+                boxShadow: '0 8px 22px rgba(42,30,63,0.42)', marginLeft: 8,
               }}>
               <IconPlus size={16} stroke={2.5} /> Lançar
             </button>
@@ -320,7 +320,7 @@ export function Page() {
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
-              color: '#C4553B', padding: '4px 8px',
+              color: '#504E76', padding: '4px 8px',
             }}>
             Limpar tudo
           </button>
@@ -698,9 +698,9 @@ function EmptyList({ hasFilters, onLancar }: { hasFilters: boolean; onLancar: ()
     }}>
       <div style={{
         width: 56, height: 56, borderRadius: 16,
-        background: 'linear-gradient(135deg, #D4643A, #C4553B)',
+        background: 'linear-gradient(135deg, #2A1E3F, #504E76)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 8px 24px rgba(196,85,59,0.32)',
+        boxShadow: '0 10px 26px rgba(42,30,63,0.4)',
       }}>
         <IconReceipt size={28} stroke={1.6} color="#FFFFFF" />
       </div>
@@ -713,11 +713,11 @@ function EmptyList({ hasFilters, onLancar }: { hasFilters: boolean; onLancar: ()
         </p>
       </div>
       <button onClick={onLancar} style={{
-        background: 'linear-gradient(135deg, #D4643A, #C4553B)', color: '#FFFFFF', border: 'none',
+        background: 'linear-gradient(135deg, #2A1E3F, #504E76)', color: '#FFFFFF', border: 'none',
         borderRadius: 12, padding: '10px 18px', cursor: 'pointer',
         fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        boxShadow: '0 4px 16px rgba(196,85,59,0.35)',
+        boxShadow: '0 8px 22px rgba(42,30,63,0.4)',
       }}>
         <IconPlus size={14} stroke={2.5} /> Lançar primeira
       </button>
