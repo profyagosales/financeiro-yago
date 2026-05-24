@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { IconReceipt2 } from '@tabler/icons-react'
 
 type EmptyStateType =
@@ -117,6 +117,9 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ type = 'default', title, subtitle, cta }: EmptyStateProps) {
+  // A11Y: respeita prefers-reduced-motion (sem float infinito pra
+  // vestibulares / motion sickness)
+  const reduceMotion = useReducedMotion()
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -132,8 +135,8 @@ export function EmptyState({ type = 'default', title, subtitle, cta }: EmptyStat
       }}
     >
       <motion.div
-        animate={{ y: [0, -6, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        animate={reduceMotion ? undefined : { y: [0, -6, 0] }}
+        transition={reduceMotion ? undefined : { duration: 3, repeat: Infinity, ease: 'easeInOut' }}
         style={{ marginBottom: 20 }}
       >
         {ILLUSTRATIONS[type]}
@@ -154,7 +157,7 @@ export function EmptyState({ type = 'default', title, subtitle, cta }: EmptyStat
           style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
             fontSize: 14,
-            color: '#9B7B6A',
+            color: '#7A5C4F',
             marginBottom: cta ? 20 : 0,
             maxWidth: 280,
             lineHeight: 1.5,

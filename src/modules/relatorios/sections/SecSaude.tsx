@@ -86,7 +86,7 @@ export function SecSaude({ score, status }: Props) {
                     }}>{valor}</p>
                     <p style={{
                       fontFamily: "'Plus Jakarta Sans',sans-serif",
-                      fontSize: 10, color: '#9B7B6A', margin: 0, fontWeight: 600,
+                      fontSize: 10, color: '#7A5C4F', margin: 0, fontWeight: 600,
                     }}>peso {f.peso}%</p>
                   </div>
                 </div>
@@ -152,7 +152,7 @@ function Gauge({ score, color }: { score: number; color: string }) {
         }}>{score}</p>
         <p style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif",
-          fontSize: 10, fontWeight: 700, color: '#9B7B6A',
+          fontSize: 10, fontWeight: 700, color: '#7A5C4F',
           letterSpacing: '.18em', textTransform: 'uppercase', margin: '2px 0 0',
         }}>de 100</p>
       </div>

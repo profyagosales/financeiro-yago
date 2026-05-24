@@ -171,7 +171,7 @@ export function WelcomeScreen() {
           <IconShieldLock size={12} stroke={2} color="#7A5C4F" />
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
-            fontSize: 10.5, color: '#9B7B6A', textAlign: 'center',
+            fontSize: 10.5, color: '#7A5C4F', textAlign: 'center',
             margin: 0, lineHeight: 1.5, fontWeight: 500,
           }}>
             Dados <strong style={{ color: '#7A5C4F' }}>criptografados no dispositivo</strong> · sync seguro entre devices
@@ -194,7 +194,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
         {hint && (
           <span style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
-            fontSize: 10, color: '#9B7B6A', fontWeight: 500,
+            fontSize: 10, color: '#7A5C4F', fontWeight: 500,
           }}>{hint}</span>
         )}
       </div>

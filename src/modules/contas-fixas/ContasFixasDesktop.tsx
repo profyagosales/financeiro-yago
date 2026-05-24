@@ -15,7 +15,7 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
 const NUM: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1 }
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }
-const SUB: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }
+const SUB: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F' }
 const TEXT: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif" }
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -240,7 +240,7 @@ export function ContasFixasDesktop() {
 
             {/* ─── Insights box ─────────────────────────── */}
             <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <span style={{ ...LABEL as object, color: '#9B7B6A' }}>Insights</span>
+              <span style={{ ...LABEL as object, color: '#7A5C4F' }}>Insights</span>
 
               {proximaPendente && (
                 <InsightRow
@@ -394,13 +394,13 @@ export function ContasFixasDesktop() {
                 </button>
               </div>
 
-              <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Nome</p>
+              <p style={{ ...LABEL as object, color: '#7A5C4F', marginBottom: 6 }}>Nome</p>
               <input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Ex: Aluguel, Internet, Spotify..."
                 style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '13px 16px', ...TEXT, fontSize: 14, outline: 'none', marginBottom: 14, boxSizing: 'border-box', color: '#2C1A0F' }} />
 
               <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Valor</p>
+                  <p style={{ ...LABEL as object, color: '#7A5C4F', marginBottom: 6 }}>Valor</p>
                   <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '12px 14px', gap: 6 }}>
                     <span style={{ ...NUM as object, fontSize: 18, color: '#C4553B' }}>R$</span>
                     <input value={form.valor} onChange={e => setForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" type="tel"
@@ -408,13 +408,13 @@ export function ContasFixasDesktop() {
                   </div>
                 </div>
                 <div style={{ width: 100 }}>
-                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Dia Vence</p>
+                  <p style={{ ...LABEL as object, color: '#7A5C4F', marginBottom: 6 }}>Dia Vence</p>
                   <input value={form.diaVencimento} onChange={e => setForm(f => ({ ...f, diaVencimento: parseInt(e.target.value) || 1 }))} type="number" min="1" max="31"
                     style={{ width: '100%', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 14, padding: '12px 0', ...TEXT, fontSize: 22, fontWeight: 700, color: '#2C1A0F', outline: 'none', textAlign: 'center', boxSizing: 'border-box' }} />
                 </div>
               </div>
 
-              <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 10 }}>Categoria</p>
+              <p style={{ ...LABEL as object, color: '#7A5C4F', marginBottom: 10 }}>Categoria</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: 8, marginBottom: 16 }}>
                 {categorias.map(c => (
                   <motion.button key={c.id} onClick={() => setForm(f => ({ ...f, categoriaId: c.id! }))} whileTap={{ scale: 0.92 }}
@@ -427,7 +427,7 @@ export function ContasFixasDesktop() {
 
               {(contas.length > 0 || cartoes.length > 0) && (
                 <>
-                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 8 }}>Forma de pagamento <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span></p>
+                  <p style={{ ...LABEL as object, color: '#7A5C4F', marginBottom: 8 }}>Forma de pagamento <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span></p>
 
                   {/* Toggle Débito / Crédito */}
                   <div style={{ display: 'flex', gap: 6, background: '#F5F0E8', padding: 4, borderRadius: 12, marginBottom: 10 }}>
@@ -545,14 +545,14 @@ export function ContasFixasDesktop() {
 
               {/* Valor original (readonly) */}
               <div style={{ background: '#FAF6F0', border: '1px solid #EDE6DC', borderRadius: 12, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ ...LABEL as object, color: '#9B7B6A' }}>Valor original</span>
+                <span style={{ ...LABEL as object, color: '#7A5C4F' }}>Valor original</span>
                 <span style={{ ...NUM as object, fontSize: 16, color: '#2C1A0F' }}>{fmt(payingWithFee.valor)}</span>
               </div>
 
               {/* Juros + Multa lado a lado */}
               <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Juros</p>
+                  <p style={{ ...LABEL as object, color: '#7A5C4F', marginBottom: 6 }}>Juros</p>
                   <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 12px', gap: 6 }}>
                     <span style={{ ...NUM as object, fontSize: 13, color: '#C4553B' }}>R$</span>
                     <input
@@ -565,7 +565,7 @@ export function ContasFixasDesktop() {
                   </div>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ ...LABEL as object, color: '#9B7B6A', marginBottom: 6 }}>Multa</p>
+                  <p style={{ ...LABEL as object, color: '#7A5C4F', marginBottom: 6 }}>Multa</p>
                   <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F0', border: '1.5px solid #E8E0D5', borderRadius: 12, padding: '10px 12px', gap: 6 }}>
                     <span style={{ ...NUM as object, fontSize: 13, color: '#C4553B' }}>R$</span>
                     <input
@@ -670,7 +670,7 @@ function InsightRow({ icon, label, value, hint, amount, cor }: { icon: React.Rea
         {icon}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ ...LABEL as object, fontSize: 9, color: '#9B7B6A', marginBottom: 2 }}>{label}</p>
+        <p style={{ ...LABEL as object, fontSize: 9, color: '#7A5C4F', marginBottom: 2 }}>{label}</p>
         <p style={{ ...TEXT, fontSize: 12, fontWeight: 700, color: '#2C1A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{value}</p>
         {hint && <p style={{ ...SUB as object, fontSize: 10, marginTop: 1 }}>{hint}</p>}
       </div>
@@ -751,7 +751,7 @@ function CompactRow({ cf, categoria, conta, cartao, pago, valorPago, vencida, ur
           {conta && (
             <>
               <span style={{ color: '#D4C8BC', fontSize: 9 }}>·</span>
-              <span style={{ ...TEXT, fontSize: 10, fontWeight: 600, color: '#9B7B6A', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ ...TEXT, fontSize: 10, fontWeight: 600, color: '#7A5C4F', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <IconBuildingBank size={9} stroke={2} color="#9B7B6A" />
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: conta.cor }} />
                 {conta.nome}
@@ -865,7 +865,7 @@ function MiniCalendar({ mes, ano, contasFixas, catMap, pgtoMap, selectedDay, onS
   return (
     <div style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 16, padding: '16px 16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ ...LABEL as object, color: '#9B7B6A' }}>{MESES_FULL[mes - 1]} {ano}</span>
+        <span style={{ ...LABEL as object, color: '#7A5C4F' }}>{MESES_FULL[mes - 1]} {ano}</span>
         <span style={{ ...SUB as object, fontSize: 10 }}>{contasFixas.length} {contasFixas.length === 1 ? 'conta' : 'contas'}</span>
       </div>
 

@@ -89,7 +89,7 @@ function MiniMetric({ label, value, color }: { label: string; value: string; col
       <p style={{
         fontFamily: "'Plus Jakarta Sans',sans-serif",
         fontSize: 10, fontWeight: 700,
-        color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase',
+        color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase',
         margin: '0 0 4px',
       }}>{label}</p>
       <p style={{

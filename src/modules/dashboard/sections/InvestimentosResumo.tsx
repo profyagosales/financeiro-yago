@@ -39,7 +39,7 @@ export function InvestimentosResumo({
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
             fontSize: 10, fontWeight: 700,
-            color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
+            color: '#7A5C4F', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
           }}>Investimentos</p>
           <h2 style={{
             fontFamily: "'Fraunces',Georgia,serif",
@@ -180,7 +180,7 @@ function PerfMini({ label, item }: { label: string; item: { nome: string; pctMes
         <span style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: 9.5, fontWeight: 700,
-          color: '#9B7B6A', letterSpacing: '.1em', textTransform: 'uppercase',
+          color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase',
         }}>{label}</span>
         <p style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif",

@@ -125,7 +125,7 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
             <p style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif",
               fontSize: 11, fontWeight: 500,
-              color: '#9B7B6A', margin: '6px 0 0',
+              color: '#7A5C4F', margin: '6px 0 0',
             }}>
               {todasTxs.length} {todasTxs.length === 1 ? 'transação registrada' : 'transações registradas'}
             </p>
@@ -152,7 +152,7 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
               <p style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif",
                 fontSize: 10, fontWeight: 700,
-                color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
+                color: '#7A5C4F', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
               }}>Saldo atual</p>
               <p style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif",
@@ -359,7 +359,7 @@ function TransactionRow({ tx, cat }: { tx: Transacao; cat?: Categoria }) {
         }}>{tx.descricao || cat?.nome || 'Sem descrição'}</p>
         <p style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11,
-          color: '#9B7B6A', margin: '2px 0 0',
+          color: '#7A5C4F', margin: '2px 0 0',
         }}>{cat?.nome ?? '—'} · {dataFmt}</p>
       </div>
       <span style={{

@@ -117,7 +117,7 @@ export function TransactionListRow({ tx, active, bulkSelected, bulkMode, onClick
                 <BankLogo logo={conta.logo} nome={conta.nome} cor={conta.cor} size={14} radiusRatio={0.28}/>
                 <span style={{
                   fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600,
-                  color: '#9B7B6A',
+                  color: '#7A5C4F',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>{conta.nome}</span>
               </span>

@@ -238,7 +238,7 @@ export function ContasDesktop() {
                 {search && (
                   <button onClick={() => setSearch('')}
                     title="Limpar busca"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9B7B6A', padding: 2, fontSize: 11 }}>
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7A5C4F', padding: 2, fontSize: 11 }}>
                     ✕
                   </button>
                 )}
@@ -273,7 +273,7 @@ export function ContasDesktop() {
               {contasFiltradas.length === 0 ? (
                 <p style={{
                   padding: '24px 16px', textAlign: 'center',
-                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A',
+                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F',
                 }}>Nenhuma conta encontrada</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -329,7 +329,7 @@ export function ContasDesktop() {
               height: '100%',
             }}>
               <IconWallet size={48} stroke={1.4} color="#D4C8BC" />
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', margin: 0 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', margin: 0 }}>
                 Selecione uma conta na lista
               </p>
             </div>
@@ -387,7 +387,7 @@ function TopKpi({ label, value, cor, icon }: { label: string; value: string; cor
     <div>
       <p style={{
         fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
-        color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0,
+        color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0,
       }}>{label}</p>
       <p style={{
         fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700,

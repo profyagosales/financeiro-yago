@@ -210,7 +210,7 @@ function InvestimentoActionSheet({
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>{invest.nome}</p>
             <p style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A',
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F',
               margin: '2px 0 0', fontWeight: 500, letterSpacing: '.04em',
             }}>{invest.tipo}{invest.instituicao ? ` · ${invest.instituicao}` : ''}</p>
           </div>
@@ -287,7 +287,7 @@ function ActionRow({ onClick, icon, iconBg, title, subtitle }: {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: 13.5, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>{title}</p>
-        <p style={{ fontSize: 11, color: '#9B7B6A', margin: '2px 0 0', fontWeight: 500 }}>{subtitle}</p>
+        <p style={{ fontSize: 11, color: '#7A5C4F', margin: '2px 0 0', fontWeight: 500 }}>{subtitle}</p>
       </div>
       <IconChevronRight size={14} stroke={2.2} color="#9B7B6A" />
     </button>

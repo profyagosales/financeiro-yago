@@ -61,7 +61,7 @@ export function StatBlock({
             fontFamily: "'Plus Jakarta Sans',sans-serif",
             fontSize: 11,
             fontWeight: 700,
-            color: '#9B7B6A',
+            color: '#7A5C4F',
             letterSpacing: '.07em',
             textTransform: 'uppercase',
           }}
@@ -108,7 +108,7 @@ export function StatBlock({
               style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif",
                 fontSize: 11,
-                color: '#9B7B6A',
+                color: '#7A5C4F',
               }}
             >
               {sub}

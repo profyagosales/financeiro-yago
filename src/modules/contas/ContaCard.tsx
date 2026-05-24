@@ -75,7 +75,7 @@ export function ContaCard({
       <div>
         <p style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
-          color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0,
+          color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0,
         }}>Saldo atual</p>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
           <p style={{
@@ -99,7 +99,7 @@ export function ContaCard({
         {/* Insights subtitle */}
         {(ultimaMovimentacao || transacoesMes > 0) && (
           <p style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '8px 0 0',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '8px 0 0',
           }}>
             {ultimaMovimentacao && <>Última: {ultimaMovimentacao}</>}
             {ultimaMovimentacao && transacoesMes > 0 && ' · '}

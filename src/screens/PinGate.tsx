@@ -70,7 +70,7 @@ export function PinGate() {
         eyebrow={greeting}
         title="Digite seu PIN"
         subtitle={email && (
-          <span style={{ color: '#9B7B6A' }}>
+          <span style={{ color: '#7A5C4F' }}>
             Conta: <strong style={{ color: '#7A5C4F' }}>{email}</strong>
           </span>
         )}

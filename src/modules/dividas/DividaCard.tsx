@@ -123,7 +123,7 @@ export function DividaCard({ divida, onEdit, onDelete, onMovimentar }: Props) {
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#7A5C4F' }}>
                   {divida.parcelasPagas}/{divida.parcelasTotal} parcelas pagas
                   {projecao && !divida.quitada && (
-                    <span style={{ color: '#9B7B6A', marginLeft: 8 }}>· quita em {projecao}</span>
+                    <span style={{ color: '#7A5C4F', marginLeft: 8 }}>· quita em {projecao}</span>
                   )}
                 </span>
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: cor }}>
@@ -141,7 +141,7 @@ export function DividaCard({ divida, onEdit, onDelete, onMovimentar }: Props) {
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-            <span style={{ ...SUB_TXT, color: '#9B7B6A' }}>Início {dataInicio}</span>
+            <span style={{ ...SUB_TXT, color: '#7A5C4F' }}>Início {dataInicio}</span>
             {divida.totalAmortizado > 0 && (
               <>
                 <Dot />
@@ -163,14 +163,14 @@ export function DividaCard({ divida, onEdit, onDelete, onMovimentar }: Props) {
 
         {/* Saldo devedor */}
         <div style={{ textAlign: 'right' }}>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.1em', textTransform: 'uppercase', margin: 0 }}>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: 0 }}>
             Saldo devedor
           </p>
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700,
             color: divida.quitada ? '#3A8580' : '#A8442B', letterSpacing: '-0.3px', margin: '2px 0 0',
           }}>{fmt(divida.saldoDevedor)}</p>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '2px 0 0' }}>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', margin: '2px 0 0' }}>
             de {fmt(divida.valorTotal)}
           </p>
         </div>

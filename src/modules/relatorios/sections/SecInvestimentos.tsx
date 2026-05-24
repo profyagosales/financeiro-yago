@@ -79,7 +79,7 @@ export function SecInvestimentos({ d }: Props) {
               <>
                 <p style={{
                   fontFamily: "'Plus Jakarta Sans',sans-serif",
-                  fontSize: 10, fontWeight: 700, color: '#9B7B6A',
+                  fontSize: 10, fontWeight: 700, color: '#7A5C4F',
                   letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
                 }}>{distrib[hover].tipo}</p>
                 <p style={{
@@ -97,7 +97,7 @@ export function SecInvestimentos({ d }: Props) {
               <>
                 <p style={{
                   fontFamily: "'Plus Jakarta Sans',sans-serif",
-                  fontSize: 10, fontWeight: 700, color: '#9B7B6A',
+                  fontSize: 10, fontWeight: 700, color: '#7A5C4F',
                   letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
                 }}>Total investido</p>
                 <p style={{
@@ -157,7 +157,7 @@ export function SecInvestimentos({ d }: Props) {
         }}>
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
-            fontSize: 10, fontWeight: 700, color: '#9B7B6A',
+            fontSize: 10, fontWeight: 700, color: '#7A5C4F',
             letterSpacing: '.12em', textTransform: 'uppercase',
             margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: 6,
           }}>
@@ -221,7 +221,7 @@ function PerfRow({ item }: { item: { id: number; nome: string; tipo: string; pct
         }}>{item.nome}</p>
         <p style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif",
-          fontSize: 10.5, color: '#9B7B6A', margin: 0, fontWeight: 500,
+          fontSize: 10.5, color: '#7A5C4F', margin: 0, fontWeight: 500,
         }}>{item.tipo}</p>
       </div>
       <div style={{ textAlign: 'right' }}>

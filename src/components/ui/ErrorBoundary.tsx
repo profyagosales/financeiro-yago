@@ -145,7 +145,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <button onClick={() => this.setState(s => ({ showDetails: !s.showDetails }))}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
-              fontSize: 11, fontWeight: 700, color: '#9B7B6A',
+              fontSize: 11, fontWeight: 700, color: '#7A5C4F',
               textTransform: 'uppercase', letterSpacing: '.1em',
               padding: '6px 12px',
             }}>

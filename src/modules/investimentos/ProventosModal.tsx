@@ -170,11 +170,11 @@ export function ProventosModal({ invest, onClose }: Props) {
         {/* Lista de proventos registrados */}
         <div style={{ padding: '16px 26px 24px' }}>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: '0 0 10px' }}>
-            Histórico {proventos.length > 0 && <span style={{ color: '#9B7B6A' }}>({proventos.length})</span>}
+            Histórico {proventos.length > 0 && <span style={{ color: '#7A5C4F' }}>({proventos.length})</span>}
           </p>
 
           {proventos.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12 }}>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12 }}>
               Nenhum provento registrado ainda.
             </div>
           ) : (
@@ -190,7 +190,7 @@ export function ProventosModal({ invest, onClose }: Props) {
                       <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, lineHeight: 1, letterSpacing: '-0.3px' }}>
                         {new Date(p.data + 'T00:00:00').getDate().toString().padStart(2, '0')}
                       </p>
-                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em', textTransform: 'uppercase', margin: '2px 0 0' }}>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.06em', textTransform: 'uppercase', margin: '2px 0 0' }}>
                         {new Date(p.data + 'T00:00:00').toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
                       </p>
                     </div>
@@ -242,7 +242,7 @@ function Kpi({ label, value, sub, cor }: { label: string; value: string; sub: st
     <div style={{ background: '#FFFFFF', border: '1px solid #EDE6DC', borderRadius: 12, padding: '10px 12px' }}>
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: cor, letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>{label}</p>
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700, color: cor, letterSpacing: '-0.3px', margin: '3px 0 1px' }}>{value}</p>
-      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: 0 }}>{sub}</p>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', margin: 0 }}>{sub}</p>
     </div>
   )
 }

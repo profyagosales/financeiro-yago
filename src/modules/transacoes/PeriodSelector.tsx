@@ -186,12 +186,12 @@ export function PeriodSelector({ period, onChange }: Props) {
                   color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: '0 0 8px',
                 }}>Período personalizado</p>
                 <label style={{ display: 'block', marginBottom: 8 }}>
-                  <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A', marginBottom: 4, display: 'block' }}>De</span>
+                  <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#7A5C4F', marginBottom: 4, display: 'block' }}>De</span>
                   <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)}
                     style={{ width: '100%', boxSizing: 'border-box', background: '#FBF8F3', border: '1.5px solid #EDE6DC', borderRadius: 8, padding: '7px 10px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#2C1A0F', outline: 'none' }}/>
                 </label>
                 <label style={{ display: 'block', marginBottom: 14 }}>
-                  <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A', marginBottom: 4, display: 'block' }}>Até</span>
+                  <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#7A5C4F', marginBottom: 4, display: 'block' }}>Até</span>
                   <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)}
                     style={{ width: '100%', boxSizing: 'border-box', background: '#FBF8F3', border: '1.5px solid #EDE6DC', borderRadius: 8, padding: '7px 10px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#2C1A0F', outline: 'none' }}/>
                 </label>

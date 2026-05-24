@@ -183,7 +183,7 @@ export function DividasDesktop() {
                 <IconTrash size={26} color="#C4553B" stroke={1.8} />
               </div>
               <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.5px', margin: '0 0 8px' }}>Excluir "{confirmDelete.nome}"?</p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginBottom: 22, lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', marginBottom: 22, lineHeight: 1.5 }}>
                 A dívida e a Conta Fixa vinculada serão desativadas. O histórico de pagamentos e movimentações é mantido.
               </p>
               <div style={{ display: 'flex', gap: 10 }}>

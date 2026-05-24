@@ -103,7 +103,7 @@ export function SecInsights({ d }: Props) {
           background: '#FBF8F3', borderRadius: 14,
         }}>
           <p style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F',
             margin: 0, fontWeight: 500,
           }}>Nenhum insight nessa categoria.</p>
         </div>

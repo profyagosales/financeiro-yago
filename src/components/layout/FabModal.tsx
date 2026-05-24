@@ -335,7 +335,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                   <div>
                     <FieldLabel>Cartão</FieldLabel>
                     {cartoes.length === 0 ? (
-                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: '4px 0 0' }}>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', margin: '4px 0 0' }}>
                         Nenhum cartão cadastrado
                       </p>
                     ) : (
@@ -378,12 +378,12 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                       <div style={{ flex: 1, textAlign: 'center' }}>
                         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.3px' }}>{parcelas}×</p>
                         {parcelas > 1 && valorNum > 0 && (
-                          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '2px 0 0' }}>
+                          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '2px 0 0' }}>
                             {fmt(valorNum / parcelas)} por mês
                           </p>
                         )}
                         {parcelas === 1 && (
-                          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '2px 0 0' }}>À vista</p>
+                          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '2px 0 0' }}>À vista</p>
                         )}
                       </div>
                       <button onClick={() => setParcelas(p => Math.min(48, p + 1))}
@@ -472,7 +472,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                     }}>
                       <IconTag size={11} stroke={2}/>{t}
                       <button onClick={() => setTags(tags.filter(x => x !== t))}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#9B7B6A', display: 'flex' }}>
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#7A5C4F', display: 'flex' }}>
                         <IconX size={11} stroke={2.4}/>
                       </button>
                     </span>
@@ -514,7 +514,7 @@ export function FabModal({ onClose, defaultContaId }: { onClose: () => void; def
                 <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>
                   Repetir todo mês
                 </p>
-                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '2px 0 0' }}>
+                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '2px 0 0' }}>
                   {recorrente ? 'Salva como conta fixa recorrente' : 'Lançamento único'}
                 </p>
               </div>
@@ -601,7 +601,7 @@ function ContaSelector({ label, contas, value, onChange }: {
       <FieldLabel>{label}</FieldLabel>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {contas.length === 0 ? (
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: 0 }}>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', margin: 0 }}>
             Nenhuma conta cadastrada
           </p>
         ) : (

@@ -178,7 +178,7 @@ export function CartoesDesktop() {
                 />
                 {search && (
                   <button onClick={() => setSearch('')}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9B7B6A', padding: 2, fontSize: 11 }}>✕</button>
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7A5C4F', padding: 2, fontSize: 11 }}>✕</button>
                 )}
               </div>
               <div style={{ display: 'flex', gap: 5, overflowX: 'auto', overflowY: 'hidden', paddingBottom: 2, scrollbarWidth: 'none' }}>
@@ -203,7 +203,7 @@ export function CartoesDesktop() {
             {/* Scrollable rows */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px 16px' }}>
               {cartoesFiltrados.length === 0 ? (
-                <p style={{ padding: '24px 16px', textAlign: 'center', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A' }}>
+                <p style={{ padding: '24px 16px', textAlign: 'center', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F' }}>
                   Nenhum cartão encontrado
                 </p>
               ) : (
@@ -252,7 +252,7 @@ export function CartoesDesktop() {
               height: '100%',
             }}>
               <IconCreditCard size={48} stroke={1.4} color="#D4C8BC" />
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', margin: 0 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', margin: 0 }}>
                 Selecione um cartão na lista
               </p>
             </div>
@@ -319,7 +319,7 @@ export function CartoesDesktop() {
 function TopKpi({ label, value, cor }: { label: string; value: string; cor: string }) {
   return (
     <div>
-      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0 }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0 }}>
         {label}
       </p>
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.3px', lineHeight: 1 }}>

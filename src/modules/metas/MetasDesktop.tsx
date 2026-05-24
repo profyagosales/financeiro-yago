@@ -15,7 +15,7 @@ import type { MetaComputed } from '@/db/hooks/useMetas'
 
 const LABEL: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }
 const NUM: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, letterSpacing: '-0.3px', lineHeight: 1.1 }
-const SUB: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }
+const SUB: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F' }
 const TEXT: React.CSSProperties = { fontFamily: "'Plus Jakarta Sans',sans-serif" }
 const DISPLAY: React.CSSProperties = { fontFamily: "'Fraunces',Georgia,serif", fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }
 
@@ -89,7 +89,7 @@ export function MetasDesktop() {
             Outras metas
           </h2>
           {todasMetas.length > 0 && (
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#9B7B6A' }}>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600, color: '#7A5C4F' }}>
               {todasMetas.length} {todasMetas.length === 1 ? 'meta' : 'metas'}
             </p>
           )}

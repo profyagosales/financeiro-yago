@@ -42,7 +42,7 @@ export function OrcamentoMes({
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
             fontSize: 10, fontWeight: 700,
-            color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase',
+            color: '#7A5C4F', letterSpacing: '.14em', textTransform: 'uppercase',
             margin: 0,
           }}>Orçamento do mês</p>
           <h2 style={{
@@ -167,7 +167,7 @@ function LegendItem({ color, label, value, pct, highlight }: { color: string; la
         <span style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: 10, fontWeight: 700,
-          color: '#9B7B6A', letterSpacing: '.06em', textTransform: 'uppercase',
+          color: '#7A5C4F', letterSpacing: '.06em', textTransform: 'uppercase',
         }}>{label} · {pct.toFixed(0)}%</span>
         <span style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif",

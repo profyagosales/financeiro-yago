@@ -275,11 +275,11 @@ export function MovimentacaoModal({ divida, onClose }: Props) {
         {/* Histórico de movimentações */}
         <div style={{ padding: '16px 26px 24px' }}>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: '0 0 10px' }}>
-            Histórico {movs.length > 0 && <span style={{ color: '#9B7B6A' }}>({movs.length})</span>}
+            Histórico {movs.length > 0 && <span style={{ color: '#7A5C4F' }}>({movs.length})</span>}
           </p>
 
           {movs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#9B7B6A', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12 }}>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12 }}>
               Nenhuma movimentação registrada ainda.
             </div>
           ) : (
@@ -295,7 +295,7 @@ export function MovimentacaoModal({ divida, onClose }: Props) {
                       <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, lineHeight: 1, letterSpacing: '-0.3px' }}>
                         {new Date(m.data + 'T00:00:00').getDate().toString().padStart(2, '0')}
                       </p>
-                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.06em', textTransform: 'uppercase', margin: '2px 0 0' }}>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.06em', textTransform: 'uppercase', margin: '2px 0 0' }}>
                         {new Date(m.data + 'T00:00:00').toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
                       </p>
                     </div>
@@ -356,7 +356,7 @@ function MiniKpi({ label, value, cor }: { label: string; value: string; cor: str
 }
 
 const HELP_STYLE: React.CSSProperties = {
-  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A',
+  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F',
   margin: '6px 0 0', lineHeight: 1.4,
 }
 

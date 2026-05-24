@@ -40,7 +40,7 @@ export function Proximos7Dias({ eventos }: Proximos7DiasProps) {
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
             fontSize: 10, fontWeight: 700,
-            color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
+            color: '#7A5C4F', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
           }}>Próximos 7 dias</p>
           <h2 style={{
             fontFamily: "'Fraunces',Georgia,serif",
@@ -134,7 +134,7 @@ export function Proximos7Dias({ eventos }: Proximos7DiasProps) {
                           margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         }}>{ev.titulo}</p>
                         <p style={{
-                          fontSize: 10.5, color: '#9B7B6A', margin: 0, fontWeight: 500,
+                          fontSize: 10.5, color: '#7A5C4F', margin: 0, fontWeight: 500,
                         }}>{ev.subtitulo ?? TIPO_LABEL[ev.tipo]}</p>
                       </div>
                       {ev.valor > 0 && (

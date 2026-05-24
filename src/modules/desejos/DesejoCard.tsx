@@ -96,7 +96,7 @@ export function DesejoCard({ desejo, onEdit, onComprar, onDelete }: Props) {
       {/* Observações (collapse simples — só primeiras linhas) */}
       {desejo.observacoes && (
         <p style={{
-          fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A',
+          fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F',
           margin: 0, fontStyle: 'italic', lineHeight: 1.4,
           overflow: 'hidden', textOverflow: 'ellipsis',
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',

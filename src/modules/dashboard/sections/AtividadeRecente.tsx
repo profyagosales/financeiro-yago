@@ -41,7 +41,7 @@ export function AtividadeRecente({ txs, insights }: AtividadeRecenteProps) {
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
             fontSize: 10, fontWeight: 700,
-            color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
+            color: '#7A5C4F', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
           }}>Atividade recente</p>
           <h2 style={{
             fontFamily: "'Fraunces',Georgia,serif",
@@ -107,7 +107,7 @@ export function AtividadeRecente({ txs, insights }: AtividadeRecenteProps) {
                     fontSize: 13, fontWeight: 600, color: '#2C1A0F',
                     margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>{tx.descricao || cat?.nome || 'Transação'}</p>
-                  <p style={{ fontSize: 11, color: '#9B7B6A', margin: 0, fontWeight: 500 }}>
+                  <p style={{ fontSize: 11, color: '#7A5C4F', margin: 0, fontWeight: 500 }}>
                     {fmtDate(tx.data)} {cat && `· ${cat.nome}`}
                   </p>
                 </div>
@@ -136,7 +136,7 @@ export function AtividadeRecente({ txs, insights }: AtividadeRecenteProps) {
             <span style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif",
               fontSize: 10, fontWeight: 700,
-              color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase',
+              color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase',
             }}>Insights rápidos</span>
             <div style={{ flex: 1, height: 1, background: 'transparent' }} />
           </div>

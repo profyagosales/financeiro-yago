@@ -85,7 +85,7 @@ function Row({ icon, label, sub, onClick, danger, right }: { icon: React.ReactNo
       </div>
       <div style={{ flex: 1 }}>
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 600, color: danger ? '#C4553B' : '#2C1A0F', margin: 0 }}>{label}</p>
-        {sub && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', marginTop: 2 }}>{sub}</p>}
+        {sub && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', marginTop: 2 }}>{sub}</p>}
       </div>
       {right ?? (onClick && <IconChevronRight size={16} color="#C4B4A8" />)}
     </motion.button>
@@ -544,7 +544,7 @@ function NotifToggle({ icon, label, sub, checked, onChange }: { icon: React.Reac
         {icon}
         <div>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>{label}</p>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: 0 }}>{sub}</p>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: 0 }}>{sub}</p>
         </div>
       </div>
       <Toggle checked={checked} onChange={onChange} />
@@ -611,7 +611,7 @@ function PreferenciasSection() {
           <IconVolume size={16} color="#7A5C4F" stroke={2} />
           <div>
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Sons do sistema</p>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: 0 }}>Confirmação ao pagar, alerta de orçamento estourado, etc.</p>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: 0 }}>Confirmação ao pagar, alerta de orçamento estourado, etc.</p>
           </div>
         </div>
         <Toggle checked={prefs.soundEnabled !== false} onChange={v => setAppPreferences({ soundEnabled: v })} />
@@ -623,7 +623,7 @@ function PreferenciasSection() {
           <IconAccessible size={16} color="#7A5C4F" stroke={2} />
           <div>
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>Reduzir animações</p>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: 0 }}>Útil pra acessibilidade ou se você prefere interface mais sóbria.</p>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: 0 }}>Útil pra acessibilidade ou se você prefere interface mais sóbria.</p>
           </div>
         </div>
         <Toggle checked={prefs.reducedMotion === true} onChange={v => setAppPreferences({ reducedMotion: v })} />
@@ -702,7 +702,7 @@ function ZonaPerigoSection() {
                 </div>
                 <div>
                   <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.5px' }}>{actions[confirm].title}?</h3>
-                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 4 }}>Ação não pode ser desfeita.</p>
+                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', marginTop: 4 }}>Ação não pode ser desfeita.</p>
                 </div>
               </div>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', lineHeight: 1.5, marginBottom: 16 }}>
@@ -834,14 +834,14 @@ function ImportCSVSection() {
                   <div style={{ maxHeight: 140, overflowY: 'auto', border: '0.5px solid #E8E0D5', borderRadius: 10 }}>
                     {rows.slice(0, 8).map((r, i) => (
                       <div key={i} style={{ display: 'flex', gap: 8, padding: '6px 10px', borderBottom: i < 7 ? '0.5px solid #F5F0E8' : 'none', alignItems: 'center' }}>
-                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', flexShrink: 0 }}>{r.data}</span>
+                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', flexShrink: 0 }}>{r.data}</span>
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#2C1A0F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.descricao}</span>
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: r.tipo === 'receita' ? '#3A8580' : '#C4553B', flexShrink: 0, letterSpacing: '-0.3px' }}>
                           {r.tipo === 'receita' ? '+' : '−'}R$ {r.valor.toFixed(2)}
                         </span>
                       </div>
                     ))}
-                    {rows.length > 8 && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', padding: '6px 10px', textAlign: 'center' }}>... e mais {rows.length - 8}</p>}
+                    {rows.length > 8 && <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', padding: '6px 10px', textAlign: 'center' }}>... e mais {rows.length - 8}</p>}
                   </div>
 
                   <div>
@@ -1163,7 +1163,7 @@ function TaxasMercadoSection() {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: 0 }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: 0 }}>
           Última atualização: <strong style={{ color: '#7A5C4F' }}>{dataAtual}</strong>
         </p>
         <SaveButton onClick={handleSave} saved={saved} label="Salvar taxas" />
@@ -1215,7 +1215,7 @@ const LABEL_STYLE: React.CSSProperties = {
   margin: '0 0 6px',
 }
 const HELP_STYLE: React.CSSProperties = {
-  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A',
+  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F',
   lineHeight: 1.6, margin: 0,
 }
 const INPUT_GROUP: React.CSSProperties = {
@@ -1229,7 +1229,7 @@ const INPUT_BARE: React.CSSProperties = {
   color: '#2C1A0F', flex: 1, outline: 'none', width: '100%', minWidth: 0,
 }
 const CURRENCY_PREFIX: React.CSSProperties = {
-  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#9B7B6A',
+  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#7A5C4F',
 }
 
 // ─── CATEGORIAS (CRUD) ───────────────────────────────────────────────
@@ -1341,7 +1341,7 @@ function CategoriasSection() {
                         <span style={{
                           fontFamily: "'Plus Jakarta Sans',sans-serif",
                           fontSize: 9, fontWeight: 700, letterSpacing: '.06em',
-                          textTransform: 'uppercase', color: '#9B7B6A',
+                          textTransform: 'uppercase', color: '#7A5C4F',
                           background: '#F5F0E8',
                           padding: '2px 6px', borderRadius: 5,
                         }}>Padrão</span>
@@ -1349,7 +1349,7 @@ function CategoriasSection() {
                     </div>
                     <p style={{
                       fontFamily: "'Plus Jakarta Sans',sans-serif",
-                      fontSize: 11, color: '#9B7B6A', margin: '2px 0 0',
+                      fontSize: 11, color: '#7A5C4F', margin: '2px 0 0',
                     }}>{cat.tipo === 'receita' ? 'Receita' : 'Despesa'}</p>
                   </div>
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
@@ -1397,7 +1397,7 @@ function CategoriasSection() {
                   <h3 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 19, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px' }}>
                     Apagar "{deleteConfirm.cat.nome}"?
                   </h3>
-                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 4 }}>
+                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', marginTop: 4 }}>
                     Ação não pode ser desfeita.
                   </p>
                 </div>
@@ -1543,7 +1543,7 @@ function CategoriaForm({
 
       {/* Tipo */}
       <div>
-        <p style={LABEL_STYLE}>Tipo {lockTipo && <span style={{ color: '#9B7B6A', textTransform: 'none', letterSpacing: 0, fontWeight: 500 }}>· bloqueado para não quebrar transações</span>}</p>
+        <p style={LABEL_STYLE}>Tipo {lockTipo && <span style={{ color: '#7A5C4F', textTransform: 'none', letterSpacing: 0, fontWeight: 500 }}>· bloqueado para não quebrar transações</span>}</p>
         <div style={{ display: 'flex', gap: 6 }}>
           {(['despesa', 'receita'] as const).map(t => {
             const active = tipo === t

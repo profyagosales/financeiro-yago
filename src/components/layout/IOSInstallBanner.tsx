@@ -105,7 +105,7 @@ export function IOSInstallBanner() {
               // 40x40 atende WCAG touch target mínimo
               width: 40, height: 40, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, color: '#9B7B6A',
+              flexShrink: 0, color: '#7A5C4F',
             }}>
             <IconX size={16} stroke={2} />
           </button>

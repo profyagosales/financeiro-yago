@@ -140,11 +140,11 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-            <span style={{ ...SUB_TXT, color: '#9B7B6A' }}>Desde {dataAplicacao}</span>
+            <span style={{ ...SUB_TXT, color: '#7A5C4F' }}>Desde {dataAplicacao}</span>
             {dataVencimento && (
               <>
                 <Dot />
-                <span style={{ ...SUB_TXT, color: '#9B7B6A' }}>Vence {dataVencimento}</span>
+                <span style={{ ...SUB_TXT, color: '#7A5C4F' }}>Vence {dataVencimento}</span>
               </>
             )}
             {podeProventos && proventosMes > 0 && (
@@ -216,7 +216,7 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
           </div>
           {/* Conversão pra BRL quando ativo em USD */}
           {invest.moeda === 'USD' && (
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '3px 0 0' }}>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', margin: '3px 0 0' }}>
               ≈ {fmt(converterParaBRL(invest.valorAtual, 'USD'))} <span style={{ color: '#C4B4A8' }}>BRL</span>
             </p>
           )}

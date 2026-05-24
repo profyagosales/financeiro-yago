@@ -63,7 +63,7 @@ export function SecGastos({ d }: Props) {
                   <>
                     <p style={{
                       fontFamily: "'Plus Jakarta Sans',sans-serif",
-                      fontSize: 10, fontWeight: 700, color: '#9B7B6A',
+                      fontSize: 10, fontWeight: 700, color: '#7A5C4F',
                       letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
                     }}>{cats[hover].nome}</p>
                     <p style={{
@@ -81,7 +81,7 @@ export function SecGastos({ d }: Props) {
                   <>
                     <p style={{
                       fontFamily: "'Plus Jakarta Sans',sans-serif",
-                      fontSize: 10, fontWeight: 700, color: '#9B7B6A',
+                      fontSize: 10, fontWeight: 700, color: '#7A5C4F',
                       letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
                     }}>Total despesas</p>
                     <p style={{
@@ -138,7 +138,7 @@ export function SecGastos({ d }: Props) {
                     color={c.cor} height={6} background="#F5EEE3" />
                   <span style={{
                     fontFamily: "'Plus Jakarta Sans',sans-serif",
-                    fontSize: 10.5, color: '#9B7B6A', minWidth: 38, textAlign: 'right', fontWeight: 600,
+                    fontSize: 10.5, color: '#7A5C4F', minWidth: 38, textAlign: 'right', fontWeight: 600,
                   }}>{c.pct.toFixed(1)}%</span>
                 </div>
               </motion.div>
@@ -146,7 +146,7 @@ export function SecGastos({ d }: Props) {
             {cats.length > 10 && (
               <p style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif",
-                fontSize: 11, color: '#9B7B6A', fontWeight: 500,
+                fontSize: 11, color: '#7A5C4F', fontWeight: 500,
                 margin: '4px 0 0', textAlign: 'right',
               }}>+ {cats.length - 10} {cats.length - 10 === 1 ? 'outra categoria' : 'outras categorias'}</p>
             )}
@@ -162,7 +162,7 @@ export function SecGastos({ d }: Props) {
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
             fontSize: 10, fontWeight: 700,
-            color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase',
+            color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase',
             margin: '0 0 10px',
           }}>Padrão por dia da semana</p>
           <div style={{

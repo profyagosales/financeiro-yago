@@ -210,7 +210,7 @@ export function TransactionDetail({ tx, onClose }: Props) {
                 }}>
                   <IconTag size={11} stroke={2} />{t}
                   <button onClick={() => removeTag(t)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#9B7B6A', display: 'flex' }}>
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#7A5C4F', display: 'flex' }}>
                     <IconX size={11} stroke={2.4} />
                   </button>
                 </span>
@@ -266,7 +266,7 @@ export function TransactionDetail({ tx, onClose }: Props) {
                 background: '#FBF8F3', border: '1px dashed #D4C8BC', borderRadius: 12,
               }}>
               <IconPaperclip size={20} stroke={1.6} color="#9B7B6A" />
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '6px 0 0' }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '6px 0 0' }}>
                 Arraste arquivos aqui ou clique em Adicionar
               </p>
             </div>
@@ -671,7 +671,7 @@ function AnexoRow({ anexo, onDelete }: { anexo: Anexo; onDelete: () => void }) {
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600, color: '#2C1A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {anexo.nomeArquivo}
           </p>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '2px 0 0' }}>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', margin: '2px 0 0' }}>
             {sizeKB} KB · {anexo.tipo.split('/')[1]?.toUpperCase() ?? 'arquivo'}
           </p>
         </button>

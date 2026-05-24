@@ -272,7 +272,7 @@ export function TransacoesDesktop() {
           />
           {search && (
             <button onClick={() => setSearch('')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9B7B6A', padding: 2, fontSize: 11 }}>✕</button>
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7A5C4F', padding: 2, fontSize: 11 }}>✕</button>
           )}
         </div>
 
@@ -346,7 +346,7 @@ export function TransacoesDesktop() {
       }}>
         <span style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
-          color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase',
+          color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase',
           marginRight: 6,
         }}>Atalhos:</span>
         <QuickChip icon={<IconCalendarEvent size={11} stroke={2}/>} active={quickToday} onClick={() => setQuickToday(t => !t)}>
@@ -497,7 +497,7 @@ export function TransacoesDesktop() {
                     }}>
                       <span style={{
                         fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
-                        color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase',
+                        color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase',
                       }}>{dateInfo.label}</span>
                       <span style={{
                         fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
@@ -660,7 +660,7 @@ function formatGroupDate(data: string): { label: string } {
 function InlineStat({ icon, label, value, cor }: { icon?: React.ReactNode; label: string; value: string; cor: string }) {
   return (
     <div>
-      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
         {icon}{label}
       </p>
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.3px', lineHeight: 1 }}>
@@ -685,7 +685,7 @@ function EmptyList({ hasFilters, onLancar }: { hasFilters: boolean; onLancar: ()
         <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 15, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px' }}>
           Nenhuma transação encontrada
         </p>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: '6px 0 0' }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', margin: '6px 0 0' }}>
           Tente ajustar os filtros ou o período
         </p>
       </div>

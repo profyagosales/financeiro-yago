@@ -166,7 +166,7 @@ export function Dropdown<T extends string | number>({
                 padding: 8, borderTop: '1px solid #EDE6DC',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}>
-                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A' }}>
+                <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#7A5C4F' }}>
                   {selected.length} selecionado{selected.length !== 1 ? 's' : ''}
                 </span>
                 <button onClick={() => { onChange([]); setOpen(false) }}

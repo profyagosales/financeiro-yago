@@ -336,7 +336,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                   ))}
                 </div>
               ) : (
-                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', padding: '10px 14px', background: '#FAF6F0', borderRadius: 10, border: '1px dashed #E8E0D5', margin: 0 }}>
+                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', padding: '10px 14px', background: '#FAF6F0', borderRadius: 10, border: '1px dashed #E8E0D5', margin: 0 }}>
                   Nenhuma conta cadastrada. Use "Outra" para digitar livre ou cadastre uma conta primeiro.
                 </p>
               )
@@ -407,7 +407,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                 <div style={{ background: '#FBF8F3', border: '1px solid #EDE6DC', borderRadius: 12, padding: '14px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                     <span style={{ ...LABEL_STYLE, color: '#2C1A0F', margin: 0 }}>Primeiro aporte</span>
-                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#9B7B6A' }}>(compra inicial)</span>
+                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 600, color: '#7A5C4F' }}>(compra inicial)</span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                     <Field label="Data">
@@ -448,7 +448,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                 <div style={{ background: '#FBF8F3', border: '1px solid #EDE6DC', borderRadius: 12, padding: '14px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                     <span style={{ ...LABEL_STYLE, color: '#2C1A0F', margin: 0 }}>Posição atual</span>
-                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#9B7B6A' }}>
+                    <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F' }}>
                       {aportes.length} {aportes.length === 1 ? 'aporte' : 'aportes'}
                     </span>
                   </div>
@@ -701,7 +701,7 @@ function TaxaEfetivaPreview({ tipoRendimento, percentualIndexador, taxaAdicional
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#1E7D5A', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
           <IconTrendingUp size={12} stroke={2.4} />Taxa efetiva
         </p>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '3px 0 0' }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '3px 0 0' }}>
           R$ 1.000 viraria <strong style={{ color: '#1E7D5A' }}>{(1000 * Math.pow(1 + taxa, 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong> em 12 meses
         </p>
       </div>
@@ -709,7 +709,7 @@ function TaxaEfetivaPreview({ tipoRendimento, percentualIndexador, taxaAdicional
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: '#1E7D5A', letterSpacing: '-0.3px', margin: 0 }}>
           {(taxa * 100).toFixed(2)}% <span style={{ fontSize: 11, fontWeight: 600, color: '#7A5C4F' }}>a.a.</span>
         </p>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '2px 0 0' }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', margin: '2px 0 0' }}>
           ~{(mensal * 100).toFixed(2)}% ao mês
         </p>
       </div>
@@ -720,7 +720,7 @@ function TaxaEfetivaPreview({ tipoRendimento, percentualIndexador, taxaAdicional
 function Mini({ label, value, cor = '#2C1A0F' }: { label: string; value: string; cor?: string }) {
   return (
     <div>
-      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>{label}</p>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>{label}</p>
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: cor, letterSpacing: '-0.3px', margin: '2px 0 0' }}>{value}</p>
     </div>
   )
@@ -733,7 +733,7 @@ const LABEL_STYLE: React.CSSProperties = {
 }
 
 const HELP_STYLE: React.CSSProperties = {
-  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A',
+  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F',
   margin: '6px 0 0', lineHeight: 1.4,
 }
 

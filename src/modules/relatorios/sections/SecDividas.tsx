@@ -62,7 +62,7 @@ export function SecDividas({ d }: Props) {
         <div style={{ flex: 1, minWidth: 200 }}>
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif",
-            fontSize: 10, fontWeight: 700, color: '#9B7B6A',
+            fontSize: 10, fontWeight: 700, color: '#7A5C4F',
             letterSpacing: '.12em', textTransform: 'uppercase', margin: 0,
           }}>Saldo devedor total</p>
           <p style={{

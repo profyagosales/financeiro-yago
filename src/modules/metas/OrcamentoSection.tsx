@@ -58,7 +58,7 @@ export function OrcamentoSection() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <h2 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.6px' }}>Orçamentos</h2>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', marginTop: 3 }}>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', marginTop: 3 }}>
             Limites mensais por categoria — sai alerta quando estoura
           </p>
         </div>
@@ -87,14 +87,14 @@ export function OrcamentoSection() {
           {/* Mini KPIs */}
           <div style={{ display: 'flex', gap: 10, marginBottom: 12, padding: '10px 14px', background: '#FBF8F3', border: '1px solid #EDE6DC', borderRadius: 12 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>Gasto / limite</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>Gasto / limite</p>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: totalGasto > totalLimite ? '#C4553B' : '#2C1A0F', letterSpacing: '-0.3px', margin: '2px 0 0' }}>
-                {fmt(totalGasto)} <span style={{ color: '#9B7B6A', fontWeight: 600, fontSize: 12 }}>/ {fmt(totalLimite)}</span>
+                {fmt(totalGasto)} <span style={{ color: '#7A5C4F', fontWeight: 600, fontSize: 12 }}>/ {fmt(totalLimite)}</span>
               </p>
             </div>
             <div style={{ width: 1, background: '#EDE6DC' }} />
             <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>Uso geral</p>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>Uso geral</p>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.3px', margin: '2px 0 0' }}>
                 {totalLimite > 0 ? ((totalGasto / totalLimite) * 100).toFixed(0) : 0}%
               </p>
@@ -103,7 +103,7 @@ export function OrcamentoSection() {
             <div style={{ flex: 1 }}>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: estourados > 0 ? '#C4553B' : '#9B7B6A', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>Estourados</p>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: estourados > 0 ? '#C4553B' : '#2C1A0F', letterSpacing: '-0.3px', margin: '2px 0 0' }}>
-                {estourados} <span style={{ color: '#9B7B6A', fontWeight: 600, fontSize: 12 }}>de {orcamentos.length}</span>
+                {estourados} <span style={{ color: '#7A5C4F', fontWeight: 600, fontSize: 12 }}>de {orcamentos.length}</span>
               </p>
             </div>
           </div>
@@ -213,7 +213,7 @@ export function OrcamentoSection() {
                 <IconTrash size={26} color="#C4553B" stroke={1.8} />
               </div>
               <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.5px', margin: '0 0 8px' }}>Excluir orçamento?</p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A', marginBottom: 22, lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', marginBottom: 22, lineHeight: 1.5 }}>
                 O limite mensal dessa categoria será removido. As transações continuam intactas.
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
@@ -278,7 +278,7 @@ function OrcamentoRow({ orc, gastos, onEdit, onDelete }: { orc: { id?: number; c
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: estourado ? '#C4553B' : '#2C1A0F', letterSpacing: '-0.3px' }}>{fmt(gasto)}</span>
-            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A' }}> / {fmt(orc.valorLimite)}</span>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F' }}> / {fmt(orc.valorLimite)}</span>
           </div>
           <div style={{ display: 'flex', gap: 3 }}>
             <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

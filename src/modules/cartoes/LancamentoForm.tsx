@@ -133,7 +133,7 @@ export function LancamentoForm({ open, cartao, lancamento, mes, ano, onClose }: 
               )}
             </div>
             {!isEditing && form.totalParcelas > 1 && form.valor && (
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '6px 0 0' }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '6px 0 0' }}>
                 {form.totalParcelas}x de R$ {(parseValor(form.valor) / form.totalParcelas).toFixed(2).replace('.', ',')}
               </p>
             )}

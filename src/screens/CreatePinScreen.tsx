@@ -81,7 +81,7 @@ export function CreatePinScreen() {
         title={step === 'create' ? 'Crie um PIN local' : 'Confirme seu PIN'}
         subtitle={
           step === 'create'
-            ? <>4 dígitos pra proteger o app <strong style={{ color: '#7A5C4F' }}>neste dispositivo</strong>. {email && <><br /><span style={{ color: '#9B7B6A', fontSize: 11.5 }}>Conta: {email}</span></>}</>
+            ? <>4 dígitos pra proteger o app <strong style={{ color: '#7A5C4F' }}>neste dispositivo</strong>. {email && <><br /><span style={{ color: '#7A5C4F', fontSize: 11.5 }}>Conta: {email}</span></>}</>
             : <>Digite novamente o PIN que você acabou de criar.</>
         }
       />

@@ -103,7 +103,7 @@ export function StackScreen({
                     <p style={{
                       fontFamily: "'Plus Jakarta Sans',sans-serif",
                       fontSize: 9.5, fontWeight: 700,
-                      color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase',
+                      color: '#7A5C4F', letterSpacing: '.14em', textTransform: 'uppercase',
                       margin: 0, lineHeight: 1,
                     }}>{eyebrow}</p>
                   )}

@@ -112,7 +112,7 @@ export function SecCompromissos({ d }: Props) {
                             textDecoration: isPago ? 'line-through' : undefined,
                           }}>{c.titulo}</p>
                           <p style={{
-                            fontSize: 10.5, color: '#9B7B6A', margin: 0, fontWeight: 600,
+                            fontSize: 10.5, color: '#7A5C4F', margin: 0, fontWeight: 600,
                           }}>{diaLabel} {c.subtitulo ? `· ${c.subtitulo}` : ''}</p>
                         </div>
                         <span style={{

@@ -121,7 +121,7 @@ export function MetaCard({ meta, onEdit, onAporte, onDelete }: Props) {
             color: corBarra, letterSpacing: '.04em',
           }}>{meta.progressoPct.toFixed(0)}% concluído</span>
           {!atingida && (
-            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A' }}>
+            <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F' }}>
               faltam {fmt(falta)}
             </span>
           )}
@@ -133,7 +133,7 @@ export function MetaCard({ meta, onEdit, onAporte, onDelete }: Props) {
         <div style={{ background: '#FBF8F3', border: '1px solid #EDE6DC', borderRadius: 10, padding: '8px 10px' }}>
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
-            color: '#9B7B6A', letterSpacing: '.1em', textTransform: 'uppercase', margin: '0 0 6px',
+            color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: '0 0 6px',
           }}>Composição</p>
           {meta.valorAporteDireto > 0 && (
             <Row label="Aporte direto" valor={meta.valorAporteDireto} />
@@ -160,7 +160,7 @@ export function MetaCard({ meta, onEdit, onAporte, onDelete }: Props) {
             ? <span>{diasRestantes} {diasRestantes === 1 ? 'dia' : 'dias'} restantes</span>
             : <span style={{ color: '#C4553B', fontWeight: 700 }}>Prazo vencido</span>}
           {aporteMensal && diasRestantes && diasRestantes > 0 && (
-            <span style={{ color: '#9B7B6A' }}>· aporte sugerido {fmt(aporteMensal)}/mês</span>
+            <span style={{ color: '#7A5C4F' }}>· aporte sugerido {fmt(aporteMensal)}/mês</span>
           )}
         </div>
       )}

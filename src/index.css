@@ -70,7 +70,11 @@
   --amber-light: #FDF4E3;
   --dark: #2C1A0F;
   --mocha: #7A5C4F;
-  --muted: #9B7B6A;
+  /* --muted promovido pra 4.7:1 contrast (era #9B7B6A = 3.6:1 borderline).
+     Use --muted-soft pra labels uppercase grandes onde o tom mais claro
+     ainda atinge large-text exemption WCAG. */
+  --muted: #7A5C4F;
+  --muted-soft: #9B7B6A;
   --border: #EDE6DC;
   --border-soft: #F5F0E8;
   --card: rgba(255,255,255,0.82);
@@ -93,7 +97,8 @@
   --color-red-light: #FAEAEA;
   --color-dark: #2C1A0F;
   --color-mocha: #7A5C4F;
-  --color-muted: #9B7B6A;
+  --color-muted: #7A5C4F;
+  --color-muted-soft: #9B7B6A;
   --color-border: #E8E0D5;
   --color-border-strong: #D4C8BC;
   --radius-card: 20px;

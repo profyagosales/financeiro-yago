@@ -121,7 +121,7 @@ export function SecMovimentacoes({ d }: Props) {
           background: '#FBF8F3', borderRadius: 12,
         }}>
           <p style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#9B7B6A',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F',
             margin: 0, fontWeight: 500,
           }}>Nenhuma transação encontrada.</p>
         </div>
@@ -192,7 +192,7 @@ export function SecMovimentacoes({ d }: Props) {
                     <span style={{ width: 6, height: 6, borderRadius: 2, background: cat.cor, flexShrink: 0 }} />
                     {cat.nome}
                   </span>
-                ) : <span style={{ fontSize: 11, color: '#9B7B6A' }}>—</span>}
+                ) : <span style={{ fontSize: 11, color: '#7A5C4F' }}>—</span>}
                 <span className="hide-mobile" style={{
                   fontSize: 11.5, color: '#7A5C4F', fontWeight: 500,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',

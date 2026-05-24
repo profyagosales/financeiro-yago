@@ -67,7 +67,7 @@ export function PageHeader({ title, subtitle, action, icon, accent = DEFAULT_ACC
           {subtitle && (
             <p style={{
               fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: 13, color: '#9B7B6A',
+              fontSize: 13, color: '#7A5C4F',
               margin: '4px 0 0',
               fontWeight: 500,
             }}>

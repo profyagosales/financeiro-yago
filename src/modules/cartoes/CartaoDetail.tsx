@@ -189,7 +189,7 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 padding: 6, borderRadius: 8,
-                color: '#9B7B6A',
+                color: '#7A5C4F',
                 display: 'flex', alignItems: 'center',
               }}
               onMouseEnter={e => (e.currentTarget.style.background = '#FBF8F3')}
@@ -215,7 +215,7 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 padding: 6, borderRadius: 8,
-                color: '#9B7B6A',
+                color: '#7A5C4F',
                 display: 'flex', alignItems: 'center',
               }}
               onMouseEnter={e => (e.currentTarget.style.background = '#FBF8F3')}
@@ -268,7 +268,7 @@ function LancamentosList({ lancs, cartaoCor, onEdit, onLancar }: {
         <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px' }}>
           Nenhum lançamento nesta fatura
         </p>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: '6px 0 14px' }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', margin: '6px 0 14px' }}>
           As despesas registradas neste mês aparecem aqui
         </p>
         <button onClick={onLancar}
@@ -326,7 +326,7 @@ function LancamentoRow({ lanc, onEdit, isLast }: { lanc: LancamentoCartao; onEdi
         {/* Data column */}
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 20, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.3px', lineHeight: 1 }}>{dia}</p>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.1em', textTransform: 'uppercase', margin: '2px 0 0' }}>{mesAbrev}</p>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: '2px 0 0' }}>{mesAbrev}</p>
         </div>
 
         {/* Categoria + descrição + chips */}
@@ -481,7 +481,7 @@ function CategoriasTab({ lancs, faturaTotal }: { lancs: LancamentoCartao[]; fatu
         <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px' }}>
           Sem categorias pra agrupar
         </p>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: '6px 0 0' }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', margin: '6px 0 0' }}>
           Lance despesas pra ver a distribuição
         </p>
       </div>
@@ -510,7 +510,7 @@ function CategoriasTab({ lancs, faturaTotal }: { lancs: LancamentoCartao[]; fatu
             )
           })}
         </div>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '8px 0 0', textAlign: 'right' }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '8px 0 0', textAlign: 'right' }}>
           Total: <strong style={{ color: '#2C1A0F' }}>{fmt(faturaTotal)}</strong>
         </p>
       </div>
@@ -586,7 +586,7 @@ function HistoricoTab({ cartao }: { cartao: Cartao }) {
         <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 16, fontWeight: 700, color: '#2C1A0F', margin: 0, letterSpacing: '-0.4px' }}>
           Ainda sem histórico
         </p>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', margin: 0 }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', margin: 0 }}>
           As faturas anteriores aparecem aqui
         </p>
       </div>
@@ -649,7 +649,7 @@ function HistoricoTab({ cartao }: { cartao: Cartao }) {
 function Meta({ label, value }: { label: string; value: string }) {
   return (
     <span>
-      <span style={{ color: '#9B7B6A' }}>{label} </span>
+      <span style={{ color: '#7A5C4F' }}>{label} </span>
       <strong style={{ color: '#2C1A0F', fontWeight: 700 }}>{value}</strong>
     </span>
   )
@@ -662,7 +662,7 @@ function Dot() {
 function InlineStat({ label, value, cor }: { label: string; value: string; cor: string }) {
   return (
     <div>
-      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0 }}>
+      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0 }}>
         {label}
       </p>
       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: cor, margin: '4px 0 0', letterSpacing: '-0.3px' }}>

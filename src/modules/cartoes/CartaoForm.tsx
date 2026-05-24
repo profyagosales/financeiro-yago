@@ -120,7 +120,7 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
           }}>
             <p style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9.5, fontWeight: 700,
-              color: '#9B7B6A', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
+              color: '#7A5C4F', letterSpacing: '.14em', textTransform: 'uppercase', margin: 0,
             }}>Pré-visualização</p>
             <div style={{ transform: 'scale(0.78)', transformOrigin: 'center top', marginBottom: -40 }}>
               <RealCardVisual
@@ -283,7 +283,7 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
           }}>
             <p style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
-              color: '#9B7B6A', letterSpacing: '.16em', textTransform: 'uppercase', margin: 0,
+              color: '#7A5C4F', letterSpacing: '.16em', textTransform: 'uppercase', margin: 0,
             }}>Pré-visualização</p>
 
             <RealCardVisual
@@ -298,7 +298,7 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
             />
 
             <p style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A',
+              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F',
               margin: 0, lineHeight: 1.5,
             }}>
               Os últimos 4 dígitos podem ser personalizados — os demais números são gerados aleatoriamente apenas pra ilustração visual.

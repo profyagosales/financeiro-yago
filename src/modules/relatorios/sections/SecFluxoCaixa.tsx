@@ -143,7 +143,7 @@ export function EmptyChart({ text }: { text: string }) {
     }}>
       <p style={{
         fontFamily: "'Plus Jakarta Sans',sans-serif",
-        fontSize: 13, color: '#9B7B6A', margin: 0, fontWeight: 500,
+        fontSize: 13, color: '#7A5C4F', margin: 0, fontWeight: 500,
       }}>{text}</p>
     </div>
   )

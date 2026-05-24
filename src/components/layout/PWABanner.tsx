@@ -67,7 +67,7 @@ export function PWABanner() {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#FAF6F0', margin: 0 }}>Instalar como app</p>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '2px 0 0' }}>Acesso rápido pela tela inicial</p>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', margin: '2px 0 0' }}>Acesso rápido pela tela inicial</p>
           </div>
           <motion.button onClick={handleInstall} whileTap={{ scale: 0.95 }}
             style={{ background: '#C4553B', color: 'white', border: 'none', borderRadius: 9, padding: '7px 12px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
@@ -81,7 +81,7 @@ export function PWABanner() {
               // 40x40 cumpre touch target mínimo (era 24)
               width: 40, height: 40, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, color: '#9B7B6A',
+              flexShrink: 0, color: '#7A5C4F',
             }}>
             <IconX size={15} stroke={2} />
           </button>

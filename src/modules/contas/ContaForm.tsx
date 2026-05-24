@@ -261,7 +261,7 @@ export function ContaForm({ open, conta, onClose, onSave, onDelete }: Props) {
         }}>
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
-            color: '#9B7B6A', letterSpacing: '.16em', textTransform: 'uppercase', margin: 0,
+            color: '#7A5C4F', letterSpacing: '.16em', textTransform: 'uppercase', margin: 0,
           }}>Preview</p>
 
           {/* Live preview do card */}
@@ -295,7 +295,7 @@ export function ContaForm({ open, conta, onClose, onSave, onDelete }: Props) {
             <div>
               <p style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
-                color: '#9B7B6A', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0,
+                color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase', margin: 0,
               }}>Saldo atual</p>
               <p style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 26, fontWeight: 700,
@@ -324,7 +324,7 @@ export function ContaForm({ open, conta, onClose, onSave, onDelete }: Props) {
           </div>
 
           <p style={{
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A',
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F',
             margin: 0, lineHeight: 1.5,
           }}>
             Esse é o cartão como ele aparece na página de contas. Edite os campos à esquerda e veja o resultado ao vivo aqui.
