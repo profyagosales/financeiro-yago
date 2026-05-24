@@ -45,10 +45,12 @@ async function dispararNotificacao(opts: {
   const data = { url: opts.url ?? '/' }
   const options: NotificationOptions = {
     body: opts.body,
-    icon: '/icon-192.svg',
-    badge: '/favicon.svg',
+    // PNG: Safari macOS não renderiza SVG bem em notificações
+    icon: '/notification-icon.png',
+    badge: '/brand/notification-badge.svg',
     tag: opts.tag,
-    silent: opts.silent,
+    // Safari quebra se silent: true sem motivo claro
+    silent: opts.silent === true ? true : undefined,
     data,
   }
   try {
@@ -212,4 +214,31 @@ export async function notificarTeste(): Promise<boolean> {
     tag: 'teste',
     url: '/',
   })
+}
+
+// ─── Detecta plataforma pra UX ───────────────────────────────────────
+// Usado pra customizar copy/CTA em telas que pedem permissão (Safari vs
+// Chrome têm fluxos diferentes; iOS Safari só permite se instalado PWA).
+export type Plataforma = 'ios-safari' | 'macos-safari' | 'chromium' | 'firefox' | 'desconhecida'
+
+export function detectarPlataforma(): Plataforma {
+  if (typeof navigator === 'undefined') return 'desconhecida'
+  const ua = navigator.userAgent
+  const isIOS = /iPad|iPhone|iPod/.test(ua)
+  const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua)
+  const isMac = /Macintosh/.test(ua) && !isIOS
+  if (isIOS && isSafari) return 'ios-safari'
+  if (isMac && isSafari) return 'macos-safari'
+  if (/Firefox/.test(ua)) return 'firefox'
+  if (/Chrome|Chromium|Edg/.test(ua)) return 'chromium'
+  return 'desconhecida'
+}
+
+// Se o app está rodando como PWA standalone (Dock no Mac / Home Screen no iOS).
+// iOS Safari só envia push se o app for instalado primeiro.
+export function estaInstaladoPWA(): boolean {
+  if (typeof window === 'undefined') return false
+  const standalone = window.matchMedia?.('(display-mode: standalone)').matches
+  const iosStandalone = (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  return standalone || iosStandalone
 }

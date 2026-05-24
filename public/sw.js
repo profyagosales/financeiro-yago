@@ -5,15 +5,18 @@
 // O service worker mantém o app rodando offline depois da primeira
 // visita: ícones, fontes, JS bundle, etc ficam cacheados.
 
-const CACHE_NAME = 'financeiro-yago-v3-rich-notif'
+const CACHE_NAME = 'financeiro-yago-v4-png-icons'
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
   '/favicon.svg',
-  '/icon-192.svg',
-  '/icon-512.svg',
-  '/apple-touch-icon.svg',
+  '/favicon-32.png',
+  '/favicon-16.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
+  '/notification-icon.png',
   '/brand/notification-badge.svg',
 ]
 
@@ -88,13 +91,15 @@ self.addEventListener('push', (event) => {
     const p = event.data.json()
     const options = {
       body: p.body || '',
-      icon: p.icon || '/icon-192.svg',
+      // PNG: Safari macOS renderiza mal SVG em notificações
+      icon: p.icon || '/notification-icon.png',
       badge: p.badge || '/brand/notification-badge.svg',
       image: p.image,
       tag: p.tag || undefined,
       renotify: p.renotify === true,
       requireInteraction: p.requireInteraction === true,
-      silent: p.silent === true,
+      // Safari quebra com silent: true — só passa se for explicitamente true
+      silent: p.silent === true ? true : undefined,
       vibrate: p.vibrate || [80, 40, 80],
       timestamp: Date.now(),
       actions: Array.isArray(p.actions) ? p.actions.slice(0, 2) : undefined,
@@ -112,7 +117,7 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
       self.registration.showNotification('Financeiro do Yago', {
         body: text,
-        icon: '/icon-192.svg',
+        icon: '/notification-icon.png',
         badge: '/brand/notification-badge.svg',
       }),
     )

@@ -12,20 +12,22 @@
     <meta name="theme-color" content="#2A1E3F" />
     <meta name="color-scheme" content="light" />
 
-    <!-- Favicon -->
+    <!-- Favicon (Safari prefere PNG; SVG é fallback pra navegadores que aceitam) -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="mask-icon" href="/brand/mark-mono-dark.svg" color="#2A1E3F" />
 
     <!-- PWA manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <!-- iOS / Safari PWA -->
+    <!-- iOS / Safari PWA — apple-touch-icon DEVE ser PNG pro Safari macOS Dock -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Financeiro" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Open Graph (share preview) -->
     <meta property="og:title" content="Financeiro do Yago" />

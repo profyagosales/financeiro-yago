@@ -915,8 +915,13 @@ function PinSection() {
 // ─── PWA ─────────────────────────────────────────────────────────────
 function PWASection() {
   const { canInstall, install } = usePWAInstall()
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-  const isMac = /Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1
+  // Detecção correta — iPadOS 13+ reporta como "Macintosh" + tem touch
+  // (maxTouchPoints > 1). Mac REAL tem maxTouchPoints = 0.
+  const ua = navigator.userAgent
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+  const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg|Firefox/.test(ua)
+  const isMacOS = /Macintosh/.test(ua) && navigator.maxTouchPoints === 0
+  const isMacSafari = isMacOS && isSafari
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as { standalone?: boolean }).standalone === true
 
   if (isStandalone) {
@@ -929,7 +934,7 @@ function PWASection() {
         <IconCheck size={20} stroke={2.4} color="#1E7D5A" />
         <div>
           <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#1E7D5A', margin: 0 }}>App instalado!</p>
-          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', margin: '3px 0 0' }}>Rodando em modo standalone.</p>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F', margin: '3px 0 0' }}>Rodando em modo standalone. Notificações em background ativas.</p>
         </div>
       </div>
     )
@@ -950,25 +955,48 @@ function PWASection() {
         </button>
       )}
 
-      {/* Guia iOS */}
-      {(isIOS || isMac) && (
+      {/* Guia macOS Safari — "Add to Dock" (Safari 17+ / macOS Sonoma+) */}
+      {isMacSafari && (
         <div style={GUIDE_BOX}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <IconBrandApple size={18} stroke={1.8} color="#2C1A0F" />
-            <p style={GUIDE_TITLE}>iPhone, iPad ou Mac (Safari)</p>
+            <p style={GUIDE_TITLE}>Mac (Safari 17+)</p>
+          </div>
+          {[
+            'No menu superior do Safari, clique em "Arquivo" → "Adicionar ao Dock…"',
+            'Confirme o nome "Financeiro" e clique em "Adicionar"',
+            'O app aparece no Dock e abre em janela própria, sem barra de URL',
+            'Notificações chegam mesmo com a janela fechada (via APNs da Apple)',
+          ].map((s, i) => <GuideStep key={i} n={i + 1} text={s} />)}
+          <p style={{
+            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F',
+            margin: '10px 0 0', lineHeight: 1.5, fontStyle: 'italic',
+          }}>
+            Requer macOS 14 Sonoma ou posterior. Em versões mais antigas, use Chrome ou Edge.
+          </p>
+        </div>
+      )}
+
+      {/* Guia iOS / iPadOS Safari */}
+      {isIOS && (
+        <div style={GUIDE_BOX}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <IconBrandApple size={18} stroke={1.8} color="#2C1A0F" />
+            <p style={GUIDE_TITLE}>iPhone ou iPad (Safari)</p>
           </div>
           {[
             'Abra este site no Safari (não funciona em outros browsers no iOS)',
-            'Toque no ícone de compartilhar (quadrado com seta) na barra de baixo',
+            'Toque no ícone de compartilhar (quadrado com seta para cima)',
             'Role pra baixo e toque em "Adicionar à Tela de Início"',
             'Confirme o nome "Financeiro" e toque em "Adicionar"',
             'O ícone aparece na tela inicial e abre em tela cheia, como app nativo',
+            'Só depois de instalado as notificações funcionam no iOS',
           ].map((s, i) => <GuideStep key={i} n={i + 1} text={s} />)}
         </div>
       )}
 
-      {/* Guia Chrome/Edge desktop e Android */}
-      {!isIOS && (
+      {/* Guia Chrome/Edge desktop e Android (mostra também em Mac sem ser Safari) */}
+      {!isIOS && !isMacSafari && (
         <div style={GUIDE_BOX}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <IconBrandChrome size={18} stroke={1.8} color="#E89527" />
@@ -989,7 +1017,7 @@ function PWASection() {
       }}>
         <IconInfoCircle size={14} color="#9B7B6A" stroke={2} style={{ flexShrink: 0, marginTop: 2 }}/>
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: 0, lineHeight: 1.5 }}>
-          <strong>Por que instalar?</strong> Acesso direto pela tela inicial, abre em tela cheia (sem URL/abas), funciona offline (cache local), notificações futuras. Seus dados ficam no dispositivo.
+          <strong>Por que instalar?</strong> Acesso direto pela tela inicial / Dock, abre em janela própria (sem URL/abas), funciona offline (cache local), notificações em background mesmo com o app fechado. Seus dados ficam no dispositivo.
         </p>
       </div>
     </div>
