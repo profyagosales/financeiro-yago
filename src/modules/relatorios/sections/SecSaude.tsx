@@ -12,7 +12,7 @@ interface Props {
 
 const FATORES: Array<{ key: keyof SaudeScore['fatores']; label: string; description: string; icon: typeof IconShieldCheck; peso: number; color: string }> = [
   { key: 'reserva',        label: 'Reserva de emergência', description: 'Cobertura do alvo definido (ou 6m de despesa).', icon: IconShieldCheck,  peso: 30, color: '#3A8580' },
-  { key: 'poupanca',       label: 'Taxa de poupança',      description: 'Quanto da renda você guarda. Ideal: 20%+.',     icon: IconCoin,         peso: 25, color: '#1E7D5A' },
+  { key: 'economia',       label: 'Taxa de economia',      description: 'Quanto da renda você guarda no mês (savings rate). Ideal: 20%+.',     icon: IconCoin,         peso: 25, color: '#1E7D5A' },
   { key: 'endividamento',  label: 'Endividamento',         description: 'Parcela de dívidas vs renda. Menor = melhor.',   icon: IconScaleOutline, peso: 25, color: '#A8442B' },
   { key: 'liquidez',       label: 'Liquidez',              description: 'Saldo em contas vs despesa mensal (3m = ótimo).', icon: IconWaveSawTool,  peso: 20, color: '#504E76' },
 ]

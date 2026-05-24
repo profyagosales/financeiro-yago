@@ -13,12 +13,12 @@ export function SecMetas({ d }: Props) {
   const navigate = useNavigate()
   const reserva = d.reserva
   const metas = d.metasAtivas
-  const taxaPoupancaMensal = Math.max(0, d.totais.receitasMensalMedia - d.totais.despesasMensalMedia)
+  const economiaMensal = Math.max(0, d.totais.receitasMensalMedia - d.totais.despesasMensalMedia)
 
   function mesesAteAtingir(faltam: number): number | null {
     if (faltam <= 0) return 0
-    if (taxaPoupancaMensal <= 0) return null
-    return Math.ceil(faltam / taxaPoupancaMensal)
+    if (economiaMensal <= 0) return null
+    return Math.ceil(faltam / economiaMensal)
   }
 
   return (
@@ -26,7 +26,7 @@ export function SecMetas({ d }: Props) {
       id="metas"
       eyebrow="Metas"
       title="Progresso e projeção"
-      description={`Com a média de poupança atual (${fmt(taxaPoupancaMensal)}/mês), aqui o tempo estimado pra cada meta.`}
+      description={`Com a média de economia atual (${fmt(economiaMensal)}/mês), aqui o tempo estimado pra cada meta.`}
       icon={<IconTarget size={18} stroke={2} color="#D4A017" />}
       accent="#D4A017"
       action={(
@@ -150,7 +150,7 @@ export function SecMetas({ d }: Props) {
                   <p style={{
                     fontFamily: "'Plus Jakarta Sans',sans-serif",
                     fontSize: 11, color: '#A8442B', margin: '8px 0 0', fontWeight: 600,
-                  }}>Sem poupança disponível pra projetar prazo</p>
+                  }}>Sem economia disponível pra projetar prazo</p>
                 )}
               </motion.div>
             )

@@ -111,7 +111,7 @@ function PerfilSection() {
   const [form, setForm] = useState({
     displayName: profile.displayName ?? '',
     renda: profile.rendaMensal ? String(profile.rendaMensal).replace('.', ',') : '',
-    metaPct: profile.metaPoupancaPct ? String(profile.metaPoupancaPct * 100) : '',
+    metaPct: profile.metaEconomiaPct ? String(profile.metaEconomiaPct * 100) : '',
   })
   const [saved, setSaved] = useState(false)
 
@@ -121,7 +121,9 @@ function PerfilSection() {
     await setUserProfile({
       displayName: form.displayName.trim() || undefined,
       rendaMensal: parse(form.renda),
-      metaPoupancaPct: parse(form.metaPct) / 100,
+      metaEconomiaPct: parse(form.metaPct) / 100,
+      // Limpa campo legado pra não confundir
+      metaPoupancaPct: undefined,
     })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -129,13 +131,15 @@ function PerfilSection() {
 
   const renda = parse(form.renda)
   const metaPct = parse(form.metaPct) / 100
-  const valorPoupar = renda * metaPct
+  const valorEconomizar = renda * metaPct
 
   return (
     <div>
       <p style={{ ...HELP_STYLE, marginBottom: 14 }}>
         Como prefere ser chamado aparece na saudação do Dashboard. Sua renda é usada para
-        calcular % comprometido e dimensionar a reserva de emergência.
+        calcular % comprometido e dimensionar a reserva de emergência. A <strong>meta de
+        economia</strong> é o % que você quer guardar mensalmente (pode ir pra CDB, Tesouro,
+        ações, reserva — não tem nada a ver com Caderneta de Poupança).
       </p>
 
       {/* Nome de exibição */}
@@ -160,7 +164,7 @@ function PerfilSection() {
           </div>
         </div>
         <div>
-          <p style={LABEL_STYLE}>Meta poupança</p>
+          <p style={LABEL_STYLE}>Meta de economia</p>
           <div style={INPUT_GROUP}>
             <input value={form.metaPct} onChange={e => setForm(f => ({ ...f, metaPct: e.target.value }))}
               placeholder="20" inputMode="decimal" style={{ ...INPUT_BARE, textAlign: 'right' }} />
@@ -176,10 +180,10 @@ function PerfilSection() {
           display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
         }}>
           <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#1E7D5A', fontWeight: 600 }}>
-            Meta de poupança mensal
+            Meta de economia mensal
           </span>
           <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700, color: '#1E7D5A', letterSpacing: '-0.3px' }}>
-            {fmt(valorPoupar)}
+            {fmt(valorEconomizar)}
           </span>
         </div>
       )}
@@ -430,7 +434,7 @@ function NotificacoesSection() {
                 <PushToggle
                   emoji="📅"
                   label="Monthly recap"
-                  sub="Dia 1 às 09:00 BRT · fechamento do mês anterior + taxa de poupança"
+                  sub="Dia 1 às 09:00 BRT · fechamento do mês anterior + taxa de economia"
                   checked={prefs.pushMonthlyRecap !== false}
                   onChange={v => setAppPreferences({ pushMonthlyRecap: v })}
                 />

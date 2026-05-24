@@ -104,7 +104,7 @@ export function RelatoriosMobile() {
           <div>
             <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: '.16em', textTransform: 'uppercase', margin: 0 }}>Saúde financeira</p>
             <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 19, fontWeight: 700, color: C.ink, letterSpacing: '-0.4px', margin: '4px 0 0' }}>{labelStatus(d.status)}</p>
-            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: C.muted, margin: '2px 0 0', fontWeight: 500 }}>Reserva, poupança, dívidas, liquidez</p>
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: C.muted, margin: '2px 0 0', fontWeight: 500 }}>Reserva, economia, dívidas, liquidez</p>
           </div>
         </motion.section>
 

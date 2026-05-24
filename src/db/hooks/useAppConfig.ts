@@ -61,11 +61,16 @@ export async function setBrapiToken(token: string) {
   }
 }
 
-// ─── Perfil financeiro (renda + meta de poupança + identidade) ───────
+// ─── Perfil financeiro (renda + meta de economia + identidade) ───────
+// Nota: "taxa de economia" é o savings rate = % da renda não consumida no mês.
+// NÃO confundir com Caderneta de Poupança — esse % pode ir pra qualquer
+// investimento (CDB, Tesouro, ações, reserva, etc).
 export interface UserProfile {
   displayName?: string              // Como prefere ser chamado
   rendaMensal?: number              // R$ líquida
-  metaPoupancaPct?: number          // 0.20 = 20%
+  metaEconomiaPct?: number          // 0.20 = 20%
+  /** @deprecated nome antigo — use metaEconomiaPct. Mantido só pra ler dados legados. */
+  metaPoupancaPct?: number
 }
 
 // Hook helper: retorna nome pra saudação. Sem fallback automático
@@ -77,7 +82,12 @@ export function useDisplayName(): string {
 
 export function useUserProfile(): UserProfile {
   const row = useLiveQuery(() => db.appConfig.where('key').equals(KEY_PROFILE).first(), [])
-  return (row?.value as UserProfile) ?? {}
+  const profile = (row?.value as UserProfile) ?? {}
+  // Backwards compat: dados antigos têm metaPoupancaPct. Expõe sempre via metaEconomiaPct.
+  return {
+    ...profile,
+    metaEconomiaPct: profile.metaEconomiaPct ?? profile.metaPoupancaPct,
+  }
 }
 
 export async function setUserProfile(profile: Partial<UserProfile>) {

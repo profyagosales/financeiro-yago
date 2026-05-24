@@ -298,12 +298,12 @@ export function indicadores(opts: {
   totalDividas: number
 }) {
   const { receitasMensal, despesasMensal, parcelaDividas, saldoContas, totalInvestido, totalDividas } = opts
-  const taxaPoupanca = receitasMensal > 0 ? ((receitasMensal - despesasMensal) / receitasMensal) * 100 : 0
+  const taxaEconomia = receitasMensal > 0 ? ((receitasMensal - despesasMensal) / receitasMensal) * 100 : 0
   const endividamentoPct = receitasMensal > 0 ? (parcelaDividas / receitasMensal) * 100 : 0
   const liquidezMeses = despesasMensal > 0 ? saldoContas / despesasMensal : 0
   const patrimonioLiquido = saldoContas + totalInvestido - totalDividas
   const expoDividaPct = patrimonioLiquido !== 0 ? (totalDividas / Math.abs(patrimonioLiquido + totalDividas)) * 100 : 0
-  return { taxaPoupanca, endividamentoPct, liquidezMeses, patrimonioLiquido, expoDividaPct }
+  return { taxaEconomia, endividamentoPct, liquidezMeses, patrimonioLiquido, expoDividaPct }
 }
 
 // ─── Debt avalanche / snowball ────────────────────────────────────

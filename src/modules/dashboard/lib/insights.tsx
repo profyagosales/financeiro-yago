@@ -88,12 +88,12 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
     })
   }
 
-  // 4. Taxa de poupança
+  // 4. Taxa de economia (savings rate = receitas - despesas / receitas)
   if (inp.receitasMes > 0) {
     const pct = ((inp.receitasMes - inp.despesasMes) / inp.receitasMes) * 100
     if (pct >= 30) {
       out.push({
-        id: 'poupanca-alta',
+        id: 'economia-alta',
         text: <>Está guardando <strong>{pct.toFixed(0)}%</strong> da renda este mês</>,
         tone: 'positive',
         icon: IconCircleCheck,
@@ -101,7 +101,7 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
       })
     } else if (pct < 0) {
       out.push({
-        id: 'poupanca-negativa',
+        id: 'economia-negativa',
         text: <>Gastando <strong>{Math.abs(pct).toFixed(0)}%</strong> mais do que recebe</>,
         tone: 'negative',
         icon: IconTrendingDown,
@@ -109,7 +109,7 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
       })
     } else if (pct < 10) {
       out.push({
-        id: 'poupanca-baixa',
+        id: 'economia-baixa',
         text: <>Só sobra <strong>{pct.toFixed(0)}%</strong> da renda — fica apertado</>,
         tone: 'highlight',
         icon: IconClockHour4,

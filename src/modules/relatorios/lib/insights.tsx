@@ -122,26 +122,26 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
     }
   }
 
-  // ─── 6. Taxa de poupança ────────────────────────────────────────
+  // ─── 6. Taxa de economia (savings rate) ─────────────────────────
   if (inp.receitasTotal > 0) {
     const pct = ((inp.receitasTotal - inp.despesasTotal) / inp.receitasTotal) * 100
     if (pct >= 35) {
       out.push({
-        id: 'pou-otima',
-        title: 'Taxa de poupança excelente',
+        id: 'econ-otima',
+        title: 'Taxa de economia excelente',
         body: <>Guardando <strong>{pct.toFixed(0)}%</strong> da renda. Ideal pra ampliar investimentos diversificados.</>,
         tone: 'positive', icon: IconCircleCheck, priority: 7, categoria: 'conquista',
       })
     } else if (pct < 0) {
       out.push({
-        id: 'pou-negativa',
+        id: 'econ-negativa',
         title: 'Você está gastando mais do que ganha',
         body: <>Déficit de <strong>{Math.abs(pct).toFixed(0)}%</strong> no período. Saldo só se mantém com reserva ou crédito. Priorize cortar despesas variáveis.</>,
         tone: 'negative', icon: IconAlertTriangle, priority: 10, categoria: 'sugestao',
       })
     } else if (pct < 10) {
       out.push({
-        id: 'pou-baixa',
+        id: 'econ-baixa',
         title: 'Margem de segurança apertada',
         body: <>Só <strong>{pct.toFixed(0)}%</strong> da renda restam após despesas. Ideal mínimo: 10%, recomendado: 20%+.</>,
         tone: 'highlight', icon: IconClockHour4, priority: 7, categoria: 'sugestao',

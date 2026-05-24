@@ -118,14 +118,14 @@ export function comprometidoRestante(
 // ─── Score de Saúde Financeira (0-100) ──────────────────────────────
 // Pondera 4 fatores. Usado no Dashboard como "termômetro".
 //   1. Reserva de emergência (peso 30): % de cobertura do alvo
-//   2. Taxa de poupança (peso 25): (receitas - despesas) / receitas
+//   2. Taxa de economia (peso 25): (receitas - despesas) / receitas — savings rate
 //   3. Endividamento (peso 25): 100 - (parcela mensal de dívida / receita * 100, cap 100)
 //   4. Liquidez (peso 20): saldo em contas / despesa mensal média (cap em 3 meses = 100%)
 export interface SaudeScore {
   total: number
   fatores: {
     reserva: number       // 0..100
-    poupanca: number
+    economia: number
     endividamento: number
     liquidez: number
   }
@@ -153,14 +153,14 @@ export function calcSaudeScore(opts: ScoreOpts): SaudeScore {
     reserva = 50
   }
 
-  // 2. Poupança
-  let poupanca = 0
+  // 2. Taxa de economia (savings rate)
+  let economia = 0
   if (opts.receitasMes > 0) {
     const pct = ((opts.receitasMes - opts.despesasMes) / opts.receitasMes) * 100
     // 30% é ótimo. Escala: 0 → 0, 30 → 100, 100 → 100. Abaixo de 0 = penalidade.
-    if (pct >= 30) poupanca = 100
-    else if (pct >= 0) poupanca = (pct / 30) * 100
-    else poupanca = Math.max(0, 50 + pct)  // se -50% gasta, vira 0
+    if (pct >= 30) economia = 100
+    else if (pct >= 0) economia = (pct / 30) * 100
+    else economia = Math.max(0, 50 + pct)  // se -50% gasta, vira 0
   }
 
   // 3. Endividamento (parcela / receita)
@@ -181,12 +181,12 @@ export function calcSaudeScore(opts: ScoreOpts): SaudeScore {
   }
 
   // Pesos: 30/25/25/20
-  const total = reserva * 0.3 + poupanca * 0.25 + endividamento * 0.25 + liquidez * 0.2
+  const total = reserva * 0.3 + economia * 0.25 + endividamento * 0.25 + liquidez * 0.2
   return {
     total: Math.round(Math.max(0, Math.min(100, total))),
     fatores: {
       reserva: Math.round(reserva),
-      poupanca: Math.round(poupanca),
+      economia: Math.round(economia),
       endividamento: Math.round(endividamento),
       liquidez: Math.round(liquidez),
     },
