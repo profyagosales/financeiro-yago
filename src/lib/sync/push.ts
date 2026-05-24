@@ -85,7 +85,7 @@ export async function pushTable(tableName: string, opts: { force?: boolean } = {
 
     const { data, error } = await supabase
       .from(config.remoteTable)
-      .upsert(payloads, { onConflict: 'id' })
+      .upsert(payloads, { onConflict: config.onConflictColumn ?? 'id' })
       .select('id, local_id')
 
     if (error) {

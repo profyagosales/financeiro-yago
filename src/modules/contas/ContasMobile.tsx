@@ -5,7 +5,7 @@ import { IconPlus, IconBuildingBank, IconWallet, IconChevronRight } from '@table
 import { useContas, useSaldoTotal, deleteConta } from '@/db/hooks/useContas'
 import { fmt } from '@/lib/format'
 import { ContaForm } from './ContaForm'
-import { StackScreen } from '@/components/layout/StackScreen'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { sounds, haptic } from '@/lib/sounds'
 import type { Conta } from '@/db/schema'
 
@@ -27,6 +27,7 @@ export function ContasMobile() {
   const saldoTotal = useSaldoTotal()
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Conta | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Conta | null>(null)
 
   return (
     <div style={{

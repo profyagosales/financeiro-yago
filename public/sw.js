@@ -5,7 +5,7 @@
 // O service worker mantém o app rodando offline depois da primeira
 // visita: ícones, fontes, JS bundle, etc ficam cacheados.
 
-const CACHE_NAME = 'financeiro-yago-v4-png-icons'
+const CACHE_NAME = 'financeiro-yago-v5-update-prompt'
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -20,13 +20,21 @@ const CORE_ASSETS = [
   '/brand/notification-badge.svg',
 ]
 
-// Install: pré-cache dos assets core
+// Install: pré-cache dos assets core. NÃO faz skipWaiting automático —
+// o client (AppShell) detecta `registration.waiting` e mostra toast pro
+// user; só quando ele clica "Atualizar" mandamos SKIP_WAITING aqui.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(CORE_ASSETS).catch(() => { /* alguns assets podem falhar em dev */ }))
-      .then(() => self.skipWaiting())
   )
+})
+
+// Mensagens do client: 'SKIP_WAITING' ativa a versão nova imediatamente.
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
 })
 
 // Activate: limpa caches antigos

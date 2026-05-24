@@ -17,6 +17,11 @@ export interface TableConfig {
   fks: Record<string, string>
   // Skip de campos que NÃO devem ir pro Supabase (ex: syncId legado)
   skipFields?: string[]
+  // Coluna(s) de conflito pro upsert. Default: 'id' (PK). Use quando a
+  // tabela tem unique secondary que DEVE ser respeitado no merge.
+  // Ex: app_config tem unique (user_id, key) — segundo device cria mesma
+  // key local e o upsert por 'id' falha com 23505 sem isso.
+  onConflictColumn?: string
 }
 
 // Ordem de sync (topológica — pais antes de filhos)
@@ -76,6 +81,9 @@ export const TABLES: Record<string, TableConfig> = {
     remoteTable: 'app_config',
     dexie: () => db.appConfig,
     fks: {},
+    // unique (user_id, key) — vários devices criam mesma key (ex: 'app_preferences')
+    // localmente. Sem isso, segundo device falha com 23505 toda vez.
+    onConflictColumn: 'user_id,key',
   },
   transacoes: {
     localTable: 'transacoes',

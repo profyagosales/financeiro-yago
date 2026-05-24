@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { IconCheck, IconBuildingBank, IconPlus, IconHistory } from '@tabler/icons-react'
+import { IconCheck, IconBuildingBank, IconPlus, IconHistory, IconTrash } from '@tabler/icons-react'
 import type { Conta } from '@/db/schema'
 import { Modal } from '@/components/ui/Modal'
 import { BankLogo } from '@/components/ui/BankLogo'
@@ -12,9 +12,12 @@ interface Props {
   conta?: Conta | null
   onClose: () => void
   onSave: (data: Omit<Conta, 'id' | 'syncId' | 'updatedAt'>) => Promise<void> | void
+  /** Quando definida + modo edit, exibe botão "Excluir conta" no rodapé.
+   *  Desktop usa botão próprio no AccountDetail e não passa essa prop. */
+  onDelete?: () => void
 }
 
-export function ContaForm({ open, conta, onClose, onSave }: Props) {
+export function ContaForm({ open, conta, onClose, onSave, onDelete }: Props) {
   const isEditing = !!conta
 
   // Encontra preset do banco baseado no nome (pra modo edit)
@@ -323,14 +326,21 @@ export function ContaForm({ open, conta, onClose, onSave }: Props) {
       </div>
 
       {/* Footer */}
-      <Modal.Footer>
-        <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-        <button onClick={handleSave}
-          disabled={!form.nome}
-          style={{ ...PRIMARY_BTN, opacity: !form.nome ? 0.5 : 1, cursor: !form.nome ? 'not-allowed' : 'pointer' }}>
-          <IconCheck size={16} stroke={2.5} />
-          {isEditing ? 'Salvar alterações' : 'Adicionar conta'}
-        </button>
+      <Modal.Footer align={isEditing && onDelete ? 'between' : 'end'}>
+        {isEditing && onDelete && (
+          <button onClick={onDelete} style={DANGER_GHOST_BTN}>
+            <IconTrash size={15} stroke={2.2} /> Excluir conta
+          </button>
+        )}
+        <div style={{ display: 'flex', gap: 10, marginLeft: 'auto' }}>
+          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
+          <button onClick={handleSave}
+            disabled={!form.nome}
+            style={{ ...PRIMARY_BTN, opacity: !form.nome ? 0.5 : 1, cursor: !form.nome ? 'not-allowed' : 'pointer' }}>
+            <IconCheck size={16} stroke={2.5} />
+            {isEditing ? 'Salvar alterações' : 'Adicionar conta'}
+          </button>
+        </div>
       </Modal.Footer>
     </Modal>
   )
@@ -370,4 +380,12 @@ const SECONDARY_BTN: React.CSSProperties = {
   background: 'transparent', color: '#7A5C4F', border: '1.5px solid #EDE6DC',
   borderRadius: 12, padding: '11px 20px', cursor: 'pointer',
   fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+}
+
+const DANGER_GHOST_BTN: React.CSSProperties = {
+  background: 'rgba(196,85,59,0.08)', color: '#C4553B',
+  border: '1.5px solid rgba(196,85,59,0.25)', borderRadius: 12,
+  padding: '11px 16px', cursor: 'pointer',
+  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
+  display: 'inline-flex', alignItems: 'center', gap: 7,
 }

@@ -1,6 +1,6 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { FabModal } from './FabModal'
@@ -73,6 +73,61 @@ export function AppShell() {
     void migrateStatusToCanonical()
   }, [])
 
+  // ── PWA shortcut: ?action=new abre o FAB ──
+  // Vem dos shortcuts do manifest.webmanifest (right-click no ícone do Dock
+  // Safari macOS, long-press no iOS) — sem isso, "Novo lançamento" só abria
+  // o dashboard sem ação.
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      openFab()
+      const next = new URLSearchParams(searchParams)
+      next.delete('action')
+      setSearchParams(next, { replace: true })
+    }
+  }, [searchParams, openFab, setSearchParams])
+
+  // ── Service Worker update prompt ──
+  // Detecta nova versão do SW deployada (registration.waiting) e mostra
+  // toast persistente. Sem isso, PWA instalado fica preso em versão velha
+  // até user limpar cache manualmente.
+  const [swUpdate, setSwUpdate] = useState<ServiceWorker | null>(null)
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    let mounted = true
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (!reg || !mounted) return
+      // Já tem um SW waiting? (versão nova pronta pra ativar)
+      if (reg.waiting && navigator.serviceWorker.controller) {
+        setSwUpdate(reg.waiting)
+      }
+      // Escuta novas instalações
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing
+        if (!nw) return
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            setSwUpdate(nw)
+          }
+        })
+      })
+    })
+    // Reload assim que o SW novo virar controlador
+    let reloading = false
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloading) return
+      reloading = true
+      window.location.reload()
+    })
+    return () => { mounted = false }
+  }, [])
+
+  const applyUpdate = () => {
+    if (swUpdate) {
+      swUpdate.postMessage({ type: 'SKIP_WAITING' })
+    }
+  }
+
   return (
     <div className="grain" style={{ display: 'flex', height: '100dvh', background: '#FFFFFF', overflow: 'hidden' }}>
       <div className="bg-mesh-desktop">
@@ -142,6 +197,40 @@ export function AppShell() {
       </AnimatePresence>
 
       <PWABanner />
+
+      {/* SW update prompt: toast persistente quando uma nova versão do
+          PWA está pronta. Click "Atualizar" ativa o SW novo e dá reload. */}
+      <AnimatePresence>
+        {swUpdate && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+            style={{
+              position: 'fixed',
+              bottom: 'calc(80px + env(safe-area-inset-bottom))',
+              left: '50%', transform: 'translateX(-50%)',
+              zIndex: 300,
+              background: 'linear-gradient(135deg, #2A1E3F, #504E76)',
+              color: '#FFFFFF', borderRadius: 14,
+              padding: '14px 18px 14px 16px',
+              display: 'flex', alignItems: 'center', gap: 12,
+              boxShadow: '0 12px 32px rgba(13,5,25,0.4)',
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              maxWidth: 'calc(100vw - 32px)',
+            }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>Nova versão disponível</p>
+              <p style={{ fontSize: 11, fontWeight: 500, margin: '2px 0 0', color: 'rgba(255,255,255,0.7)' }}>Atualize pra pegar os fixes mais recentes.</p>
+            </div>
+            <button onClick={applyUpdate}
+              style={{
+                background: '#F2C745', color: '#2C1A0F', border: 'none',
+                borderRadius: 10, padding: '8px 14px', cursor: 'pointer',
+                fontSize: 12, fontWeight: 800, flexShrink: 0,
+              }}>Atualizar</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         .sidebar-desktop { display: none; }

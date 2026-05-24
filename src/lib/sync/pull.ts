@@ -73,9 +73,20 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
     let localId = getLocalId(tableName, remoteUuid)
 
     if (isDeleted) {
-      // Soft delete remoto → apaga local
+      // Soft delete remoto → apaga local. Pra anexos, também limpa o
+      // blob no Storage — sem isso, anexos deletados em outro device
+      // ficam órfãos eternamente.
       if (localId != null) {
-        try { await config.dexie().delete(localId) } catch { /* noop */ }
+        try {
+          if (tableName === 'anexos') {
+            const anexo = await config.dexie().get(localId) as { storagePath?: string } | undefined
+            if (anexo?.storagePath) {
+              const { deleteAnexoFromStorage } = await import('@/lib/storage')
+              await deleteAnexoFromStorage(anexo.storagePath).catch(() => { /* noop */ })
+            }
+          }
+          await config.dexie().delete(localId)
+        } catch { /* noop */ }
       }
       continue
     }
@@ -84,10 +95,11 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
     const remoteUpdatedMs = new Date(remoteUpdatedAt).getTime()
 
     if (localId != null) {
-      // UPDATE existente — LWW
+      // UPDATE existente — LWW. Usa `>` (não `>=`) pra evitar que um
+      // tie em ms reverta um edit local recente com a versão remota antiga.
       const existing = await config.dexie().get(localId) as Record<string, unknown> | undefined
       const existingUpdatedAt = (existing?.updatedAt as number) ?? 0
-      if (remoteUpdatedMs >= existingUpdatedAt) {
+      if (remoteUpdatedMs > existingUpdatedAt) {
         await config.dexie().update(localId, localRecord)
         pulled += 1
       }

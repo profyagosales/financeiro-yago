@@ -1,10 +1,16 @@
 // ─── Investimentos mobile — identidade peach + lista simplificada ──
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { IconPlus, IconChartLine, IconTrendingUp, IconTrendingDown, IconChevronRight } from '@tabler/icons-react'
-import { useInvestimentos, useTotalInvestimentos, deleteInvestimento } from '@/db/hooks/useInvestimentos'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  IconPlus, IconChartLine, IconTrendingUp, IconTrendingDown, IconChevronRight,
+  IconShoppingCart, IconShoppingBag, IconCoins, IconEdit, IconX,
+} from '@tabler/icons-react'
+import { useInvestimentos, useTotalInvestimentos, isRendaVariavel, aceitaProventos } from '@/db/hooks/useInvestimentos'
 import { fmt } from '@/lib/format'
 import { InvestimentoForm } from './InvestimentoForm'
+import { AportesModal } from './AportesModal'
+import { ProventosModal } from './ProventosModal'
+import { VendasModal } from './VendasModal'
 import type { Investimento } from '@/db/schema'
 
 const C = {
@@ -26,6 +32,12 @@ export function InvestimentosMobile() {
   const pct = aplicado > 0 ? (rendimento / aplicado) * 100 : 0
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Investimento | null>(null)
+  // Action sheet ao tocar num investimento
+  const [actionFor, setActionFor] = useState<Investimento | null>(null)
+  // Modais de operação (espelham o desktop)
+  const [aportesFor, setAportesFor] = useState<Investimento | null>(null)
+  const [proventosFor, setProventosFor] = useState<Investimento | null>(null)
+  const [vendasFor, setVendasFor] = useState<Investimento | null>(null)
 
   // Ordena por rentabilidade
   const ordenados = [...invs].map(i => ({
@@ -85,7 +97,7 @@ export function InvestimentosMobile() {
               <h2 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: C.inkSoft, letterSpacing: '.16em', textTransform: 'uppercase', margin: '0 0 8px', padding: '0 4px' }}>Sua carteira</h2>
               <div style={{ background: C.glass, backdropFilter: 'blur(16px)', border: `1px solid ${C.glassBorder}`, borderRadius: 18, padding: '4px 14px', boxShadow: C.glassShadow }}>
                 {ordenados.map((inv, i) => (
-                  <button key={inv.id} onClick={() => { setEditing(inv); setFormOpen(true) }}
+                  <button key={inv.id} onClick={() => setActionFor(inv)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '12px 0', width: '100%',
