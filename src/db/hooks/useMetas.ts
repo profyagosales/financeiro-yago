@@ -63,13 +63,39 @@ export async function addMeta(data: Omit<Meta, 'id' | 'syncId' | 'updatedAt'>) {
   return db.metas.add({ ...data, updatedAt: Date.now() })
 }
 
-export async function aportarMeta(id: number, valor: number) {
+// Aporte direto na meta. Se `contaOrigemId` for passado, cria também
+// uma Transacao de despesa categoria "Investimentos" que debita a conta —
+// mantém o patrimônio CONSISTENTE (sem inflação artificial).
+//
+// Quando o aporte é feito SEM origem (modo legado / fluxos antigos), só
+// atualiza valorAtual da meta — usuário precisa lançar transação à parte.
+export async function aportarMeta(id: number, valor: number, opts?: {
+  contaOrigemId?: number
+  data?: string
+  descricao?: string
+}) {
   const meta = await db.metas.get(id)
   if (!meta) return
-  return db.metas.update(id, {
+  await db.metas.update(id, {
     valorAtual: (meta.valorAtual ?? 0) + valor,
     updatedAt: Date.now(),
   })
+  if (opts?.contaOrigemId) {
+    // Procura categoria "Investimentos" (seed) — fallback pra primeira despesa
+    const catInvest = await db.categorias.filter(c => c.tipo === 'despesa' && c.nome.toLowerCase().includes('investimento')).first()
+    const catId = catInvest?.id ?? (await db.categorias.where('tipo').equals('despesa').first())?.id ?? 1
+    const { addTransacao } = await import('./useTransacoes')
+    await addTransacao({
+      data: opts.data ?? new Date().toISOString().split('T')[0],
+      valor,
+      tipo: 'despesa',
+      contaId: opts.contaOrigemId,
+      categoriaId: catId,
+      descricao: opts.descricao ?? `Aporte em ${meta.nome}`,
+      status: 'efetivada',
+      recorrencia: 'unica',
+    })
+  }
 }
 
 export async function editMeta(id: number, data: Partial<Meta>) {

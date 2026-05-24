@@ -21,17 +21,23 @@ export async function addContaFixa(data: Omit<ContaFixa, 'id' | 'syncId'>) {
   }
   return id
 }
+// Tag determinística pra ligar pagamento ↔ lançamento/transação criada
+function tagPagamento(contaFixaId: number, mes: number, ano: number): string {
+  return `[fixa:${contaFixaId}:${mes}:${ano}]`
+}
+
 export async function marcarPago(contaFixaId: number, mes: number, ano: number, valor: number) {
   const existing = await db.pagamentosFixos.where({ contaFixaId, mes, ano }).first()
   const today = new Date().toISOString().split('T')[0]
   if (existing) await db.pagamentosFixos.update(existing.id!, { status: 'pago', dataPagamento: today, valor })
   else await db.pagamentosFixos.add({ contaFixaId, mes, ano, status: 'pago', dataPagamento: today, valor })
 
-  // Se a conta fixa é paga via cartão, criar lançamento na fatura do mês corrente
   const cf = await db.contasFixas.get(contaFixaId)
-  if (cf?.cartaoId) {
-    // Evita duplicidade: procura lançamento já vinculado a este pagamentoFixo (via descrição padronizada)
-    const tag = `[fixa:${contaFixaId}:${mes}:${ano}]`
+  if (!cf) return
+  const tag = tagPagamento(contaFixaId, mes, ano)
+
+  if (cf.cartaoId) {
+    // Pagamento via CARTÃO: cria lançamento na fatura do mês.
     const existingLanc = await db.lancamentosCartao
       .where('[cartaoId+mes+ano]').equals([cf.cartaoId, mes, ano])
       .filter(l => l.descricao.includes(tag))
@@ -49,41 +55,66 @@ export async function marcarPago(contaFixaId: number, mes: number, ano: number, 
         ano,
       })
     }
+  } else if (cf.contaId) {
+    // Pagamento via CONTA (débito/PIX/boleto): cria Transacao que debita
+    // a conta. Sem isso, o saldo da conta não baixaria e o patrimônio
+    // ficaria inflado.
+    const existingTx = await db.transacoes
+      .filter(t => t.contaId === cf.contaId && t.descricao.includes(tag))
+      .first()
+    if (!existingTx) {
+      const { addTransacao } = await import('./useTransacoes')
+      await addTransacao({
+        data: today,
+        valor,
+        tipo: 'despesa',
+        contaId: cf.contaId,
+        categoriaId: cf.categoriaId,
+        descricao: `${cf.nome} ${tag}`,
+        status: 'efetivada',
+        recorrencia: 'unica',
+      })
+    }
   }
 
   await sincronizarDividaSeVinculada(contaFixaId)
 }
+
 export async function marcarPendente(contaFixaId: number, mes: number, ano: number) {
   const existing = await db.pagamentosFixos.where({ contaFixaId, mes, ano }).first()
   if (existing) await db.pagamentosFixos.update(existing.id!, { status: 'pendente', dataPagamento: undefined })
 
-  // Se a conta fixa é paga via cartão, remover o lançamento criado automaticamente
   const cf = await db.contasFixas.get(contaFixaId)
-  if (cf?.cartaoId) {
-    const tag = `[fixa:${contaFixaId}:${mes}:${ano}]`
+  if (!cf) return
+  const tag = tagPagamento(contaFixaId, mes, ano)
+
+  if (cf.cartaoId) {
     const lanc = await db.lancamentosCartao
       .where('[cartaoId+mes+ano]').equals([cf.cartaoId, mes, ano])
       .filter(l => l.descricao.includes(tag))
       .first()
     if (lanc?.id) await db.lancamentosCartao.delete(lanc.id)
+  } else if (cf.contaId) {
+    // Reverte a Transacao criada por marcarPago (vinculada por tag).
+    const tx = await db.transacoes.filter(t => t.contaId === cf.contaId && t.descricao.includes(tag)).first()
+    if (tx?.id) {
+      const { deleteTransacao } = await import('./useTransacoes')
+      await deleteTransacao(tx.id)
+    }
   }
 
   await sincronizarDividaSeVinculada(contaFixaId)
 }
 
 // ─── Sincronização com Dívida (se a ContaFixa for vinculada) ─────────
-// Usa db direto pra evitar dependência circular com useDividas.
+// Delega pra recalcDividaFromAll, que considera amortizações/descontos/
+// quitações além das parcelas pagas. Sem isso, marcarPago apagaria
+// amortizações extraordinárias do saldo devedor.
 async function sincronizarDividaSeVinculada(contaFixaId: number) {
   const divida = await db.dividas.where('contaFixaId').equals(contaFixaId).first()
   if (!divida?.id) return
-  const pagamentos = await db.pagamentosFixos.where('contaFixaId').equals(contaFixaId).toArray()
-  const pagas = pagamentos.filter(p => p.status === 'pago')
-  const valorPago = pagas.reduce((s, p) => s + (p.valor ?? divida.valorParcela), 0)
-  await db.dividas.update(divida.id, {
-    parcelasPagas: pagas.length,
-    valorPago,
-    updatedAt: Date.now(),
-  })
+  const { recalcDividaFromAll } = await import('./useDividas')
+  await recalcDividaFromAll(divida.id)
 }
 export async function editContaFixa(id: number, data: Partial<import('../schema').ContaFixa>) {
   return db.contasFixas.update(id, data)

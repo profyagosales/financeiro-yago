@@ -3,7 +3,8 @@ import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconCurrencyReal, IconChartLine } from '@tabler/icons-react'
 import type { Meta } from '@/db/schema'
 import { aportarMeta } from '@/db/hooks/useMetas'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useContas } from '@/db/hooks/useContas'
+import { BankLogo } from '@/components/ui/BankLogo'
 
 interface Props {
   meta: Meta
@@ -15,16 +16,18 @@ interface Props {
 //   1. Aporte direto na meta (incrementa meta.valorAtual)
 //   2. Vincular investimento real (abre InvestimentoForm com presetMetaId)
 export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
-  // body scroll lock agora é responsabilidade do LegacyModalShell
   const [valor, setValor] = useState('')
   const [path, setPath] = useState<'direto' | null>(null)
+  const [contaOrigemId, setContaOrigemId] = useState<number | null>(null)
+  const contas = useContas()
 
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
+  const v = parseValor(valor)
+  const canSubmit = v > 0 && !!meta.id
 
   const handleAporte = async () => {
-    const v = parseValor(valor)
-    if (v <= 0 || !meta.id) return
-    await aportarMeta(meta.id, v)
+    if (!canSubmit || !meta.id) return
+    await aportarMeta(meta.id, v, contaOrigemId ? { contaOrigemId } : undefined)
     onClose()
   }
 
@@ -102,10 +105,7 @@ export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <p style={{
-                  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
-                  color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: 0,
-                }}>Valor do aporte (R$)</p>
+                <p style={FIELD_LABEL}>Valor do aporte (R$)</p>
                 <input
                   autoFocus
                   value={valor}
@@ -121,9 +121,55 @@ export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
                   }}
                 />
               </div>
+
+              {/* Conta origem (opcional). Se selecionada, debita o saldo
+                  com uma Transacao automática — patrimônio mantém-se
+                  consistente. Se omitida, só incrementa valorAtual da meta
+                  (modo legado, útil pra registrar aporte feito fora). */}
+              <div>
+                <p style={FIELD_LABEL}>De qual conta sai o dinheiro? (opcional)</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                  <button onClick={() => setContaOrigemId(null)}
+                    style={{
+                      padding: '7px 12px', borderRadius: 22,
+                      border: `1.5px solid ${contaOrigemId === null ? '#2C1A0F' : '#EDE6DC'}`,
+                      background: contaOrigemId === null ? '#2C1A0F' : '#FFFFFF',
+                      color: contaOrigemId === null ? '#FFFFFF' : '#7A5C4F',
+                      cursor: 'pointer',
+                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+                    }}>Só registrar na meta</button>
+                  {contas.map(c => {
+                    const active = contaOrigemId === c.id
+                    return (
+                      <button key={c.id} onClick={() => setContaOrigemId(c.id ?? null)}
+                        style={{
+                          padding: '5px 12px 5px 5px', borderRadius: 22,
+                          border: `1.5px solid ${active ? c.cor : '#EDE6DC'}`,
+                          background: active ? c.cor : '#FFFFFF',
+                          color: active ? '#FFFFFF' : '#2C1A0F',
+                          cursor: 'pointer',
+                          fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700,
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                        }}>
+                        <BankLogo logo={c.logo} nome={c.nome} cor={c.cor} size={22} radiusRatio={0.28} />
+                        {c.nome}
+                      </button>
+                    )
+                  })}
+                </div>
+                {contaOrigemId && (
+                  <p style={{
+                    fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F',
+                    margin: '8px 0 0', lineHeight: 1.5,
+                  }}>O saldo da conta será debitado em R$ {valor || '0,00'} via transação automática.</p>
+                )}
+              </div>
+
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                 <button onClick={() => setPath(null)} style={SECONDARY_BTN}>Voltar</button>
-                <button onClick={handleAporte} style={PRIMARY_BTN}>
+                <button onClick={handleAporte}
+                  disabled={!canSubmit}
+                  style={{ ...PRIMARY_BTN, opacity: canSubmit ? 1 : 0.5, cursor: canSubmit ? 'pointer' : 'not-allowed' }}>
                   <IconCheck size={16} stroke={2.5} /> Aportar
                 </button>
               </div>
@@ -132,6 +178,11 @@ export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
         </div>
     </LegacyModalShell>
   )
+}
+
+const FIELD_LABEL: React.CSSProperties = {
+  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
+  color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase', margin: 0,
 }
 
 const PATH_BTN: React.CSSProperties = {

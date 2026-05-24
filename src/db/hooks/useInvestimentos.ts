@@ -36,8 +36,28 @@ export function useTotalInvestimentos() {
 
 export async function addInvestimento(
   data: Omit<Investimento, 'id' | 'syncId' | 'updatedAt'>,
+  opts?: { contaOrigemId?: number; categoriaId?: number },
 ) {
-  return db.investimentos.add({ ...data, updatedAt: Date.now() })
+  const id = await db.investimentos.add({ ...data, updatedAt: Date.now() })
+  // Se origem informada, debita conta com transação de despesa categoria
+  // "Investimentos". Mantém patrimônio consistente: saldo_conta - valor +
+  // investimento_valor = total inalterado.
+  if (opts?.contaOrigemId && data.valorAplicado > 0) {
+    const catInvest = await db.categorias.filter(c => c.tipo === 'despesa' && c.nome.toLowerCase().includes('investimento')).first()
+    const catId = opts.categoriaId ?? catInvest?.id ?? 1
+    const { addTransacao } = await import('./useTransacoes')
+    await addTransacao({
+      data: data.dataAplicacao,
+      valor: data.valorAplicado,
+      tipo: 'despesa',
+      contaId: opts.contaOrigemId,
+      categoriaId: catId,
+      descricao: `Aplicação em ${data.nome}`,
+      status: 'efetivada',
+      recorrencia: 'unica',
+    })
+  }
+  return id
 }
 
 export async function editInvestimento(id: number, data: Partial<Investimento>) {
@@ -167,9 +187,32 @@ export function useAportes(investimentoId: number | undefined) {
   ) ?? []
 }
 
-export async function addAporte(data: Omit<InvestimentoAporte, 'id' | 'syncId' | 'updatedAt'>) {
+export async function addAporte(
+  data: Omit<InvestimentoAporte, 'id' | 'syncId' | 'updatedAt'>,
+  opts?: { contaOrigemId?: number; categoriaId?: number },
+) {
   const id = await db.investimentosAportes.add({ ...data, updatedAt: Date.now() })
   await recalcInvestimentoFromAportes(data.investimentoId)
+  // Debita conta se origem informada
+  if (opts?.contaOrigemId) {
+    const inv = await db.investimentos.get(data.investimentoId)
+    const valorTotal = data.quantidade * data.precoUnitario + (data.custos ?? 0)
+    if (valorTotal > 0) {
+      const catInvest = await db.categorias.filter(c => c.tipo === 'despesa' && c.nome.toLowerCase().includes('investimento')).first()
+      const catId = opts.categoriaId ?? catInvest?.id ?? 1
+      const { addTransacao } = await import('./useTransacoes')
+      await addTransacao({
+        data: data.data,
+        valor: valorTotal,
+        tipo: 'despesa',
+        contaId: opts.contaOrigemId,
+        categoriaId: catId,
+        descricao: `Aporte em ${inv?.nome ?? 'investimento'}`,
+        status: 'efetivada',
+        recorrencia: 'unica',
+      })
+    }
+  }
   return id
 }
 
