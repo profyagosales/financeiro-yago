@@ -67,12 +67,19 @@ function Orb({ left, top, size, color, dur, delay }: {
 }
 
 // ─── AuthCard: vidro premium centralizado ───────────────────────────
+// Layout pattern: margin auto pra centrar quando cabe + anchor topo
+// quando estoura (keyboard aberto, iPhone SE, etc.). Safe-area top/bot
+// respeitados via max(clamp, env) — não cola no notch/home-indicator.
 export function AuthCard({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
     <div style={{
       position: 'relative', zIndex: 1,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      minHeight: '100dvh', padding: 'clamp(16px, 4vw, 32px)',
+      display: 'flex',
+      minHeight: '100dvh',
+      paddingTop: 'max(clamp(16px, 4vw, 32px), env(safe-area-inset-top))',
+      paddingBottom: 'max(clamp(16px, 4vw, 32px), env(safe-area-inset-bottom))',
+      paddingLeft: 'clamp(16px, 4vw, 32px)',
+      paddingRight: 'clamp(16px, 4vw, 32px)',
     }}>
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.96 }}
@@ -87,6 +94,8 @@ export function AuthCard({ children, wide = false }: { children: ReactNode; wide
           padding: 'clamp(24px, 4vw, 36px) clamp(20px, 4vw, 32px)',
           width: '100%',
           maxWidth: wide ? 480 : 400,
+          // Auto margins: centraliza quando cabe, anchor no topo se estoura
+          margin: 'auto',
           boxShadow:
             '0 24px 60px rgba(13,5,25,0.42), 0 6px 18px rgba(13,5,25,0.24), inset 0 1px 0 rgba(255,255,255,0.6)',
           border: '1px solid rgba(255,255,255,0.7)',

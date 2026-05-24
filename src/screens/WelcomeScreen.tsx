@@ -222,7 +222,8 @@ const BOX: React.CSSProperties = {
 const INPUT: React.CSSProperties = {
   flex: 1, border: 'none', outline: 'none', background: 'transparent',
   fontFamily: "'Plus Jakarta Sans',sans-serif",
-  fontSize: 14, fontWeight: 500, color: '#2C1A0F',
+  // 16px é o mínimo pra evitar auto-zoom do iOS Safari em campos.
+  fontSize: 16, fontWeight: 500, color: '#2C1A0F',
   minWidth: 0,
 }
 
