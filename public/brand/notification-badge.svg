@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Notificação Financeiro do Yago">
+  <!-- Silhueta branca pura, fundo transparente. Stroke mais grosso pra
+       legibilidade em badges de 24x24/48x48 do sistema. -->
+  <path d="M 24 24 L 24 72 M 24 24 L 48 24 M 24 46 L 42 46"
+        stroke="#FFFFFF" stroke-width="9"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M 54 36 L 66 52 L 78 36 M 66 52 L 66 72"
+        stroke="#FFFFFF" stroke-width="9"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

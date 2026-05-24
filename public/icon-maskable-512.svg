@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Financeiro do Yago">
+  <!-- Maskable icon: o SO recorta a borda (até 20%). Safe zone = 60% central.
+       Por isso o cartão ocupa 100% (preenchimento total) e o monograma fica
+       num quadrante de ~60% no centro, garantindo que NUNCA seja cortado. -->
+  <defs>
+    <linearGradient id="m-bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2A1E3F"/>
+      <stop offset="100%" stop-color="#3D3457"/>
+    </linearGradient>
+    <linearGradient id="m-fy" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBF8F3"/>
+      <stop offset="100%" stop-color="#D4D0C5"/>
+    </linearGradient>
+    <radialGradient id="m-glow" cx="68%" cy="55%" r="42%">
+      <stop offset="0%" stop-color="#F2C745" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Background cobrindo TODO o canvas (sem radius — o SO arredonda) -->
+  <rect width="512" height="512" fill="url(#m-bg)"/>
+  <circle cx="320" cy="265" r="148" fill="url(#m-glow)"/>
+  <!-- Monograma centralizado em safe zone (~60% central = 154 a 358) -->
+  <!-- F -->
+  <path d="M 174 172 L 174 358 M 174 172 L 256 172 M 174 256 L 232 256"
+        stroke="url(#m-fy)" stroke-width="32"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Y -->
+  <path d="M 268 210 L 314 265 L 360 210 M 314 265 L 314 358"
+        stroke="url(#m-fy)" stroke-width="32"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="314" cy="265" r="14" fill="#F2C745"/>
+</svg>

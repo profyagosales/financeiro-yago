@@ -1,17 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="96" fill="#C4553B"/>
-  <circle cx="256" cy="280" r="172" fill="#D4653B"/>
-  <circle cx="256" cy="280" r="140" stroke="#B84D33" stroke-width="8" fill="none"/>
-  <!-- Olhos -->
-  <circle cx="212" cy="256" r="28" fill="#2C1A0F"/>
-  <circle cx="300" cy="256" r="28" fill="#2C1A0F"/>
-  <circle cx="222" cy="246" r="9" fill="white"/>
-  <circle cx="310" cy="246" r="9" fill="white"/>
-  <!-- Sorriso -->
-  <path d="M200 320 Q256 366 312 320" stroke="#2C1A0F" stroke-width="16" stroke-linecap="round" fill="none"/>
-  <!-- Chapéu -->
-  <rect x="172" y="92" width="168" height="84" rx="32" fill="#2C1A0F"/>
-  <rect x="138" y="172" width="236" height="44" rx="22" fill="#2C1A0F"/>
-  <!-- Símbolo R$ no chapéu -->
-  <text x="256" y="158" text-anchor="middle" fill="#D4A017" font-family="Georgia, serif" font-size="54" font-weight="bold">R$</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Financeiro do Yago">
+  <defs>
+    <linearGradient id="i512-bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2A1E3F"/>
+      <stop offset="100%" stop-color="#3D3457"/>
+    </linearGradient>
+    <linearGradient id="i512-fy" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBF8F3"/>
+      <stop offset="100%" stop-color="#D4D0C5"/>
+    </linearGradient>
+    <radialGradient id="i512-glow" cx="68%" cy="55%" r="42%">
+      <stop offset="0%" stop-color="#F2C745" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="125" fill="url(#i512-bg)"/>
+  <circle cx="347" cy="273" r="176" fill="url(#i512-glow)"/>
+  <path d="M 131 125 L 131 387 M 131 125 L 256 125 M 131 245 L 227 245"
+        stroke="url(#i512-fy)" stroke-width="40"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M 285 182 L 347 273 L 409 182 M 347 273 L 347 387"
+        stroke="url(#i512-fy)" stroke-width="40"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="347" cy="273" r="17" fill="#F2C745"/>
 </svg>

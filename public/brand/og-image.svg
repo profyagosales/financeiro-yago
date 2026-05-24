@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Financeiro do Yago">
+  <defs>
+    <linearGradient id="og-bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2A1E3F"/>
+      <stop offset="55%" stop-color="#504E76"/>
+      <stop offset="100%" stop-color="#6B4E8F"/>
+    </linearGradient>
+    <linearGradient id="og-fy" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBF8F3"/>
+      <stop offset="100%" stop-color="#D4D0C5"/>
+    </linearGradient>
+    <radialGradient id="og-orb1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F2C745" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="og-orb2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F1642E" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#C4553B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#og-bg)"/>
+  <!-- Orbs decorativos (mesmo padrão do hero do Dashboard) -->
+  <circle cx="1050" cy="100" r="320" fill="url(#og-orb1)"/>
+  <circle cx="540" cy="540" r="400" fill="url(#og-orb2)"/>
+
+  <!-- Mark grande à esquerda -->
+  <g transform="translate(100 175)">
+    <rect width="280" height="280" rx="68" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <path d="M 72 68 L 72 212 M 72 68 L 140 68 M 72 134 L 124 134"
+          stroke="url(#og-fy)" stroke-width="22"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M 156 100 L 190 150 L 224 100 M 190 150 L 190 212"
+          stroke="url(#og-fy)" stroke-width="22"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="190" cy="150" r="9" fill="#F2C745"/>
+  </g>
+
+  <!-- Texto à direita -->
+  <g transform="translate(450 230)">
+    <text x="0" y="60"
+          font-family="'Plus Jakarta Sans', sans-serif"
+          font-size="20"
+          font-weight="700"
+          letter-spacing="5"
+          fill="#F2C745">SEU DINHEIRO COM CLAREZA</text>
+    <text x="0" y="160"
+          font-family="Fraunces, Georgia, serif"
+          font-size="92"
+          font-weight="700"
+          letter-spacing="-3"
+          fill="#FFFFFF">Financeiro</text>
+    <text x="0" y="222"
+          font-family="Fraunces, Georgia, serif"
+          font-size="38"
+          font-weight="500"
+          font-style="italic"
+          letter-spacing="-0.5"
+          fill="rgba(255,255,255,0.78)">do Yago</text>
+  </g>
+
+  <!-- Linha decorativa rodapé -->
+  <rect x="100" y="570" width="1000" height="2" fill="rgba(255,255,255,0.12)"/>
+  <text x="100" y="600"
+        font-family="'Plus Jakarta Sans', sans-serif"
+        font-size="16"
+        font-weight="600"
+        letter-spacing="0.5"
+        fill="rgba(255,255,255,0.5)">Offline-first · Sincronizado · Premium</text>
+</svg>

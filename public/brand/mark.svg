@@ -1,26 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Financeiro do Yago">
-  <!-- iOS aplica máscara/recorte automático; canvas full bleed -->
   <defs>
-    <linearGradient id="ios-bg" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+    <linearGradient id="mark-bg" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#2A1E3F"/>
       <stop offset="100%" stop-color="#3D3457"/>
     </linearGradient>
-    <linearGradient id="ios-fy" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="mark-fy" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#FBF8F3"/>
       <stop offset="100%" stop-color="#D4D0C5"/>
     </linearGradient>
-    <radialGradient id="ios-glow" cx="68%" cy="55%" r="42%">
+    <radialGradient id="mark-glow" cx="68%" cy="55%" r="42%">
       <stop offset="0%" stop-color="#F2C745" stop-opacity="0.22"/>
       <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="180" height="180" fill="url(#ios-bg)"/>
-  <circle cx="122" cy="96" r="62" fill="url(#ios-glow)"/>
+  <rect width="180" height="180" rx="44" fill="url(#mark-bg)"/>
+  <circle cx="122" cy="96" r="62" fill="url(#mark-glow)"/>
+  <!-- F -->
   <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
-        stroke="url(#ios-fy)" stroke-width="14"
+        stroke="url(#mark-fy)" stroke-width="14"
         stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Y -->
   <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
-        stroke="url(#ios-fy)" stroke-width="14"
+        stroke="url(#mark-fy)" stroke-width="14"
         stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Accent dourado: ponto de junção do Y -->
   <circle cx="122" cy="96" r="6" fill="#F2C745"/>
 </svg>

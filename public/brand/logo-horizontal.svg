@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 140" role="img" aria-label="Financeiro do Yago">
+  <defs>
+    <linearGradient id="lh-bg" x1="0" y1="0" x2="140" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2A1E3F"/>
+      <stop offset="100%" stop-color="#3D3457"/>
+    </linearGradient>
+    <linearGradient id="lh-fy" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBF8F3"/>
+      <stop offset="100%" stop-color="#D4D0C5"/>
+    </linearGradient>
+    <radialGradient id="lh-glow" cx="68%" cy="55%" r="42%">
+      <stop offset="0%" stop-color="#F2C745" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#D4A017" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Mark -->
+  <g transform="translate(0 0)">
+    <rect width="140" height="140" rx="34" fill="url(#lh-bg)"/>
+    <circle cx="95" cy="74" r="48" fill="url(#lh-glow)"/>
+    <path d="M 36 34 L 36 106 M 36 34 L 70 34 M 36 67 L 62 67"
+          stroke="url(#lh-fy)" stroke-width="11"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M 78 50 L 95 75 L 112 50 M 95 75 L 95 106"
+          stroke="url(#lh-fy)" stroke-width="11"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="95" cy="75" r="4.6" fill="#F2C745"/>
+  </g>
+  <!-- Wordmark -->
+  <g transform="translate(168 0)">
+    <text x="0" y="78"
+          font-family="Fraunces, Georgia, serif"
+          font-size="48"
+          font-weight="700"
+          letter-spacing="-1.4"
+          fill="#2C1A0F">Financeiro<tspan fill="#C4553B">.</tspan></text>
+    <text x="2" y="106"
+          font-family="'Plus Jakarta Sans', sans-serif"
+          font-size="12"
+          font-weight="700"
+          letter-spacing="3"
+          fill="#7A5C4F">DO YAGO</text>
+  </g>
+</svg>

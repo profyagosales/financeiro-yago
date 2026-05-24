@@ -1,12 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <rect width="48" height="48" rx="12" fill="#C4553B"/>
-  <circle cx="24" cy="26" r="16" fill="#D4653B"/>
-  <circle cx="24" cy="26" r="13" stroke="#B84D33" stroke-width="1" fill="none"/>
-  <circle cx="20" cy="24" r="2.5" fill="#2C1A0F"/>
-  <circle cx="28" cy="24" r="2.5" fill="#2C1A0F"/>
-  <circle cx="21" cy="23" r="0.8" fill="white"/>
-  <circle cx="29" cy="23" r="0.8" fill="white"/>
-  <path d="M19 30Q24 34 29 30" stroke="#2C1A0F" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-  <rect x="16" y="9" width="16" height="8" rx="3" fill="#2C1A0F"/>
-  <rect x="13" y="16" width="22" height="4" rx="2" fill="#2C1A0F"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Financeiro do Yago">
+  <defs>
+    <linearGradient id="fav-bg" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2A1E3F"/>
+      <stop offset="100%" stop-color="#3D3457"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" rx="44" fill="url(#fav-bg)"/>
+  <!-- Strokes mais grossos pra legibilidade em 16-32px -->
+  <path d="M 46 44 L 46 136 M 46 44 L 90 44 M 46 86 L 80 86"
+        stroke="#FBF8F3" stroke-width="18"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M 100 64 L 122 96 L 144 64 M 122 96 L 122 136"
+        stroke="#FBF8F3" stroke-width="18"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="122" cy="96" r="7" fill="#F2C745"/>
 </svg>

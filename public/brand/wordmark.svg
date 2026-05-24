@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 84" role="img" aria-label="Financeiro do Yago">
+  <text x="0" y="50"
+        font-family="Fraunces, Georgia, serif"
+        font-size="42"
+        font-weight="700"
+        letter-spacing="-1.2"
+        fill="#2C1A0F">Financeiro<tspan fill="#C4553B">.</tspan></text>
+  <text x="2" y="74"
+        font-family="'Plus Jakarta Sans', sans-serif"
+        font-size="11"
+        font-weight="700"
+        letter-spacing="2.8"
+        fill="#7A5C4F">DO YAGO</text>
+</svg>
