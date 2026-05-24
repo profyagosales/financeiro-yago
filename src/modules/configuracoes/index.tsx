@@ -1229,7 +1229,35 @@ export function Page() {
   }
 
   return (
-    <div style={{ padding: '32px', width: '100%', maxWidth: 880, margin: '0 auto' }}>
+    <div className="cfg-page" style={{
+      width: '100%',
+      padding: 'clamp(16px, 4vw, 32px)',
+      maxWidth: 880, margin: '0 auto',
+    }}>
+      <style>{`
+        @media (max-width: 767px) {
+          .cfg-page {
+            position: relative;
+            min-height: 100dvh;
+            padding-top: calc(20px + env(safe-area-inset-top));
+            padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            padding-left: 16px;
+            padding-right: 16px;
+            background: linear-gradient(180deg, #FFE2C7 0%, #FFF1DE 35%, #FFE9D7 100%);
+          }
+          .cfg-page > div::before {
+            content: '';
+            position: absolute;
+            right: -80px; top: -120px;
+            width: 340px; height: 340px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(241,100,46,0.18), transparent 65%);
+            filter: blur(20px);
+            pointer-events: none;
+            z-index: 0;
+          }
+        }
+      `}</style>
 
       {/* Header (mesmo padrão das outras páginas) */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid #EDE6DC' }}>

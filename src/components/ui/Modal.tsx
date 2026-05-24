@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect } from 'react'
 import { IconX } from '@tabler/icons-react'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 // ─── Modal premium reutilizável ──────────────────────────────────────
 //
@@ -58,6 +59,7 @@ export function Modal({
   className,
 }: ModalProps) {
   const maxWidth = SIZE_MAP[size]
+  const isMobile = useIsMobile()
 
   // Lock body scroll quando aberto (compartilhado via hook)
   useBodyScrollLock(open)
@@ -72,6 +74,16 @@ export function Modal({
     }
   }, [open, onClose])
 
+  // ── Mobile: full-screen slide-up (estilo iOS sheet) ──
+  // ── Desktop: centralizado scale + fade ──
+  const backdropPad = isMobile ? 0 : 24
+  const sheetInitial = isMobile ? { y: '100%' } : { opacity: 0, y: 24, scale: 0.96 }
+  const sheetAnimate = isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }
+  const sheetExit = isMobile ? { y: '100%' } : { opacity: 0, y: 16, scale: 0.97 }
+  const sheetTransition = isMobile
+    ? { type: 'spring' as const, stiffness: 320, damping: 32 }
+    : { type: 'spring' as const, stiffness: 260, damping: 28 }
+
   return (
     <AnimatePresence>
       {open && (
@@ -83,45 +95,67 @@ export function Modal({
           onClick={closeOnBackdrop ? onClose : undefined}
           style={{
             position: 'fixed', inset: 0, zIndex: 200,
-            background: 'rgba(28,10,5,0.55)',
+            background: isMobile ? 'rgba(28,10,5,0.4)' : 'rgba(28,10,5,0.55)',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 24,
+            display: 'flex',
+            alignItems: isMobile ? 'flex-end' : 'center',
+            justifyContent: 'center',
+            padding: backdropPad,
           }}
         >
           <motion.div
             role="dialog" aria-modal="true"
-            initial={{ opacity: 0, y: 24, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0,  scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+            initial={sheetInitial}
+            animate={sheetAnimate}
+            exit={sheetExit}
+            transition={sheetTransition}
             onClick={e => e.stopPropagation()}
             className={className}
             style={{
-              background: '#FFFFFF',
-              borderRadius: 24,
+              // Em mobile: bg peach quente igual ao app
+              background: isMobile
+                ? 'linear-gradient(180deg, #FFE2C7 0%, #FFF1DE 30%, #FFE9D7 100%)'
+                : '#FFFFFF',
+              borderRadius: isMobile ? '24px 24px 0 0' : 24,
               width: '100%',
-              maxWidth: `min(${maxWidth}px, calc(100vw - 48px))`,
-              maxHeight: 'calc(100vh - 48px)',
+              maxWidth: isMobile ? '100%' : `min(${maxWidth}px, calc(100vw - 48px))`,
+              maxHeight: isMobile ? '94dvh' : 'calc(100vh - 48px)',
+              minHeight: isMobile ? '60dvh' : undefined,
               display: 'flex', flexDirection: 'column',
-              boxShadow: '0 28px 80px rgba(28,10,5,0.45), 0 4px 16px rgba(28,10,5,0.18)',
+              boxShadow: isMobile
+                ? '0 -10px 40px rgba(28,10,5,0.32)'
+                : '0 28px 80px rgba(28,10,5,0.45), 0 4px 16px rgba(28,10,5,0.18)',
               overflow: 'hidden',
+              paddingBottom: isMobile ? 'env(safe-area-inset-bottom)' : 0,
             }}
           >
+            {/* Drag handle visual (mobile) */}
+            {isMobile && (
+              <div aria-hidden style={{
+                paddingTop: 10, paddingBottom: 4,
+                display: 'flex', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <div style={{
+                  width: 40, height: 4, borderRadius: 999,
+                  background: 'rgba(44,26,15,0.18)',
+                }} />
+              </div>
+            )}
             {/* Header */}
             {!bare && (title || subtitle || showCloseButton) && (
               <div style={{
-                padding: '22px 28px',
-                borderBottom: '1px solid #EDE6DC',
-                display: 'flex', alignItems: 'center', gap: 14,
-                background: '#FFFFFF',
+                padding: isMobile ? '12px 18px 14px' : '22px 28px',
+                borderBottom: isMobile ? '1px solid rgba(44,26,15,0.06)' : '1px solid #EDE6DC',
+                display: 'flex', alignItems: 'center', gap: 12,
+                background: isMobile ? 'transparent' : '#FFFFFF',
                 flexShrink: 0,
               }}>
                 {icon && (
                   <div style={{
-                    width: 44, height: 44, borderRadius: 12,
-                    background: '#FBF8F3',
+                    width: isMobile ? 38 : 44, height: isMobile ? 38 : 44, borderRadius: 12,
+                    background: isMobile ? 'rgba(255,255,255,0.7)' : '#FBF8F3',
+                    backdropFilter: isMobile ? 'blur(14px)' : undefined,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0,
                   }}>
@@ -131,14 +165,17 @@ export function Modal({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {title && (
                     <h2 style={{
-                      fontFamily: "'Fraunces',Georgia,serif", fontSize: 22, fontWeight: 700,
-                      color: '#2C1A0F', margin: 0, letterSpacing: '-0.6px', lineHeight: 1.15,
+                      fontFamily: "'Fraunces',Georgia,serif",
+                      fontSize: isMobile ? 18 : 22, fontWeight: 700,
+                      color: '#2C1A0F', margin: 0,
+                      letterSpacing: '-0.5px', lineHeight: 1.15,
                     }}>{title}</h2>
                   )}
                   {subtitle && (
                     <p style={{
-                      fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 500,
-                      color: '#9B7B6A', margin: '3px 0 0',
+                      fontFamily: "'Plus Jakarta Sans',sans-serif",
+                      fontSize: isMobile ? 11.5 : 12, fontWeight: 500,
+                      color: '#7A5C4F', margin: '2px 0 0',
                     }}>{subtitle}</p>
                   )}
                 </div>
@@ -146,15 +183,16 @@ export function Modal({
                   <button onClick={onClose}
                     aria-label="Fechar"
                     style={{
-                      background: '#F5F0E8', border: 'none', borderRadius: 10,
-                      width: 34, height: 34, cursor: 'pointer',
+                      background: isMobile ? 'rgba(255,255,255,0.7)' : '#F5F0E8',
+                      backdropFilter: isMobile ? 'blur(14px)' : undefined,
+                      border: 'none', borderRadius: 10,
+                      width: isMobile ? 36 : 34, height: isMobile ? 36 : 34,
+                      cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0, transition: 'background .15s',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#EDE6DC')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#F5F0E8')}
                   >
-                    <IconX size={16} stroke={2} color="#7A5C4F" />
+                    <IconX size={isMobile ? 17 : 16} stroke={2.2} color="#7A5C4F" />
                   </button>
                 )}
               </div>
