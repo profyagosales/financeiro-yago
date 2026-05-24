@@ -75,9 +75,14 @@ export interface Investimento {
   taxaAdicional?: number                // 0.0545 = 5,45% a.a.; usado em ipca_mais
   // ─── Renda variável (Ações, FIIs, ETFs, Cripto) ───────────────────
   quantidade?: number                   // X cotas/ações/moedas
-  precoMedio?: number                   // preço médio de compra por unidade
-  cotacaoAtual?: number                 // cotação atual por unidade (manual)
-  ticker?: string                       // BBAS3, HGLG11, BTC, etc (opcional)
+  precoMedio?: number                   // preço médio de compra por unidade (na moeda do ativo)
+  cotacaoAtual?: number                 // cotação atual por unidade (na moeda do ativo)
+  ticker?: string                       // BBAS3, HGLG11, BTC, AAPL, etc
+  // ─── Moeda do ativo (v10) ─────────────────────────────────────────
+  // BRL é padrão. USD usado pra ativos no exterior (ações US, REITs,
+  // ETFs US, cripto cotada em dólar). Valores armazenados nessa moeda;
+  // conversão pra BRL acontece on-the-fly via cotação do dólar.
+  moeda?: 'BRL' | 'USD'                 // default 'BRL'
   syncId?: string
   updatedAt: number
 }
@@ -126,7 +131,7 @@ export interface DividaMovimentacao {
   updatedAt: number
 }
 
-// ─── InvestimentoAporte (NOVO v7) ────────────────────────────────────
+// ─── InvestimentoAporte (NOVO v7, custos em v10) ─────────────────────
 // Cada compra individual de um ativo de renda variável.
 // Quantidade total e preço médio são derivados desta tabela.
 export interface InvestimentoAporte {
@@ -134,7 +139,34 @@ export interface InvestimentoAporte {
   investimentoId: number
   data: string                          // YYYY-MM-DD da compra
   quantidade: number                    // cotas/ações/moedas adquiridas
-  precoUnitario: number                 // R$ por unidade naquela compra
+  precoUnitario: number                 // VALOR por unidade na moeda do ativo
+  // Custos da operação (corretagem + emolumentos + IOF + taxas) — v10
+  custos?: number                       // VALOR total na moeda do ativo (incluído no PM)
+  observacao?: string
+  syncId?: string
+  updatedAt: number
+}
+
+// ─── InvestimentoMovimentacao (NOVO v10) ─────────────────────────────
+// Eventos de SAÍDA: venda de renda variável ou resgate de renda fixa.
+// Aportes ficam em InvestimentoAporte (entradas); aqui ficam saídas.
+export type InvestMovTipo = 'venda' | 'resgate'
+
+export interface InvestimentoMovimentacao {
+  id?: number
+  investimentoId: number
+  data: string                          // YYYY-MM-DD
+  tipo: InvestMovTipo
+  // ─── Renda variável (venda) ──────────────────────────────────────
+  quantidade?: number                   // unidades vendidas (RV)
+  precoUnitario?: number                // preço de venda por unidade
+  // ─── Renda fixa (resgate) ────────────────────────────────────────
+  valorResgate?: number                 // R$/US$ resgatado (RF)
+  // ─── Comum a ambos ───────────────────────────────────────────────
+  custos?: number                       // corretagem/emolumentos/IOF na saída
+  // Snapshot pra histórico/cálculo de resultado (não é fonte da verdade)
+  pmNaData?: number                     // PM do ativo no momento da venda
+  resultado?: number                    // lucro/prejuízo realizado (líquido)
   observacao?: string
   syncId?: string
   updatedAt: number
@@ -235,6 +267,8 @@ class FinanceiroYagoDB extends Dexie {
   dividasMovimentacoes!: Table<DividaMovimentacao>
   // Nova tabela v9
   appConfig!: Table<AppConfig>
+  // Nova tabela v10
+  investimentosMovimentacoes!: Table<InvestimentoMovimentacao>
 
   constructor() {
     super('FinanceiroYago')
@@ -433,6 +467,30 @@ class FinanceiroYagoDB extends Dexie {
       dividasMovimentacoes: '++id, dividaId, data, tipo, syncId',
       // NOVA
       appConfig: '++id, &key',
+    })
+
+    // v10 — Vendas/resgates de investimento + custos no aporte + moeda do ativo
+    this.version(10).stores({
+      contas: '++id, tipo, ativo, syncId',
+      categorias: '++id, tipo, syncId',
+      transacoes: '++id, data, tipo, contaId, categoriaId, status, syncId',
+      cartoes: '++id, ativo, syncId',
+      lancamentosCartao: '++id, cartaoId, [cartaoId+mes+ano], mes, ano, parcelaPaiId, syncId',
+      contasFixas: '++id, ativo, categoriaId, syncId',
+      pagamentosFixos: '++id, contaFixaId, [contaFixaId+mes+ano], [mes+ano], syncId',
+      metas: '++id, ativo, tipo, syncId',
+      patrimonio: '++id, tipo, syncId',
+      orcamentos: '++id, categoriaId, syncId',
+      anexos: '++id, transacaoId',
+      investimentos: '++id, tipo, metaId, ativo, syncId',
+      dividas: '++id, tipo, contaFixaId, ativo, syncId',
+      desejos: '++id, status, prioridade, transacaoId, syncId',
+      investimentosProventos: '++id, investimentoId, data, tipo, syncId',
+      investimentosAportes: '++id, investimentoId, data, syncId',
+      dividasMovimentacoes: '++id, dividaId, data, tipo, syncId',
+      appConfig: '++id, &key',
+      // NOVA
+      investimentosMovimentacoes: '++id, investimentoId, data, tipo, syncId',
     })
   }
 }

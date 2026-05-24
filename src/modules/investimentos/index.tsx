@@ -5,7 +5,7 @@ import { fmt } from '@/lib/format'
 import {
   useInvestimentos, useTotalInvestimentos,
   deleteInvestimento, aplicarRentabilidadeAutoTodos,
-  atualizarCotacoesTodos,
+  atualizarCotacoesTodos, ensureDolarLoaded, fetchDolarECache,
 } from '@/db/hooks/useInvestimentos'
 import { useMetas } from '@/db/hooks/useMetas'
 import type { Investimento, InvestimentoTipo } from '@/db/schema'
@@ -14,6 +14,7 @@ import { InvestimentoCard } from './InvestimentoCard'
 import { InvestimentoForm } from './InvestimentoForm'
 import { ProventosModal } from './ProventosModal'
 import { AportesModal } from './AportesModal'
+import { VendasModal } from './VendasModal'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 export function Page() {
@@ -27,13 +28,17 @@ export function Page() {
   const [confirmDelete, setConfirmDelete] = useState<Investimento | null>(null)
   const [proventosFor, setProventosFor] = useState<Investimento | null>(null)
   const [aportesFor, setAportesFor] = useState<Investimento | null>(null)
+  const [vendasFor, setVendasFor] = useState<Investimento | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [refreshMsg, setRefreshMsg] = useState<string | null>(null)
 
   useBodyScrollLock(confirmDelete !== null)
 
-  // Aplica rentabilidade auto na carga inicial
-  useEffect(() => { aplicarRentabilidadeAutoTodos() }, [])
+  // Aplica rentabilidade auto na carga inicial + busca dólar (pra conversão de USD)
+  useEffect(() => {
+    aplicarRentabilidadeAutoTodos()
+    ensureDolarLoaded()
+  }, [])
 
   const metaById = useMemo(
     () => new Map(metas.map(m => [m.id!, m])),
@@ -93,6 +98,7 @@ export function Page() {
           <button onClick={async () => {
               setRefreshing(true)
               setRefreshMsg(null)
+              await fetchDolarECache()
               await aplicarRentabilidadeAutoTodos()
               const r = await atualizarCotacoesTodos()
               setRefreshing(false)
@@ -268,6 +274,7 @@ export function Page() {
                       onDelete={() => setConfirmDelete(inv)}
                       onProventos={() => setProventosFor(inv)}
                       onAportes={() => setAportesFor(inv)}
+                      onVender={() => setVendasFor(inv)}
                     />
                   ))}
                 </div>
@@ -297,6 +304,13 @@ export function Page() {
           <AportesModal
             invest={aportesFor}
             onClose={() => setAportesFor(null)}
+          />
+        )}
+
+        {vendasFor && (
+          <VendasModal
+            invest={vendasFor}
+            onClose={() => setVendasFor(null)}
           />
         )}
 

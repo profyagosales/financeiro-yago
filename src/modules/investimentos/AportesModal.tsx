@@ -30,6 +30,7 @@ export function AportesModal({ invest, onClose }: Props) {
     precoUnitario: '',         // em BRL (campo unificado interno)
     valorInvestido: '',        // pro modo "investi X reais/dólares"
     cotacaoDolar: '',          // pro modo USD
+    custos: '',                // corretagem + emolumentos + IOF (na moeda do ativo)
     observacao: '',
   })
 
@@ -87,14 +88,22 @@ export function AportesModal({ invest, onClose }: Props) {
       if (modo === 'investido_usd') return `Investiu US$ ${parseValor(form.valorInvestido).toFixed(2)} · câmbio R$ ${parseValor(form.cotacaoDolar).toFixed(2)}${form.observacao ? ' · ' + form.observacao : ''}`
       return form.observacao || undefined
     })()
+    // Custos: se modo USD, converter pra BRL também
+    let custosBRL = parseValor(form.custos) || undefined
+    if (custosBRL && (modo === 'usd' || modo === 'investido_usd')) {
+      const fx = parseValor(form.cotacaoDolar)
+      if (fx > 0) custosBRL = custosBRL * fx
+    }
+
     await addAporte({
       investimentoId: invest.id,
       data: form.data,
       quantidade: preview.qtd,
       precoUnitario: preview.precoBRL,
+      custos: custosBRL,
       observacao,
     })
-    setForm({ data: today, quantidade: '', precoUnitario: '', valorInvestido: '', cotacaoDolar: form.cotacaoDolar, observacao: '' })
+    setForm({ data: today, quantidade: '', precoUnitario: '', valorInvestido: '', cotacaoDolar: form.cotacaoDolar, custos: '', observacao: '' })
   }
 
   // Sugestão de cotação atual quando user clica "puxar do mercado"
@@ -255,6 +264,19 @@ export function AportesModal({ invest, onClose }: Props) {
               </Field>
             </div>
           )}
+
+          <Field label={
+            (modo === 'usd' || modo === 'investido_usd')
+              ? 'Custos da operação (US$, opcional)'
+              : 'Custos da operação (R$, opcional)'
+          }>
+            <input value={form.custos} onChange={e => setForm(f => ({ ...f, custos: e.target.value }))}
+              placeholder="Corretagem + emolumentos + IOF"
+              inputMode="decimal" style={INPUT_STYLE} />
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', margin: '6px 0 0', lineHeight: 1.4 }}>
+              Padrão BR: custos entram no preço médio (afeta IR depois).
+            </p>
+          </Field>
 
           <Field label="Observação (opcional)">
             <input value={form.observacao} onChange={e => setForm(f => ({ ...f, observacao: e.target.value }))} placeholder="Ex: corretora, exchange, oferta..." style={INPUT_STYLE} />

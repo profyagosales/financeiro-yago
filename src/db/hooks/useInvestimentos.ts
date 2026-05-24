@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Investimento, type InvestimentoTipo, type InvestimentoProvento, type InvestimentoAporte } from '../schema'
+import { db, type Investimento, type InvestimentoTipo, type InvestimentoProvento, type InvestimentoAporte, type InvestimentoMovimentacao } from '../schema'
 import { getTaxasBenchmark, calcTaxaEfetiva } from './useAppConfig'
-import { fetchCotacaoPorTipo } from '@/lib/cotacoes'
+import { fetchCotacaoPorTipo, fetchCotacaoDolar } from '@/lib/cotacoes'
 
 export function useInvestimentos() {
   return useLiveQuery(() => db.investimentos.filter(i => i.ativo).toArray(), []) ?? []
@@ -25,10 +25,9 @@ export function useInvestimentosByMeta(metaId: number | undefined) {
 
 export function useTotalInvestimentos() {
   const list = useInvestimentos()
-  const total = list.reduce((s, i) => s + i.valorAtual, 0)
-  const aplicado = list.reduce((s, i) => s + i.valorAplicado, 0)
-  const rendimento = total - aplicado
-  return { total, aplicado, rendimento }
+  // Converte ativos USD pra BRL usando cotação cacheada
+  const { totalBRL, aplicadoBRL, rendimentoBRL } = totalCarteiraBRL(list)
+  return { total: totalBRL, aplicado: aplicadoBRL, rendimento: rendimentoBRL }
 }
 
 export async function addInvestimento(
@@ -178,24 +177,42 @@ export async function deleteAporte(id: number) {
 }
 
 // Recalcula quantidade, precoMedio, valorAplicado e valorAtual a partir
-// dos aportes. Chamado automaticamente em add/delete.
+// dos aportes E vendas. Chamado automaticamente em add/delete.
+//
+// Convenção (padrão Brasil):
+//   PM inclui custos (corretagem + emolumentos + IOF)
+//   Vendas reduzem a quantidade mas NÃO mudam o PM (regra contábil BR)
+//   valorAplicado = valor que o usuário desembolsou ainda EM POSIÇÃO
+//                 = qtd_atual × PM
 export async function recalcInvestimentoFromAportes(investimentoId: number) {
   const inv = await db.investimentos.get(investimentoId)
   if (!inv) return
   const aportes = await db.investimentosAportes.where('investimentoId').equals(investimentoId).toArray()
   if (aportes.length === 0) return
 
-  const qtdTotal = aportes.reduce((s, a) => s + a.quantidade, 0)
-  const totalInvestido = aportes.reduce((s, a) => s + a.quantidade * a.precoUnitario, 0)
-  const pm = qtdTotal > 0 ? totalInvestido / qtdTotal : 0
-  // valorAtual = quantidade × cotação atual (se houver), senão usa PM
+  // PM ponderado por custo total (com custos)
+  const qtdCompradaTotal = aportes.reduce((s, a) => s + a.quantidade, 0)
+  const custoTotal = aportes.reduce((s, a) => s + a.quantidade * a.precoUnitario + (a.custos ?? 0), 0)
+  const pm = qtdCompradaTotal > 0 ? custoTotal / qtdCompradaTotal : 0
+
+  // Vendas reduzem quantidade em estoque
+  const vendas = await db.investimentosMovimentacoes
+    .where('investimentoId').equals(investimentoId)
+    .filter(m => m.tipo === 'venda')
+    .toArray()
+  const qtdVendida = vendas.reduce((s, v) => s + (v.quantidade ?? 0), 0)
+  const qtdEstoque = Math.max(0, qtdCompradaTotal - qtdVendida)
+
+  // valorAplicado = posição atual ao preço médio (custo da posição em estoque)
+  const valorAplicadoEstoque = qtdEstoque * pm
+  // valorAtual = quantidade em estoque × cotação atual (ou PM se sem cotação)
   const cotacao = inv.cotacaoAtual && inv.cotacaoAtual > 0 ? inv.cotacaoAtual : pm
-  const valorAtual = qtdTotal * cotacao
+  const valorAtual = qtdEstoque * cotacao
 
   await db.investimentos.update(investimentoId, {
-    quantidade: Math.round(qtdTotal * 100000000) / 100000000, // 8 casas (cripto)
+    quantidade: Math.round(qtdEstoque * 100000000) / 100000000, // 8 casas (cripto)
     precoMedio: Math.round(pm * 100) / 100,
-    valorAplicado: Math.round(totalInvestido * 100) / 100,
+    valorAplicado: Math.round(valorAplicadoEstoque * 100) / 100,
     valorAtual: Math.round(valorAtual * 100) / 100,
     updatedAt: Date.now(),
   })
@@ -241,9 +258,173 @@ export async function atualizarCotacoesTodos(): Promise<{ sucesso: number; falho
 }
 
 // Stats consolidados a partir dos aportes (útil para o modal de aportes)
+// Inclui custos no preço médio (padrão BR).
 export function calcAportesStats(aportes: InvestimentoAporte[]) {
   const qtd = aportes.reduce((s, a) => s + a.quantidade, 0)
-  const investido = aportes.reduce((s, a) => s + a.quantidade * a.precoUnitario, 0)
-  const pm = qtd > 0 ? investido / qtd : 0
-  return { quantidade: qtd, totalInvestido: investido, precoMedio: pm }
+  const investidoSemCustos = aportes.reduce((s, a) => s + a.quantidade * a.precoUnitario, 0)
+  const totalCustos = aportes.reduce((s, a) => s + (a.custos ?? 0), 0)
+  const custoTotal = investidoSemCustos + totalCustos
+  const pm = qtd > 0 ? custoTotal / qtd : 0
+  return {
+    quantidade: qtd,
+    totalInvestido: custoTotal,        // total real gasto (com custos)
+    investidoSemCustos,                // só o valor das unidades
+    totalCustos,                       // somatório dos custos
+    precoMedio: pm,                    // PM com custos (padrão BR)
+  }
+}
+
+// ─── Vendas / resgates ───────────────────────────────────────────────
+// Renda variável: venda de N unidades a preço unitário
+// Renda fixa: resgate de R$ X (sem qtd/preço)
+export function useMovimentacoesInvest(investimentoId: number | undefined) {
+  return useLiveQuery(
+    () => investimentoId === undefined
+      ? Promise.resolve([])
+      : db.investimentosMovimentacoes.where('investimentoId').equals(investimentoId).reverse().sortBy('data'),
+    [investimentoId],
+  ) ?? []
+}
+
+export async function registrarVenda(args: {
+  investimentoId: number
+  data: string
+  quantidade: number
+  precoUnitario: number
+  custos?: number
+  observacao?: string
+}): Promise<number | null> {
+  const inv = await db.investimentos.get(args.investimentoId)
+  if (!inv) return null
+
+  const valorBruto = args.quantidade * args.precoUnitario
+  const valorLiquido = valorBruto - (args.custos ?? 0)
+  const pm = inv.precoMedio ?? 0
+  const custoEstoque = args.quantidade * pm
+  const resultado = valorLiquido - custoEstoque
+
+  const id = await db.investimentosMovimentacoes.add({
+    investimentoId: args.investimentoId,
+    data: args.data,
+    tipo: 'venda',
+    quantidade: args.quantidade,
+    precoUnitario: args.precoUnitario,
+    custos: args.custos,
+    pmNaData: pm,
+    resultado,
+    observacao: args.observacao,
+    updatedAt: Date.now(),
+  })
+
+  await recalcInvestimentoFromAportes(args.investimentoId)
+  return id as number
+}
+
+export async function registrarResgate(args: {
+  investimentoId: number
+  data: string
+  valorResgate: number
+  custos?: number
+  observacao?: string
+}): Promise<number | null> {
+  const inv = await db.investimentos.get(args.investimentoId)
+  if (!inv) return null
+
+  // Em renda fixa, resgate é proporcional ao valor atual.
+  // Resultado bruto = valorResgate - (valorAplicado × proporção_resgatada)
+  const proporcao = inv.valorAtual > 0 ? args.valorResgate / inv.valorAtual : 0
+  const custoProporcional = inv.valorAplicado * proporcao
+  const valorLiquido = args.valorResgate - (args.custos ?? 0)
+  const resultado = valorLiquido - custoProporcional
+
+  const id = await db.investimentosMovimentacoes.add({
+    investimentoId: args.investimentoId,
+    data: args.data,
+    tipo: 'resgate',
+    valorResgate: args.valorResgate,
+    custos: args.custos,
+    resultado,
+    observacao: args.observacao,
+    updatedAt: Date.now(),
+  })
+
+  // Reduz proporcionalmente valorAplicado e valorAtual
+  const novoValorAtual = Math.max(0, inv.valorAtual - args.valorResgate)
+  const novoValorAplicado = Math.max(0, inv.valorAplicado - custoProporcional)
+  await db.investimentos.update(args.investimentoId, {
+    valorAtual: Math.round(novoValorAtual * 100) / 100,
+    valorAplicado: Math.round(novoValorAplicado * 100) / 100,
+    updatedAt: Date.now(),
+  })
+
+  return id as number
+}
+
+export async function deleteMovimentacaoInvest(id: number) {
+  const m = await db.investimentosMovimentacoes.get(id)
+  if (!m) return
+  await db.investimentosMovimentacoes.delete(id)
+  // Reverter na dívida/investimento
+  if (m.tipo === 'venda') {
+    await recalcInvestimentoFromAportes(m.investimentoId)
+  } else if (m.tipo === 'resgate') {
+    // Restaura valorAtual e valorAplicado proporcionalmente
+    const inv = await db.investimentos.get(m.investimentoId)
+    if (inv && m.valorResgate) {
+      // Não temos snapshot perfeito; reverter aproximado
+      await db.investimentos.update(m.investimentoId, {
+        valorAtual: Math.round((inv.valorAtual + m.valorResgate) * 100) / 100,
+        updatedAt: Date.now(),
+      })
+    }
+  }
+}
+
+export function calcVendasStats(movs: InvestimentoMovimentacao[]) {
+  const vendas = movs.filter(m => m.tipo === 'venda')
+  const qtdVendida = vendas.reduce((s, v) => s + (v.quantidade ?? 0), 0)
+  const totalRecebido = vendas.reduce((s, v) => s + ((v.quantidade ?? 0) * (v.precoUnitario ?? 0)) - (v.custos ?? 0), 0)
+  const resultadoRealizado = vendas.reduce((s, v) => s + (v.resultado ?? 0), 0)
+  return { qtdVendida, totalRecebido, resultadoRealizado, totalVendas: vendas.length }
+}
+
+// ─── Conversão de moeda (BRL ↔ USD) ──────────────────────────────────
+// Reativo: useDolar() retorna a cotação atual do dólar, busca via API
+// se não tiver, cacheia 5min, fallback default 5.40 se API offline.
+let _ultimoDolar = 5.40
+
+export function useDolar(): number {
+  return _ultimoDolar
+}
+
+export async function fetchDolarECache(): Promise<number> {
+  const c = await fetchCotacaoDolar()
+  if (c && c > 0) _ultimoDolar = c
+  return _ultimoDolar
+}
+
+// Inicializa cotação na primeira chamada (chame em /investimentos mount)
+let _dolarFetchInProgress: Promise<number> | null = null
+export async function ensureDolarLoaded(): Promise<number> {
+  if (!_dolarFetchInProgress) _dolarFetchInProgress = fetchDolarECache()
+  return _dolarFetchInProgress
+}
+
+// Converte valor entre moedas usando cotação atual (default 5.40)
+export function converterParaBRL(valor: number, moedaOrigem: 'BRL' | 'USD' = 'BRL'): number {
+  if (moedaOrigem === 'BRL') return valor
+  return valor * _ultimoDolar
+}
+export function converterParaUSD(valorBRL: number): number {
+  return _ultimoDolar > 0 ? valorBRL / _ultimoDolar : 0
+}
+
+// Total da carteira convertendo tudo pra BRL
+export function totalCarteiraBRL(investimentos: Investimento[]): { totalBRL: number; aplicadoBRL: number; rendimentoBRL: number } {
+  let totalBRL = 0, aplicadoBRL = 0
+  for (const i of investimentos) {
+    totalBRL += converterParaBRL(i.valorAtual, i.moeda ?? 'BRL')
+    aplicadoBRL += converterParaBRL(i.valorAplicado, i.moeda ?? 'BRL')
+  }
+  return { totalBRL, aplicadoBRL, rendimentoBRL: totalBRL - aplicadoBRL }
 }

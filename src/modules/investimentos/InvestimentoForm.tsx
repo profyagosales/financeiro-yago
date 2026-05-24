@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { IconX, IconCheck, IconRefresh, IconLock, IconBuildingBank, IconPlus, IconInfoCircle, IconTrendingUp } from '@tabler/icons-react'
+import { IconX, IconCheck, IconRefresh, IconLock, IconBuildingBank, IconPlus, IconInfoCircle, IconTrendingUp, IconCurrencyDollar, IconCurrencyReal } from '@tabler/icons-react'
 import type { Investimento, InvestimentoTipo, InvestimentoLiquidez, TipoRendimento } from '@/db/schema'
 import { addInvestimento, editInvestimento, isRendaVariavel, isRendaFixa, addAporte, useAportes } from '@/db/hooks/useInvestimentos'
 import { useTaxasBenchmark, calcTaxaEfetiva } from '@/db/hooks/useAppConfig'
@@ -58,6 +58,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
     primeiroAporteQtd: '',
     primeiroAportePreco: '',
     cotacaoAtual: invest?.cotacaoAtual ? String(invest.cotacaoAtual) : '',
+    moeda: (invest?.moeda ?? 'BRL') as 'BRL' | 'USD',
     // Datas (renda fixa)
     dataAplicacao: invest?.dataAplicacao ?? today,
     dataVencimento: invest?.dataVencimento ?? '',
@@ -112,6 +113,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
           instituicao: resolveInstituicao(),
           ticker: form.ticker ? form.ticker.toUpperCase() : undefined,
           cotacaoAtual: cot > 0 ? cot : undefined,
+          moeda: form.moeda,
           metaId: form.metaId ? parseInt(form.metaId) : undefined,
           cor: tipoMeta?.cor ?? '#3A8580',
         })
@@ -136,6 +138,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
           quantidade: qtdNova,
           precoMedio: precoNovo,
           cotacaoAtual: cot > 0 ? cot : undefined,
+          moeda: form.moeda,
           dataAplicacao: form.primeiroAporteData,
           metaId: form.metaId ? parseInt(form.metaId) : undefined,
           cor: tipoMeta?.cor ?? '#3A8580',
@@ -340,19 +343,38 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
           {/* ─── CAMPOS POR TIPO ──────────────────────────────────── */}
           {isVar ? (
             <>
-              {/* Renda variável: ticker + cotação + (criação: primeiro aporte / edição: resumo) */}
+              {/* Renda variável: moeda + ticker + cotação */}
               <div style={{ background: 'rgba(80,78,118,0.06)', border: '1px solid rgba(80,78,118,0.15)', borderRadius: 12, padding: '14px 16px' }}>
+
+                {/* Toggle Moeda */}
+                <Field label="Moeda do ativo">
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => setForm(f => ({ ...f, moeda: 'BRL' }))}
+                      style={{ flex: 1, padding: '8px 12px', borderRadius: 9, cursor: 'pointer', border: `1.5px solid ${form.moeda === 'BRL' ? '#3A8580' : '#EDE6DC'}`, background: form.moeda === 'BRL' ? '#3A8580' : '#FBF8F3', color: form.moeda === 'BRL' ? '#FFFFFF' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      <IconCurrencyReal size={14} stroke={2.2} /> Brasil (BRL)
+                    </button>
+                    <button onClick={() => setForm(f => ({ ...f, moeda: 'USD' }))}
+                      style={{ flex: 1, padding: '8px 12px', borderRadius: 9, cursor: 'pointer', border: `1.5px solid ${form.moeda === 'USD' ? '#3A8580' : '#EDE6DC'}`, background: form.moeda === 'USD' ? '#3A8580' : '#FBF8F3', color: form.moeda === 'USD' ? '#FFFFFF' : '#7A5C4F', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      <IconCurrencyDollar size={14} stroke={2.2} /> Exterior (USD)
+                    </button>
+                  </div>
+                </Field>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <Field label="Ticker (opcional)">
                     <input
                       value={form.ticker}
                       onChange={e => setForm(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
-                      placeholder={form.tipo === 'FII' ? 'HGLG11' : form.tipo === 'Ação' ? 'PETR4' : form.tipo === 'Cripto' ? 'BTC' : 'TICKER'}
+                      placeholder={
+                        form.tipo === 'Cripto' ? 'BTC' :
+                        form.moeda === 'USD' ? 'AAPL' :
+                        form.tipo === 'FII' ? 'HGLG11' :
+                        form.tipo === 'Ação' ? 'PETR4' : 'TICKER'
+                      }
                       style={{ ...INPUT_STYLE, textTransform: 'uppercase' }}
                     />
                   </Field>
-                  <Field label="Cotação atual (R$)">
+                  <Field label={`Cotação atual (${form.moeda === 'USD' ? 'US$' : 'R$'})`}>
                     <input
                       value={form.cotacaoAtual}
                       onChange={e => setForm(f => ({ ...f, cotacaoAtual: e.target.value }))}
@@ -362,7 +384,9 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                   </Field>
                 </div>
                 <p style={{ ...HELP_STYLE, marginBottom: 0 }}>
-                  Atualize a cotação manualmente quando quiser refletir o valor de mercado.
+                  {form.moeda === 'USD'
+                    ? 'Ativo no exterior: valores armazenados em USD, conversão pra BRL feita automaticamente.'
+                    : 'Atualize a cotação manualmente quando quiser refletir o valor de mercado.'}
                 </p>
               </div>
 

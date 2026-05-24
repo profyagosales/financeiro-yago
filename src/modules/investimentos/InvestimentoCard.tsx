@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { IconEdit, IconTrash, IconRefresh, IconLock, IconLink, IconArrowUpRight, IconArrowDownRight, IconCoins, IconCash, IconShoppingCart, IconCloudDownload } from '@tabler/icons-react'
+import { IconEdit, IconTrash, IconRefresh, IconLock, IconLink, IconArrowUpRight, IconArrowDownRight, IconCoins, IconCash, IconShoppingCart, IconCloudDownload, IconShoppingBag } from '@tabler/icons-react'
 import { atualizarCotacaoAuto } from '@/db/hooks/useInvestimentos'
 import type { Investimento, Meta } from '@/db/schema'
 import { fmt } from '@/lib/format'
 import { TIPO_META, LIQUIDEZ_LABEL } from './constants'
-import { useProventos, calcDY12m, calcProventosMes, aceitaProventos, isRendaVariavel } from '@/db/hooks/useInvestimentos'
+import { useProventos, calcDY12m, calcProventosMes, aceitaProventos, isRendaVariavel, converterParaBRL } from '@/db/hooks/useInvestimentos'
 import { descreverRendimento } from '@/db/hooks/useAppConfig'
 
 interface Props {
@@ -15,9 +15,10 @@ interface Props {
   onDelete: () => void
   onProventos?: () => void
   onAportes?: () => void
+  onVender?: () => void
 }
 
-export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, onAportes }: Props) {
+export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, onAportes, onVender }: Props) {
   const [hover, setHover] = useState(false)
   const [fetchingCotacao, setFetchingCotacao] = useState(false)
   const [cotacaoFeedback, setCotacaoFeedback] = useState<'ok' | 'err' | null>(null)
@@ -158,7 +159,7 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
             <p style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700,
               color: '#2C1A0F', letterSpacing: '-0.3px', margin: 0,
-            }}>{fmt(invest.valorAtual)}</p>
+            }}>{invest.moeda === 'USD' ? `US$ ${invest.valorAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : fmt(invest.valorAtual)}</p>
             {/* Botão atualizar cotação (renda variável com ticker) */}
             {isVar && invest.ticker && invest.id !== undefined && (
               <button
@@ -204,8 +205,16 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
               {positivo ? <IconArrowUpRight size={12} stroke={2.4} /> : <IconArrowDownRight size={12} stroke={2.4} />}
               {positivo ? '+' : ''}{rendPct.toFixed(2)}%
             </span>
-            <span style={SUB_TXT}>aplicado {fmt(invest.valorAplicado)}</span>
+            <span style={SUB_TXT}>
+              {invest.moeda === 'USD' ? `US$ ${invest.valorAplicado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : `aplicado ${fmt(invest.valorAplicado)}`}
+            </span>
           </div>
+          {/* Conversão pra BRL quando ativo em USD */}
+          {invest.moeda === 'USD' && (
+            <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#9B7B6A', margin: '3px 0 0' }}>
+              ≈ {fmt(converterParaBRL(invest.valorAtual, 'USD'))} <span style={{ color: '#C4B4A8' }}>BRL</span>
+            </p>
+          )}
         </div>
 
         {/* Ações: Aportar (renda variável) + Proventos (FII/Ação/ETF) + edit/delete hover */}
@@ -220,6 +229,19 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
                 display: 'inline-flex', alignItems: 'center', gap: 4,
               }}>
               <IconShoppingCart size={12} stroke={2.4} /> Aportar
+            </button>
+          )}
+          {onVender && (
+            <button onClick={onVender}
+              title={isVar ? 'Registrar venda' : 'Registrar resgate'}
+              style={{
+                background: 'rgba(168,68,43,0.12)', color: '#A8442B',
+                border: '1px solid rgba(168,68,43,0.3)', borderRadius: 9,
+                padding: '6px 10px', cursor: 'pointer',
+                fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+              }}>
+              <IconShoppingBag size={12} stroke={2.4} /> {isVar ? 'Vender' : 'Resgatar'}
             </button>
           )}
           {podeProventos && onProventos && (
