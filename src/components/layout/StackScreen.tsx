@@ -11,9 +11,10 @@
 //   </StackScreen>
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { IconX } from '@tabler/icons-react'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { ReactNode } from 'react'
 
 interface StackScreenProps {
@@ -33,6 +34,11 @@ interface StackScreenProps {
 export function StackScreen({
   open, onClose, title, eyebrow, rightAction, children, footer,
 }: StackScreenProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  // Focus trap A11Y: foco vai pro primeiro tabbable e fica preso até fechar.
+  // Faltou no R4 quando aplicamos em Modal/LegacyModalShell/ConfirmDialog.
+  useFocusTrap(dialogRef, open)
+
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
@@ -63,6 +69,7 @@ export function StackScreen({
             justifyContent: 'center',
           }}>
           <motion.div
+            ref={dialogRef}
             role="dialog" aria-modal="true"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}

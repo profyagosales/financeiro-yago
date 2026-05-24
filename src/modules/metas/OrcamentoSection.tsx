@@ -284,7 +284,7 @@ function OrcamentoRow({ orc, gastos, onEdit, onDelete }: { orc: { id?: number; c
             <button onClick={onEdit} style={{ background: '#F5F0E8', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <IconEdit size={11} stroke={1.8} color="#7A5C4F" />
             </button>
-            <button onClick={onDelete} title="Excluir" style={{ background: '#FAF0EE', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button onClick={onDelete} aria-label="Excluir" title="Excluir" style={{ background: '#FAF0EE', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <IconTrash size={11} stroke={2} color="#C4553B" />
             </button>
           </div>

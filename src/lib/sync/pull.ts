@@ -4,6 +4,7 @@ import { supabase, getUserId } from '@/lib/supabase'
 import { TABLES, SYNC_TABLES_ORDERED } from './config'
 import { snakeToCamel } from './camelSnake'
 import { getLocalId, setMapping, deleteMapping, getMeta, setMeta, lastPullKey, resolveFksToLocal } from './mapping'
+import { setPulling } from './engine'
 
 // Converte record remoto pro shape local do Dexie.
 function remoteToLocalRecord(
@@ -128,13 +129,21 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
 
 export async function pullAll(opts: { full?: boolean } = {}): Promise<{ pulled: number; errors: number }> {
   let totalPulled = 0, totalErrors = 0
-  // Duas passadas pra resolver FKs órfãs que chegaram após filhos
-  for (let pass = 0; pass < 2; pass += 1) {
-    for (const t of SYNC_TABLES_ORDERED) {
-      const r = await pullTable(t, { full: opts.full && pass === 0 })
-      totalPulled += r.pulled
-      totalErrors += r.errors
+  // Sinaliza pros Dexie hooks (setupSyncHooks) que writes vêm do remoto.
+  // Evita echo loop: pull → updating hook → triggerPush → outro device
+  // recebe → push de volta = loop perpétuo entre devices sincronizando.
+  setPulling(true)
+  try {
+    // Duas passadas pra resolver FKs órfãs que chegaram após filhos
+    for (let pass = 0; pass < 2; pass += 1) {
+      for (const t of SYNC_TABLES_ORDERED) {
+        const r = await pullTable(t, { full: opts.full && pass === 0 })
+        totalPulled += r.pulled
+        totalErrors += r.errors
+      }
     }
+  } finally {
+    setPulling(false)
   }
   return { pulled: totalPulled, errors: totalErrors }
 }

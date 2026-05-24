@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -30,11 +30,14 @@ export function ContasDesktop() {
   const [filterTipo, setFilterTipo] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
-  // Auto-seleciona conta com maior saldo na 1ª carga (derived state pattern)
-  if (selectedId === null && contas.length > 0) {
-    const biggest = [...contas].sort((a, b) => b.saldoAtual - a.saldoAtual)[0]
-    if (biggest.id !== undefined) setSelectedId(biggest.id)
-  }
+  // Auto-seleciona conta com maior saldo na 1ª carga. Em useEffect pra evitar
+  // warning "Cannot update component while rendering" do React 19.
+  useEffect(() => {
+    if (selectedId === null && contas.length > 0) {
+      const biggest = [...contas].sort((a, b) => b.saldoAtual - a.saldoAtual)[0]
+      if (biggest.id !== undefined) setSelectedId(biggest.id)
+    }
+  }, [contas, selectedId])
 
   // Tipos disponíveis com contagem
   const tiposDisponiveis = useMemo(() => {

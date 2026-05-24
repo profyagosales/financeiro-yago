@@ -137,7 +137,7 @@ export function TransactionDetail({ tx, onClose }: Props) {
             letterSpacing: '-0.3px', lineHeight: 1, margin: '6px 0 0',
           }}>{isReceita ? '+' : isDespesa ? '−' : ''}{fmt(tx.valor).replace(/^-/, '')}</p>
         </div>
-        <button onClick={onClose} title="Fechar"
+        <button onClick={onClose} aria-label="Fechar" title="Fechar"
           style={{
             background: 'rgba(255,255,255,0.7)', border: '1px solid #EDE6DC',
             borderRadius: 9, width: 32, height: 32, cursor: 'pointer',
@@ -677,16 +677,16 @@ function AnexoRow({ anexo, onDelete }: { anexo: Anexo; onDelete: () => void }) {
           </p>
         </button>
         {(isImg || isPdf) && (
-          <button onClick={handleVer} title="Visualizar"
+          <button onClick={handleVer} aria-label="Visualizar" title="Visualizar"
             style={{ background: 'rgba(58,133,128,0.12)', border: 'none', borderRadius: 7, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <IconEye size={13} stroke={2} color="#1E7D5A" />
           </button>
         )}
-        <button onClick={handleBaixar} title="Baixar"
+        <button onClick={handleBaixar} aria-label="Baixar" title="Baixar"
           style={{ background: 'rgba(61,126,181,0.12)', border: 'none', borderRadius: 7, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <IconDownload size={13} stroke={2} color="#3D7EB5" />
         </button>
-        <button onClick={onDelete} title="Remover"
+        <button onClick={onDelete} aria-label="Remover" title="Remover"
           style={{ background: '#FAEAEA', border: 'none', borderRadius: 7, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <IconTrash size={13} stroke={2} color="#C4553B" />
         </button>
@@ -705,11 +705,11 @@ function AnexoRow({ anexo, onDelete }: { anexo: Anexo; onDelete: () => void }) {
               {anexo.nomeArquivo} <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: 6 }}>· {sizeKB} KB</span>
             </p>
             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-              <button onClick={handleBaixar} title="Baixar"
+              <button onClick={handleBaixar} aria-label="Baixar" title="Baixar"
                 style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 9, padding: '8px 12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#FFFFFF' }}>
                 <IconDownload size={14} stroke={2} /> Baixar
               </button>
-              <button onClick={() => setPreview(false)} title="Fechar"
+              <button onClick={() => setPreview(false)} aria-label="Fechar" title="Fechar"
                 style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 9, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <IconX size={16} stroke={2} color="#FFFFFF" />
               </button>
@@ -724,6 +724,7 @@ function AnexoRow({ anexo, onDelete }: { anexo: Anexo; onDelete: () => void }) {
                 style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: 10, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}/>
             ) : (
               <iframe src={src ?? ''} title={anexo.nomeArquivo}
+                sandbox="allow-same-origin"
                 style={{ width: '100%', height: '85vh', border: 'none', borderRadius: 10, background: '#FFFFFF', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}/>
             )}
           </div>

@@ -115,10 +115,10 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          <button onClick={onEdit} title="Editar cartão" style={ICON_BTN}>
+          <button onClick={onEdit} aria-label="Editar cartão" title="Editar cartão" style={ICON_BTN}>
             <IconEdit size={14} stroke={1.8} color="#7A5C4F" />
           </button>
-          <button onClick={onDelete} title="Excluir cartão" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
+          <button onClick={onDelete} aria-label="Excluir cartão" title="Excluir cartão" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
             <IconTrash size={14} stroke={2} color="#C4553B" />
           </button>
         </div>
@@ -370,7 +370,7 @@ function LancamentoRow({ lanc, onEdit, isLast }: { lanc: LancamentoCartao; onEdi
 
         {/* Menu */}
         <div style={{ position: 'relative' }}>
-          <button onClick={() => setOpenMenu(o => !o)} title="Opções"
+          <button onClick={() => setOpenMenu(o => !o)} aria-label="Opções" title="Opções"
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer', padding: 6,
               borderRadius: 6, display: 'flex', alignItems: 'center',

@@ -7,7 +7,7 @@
 
 import { db } from '@/db/schema'
 import { TABLES } from '@/lib/sync/config'
-import { triggerPush } from '@/lib/sync/engine'
+import { triggerPush, isPulling } from '@/lib/sync/engine'
 import { deleteMapping, getRemoteId } from '@/lib/sync/mapping'
 import { supabase, getUserId } from '@/lib/supabase'
 
@@ -23,19 +23,27 @@ export function setupSyncHooks() {
     const table = config.dexie()
 
     // creating: garante updatedAt antes do INSERT
+    // Pull também cria records remotamente — checa isPulling() pra não
+    // disparar push do que acabou de chegar (echo loop entre 2 devices).
     table.hook('creating', (_pk, obj: Record<string, unknown>) => {
       if (obj.updatedAt == null) obj.updatedAt = Date.now()
-      // Dispara push debounced (espera o ID ser atribuído)
-      queueMicrotask(() => triggerPush())
+      if (!isPulling()) {
+        queueMicrotask(() => triggerPush())
+      }
     })
 
-    // updating: atualiza updatedAt + dispara push (SEMPRE)
-    // Bug histórico: o triggerPush() só rodava no `else` (quando o caller
+    // updating: atualiza updatedAt + dispara push (SEMPRE, exceto durante pull)
+    // Bug histórico 1: o triggerPush() só rodava no `else` (quando o caller
     // NÃO passava updatedAt). Mas TODOS os helpers passam updatedAt
     // manualmente — resultado: edits silenciosamente paravam de sincronizar
     // até o próximo create/delete. Agora dispara push em qualquer update.
+    // Bug histórico 2: pull em device A escrevia local → updating hook → push
+    // → device B recebia → updating hook → push de volta = loop perpétuo.
+    // Fix: pull seta isPulling()=true, hook checa e pula triggerPush.
     table.hook('updating', (mods: Record<string, unknown>) => {
-      queueMicrotask(() => triggerPush())
+      if (!isPulling()) {
+        queueMicrotask(() => triggerPush())
+      }
       if (!('updatedAt' in mods)) {
         return { ...mods, updatedAt: Date.now() }
       }

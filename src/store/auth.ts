@@ -120,7 +120,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
-    // Limpa dados locais antes do signOut do Supabase pra evitar que dados
+    // Ordem importa:
+    // 1. unsubscribePush ANTES do signOut Supabase — precisa de sessão ativa
+    //    pra deletar a row push_subscriptions (RLS). Sem isso, o device fica
+    //    recebendo push do user antigo, e se outro user logar no mesmo
+    //    device, herda a subscription órfã (cross-user privacy leak).
+    try {
+      const { unsubscribePush } = await import('@/lib/pushSubscribe')
+      await unsubscribePush().catch(() => { /* sem permissão é OK */ })
+    } catch (e) {
+      console.warn('[signOut] unsubscribePush falhou:', e)
+    }
+    // 2. Limpa dados locais antes do signOut do Supabase pra evitar que dados
     // do user anterior fiquem misturados se outro user logar nesse device.
     // Crítico: o "Esqueci o PIN" usa essa função — sem o wipe, o próximo
     // signup com email diferente herdaria todo o IndexedDB anterior.
@@ -130,6 +141,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (e) {
       console.warn('[signOut] wipe local data falhou:', e)
     }
+    // 3. Finalmente desloga Supabase + limpa PIN local
     await supabase.auth.signOut()
     clearPin()
     setSessionActive(false)

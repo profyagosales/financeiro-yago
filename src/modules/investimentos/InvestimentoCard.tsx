@@ -225,7 +225,7 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
         {/* Ações: Aportar (renda variável) + Proventos (FII/Ação/ETF) + edit/delete hover */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
           {isVar && onAportes && (
-            <button onClick={onAportes} title="Registrar compra / ver aportes"
+            <button onClick={onAportes} aria-label="Registrar compra / ver aportes" title="Registrar compra / ver aportes"
               style={{
                 background: 'rgba(80,78,118,0.12)', color: '#504E76',
                 border: '1px solid rgba(80,78,118,0.3)', borderRadius: 9,
@@ -250,7 +250,7 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
             </button>
           )}
           {podeProventos && onProventos && (
-            <button onClick={onProventos} title="Registrar/ver proventos"
+            <button onClick={onProventos} aria-label="Registrar/ver proventos" title="Registrar/ver proventos"
               style={{
                 background: 'rgba(58,133,128,0.12)', color: '#1E7D5A',
                 border: '1px solid rgba(58,133,128,0.3)', borderRadius: 9,
@@ -269,10 +269,10 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
               <motion.div initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 6 }}
                 transition={{ duration: 0.12 }}
                 style={{ display: 'flex', gap: 6 }}>
-                <button onClick={onEdit} title="Editar" style={ICON_BTN}>
+                <button onClick={onEdit} aria-label="Editar" title="Editar" style={ICON_BTN}>
                   <IconEdit size={14} stroke={1.8} color="#7A5C4F" />
                 </button>
-                <button onClick={onDelete} title="Excluir" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
+                <button onClick={onDelete} aria-label="Excluir" title="Excluir" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
                   <IconTrash size={14} stroke={2} color="#C4553B" />
                 </button>
               </motion.div>

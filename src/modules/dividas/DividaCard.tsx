@@ -178,7 +178,7 @@ export function DividaCard({ divida, onEdit, onDelete, onMovimentar }: Props) {
         {/* Ações: Movimentar sempre visível, edit/delete no hover */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
           {!divida.quitada && (
-            <button onClick={onMovimentar} title="Amortizar, desconto, quitar, ajustar"
+            <button onClick={onMovimentar} aria-label="Amortizar, desconto, quitar, ajustar" title="Amortizar, desconto, quitar, ajustar"
               style={{
                 background: 'rgba(168,68,43,0.12)', color: '#A8442B',
                 border: '1px solid rgba(168,68,43,0.3)', borderRadius: 9,
@@ -194,10 +194,10 @@ export function DividaCard({ divida, onEdit, onDelete, onMovimentar }: Props) {
               <motion.div initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 6 }}
                 transition={{ duration: 0.12 }}
                 style={{ display: 'flex', gap: 6 }}>
-                <button onClick={onEdit} title="Editar" style={ICON_BTN}>
+                <button onClick={onEdit} aria-label="Editar" title="Editar" style={ICON_BTN}>
                   <IconEdit size={14} stroke={1.8} color="#7A5C4F" />
                 </button>
-                <button onClick={onDelete} title="Excluir" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
+                <button onClick={onDelete} aria-label="Excluir" title="Excluir" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
                   <IconTrash size={14} stroke={2} color="#C4553B" />
                 </button>
               </motion.div>

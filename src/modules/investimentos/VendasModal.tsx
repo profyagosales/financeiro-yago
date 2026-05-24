@@ -332,7 +332,7 @@ export function VendasModal({ invest, onClose }: Props) {
                         {resultado >= 0 ? '+' : ''}{simbolo} {Math.abs(resultado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
-                    <button onClick={() => m.id !== undefined && deleteMovimentacaoInvest(m.id)} title="Remover"
+                    <button onClick={() => m.id !== undefined && deleteMovimentacaoInvest(m.id)} aria-label="Remover" title="Remover"
                       style={{ background: '#FAEAEA', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <IconTrash size={11} stroke={2} color="#C4553B" />
                     </button>

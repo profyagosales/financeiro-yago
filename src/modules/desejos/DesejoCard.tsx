@@ -117,7 +117,7 @@ export function DesejoCard({ desejo, onEdit, onComprar, onDelete }: Props) {
       <div style={{ display: 'flex', gap: 4, marginTop: 'auto', paddingTop: 4, alignItems: 'center' }}>
         {/* Botão principal sempre visível */}
         {isAberto && onComprar && (
-          <button onClick={onComprar} title="Marcar como comprado"
+          <button onClick={onComprar} aria-label="Marcar como comprado" title="Marcar como comprado"
             style={{
               flex: 1, background: 'rgba(58,133,128,0.12)', color: '#1E7D5A',
               border: '1px solid rgba(58,133,128,0.3)', borderRadius: 8,
@@ -129,7 +129,7 @@ export function DesejoCard({ desejo, onEdit, onComprar, onDelete }: Props) {
           </button>
         )}
         {(isComprado || isDesistido) && (
-          <button onClick={() => desejo.id !== undefined && reabrirDesejo(desejo.id)} title="Reabrir"
+          <button onClick={() => desejo.id !== undefined && reabrirDesejo(desejo.id)} aria-label="Reabrir" title="Reabrir"
             style={{ ...SMALL_BTN, flex: 1 }}>
             <IconRotateClockwise size={11} stroke={2} color="#7A5C4F" />
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: '#7A5C4F', marginLeft: 4 }}>Reabrir</span>
@@ -143,15 +143,15 @@ export function DesejoCard({ desejo, onEdit, onComprar, onDelete }: Props) {
               transition={{ duration: 0.12 }}
               style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
               {isAberto && (
-                <button onClick={() => desejo.id !== undefined && desistirDesejo(desejo.id)} title="Desistir"
+                <button onClick={() => desejo.id !== undefined && desistirDesejo(desejo.id)} aria-label="Desistir" title="Desistir"
                   style={SMALL_BTN}>
                   <IconCircleMinus size={12} stroke={2} color="#9B7B6A" />
                 </button>
               )}
-              <button onClick={onEdit} title="Editar" style={SMALL_BTN}>
+              <button onClick={onEdit} aria-label="Editar" title="Editar" style={SMALL_BTN}>
                 <IconEdit size={11} stroke={1.8} color="#7A5C4F" />
               </button>
-              <button onClick={onDelete} title="Excluir" style={{ ...SMALL_BTN, background: '#FAEAEA' }}>
+              <button onClick={onDelete} aria-label="Excluir" title="Excluir" style={{ ...SMALL_BTN, background: '#FAEAEA' }}>
                 <IconTrash size={11} stroke={2} color="#C4553B" />
               </button>
             </motion.div>

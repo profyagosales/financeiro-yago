@@ -86,10 +86,10 @@ export function MetaCard({ meta, onEdit, onAporte, onDelete }: Props) {
             <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 8 }}
               transition={{ duration: 0.12 }}
               style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-              <button onClick={onEdit} title="Editar" style={ICON_BTN}>
+              <button onClick={onEdit} aria-label="Editar" title="Editar" style={ICON_BTN}>
                 <IconEdit size={12} stroke={1.8} color="#7A5C4F" />
               </button>
-              <button onClick={onDelete} title="Excluir" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
+              <button onClick={onDelete} aria-label="Excluir" title="Excluir" style={{ ...ICON_BTN, background: '#FAEAEA' }}>
                 <IconTrash size={12} stroke={2} color="#C4553B" />
               </button>
             </motion.div>

@@ -53,7 +53,8 @@ export function serieDiaria(txs: Transacao[], start: string, end: string): Ponto
   const ds = new Date(start + 'T00:00:00')
   const de = new Date(end + 'T00:00:00')
   for (let d = new Date(ds); d <= de; d.setDate(d.getDate() + 1)) {
-    const iso = d.toISOString().slice(0, 10)
+    // hora LOCAL (toISOString seria UTC → off-by-one no BRT após 21h)
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     const list = txs.filter(t => t.data === iso)
     const receitas = list.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
     const despesas = list.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)

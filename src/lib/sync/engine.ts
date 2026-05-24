@@ -28,6 +28,22 @@ let syncInFlight = false
 // o syncInFlight=true fazia retorno imediato → push perdido. Agora setamos
 // pendingPush=true e re-rodamos um ciclo skipPull após o pull terminar.
 let pendingPush = false
+// Cap defensivo: se algo entra em loop (push gera dirty que dispara push de
+// novo), abre janela de breathing de 5s antes de re-tentar. Sem isso, bug
+// não-tratado vira spinning infinito.
+let consecutiveCycles = 0
+const MAX_CYCLES_BEFORE_BACKOFF = 3
+
+// SINALIZAÇÃO PRO setupSyncHooks: durante pull, hooks de updating recebem
+// writes que vêm do remoto (não são writes locais). Esses NÃO devem
+// disparar triggerPush — senão pull do device A → write em B → push de B
+// → pull em A vira loop perpétuo entre 2 devices.
+//
+// Esta flag é setada pelo pull antes de chamar dexie.update() e zerada no
+// finally. O hook updating em setupSyncHooks lê esta flag.
+let _pullingFlag = false
+export function isPulling(): boolean { return _pullingFlag }
+export function setPulling(v: boolean) { _pullingFlag = v }
 
 const PUSH_DEBOUNCE_MS = 800       // após write local, espera 800ms antes de push
 const PULL_DEBOUNCE_MS = 300       // realtime → debounce curto
@@ -83,10 +99,19 @@ async function syncCycle(opts: { full?: boolean; skipPush?: boolean; skipPull?: 
     setStatus('error', msg)
   } finally {
     syncInFlight = false
-    // Se algo foi marcado durante o ciclo, drena agora
+    // Cap pra evitar spinning: depois de 3 ciclos consecutivos drena com pausa
     if (pendingPush) {
       pendingPush = false
-      void syncCycle({ skipPull: true })
+      consecutiveCycles += 1
+      if (consecutiveCycles >= MAX_CYCLES_BEFORE_BACKOFF) {
+        console.warn('[sync] 3+ ciclos consecutivos — backoff 5s')
+        consecutiveCycles = 0
+        setTimeout(() => { void syncCycle({ skipPull: true }) }, 5000)
+      } else {
+        void syncCycle({ skipPull: true })
+      }
+    } else {
+      consecutiveCycles = 0
     }
   }
 }

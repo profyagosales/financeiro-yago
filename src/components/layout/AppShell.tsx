@@ -286,6 +286,7 @@ export function AppShell() {
         whileHover={{ scale: 1.08, boxShadow: '0 12px 32px rgba(196,85,59,0.5)' }}
         whileTap={{ scale: 0.92 }}
         className="fab-desktop"
+        aria-label="Novo lançamento"
         onClick={() => openFab()}>
         <motion.div
           animate={fabOpen ? { rotate: 45 } : { rotate: 0 }}

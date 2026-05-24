@@ -299,7 +299,11 @@ export function useDashboardData(): DashboardData {
 
   alertas.sort((a, b) => b.priority - a.priority)
 
-  // Próximos 7 dias
+  // Próximos 7 dias.
+  // Bug histórico: filtro `mesIt === mes && anoIt === ano` excluía eventos
+  // de meses futuros (ex: hoje=28/mai, conta dia 2 de jun em 5 dias). Agora
+  // usa o mês/ano do iterator (mesIt/anoIt) pra buscar fixas+lancs do
+  // mês CORRESPONDENTE — cobre virada de mês corretamente.
   const proximos7Dias: ProximoEvento[] = []
   for (let i = 0; i <= 7; i += 1) {
     const dt = new Date(ano, mes - 1, hoje + i)
@@ -308,8 +312,9 @@ export function useDashboardData(): DashboardData {
     const anoIt = dt.getFullYear()
     const iso = `${anoIt}-${String(mesIt).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
 
-    contasFixas.filter(cf => cf.ativo && cf.diaVencimento === dia && mesIt === mes && anoIt === ano).forEach(cf => {
-      const paga = pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago')
+    contasFixas.filter(cf => cf.ativo && cf.diaVencimento === dia).forEach(cf => {
+      // Checa pagamento no mês ITERATOR (não no mês corrente)
+      const paga = pagamentos.find(p => p.contaFixaId === cf.id && p.status === 'pago' && p.mes === mesIt && p.ano === anoIt)
       if (paga) return
       proximos7Dias.push({
         id: `cf7-${cf.id}-${i}`, data: iso, diasFalta: i, tipo: 'conta-fixa',
@@ -318,18 +323,30 @@ export function useDashboardData(): DashboardData {
     })
 
     cartoes.filter(c => c.ativo).forEach(c => {
-      if (c.diaFechamento === dia && mesIt === mes && anoIt === ano) {
-        const lancs = lancsAtivos.filter(l => l.cartaoId === c.id)
+      if (c.diaFechamento === dia) {
+        // Fatura que está fechando = lancs do mês corrente do cartão
+        const lancs = lancsAtivos.filter(l => l.cartaoId === c.id && l.mes === mesIt && l.ano === anoIt)
         const fatura = lancs.reduce((s, l) => s + l.valor, 0)
         proximos7Dias.push({
           id: `cc-fech-${c.id}-${i}`, data: iso, diasFalta: i, tipo: 'fatura-fechamento',
           titulo: c.nome, subtitulo: 'Fecha fatura', valor: fatura, cor: '#504E76',
         })
       }
-      if (c.diaVencimento === dia && mesIt === mes && anoIt === ano) {
+      if (c.diaVencimento === dia) {
+        // Fatura que VAI vencer = lancs do mês anterior (fatura já fechada)
+        // Se diaVenc > diaFech, mês fatura = mês anterior; senão, próximo
+        let mesFatura = mesIt
+        let anoFatura = anoIt
+        if (c.diaVencimento < c.diaFechamento) {
+          // fatura já fechou no mês anterior
+          mesFatura -= 1
+          if (mesFatura < 1) { mesFatura = 12; anoFatura -= 1 }
+        }
+        const lancs = lancsAtivos.filter(l => l.cartaoId === c.id && l.mes === mesFatura && l.ano === anoFatura)
+        const fatura = lancs.reduce((s, l) => s + l.valor, 0)
         proximos7Dias.push({
           id: `cc-venc-${c.id}-${i}`, data: iso, diasFalta: i, tipo: 'fatura-vencimento',
-          titulo: c.nome, subtitulo: 'Vence fatura', valor: 0, cor: '#C4553B',
+          titulo: c.nome, subtitulo: 'Vence fatura', valor: fatura, cor: '#C4553B',
         })
       }
     })

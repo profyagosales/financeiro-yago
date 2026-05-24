@@ -79,8 +79,22 @@ export async function deleteCategoria(id: number) {
     .where('tipo').equals(cat.tipo)
     .filter(c => c.id !== id)
     .toArray()
-  const fallback = candidatosFallback.find(c => /^outros/i.test(c.nome))
+  let fallback = candidatosFallback.find(c => /^outros/i.test(c.nome))
               ?? candidatosFallback[0]
+  // Se é a ÚLTIMA categoria do tipo, cria "Outros" automaticamente pra
+  // não deixar referências órfãs. Sem isso, deletar a última despesa
+  // deixava transações/lancamentos com categoriaId apontando pra nada.
+  if (!fallback) {
+    const nomeFallback = cat.tipo === 'despesa' ? 'Outros gastos' : 'Outros'
+    const newId = await db.categorias.add({
+      nome: nomeFallback,
+      tipo: cat.tipo,
+      icone: '📦',
+      cor: '#9B7B6A',
+      ordem: 999,
+    }) as number
+    fallback = await db.categorias.get(newId)
+  }
   if (fallback?.id) {
     const fallbackId = fallback.id
     await Promise.all([

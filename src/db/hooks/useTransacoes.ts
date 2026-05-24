@@ -21,20 +21,40 @@ export function useTransacoesByMes(mes: number, ano: number) {
 // Helper: transferências têm `transferId` (duas linhas vinculadas — uma
 // despesa na conta origem + uma receita na destino). Devem ser EXCLUÍDAS
 // de qualquer agregação de receitas/despesas porque a soma net é zero.
+//
+// Espelhos de Investimento/Aporte (criados em useInvestimentos pra debitar
+// conta no aporte) também devem ser excluídos das despesas — são
+// movimentação patrimonial INTERNA (R$ saiu da conta, virou ativo
+// investido) e não despesa real. Sem esse filtro, aportes inflam: gastos
+// por categoria, saudeScore (savings rate cai), notificação de orçamento
+// dispara falsa, projeção de despesa média mensal superestima, etc.
 function semTransferencias(txs: Transacao[]): Transacao[] {
   return txs.filter(t => !t.transferId)
 }
 
+// Detecta Transacao espelho criada por useInvestimentos.addInvestimento
+// ou addAporte (vem com tag determinística `[invest:id]` ou `[aporte:id]`
+// na descrição).
+export function isEspelhoInvestimento(tx: Transacao): boolean {
+  return tx.descricao.includes('[invest:') || tx.descricao.includes('[aporte:')
+}
+
+// Filtro padrão pra agregações de gastos/receitas reais (excluindo
+// transferências internas e espelhos de investimento).
+function semTransferOuEspelhos(txs: Transacao[]): Transacao[] {
+  return txs.filter(t => !t.transferId && !isEspelhoInvestimento(t))
+}
+
 export function useTotaisMes(mes: number, ano: number) {
   const todas = useTransacoesByMes(mes, ano)
-  const txs = semTransferencias(todas)
+  const txs = semTransferOuEspelhos(todas)
   const receitas = txs.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0)
   const despesas = txs.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0)
   return { receitas, despesas, saldo: receitas - despesas }
 }
 export function useGastosPorCategoria(mes: number, ano: number) {
   const todas = useTransacoesByMes(mes, ano)
-  const txs = semTransferencias(todas)
+  const txs = semTransferOuEspelhos(todas)
   const map = new Map<number, number>()
   txs.filter(t => t.tipo === 'despesa').forEach(t => map.set(t.categoriaId, (map.get(t.categoriaId) ?? 0) + t.valor))
   return map
@@ -234,10 +254,12 @@ export async function editTransacaoComSaldo(id: number, novosDados: Partial<Tran
     }
   }
 
-  // Transferência: se mudou valor ou data, propaga pra irmã (espelho).
-  // Sem isso, editar via EditableValueField uma das pernas dessincroniza
-  // o par e o saldo das contas fica inconsistente.
-  if (original.transferId && (novosDados.valor !== undefined || novosDados.data !== undefined)) {
+  // Transferência: se mudou valor, data OU status, propaga pra irmã (espelho).
+  // Sem isso, editar uma perna dessincroniza o par e os saldos das contas
+  // ficam inconsistentes. Status é crítico: toggle pendente↔efetivada em
+  // uma perna deve refletir na outra (do contrário só metade do par afeta
+  // saldo).
+  if (original.transferId && (novosDados.valor !== undefined || novosDados.data !== undefined || novosDados.status !== undefined)) {
     const irmas = await db.transacoes
       .filter(t => t.transferId === original.transferId && t.id !== id)
       .toArray()
@@ -246,21 +268,23 @@ export async function editTransacaoComSaldo(id: number, novosDados: Partial<Tran
       const updates: Partial<Transacao> = {}
       if (novosDados.valor !== undefined) updates.valor = novosDados.valor
       if (novosDados.data !== undefined) updates.data = novosDados.data
+      if (novosDados.status !== undefined) updates.status = novosDados.status
       const oldIrma = await db.transacoes.get(irma.id)
       if (!oldIrma) continue
-      // Ajusta saldo da conta da irmã usando função pura impacto (respeita status)
-      if (novosDados.valor !== undefined) {
-        const antIrmaImp = impacto(oldIrma.tipo, oldIrma.valor, oldIrma.status)
-        const novIrmaImp = impacto(oldIrma.tipo, novosDados.valor, oldIrma.status)
-        const dIrma = novIrmaImp - antIrmaImp
-        if (dIrma !== 0) {
-          const contaIrma = await db.contas.get(oldIrma.contaId)
-          if (contaIrma) {
-            await db.contas.update(oldIrma.contaId, {
-              saldoAtual: contaIrma.saldoAtual + dIrma,
-              updatedAt: Date.now(),
-            })
-          }
+      // Ajusta saldo da conta da irmã usando função pura impacto (respeita
+      // status novo e antigo). Cobre cenários: só valor, só status, ambos.
+      const novoIrmaValor = novosDados.valor ?? oldIrma.valor
+      const novoIrmaStatus = novosDados.status ?? oldIrma.status
+      const antIrmaImp = impacto(oldIrma.tipo, oldIrma.valor, oldIrma.status)
+      const novIrmaImp = impacto(oldIrma.tipo, novoIrmaValor, novoIrmaStatus)
+      const dIrma = novIrmaImp - antIrmaImp
+      if (dIrma !== 0) {
+        const contaIrma = await db.contas.get(oldIrma.contaId)
+        if (contaIrma) {
+          await db.contas.update(oldIrma.contaId, {
+            saldoAtual: contaIrma.saldoAtual + dIrma,
+            updatedAt: Date.now(),
+          })
         }
       }
       await db.transacoes.update(irma.id, { ...updates, updatedAt: Date.now() })

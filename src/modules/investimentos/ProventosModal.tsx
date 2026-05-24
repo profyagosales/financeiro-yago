@@ -209,7 +209,7 @@ export function ProventosModal({ invest, onClose }: Props) {
                     <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#1E7D5A', letterSpacing: '-0.3px' }}>
                       +{fmt(p.valor)}
                     </span>
-                    <button onClick={() => p.id !== undefined && deleteProvento(p.id)} title="Remover"
+                    <button onClick={() => p.id !== undefined && deleteProvento(p.id)} aria-label="Remover" title="Remover"
                       style={{ background: '#FAEAEA', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <IconTrash size={11} stroke={2} color="#C4553B" />
                     </button>

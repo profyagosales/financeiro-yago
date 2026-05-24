@@ -182,12 +182,17 @@ export function DashboardMobile() {
 
           <h1 style={{
             fontFamily: "'Fraunces',Georgia,serif",
-            fontSize: 'clamp(48px, 14vw, 64px)',
+            // clamp max reduzido pra 56 (era 64) + overflow-wrap pra
+            // valores ≥ R$ 999.999.999,99 não estouravem layout em iPhone SE.
+            fontSize: 'clamp(40px, 12vw, 56px)',
             fontWeight: 700,
             color: C.ink,
             letterSpacing: '-2px', lineHeight: 0.95,
             margin: 0,
             fontVariantNumeric: 'tabular-nums',
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word',
+            maxWidth: '100%',
           }}>
             {fmt(isEmpty ? 0 : d.patrimonioLiquido)}
           </h1>

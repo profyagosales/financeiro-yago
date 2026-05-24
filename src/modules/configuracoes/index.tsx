@@ -775,7 +775,8 @@ function ImportCSVSection() {
   const parseFile = (file: File) => {
     const reader = new FileReader()
     reader.onload = e => {
-      const text = e.target?.result as string
+      // Remove BOM UTF-8 (﻿) que vem em CSVs do Excel/exports brasileiros
+      const text = (e.target?.result as string).replace(/^﻿/, '')
       const lines = text.trim().split('\n').filter(Boolean)
       const start = lines[0].toLowerCase().includes('data') ? 1 : 0
       const parsed: CSVRow[] = []
@@ -784,14 +785,17 @@ function ImportCSVSection() {
         if (cols.length < 3) return
         const data = parseCSVDate(cols[0])
         const descricao = cols[1] || 'Importado'
-        const rawVal = parseFloat(cols[2].replace(/[R$\s]/g,'').replace(',','.'))
-        if (isNaN(rawVal)) return
+        // Parse moeda BR completo: strip R$, espaços, separador milhar (.) e vírgula decimal
+        const rawVal = parseFloat(cols[2].replace(/[R$\s]/g,'').replace(/\./g,'').replace(',','.'))
+        if (isNaN(rawVal) || rawVal === 0) return  // pula linhas vazias/inválidas
         const valor = Math.abs(rawVal)
+        // Sinal explícito: positivo = receita, negativo = despesa
         const tipo: 'receita' | 'despesa' = rawVal > 0 ? 'receita' : 'despesa'
         parsed.push({ data, descricao, valor, tipo })
       })
       setRows(parsed)
     }
+    reader.onerror = () => { console.warn('[CSV] erro ao ler arquivo') }
     reader.readAsText(file, 'UTF-8')
   }
 

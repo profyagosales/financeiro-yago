@@ -65,11 +65,12 @@ export function useRelatoriosData() {
 
   // Série 12m fixa (sempre últimos 12 meses, independente do filtro)
   // — usada pra projeções e sazonalidade. Exclui transferências.
+  // hora LOCAL (toISOString seria UTC → cortava dia atual após 21h BRT)
   const txs12m = useLiveQuery(() => {
     const hoje = new Date()
     const startDate = new Date(hoje.getFullYear(), hoje.getMonth() - 11, 1)
-    const start = startDate.toISOString().slice(0, 10)
-    const end = hoje.toISOString().slice(0, 10)
+    const start = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`
+    const end = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
     return db.transacoes.where('data').between(start, end, true, true)
       .filter(t => !t.transferId)
       .toArray()

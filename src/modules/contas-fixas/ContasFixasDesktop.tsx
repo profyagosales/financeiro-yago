@@ -808,7 +808,7 @@ function CompactRow({ cf, categoria, conta, cartao, pago, valorPago, vencida, ur
           {justPaid ? 'Pago!' : pago ? 'Desfazer' : vencida ? 'Pagar c/ juros' : 'Pagar'}
         </motion.button>
         {!pago && !vencida && (
-          <button onClick={onPagarComJuros} title="Pagar com juros/multa"
+          <button onClick={onPagarComJuros} aria-label="Pagar com juros/multa" title="Pagar com juros/multa"
             style={{ background: '#FAF0EE', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <IconAlertTriangle size={12} color="#C4553B" stroke={2} />
           </button>

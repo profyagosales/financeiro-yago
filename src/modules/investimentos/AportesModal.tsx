@@ -410,7 +410,7 @@ export function AportesModal({ invest, onClose }: Props) {
                     <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#504E76', letterSpacing: '-0.3px' }}>
                       {simbolo} {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
-                    <button onClick={() => a.id !== undefined && deleteAporte(a.id)} title="Remover aporte"
+                    <button onClick={() => a.id !== undefined && deleteAporte(a.id)} aria-label="Remover aporte" title="Remover aporte"
                       style={{ background: '#FAEAEA', border: 'none', borderRadius: 7, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <IconTrash size={11} stroke={2} color="#C4553B" />
                     </button>
