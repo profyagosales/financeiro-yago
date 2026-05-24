@@ -72,7 +72,9 @@ export function AppShell() {
 
   return (
     <div className="grain" style={{ display: 'flex', height: '100dvh', background: '#FFFFFF', overflow: 'hidden' }}>
-      <BackgroundMesh />
+      <div className="bg-mesh-desktop">
+        <BackgroundMesh />
+      </div>
       {/* Sidebar — desktop only */}
       <div className="sidebar-desktop">
         <Sidebar />
@@ -142,10 +144,21 @@ export function AppShell() {
         .sidebar-desktop { display: none; }
         .bottomnav-mobile { display: block; }
         .fab-desktop { display: none; }
+        .bg-mesh-desktop { display: none; }
+        /* Em mobile, a main controla seu próprio background.
+           Desligamos o BackgroundMesh global (orbs do desktop) e o
+           paddingBottom redundante porque o DashboardMobile já reserva
+           safe-area no fim do scroll. */
+        @media (max-width: 767px) {
+          .main-content {
+            padding-bottom: 0 !important;
+          }
+        }
         @media (min-width: 768px) {
           .sidebar-desktop { display: block; }
           .bottomnav-mobile { display: none !important; }
           .main-content { padding-bottom: 0 !important; }
+          .bg-mesh-desktop { display: block; }
           .fab-desktop {
             display: flex; align-items: center; justify-content: center;
             position: fixed; bottom: 28px; right: 28px;

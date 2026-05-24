@@ -25,7 +25,17 @@ export function BottomNav({ onFab }: { onFab: () => void }) {
   const pendentes = usePendentesCount()
 
   return (
-    <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#FFFDF9', borderTop: '0.5px solid #E8E0D5', display: 'flex', alignItems: 'center', height: 64, paddingBottom: 'env(safe-area-inset-bottom)', zIndex: 100 }}>
+    <nav style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0,
+      background: 'rgba(255,253,249,0.78)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      borderTop: '0.5px solid rgba(232,224,213,0.6)',
+      display: 'flex', alignItems: 'center', height: 64,
+      paddingBottom: 'env(safe-area-inset-bottom)',
+      zIndex: 100,
+      boxShadow: '0 -8px 28px rgba(196,85,59,0.06)',
+    }}>
       {NAV.slice(0, 2).map(item => {
         const active = pathname === item.path
         const Icon = item.icon
