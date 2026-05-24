@@ -1,0 +1,16 @@
+project_id = "financeiro-yago"
+
+[auth]
+enabled = true
+
+[auth.rate_limit]
+# Email magic links / OTP enviados por hora (default Supabase = 4)
+email_sent = 1000
+# Verificações de token por 5 min (default = 30)
+token_verifications = 1000
+# Refresh de session por 5 min (default = 150)
+token_refresh = 1000
+# Sign in / sign up por 5 min por IP (default = 30)
+sign_in_sign_ups = 1000
+# Usuários anônimos por hora (default = 30)
+anonymous_users = 1000

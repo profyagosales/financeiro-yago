@@ -14,21 +14,48 @@ import { supabase } from './supabase'
 
 export type AuthStep = 'loading' | 'welcome' | 'check-email' | 'create-pin' | 'pin-gate' | 'ready'
 
-// ─── Magic link ──────────────────────────────────────────────────────
+// ─── Magic link (legado — não usado mais, mantido pra compat) ────────
 export async function sendMagicLink(email: string): Promise<{ ok: boolean; error?: string }> {
   const cleanEmail = email.trim().toLowerCase()
-  if (!cleanEmail || !cleanEmail.includes('@')) {
-    return { ok: false, error: 'Email inválido' }
-  }
+  if (!cleanEmail || !cleanEmail.includes('@')) return { ok: false, error: 'Email inválido' }
   const { error } = await supabase.auth.signInWithOtp({
     email: cleanEmail,
-    options: {
-      // Volta pra raiz do app após clicar no link do email
-      emailRedirectTo: window.location.origin,
-    },
+    options: { emailRedirectTo: window.location.origin },
   })
   if (error) return { ok: false, error: error.message }
   return { ok: true }
+}
+
+// ─── Email + senha ───────────────────────────────────────────────────
+export async function signInWithPassword(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
+  const cleanEmail = email.trim().toLowerCase()
+  if (!cleanEmail || !cleanEmail.includes('@')) return { ok: false, error: 'Email inválido' }
+  if (!password || password.length < 6) return { ok: false, error: 'Senha precisa ter pelo menos 6 caracteres' }
+  const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password })
+  if (error) {
+    // Mensagens mais humanas
+    if (/invalid login/i.test(error.message)) return { ok: false, error: 'Email ou senha incorretos' }
+    return { ok: false, error: error.message }
+  }
+  return { ok: true }
+}
+
+export async function signUpWithPassword(email: string, password: string): Promise<{ ok: boolean; error?: string; needsConfirmation?: boolean }> {
+  const cleanEmail = email.trim().toLowerCase()
+  if (!cleanEmail || !cleanEmail.includes('@')) return { ok: false, error: 'Email inválido' }
+  if (!password || password.length < 8) return { ok: false, error: 'Senha precisa ter pelo menos 8 caracteres' }
+  const { data, error } = await supabase.auth.signUp({
+    email: cleanEmail,
+    password,
+    options: { emailRedirectTo: window.location.origin },
+  })
+  if (error) {
+    if (/already registered/i.test(error.message)) return { ok: false, error: 'Email já cadastrado — use Entrar' }
+    return { ok: false, error: error.message }
+  }
+  // Se confirmação de email está ativa, session vem null
+  const needsConfirmation = !data.session
+  return { ok: true, needsConfirmation }
 }
 
 export async function signOut(): Promise<void> {
