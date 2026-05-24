@@ -1,3 +1,11 @@
+// ─── AuthFlow ────────────────────────────────────────────────────────
+// Orquestra as 3 telas de autenticação baseado no estado da auth store:
+//   - loading           → splash com mark FY
+//   - sem sessão        → WelcomeScreen (email + senha)
+//   - sessão sem PIN    → CreatePinScreen
+//   - sessão + PIN      → PinGate
+//   - tudo OK           → children (app)
+
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '@/store/auth'
@@ -5,47 +13,48 @@ import { AuthBackground, AuthCard } from './AuthBackground'
 import { WelcomeScreen } from './WelcomeScreen'
 import { CreatePinScreen } from './CreatePinScreen'
 import { PinGate } from './PinGate'
-
-// ─── AuthFlow ────────────────────────────────────────────────────────
-// Orquestra as 3 telas de autenticação baseado no estado da auth store:
-//   - loading           → spinner
-//   - sem sessão        → WelcomeScreen (email + magic link)
-//   - sessão sem PIN    → CreatePinScreen (define PIN local)
-//   - sessão + PIN      → PinGate (digite PIN)
-//   - tudo OK           → children (app)
+import { Logo } from '@/components/brand'
 
 export function AuthFlow({ children }: { children: React.ReactNode }) {
   const { loading, hasSession, hasPin, isUnlocked, init } = useAuthStore()
 
   useEffect(() => { init() }, [init])
 
-  // App liberado
-  if (!loading && hasSession && hasPin && isUnlocked) {
-    return <>{children}</>
-  }
+  if (!loading && hasSession && hasPin && isUnlocked) return <>{children}</>
 
-  // Loading inicial
   if (loading) {
     return (
       <>
         <AuthBackground />
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh' }}>
+        <div style={{
+          position: 'relative', zIndex: 1,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          minHeight: '100dvh', gap: 20,
+        }}>
+          <motion.div
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+          >
+            <Logo variant="mark" size={72} />
+          </motion.div>
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-            style={{ width: 32, height: 32, border: '3px solid rgba(196,85,59,0.2)', borderTopColor: '#C4553B', borderRadius: '50%' }}
+            style={{
+              width: 26, height: 26,
+              border: '2.5px solid rgba(242,199,69,0.18)',
+              borderTopColor: '#F2C745',
+              borderRadius: '50%',
+            }}
           />
         </div>
       </>
     )
   }
 
-  // Sem sessão Supabase: tela de boas-vindas com magic link
-  if (!hasSession) {
-    return <WelcomeScreen />
-  }
+  if (!hasSession) return <WelcomeScreen />
 
-  // Tem sessão mas falta PIN neste dispositivo
   if (!hasPin) {
     return (
       <>
@@ -57,7 +66,6 @@ export function AuthFlow({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Tem sessão + PIN, mas precisa desbloquear
   return (
     <>
       <AuthBackground />

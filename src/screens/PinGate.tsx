@@ -1,51 +1,57 @@
-import { useState, useEffect } from 'react'
+// ─── PinGate ────────────────────────────────────────────────────────
+// Mostrada quando user tem sessão Supabase + PIN local já definido.
+// Pede PIN pra desbloquear. "Esqueci o PIN" leva pra reset (logout).
+
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { IconShieldCheck, IconAlertTriangle } from '@tabler/icons-react'
 import { useAuthStore } from '@/store/auth'
-import { Dobrao } from '@/components/mascot/Dobrao'
+import { useDisplayName } from '@/db/hooks/useAppConfig'
 import { sounds, haptic } from '@/lib/sounds'
+import { AuthHeader } from './AuthHeader'
 
 const KEYS = ['1','2','3','4','5','6','7','8','9','','0','⌫']
-
-// ─── PinGate ─────────────────────────────────────────────────────────
-// Mostrada quando user tem sessão Supabase + PIN local definido.
-// Pede PIN pra desbloquear. "Esqueci o PIN" faz logout completo
-// (volta pra Welcome).
-
-const PIN_LENGTH = 4  // mesma length usada no CreatePinScreen
+const PIN_LENGTH = 4
 
 export function PinGate() {
   const [digits, setDigits] = useState<string[]>([])
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
+  const [unlocking, setUnlocking] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
   const { unlock, signOut, email } = useAuthStore()
+  const displayName = useDisplayName()
 
-  const handleKey = async (k: string) => {
+  const handleKey = useCallback(async (k: string) => {
     if (k === '⌫') {
       haptic('light')
       setDigits(d => d.slice(0, -1))
       return
     }
     if (!k) return
-    if (digits.length >= PIN_LENGTH) return
+    if (unlocking) return
+
+    const cur = digits
+    if (cur.length >= PIN_LENGTH) return
     sounds.pin_digit()
     haptic('light')
-    const next = [...digits, k]
+    const next = [...cur, k]
     setDigits(next)
+
     if (next.length === PIN_LENGTH) {
+      setUnlocking(true)
       const ok = await unlock(next.join(''))
       if (!ok) {
-        sounds.error()
-        haptic('heavy')
+        sounds.error(); haptic('heavy')
         setShake(true); setError(true)
-        setTimeout(() => { setShake(false); setDigits([]) }, 700)
+        setTimeout(() => { setShake(false); setDigits([]); setUnlocking(false) }, 700)
         setTimeout(() => setError(false), 2500)
       } else {
-        sounds.success()
-        haptic('medium')
+        sounds.success(); haptic('medium')
+        // Vai pro app — AuthFlow desmonta
       }
     }
-  }
+  }, [digits, unlock, unlocking])
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -54,104 +60,152 @@ export function PinGate() {
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [digits])
+  }, [handleKey])
+
+  const greeting = displayName ? `Oi, ${displayName}` : 'Bem-vindo de volta'
 
   return (
     <>
-      {/* Dobrao */}
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 320, damping: 22, delay: 0.1 }}
-        style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-        <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
-          <Dobrao mood={error ? 'sad' : digits.length === PIN_LENGTH ? 'celebrating' : 'happy'} size={88} />
-        </motion.div>
-      </motion.div>
-
-      <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F', textAlign: 'center', marginBottom: 4, letterSpacing: '-0.5px' }}>
-        Financeiro do Yago
-      </h1>
-      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#9B7B6A', textAlign: 'center', marginBottom: 24 }}>
-        {email ? <>Digite o PIN · <span style={{ color: '#7A5C4F' }}>{email}</span></> : 'Digite seu PIN para entrar'}
-      </p>
+      <AuthHeader
+        eyebrow={greeting}
+        title="Digite seu PIN"
+        subtitle={email && (
+          <span style={{ color: '#9B7B6A' }}>
+            Conta: <strong style={{ color: '#7A5C4F' }}>{email}</strong>
+          </span>
+        )}
+      />
 
       {/* PIN dots */}
       <motion.div
         animate={shake ? { x: [-12, 12, -10, 10, -6, 6, 0] } : { x: 0 }}
         transition={{ duration: 0.5 }}
-        style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 24 }}>
-        {Array.from({ length: PIN_LENGTH }).map((_, i) => (
-          <motion.div key={i}
-            animate={i < digits.length
-              ? { scale: [1, 1.3, 1], backgroundColor: '#C4553B' }
-              : { scale: 1, backgroundColor: '#EDE6DC' }}
-            transition={{ duration: 0.2 }}
-            style={{ width: 14, height: 14, borderRadius: '50%' }}
-          />
-        ))}
+        style={{ display: 'flex', justifyContent: 'center', gap: 14, marginBottom: 22 }}>
+        {Array.from({ length: PIN_LENGTH }).map((_, i) => {
+          const filled = i < digits.length
+          const bg = error ? '#C4553B' : '#504E76'
+          return (
+            <motion.div key={i}
+              animate={filled
+                ? { scale: [1, 1.35, 1], background: bg, borderColor: bg }
+                : { scale: 1, background: 'transparent', borderColor: '#EDE6DC' }}
+              transition={{ duration: 0.22 }}
+              style={{
+                width: 16, height: 16, borderRadius: '50%',
+                border: '2px solid',
+                boxShadow: filled ? `0 4px 12px ${bg}66` : 'none',
+              }}
+            />
+          )
+        })}
       </motion.div>
+
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              margin: '-4px 0 14px',
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontSize: 12.5, fontWeight: 700, color: '#A8442B',
+            }}>
+            <IconAlertTriangle size={13} stroke={2.4} />
+            PIN incorreto. Tente de novo.
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Keypad */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
         {KEYS.map((key, i) => (
-          <motion.button key={i}
-            whileTap={key !== '' ? { scale: 0.88 } : undefined}
-            onClick={() => key !== '' && handleKey(String(key))}
-            style={{
-              height: 64, borderRadius: 16, border: 'none',
-              cursor: key !== '' ? 'pointer' : 'default',
-              background: key === '⌫' ? '#FEE2DC' : key === '' ? 'transparent' : '#FFFFFF',
-              boxShadow: key !== '' && key !== '⌫' ? '0 2px 8px rgba(44,26,15,0.08)' : 'none',
-              fontFamily: "'Fraunces',Georgia,serif", fontSize: 24, fontWeight: 700,
-              color: key === '⌫' ? '#C4553B' : '#2C1A0F',
-            }}>
-            {key}
-          </motion.button>
+          <KeypadButton key={i} k={key} onClick={() => key !== '' && handleKey(key)} disabled={unlocking} />
         ))}
       </div>
 
-      <AnimatePresence>
-        {error && (
-          <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#C4553B', fontWeight: 600, textAlign: 'center', marginTop: 14 }}>
-            PIN incorreto
-          </motion.p>
-        )}
-      </AnimatePresence>
-
-      <button onClick={() => setConfirmReset(true)}
-        style={{
-          width: '100%', marginTop: 18, padding: '8px 0',
-          background: 'transparent', border: 'none',
-          fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 600,
-          color: '#9B7B6A', cursor: 'pointer',
-        }}>
-        Esqueci o PIN
-      </button>
+      {/* Bottom row */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginTop: 18, paddingTop: 14, borderTop: '1px dashed #EDE6DC',
+      }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#7A5C4F' }}>
+          <IconShieldCheck size={13} stroke={2} />
+          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 600 }}>
+            Protegido neste device
+          </span>
+        </div>
+        <button onClick={() => setConfirmReset(true)}
+          style={{
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
+            fontSize: 11.5, fontWeight: 600, color: '#7A5C4F',
+            padding: '6px 4px',
+          }}>
+          Esqueci o PIN
+        </button>
+      </div>
 
       {/* Confirm reset overlay */}
       <AnimatePresence>
         {confirmReset && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setConfirmReset(false)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(28,10,5,0.6)', backdropFilter: 'blur(8px)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-            <motion.div initial={{ scale: 0.92 }} animate={{ scale: 1 }} exit={{ scale: 0.92, opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 500,
+              background: 'rgba(13,5,25,0.6)', backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+            }}>
+            <motion.div
+              initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 24 }}
               onClick={e => e.stopPropagation()}
-              style={{ background: '#FFFDF9', borderRadius: 22, padding: '26px 24px', maxWidth: 340, width: '100%', textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 18, fontWeight: 700, color: '#2C1A0F', margin: '0 0 8px' }}>Esqueceu o PIN?</p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', margin: '0 0 18px', lineHeight: 1.5 }}>
-                Vamos sair da sua conta e enviar um novo link de acesso por email. Depois você cria um PIN novo neste dispositivo.
+              style={{
+                background: '#FFFFFF', borderRadius: 22,
+                padding: '26px 24px', maxWidth: 360, width: '100%',
+                textAlign: 'center',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+              }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: 14, margin: '0 auto 14px',
+                background: 'rgba(196,85,59,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <IconAlertTriangle size={22} stroke={2} color="#A8442B" />
+              </div>
+              <p style={{
+                fontFamily: "'Fraunces',Georgia,serif",
+                fontSize: 20, fontWeight: 700, color: '#2C1A0F',
+                margin: '0 0 8px', letterSpacing: '-0.3px',
+              }}>
+                Esqueceu o PIN?
+              </p>
+              <p style={{
+                fontFamily: "'Plus Jakarta Sans',sans-serif",
+                fontSize: 13, color: '#7A5C4F', margin: '0 0 20px', lineHeight: 1.55,
+              }}>
+                Vamos sair da sua conta neste device. Depois você faz login de novo com email + senha e cria um novo PIN.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => setConfirmReset(false)}
-                  style={{ flex: 1, padding: '11px 0', borderRadius: 11, border: '1.5px solid #E8E0D5', background: 'white', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer' }}>
+                  style={{
+                    flex: 1, padding: '11px 0', borderRadius: 11,
+                    border: '1.5px solid #E8E0D5', background: '#FFFFFF',
+                    fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    fontSize: 13, fontWeight: 700, color: '#7A5C4F', cursor: 'pointer',
+                  }}>
                   Cancelar
                 </button>
                 <button onClick={() => signOut()}
-                  style={{ flex: 1, padding: '11px 0', borderRadius: 11, border: 'none', background: '#C4553B', fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer', boxShadow: '0 4px 12px rgba(196,85,59,0.3)' }}>
-                  Continuar
+                  style={{
+                    flex: 1, padding: '11px 0', borderRadius: 11, border: 'none',
+                    background: 'linear-gradient(135deg, #C4553B, #A8442B)',
+                    fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    fontSize: 13, fontWeight: 700, color: '#FFFFFF', cursor: 'pointer',
+                    boxShadow: '0 6px 16px rgba(196,85,59,0.4)',
+                  }}>
+                  Sair e resetar
                 </button>
               </div>
             </motion.div>
@@ -159,5 +213,32 @@ export function PinGate() {
         )}
       </AnimatePresence>
     </>
+  )
+}
+
+// ─── Keypad button ──────────────────────────────────────────────────
+
+function KeypadButton({ k, onClick, disabled }: { k: string; onClick: () => void; disabled?: boolean }) {
+  if (k === '') return <div />
+  const isBack = k === '⌫'
+  return (
+    <motion.button
+      whileHover={!disabled ? { scale: 1.03 } : undefined}
+      whileTap={!disabled ? { scale: 0.92 } : undefined}
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        height: 64, borderRadius: 16, border: 'none',
+        cursor: disabled ? 'default' : 'pointer',
+        background: isBack ? 'rgba(196,85,59,0.08)' : '#FFFFFF',
+        boxShadow: isBack ? 'none' : '0 1px 2px rgba(44,26,15,0.06), 0 4px 10px rgba(44,26,15,0.06)',
+        fontFamily: "'Fraunces',Georgia,serif",
+        fontSize: 24, fontWeight: 700,
+        color: isBack ? '#A8442B' : '#2C1A0F',
+        opacity: disabled ? 0.5 : 1,
+        transition: 'box-shadow .15s, opacity .15s',
+      }}>
+      {k}
+    </motion.button>
   )
 }

@@ -1,41 +1,106 @@
-import { motion } from 'framer-motion'
+// ─── Fundo das telas de autenticação ────────────────────────────────
+// Gradient profundo roxo (mesmo do hero do Dashboard) + orbs decorativos
+// + ruído sutil. AuthCard é o cartão "vidro" centralizado por cima.
 
-// Fundo animado compartilhado entre as telas de auth (Welcome, CreatePin, PinGate)
+import { motion } from 'framer-motion'
+import type { ReactNode } from 'react'
+
 export function AuthBackground() {
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#FAF6F0', overflow: 'hidden', zIndex: 0 }}>
-      <motion.div
-        animate={{ x: [0, 40, -20, 0], y: [0, -30, 20, 0] }}
-        transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ position: 'absolute', left: '10%', top: '5%', width: 400, height: 400, borderRadius: '50%', background: 'rgba(196,85,59,0.08)', filter: 'blur(120px)' }}
+    <div
+      aria-hidden
+      style={{
+        position: 'fixed', inset: 0, zIndex: 0,
+        background: 'radial-gradient(circle at 25% 15%, #3A2D54 0%, #2A1E3F 38%, #1A1228 100%)',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Orbs animados — paleta direta da marca */}
+      <Orb left="78%" top="-8%"   size={520} color="rgba(212,160,23,0.32)" dur={22} delay={0} />
+      <Orb left="-6%" top="58%"   size={460} color="rgba(196,85,59,0.22)"  dur={26} delay={3} />
+      <Orb left="50%" top="88%"   size={620} color="rgba(80,78,118,0.36)"  dur={30} delay={6} />
+      <Orb left="14%" top="12%"   size={300} color="rgba(242,199,69,0.16)" dur={18} delay={9} />
+
+      {/* Ruído sutil (textura fina) */}
+      <div
+        style={{
+          position: 'absolute', inset: 0,
+          backgroundImage:
+            'radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px)',
+          backgroundSize: '3px 3px',
+          mixBlendMode: 'overlay',
+          opacity: 0.6,
+        }}
       />
-      <motion.div
-        animate={{ x: [0, -30, 25, 0], y: [0, 20, -15, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-        style={{ position: 'absolute', right: '5%', top: '30%', width: 350, height: 350, borderRadius: '50%', background: 'rgba(58,133,128,0.07)', filter: 'blur(100px)' }}
-      />
-      <motion.div
-        animate={{ x: [0, 20, -30, 0], y: [0, -20, 25, 0] }}
-        transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut', delay: 4 }}
-        style={{ position: 'absolute', left: '40%', bottom: '10%', width: 300, height: 300, borderRadius: '50%', background: 'rgba(212,160,23,0.05)', filter: 'blur(90px)' }}
+
+      {/* Vinheta sutil pra puxar foco pro centro */}
+      <div
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.32) 100%)',
+        }}
       />
     </div>
   )
 }
 
-export function AuthCard({ children }: { children: React.ReactNode }) {
+function Orb({ left, top, size, color, dur, delay }: {
+  left: string; top: string; size: number; color: string; dur: number; delay: number
+}) {
   return (
-    <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', padding: 24 }}>
+    <motion.div
+      animate={{
+        x: [0, 40, -28, 0],
+        y: [0, -32, 22, 0],
+        scale: [1, 1.06, 0.96, 1],
+      }}
+      transition={{ duration: dur, repeat: Infinity, ease: 'easeInOut', delay }}
+      style={{
+        position: 'absolute', left, top, width: size, height: size,
+        borderRadius: '50%', background: color,
+        filter: `blur(${Math.round(size / 2.6)}px)`,
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none',
+      }}
+    />
+  )
+}
+
+// ─── AuthCard: vidro premium centralizado ───────────────────────────
+export function AuthCard({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+  return (
+    <div style={{
+      position: 'relative', zIndex: 1,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      minHeight: '100dvh', padding: 'clamp(16px, 4vw, 32px)',
+    }}>
       <motion.div
-        initial={{ opacity: 0, y: 32, scale: 0.95 }}
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+        transition={{ type: 'spring', stiffness: 220, damping: 24 }}
         style={{
-          background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)',
-          borderRadius: 32, padding: '40px 36px', width: '100%', maxWidth: 420,
-          boxShadow: '0 20px 60px rgba(44,26,15,0.12), 0 4px 16px rgba(44,26,15,0.08)',
-          border: '1px solid rgba(255,255,255,0.9)',
-        }}>
+          position: 'relative',
+          background: 'rgba(255,255,255,0.96)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderRadius: 28,
+          padding: 'clamp(24px, 4vw, 36px) clamp(20px, 4vw, 32px)',
+          width: '100%',
+          maxWidth: wide ? 480 : 400,
+          boxShadow:
+            '0 24px 60px rgba(13,5,25,0.42), 0 6px 18px rgba(13,5,25,0.24), inset 0 1px 0 rgba(255,255,255,0.6)',
+          border: '1px solid rgba(255,255,255,0.7)',
+        }}
+      >
+        {/* Highlight superior sutil — borda luminosa */}
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute', top: 0, left: 24, right: 24, height: 1,
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent)',
+            borderRadius: 999,
+          }}
+        />
         {children}
       </motion.div>
     </div>

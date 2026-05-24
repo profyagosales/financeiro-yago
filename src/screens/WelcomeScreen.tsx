@@ -1,14 +1,16 @@
+// ─── WelcomeScreen ──────────────────────────────────────────────────
+// Tela de entrada do app: login com email + senha (sign in / sign up).
+// Identidade visual nova com Logo FY institucional.
+
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Dobrao } from '@/components/mascot/Dobrao'
-import { IconMail, IconArrowRight, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react'
+import {
+  IconMail, IconLock, IconArrowRight, IconEye, IconEyeOff,
+  IconAlertCircle, IconCircleCheck, IconShieldLock,
+} from '@tabler/icons-react'
 import { signInWithPassword, signUpWithPassword } from '@/lib/auth'
 import { AuthBackground, AuthCard } from './AuthBackground'
-
-// ─── Welcome screen ──────────────────────────────────────────────────
-// Login com email + senha. Modo "Entrar" (default) e "Criar conta".
-// Após sucesso, AuthFlow redireciona pro próximo passo (CreatePin / PinGate).
-// Não há dependência de email/SMTP — direto via Supabase Auth.
+import { AuthHeader } from './AuthHeader'
 
 type Mode = 'login' | 'signup'
 
@@ -54,25 +56,17 @@ export function WelcomeScreen() {
     <>
       <AuthBackground />
       <AuthCard>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-          <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
-            <Dobrao mood="waving" size={88} />
-          </motion.div>
-        </div>
-
-        <h1 style={{ fontFamily: "'Fraunces',Georgia,serif", fontSize: 26, fontWeight: 700, color: '#2C1A0F', textAlign: 'center', marginBottom: 6, letterSpacing: '-0.5px' }}>
-          {mode === 'login' ? 'Bem-vindo' : 'Criar conta'}
-        </h1>
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, color: '#7A5C4F', textAlign: 'center', marginBottom: 24, lineHeight: 1.5 }}>
-          {mode === 'login'
-            ? 'Entre com seu email e senha. PIN local protege o app no dia-a-dia.'
+        <AuthHeader
+          eyebrow={mode === 'login' ? 'Bem-vindo de volta' : 'Comece agora'}
+          title={mode === 'login' ? 'Entre na sua conta' : 'Criar nova conta'}
+          subtitle={mode === 'login'
+            ? 'Email e senha pra identificar a conta. PIN local protege o app no dia-a-dia.'
             : 'Defina email e senha. Você só usa em devices novos — depois é só PIN.'}
-        </p>
+        />
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           {/* Email */}
-          <label style={LABEL_STYLE}>Email</label>
-          <div style={INPUT_BOX}>
+          <Field label="Email">
             <IconMail size={16} stroke={2} color="#9B7B6A" />
             <input
               type="email"
@@ -83,13 +77,12 @@ export function WelcomeScreen() {
               placeholder="seu@email.com"
               autoComplete="email"
               inputMode="email"
-              style={INPUT_STYLE}
+              style={INPUT}
             />
-          </div>
+          </Field>
 
           {/* Senha */}
-          <label style={{ ...LABEL_STYLE, marginTop: 10 }}>Senha</label>
-          <div style={INPUT_BOX}>
+          <Field label="Senha" hint={mode === 'signup' ? 'Mínimo 8 caracteres' : undefined}>
             <IconLock size={16} stroke={2} color="#9B7B6A" />
             <input
               type={showPass ? 'text' : 'password'}
@@ -97,42 +90,56 @@ export function WelcomeScreen() {
               minLength={minLen}
               value={password}
               onChange={e => setPassword(e.target.value)}
-              placeholder={mode === 'signup' ? 'mínimo 8 caracteres' : 'sua senha'}
+              placeholder={mode === 'signup' ? 'crie uma senha forte' : 'sua senha'}
               autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-              style={INPUT_STYLE}
+              style={INPUT}
             />
             <button type="button" onClick={() => setShowPass(s => !s)}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}>
-              {showPass ? <IconEyeOff size={15} stroke={2} color="#9B7B6A" /> : <IconEye size={15} stroke={2} color="#9B7B6A" />}
+              aria-label={showPass ? 'Ocultar senha' : 'Mostrar senha'}
+              style={IGHOST}>
+              {showPass ? <IconEyeOff size={15} stroke={2} color="#9B7B6A" />
+                         : <IconEye size={15} stroke={2} color="#9B7B6A" />}
             </button>
-          </div>
+          </Field>
 
-          <AnimatePresence>
+          {/* Feedback */}
+          <AnimatePresence mode="wait">
             {error && (
-              <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#C4553B', fontWeight: 600, margin: '10px 0 0', textAlign: 'center' }}>
-                {error}
-              </motion.p>
+              <motion.div key="err"
+                initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                style={FEEDBACK_BOX('error')}>
+                <IconAlertCircle size={14} stroke={2} color="#A8442B" style={{ flexShrink: 0 }} />
+                <span>{error}</span>
+              </motion.div>
             )}
             {info && (
-              <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#1E7D5A', fontWeight: 600, margin: '10px 0 0', textAlign: 'center' }}>
-                {info}
-              </motion.p>
+              <motion.div key="info"
+                initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                style={FEEDBACK_BOX('success')}>
+                <IconCircleCheck size={14} stroke={2.4} color="#1E7D5A" style={{ flexShrink: 0 }} />
+                <span>{info}</span>
+              </motion.div>
             )}
           </AnimatePresence>
 
+          {/* Submit */}
           <motion.button type="submit"
-            whileTap={canSubmit ? { scale: 0.97 } : undefined}
+            whileHover={canSubmit ? { y: -1 } : undefined}
+            whileTap={canSubmit ? { scale: 0.98 } : undefined}
             disabled={!canSubmit}
             style={{
-              width: '100%', padding: '14px 0', border: 'none', borderRadius: 14, marginTop: 16,
-              background: !canSubmit ? '#E8E0D5' : 'linear-gradient(135deg, #D4643A, #C4553B)',
+              width: '100%', marginTop: 18, padding: '14px 0',
+              border: 'none', borderRadius: 14,
+              background: !canSubmit
+                ? '#E8E0D5'
+                : 'linear-gradient(135deg, #2A1E3F, #504E76)',
               color: !canSubmit ? '#9B7B6A' : '#FFFFFF',
-              fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700,
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontSize: 14, fontWeight: 700, letterSpacing: '.01em',
               cursor: !canSubmit ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              boxShadow: !canSubmit ? 'none' : '0 4px 16px rgba(196,85,59,0.35)',
+              boxShadow: !canSubmit ? 'none' : '0 10px 28px rgba(42,30,63,0.45)',
+              transition: 'box-shadow .15s, background .15s',
             }}>
             {sending ? (mode === 'login' ? 'Entrando…' : 'Criando…') : (
               <>{mode === 'login' ? 'Entrar' : 'Criar conta'} <IconArrowRight size={16} stroke={2.4} /></>
@@ -140,42 +147,101 @@ export function WelcomeScreen() {
           </motion.button>
         </form>
 
+        {/* Switch mode */}
         <button type="button" onClick={switchMode}
           style={{
             width: '100%', background: 'transparent', border: 'none', cursor: 'pointer',
-            marginTop: 14, padding: 6,
-            fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, color: '#7A5C4F',
+            marginTop: 12, padding: 8,
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
+            fontSize: 12.5, color: '#7A5C4F', fontWeight: 500,
           }}>
           {mode === 'login' ? (
-            <>Ainda não tem conta? <strong style={{ color: '#C4553B' }}>Criar conta</strong></>
+            <>Ainda não tem conta? <strong style={{ color: '#C4553B' }}>Criar conta →</strong></>
           ) : (
-            <>Já tem conta? <strong style={{ color: '#C4553B' }}>Entrar</strong></>
+            <>Já tem conta? <strong style={{ color: '#C4553B' }}>Entrar →</strong></>
           )}
         </button>
 
-        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#9B7B6A', textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>
-          Seus dados ficam <strong>criptografados no seu dispositivo</strong>.<br/>
-          Email + senha servem só pra identificar a conta e sincronizar entre devices.
-        </p>
+        {/* Trust line */}
+        <div style={{
+          marginTop: 18, paddingTop: 16,
+          borderTop: '1px dashed #EDE6DC',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}>
+          <IconShieldLock size={12} stroke={2} color="#7A5C4F" />
+          <p style={{
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
+            fontSize: 10.5, color: '#9B7B6A', textAlign: 'center',
+            margin: 0, lineHeight: 1.5, fontWeight: 500,
+          }}>
+            Dados <strong style={{ color: '#7A5C4F' }}>criptografados no dispositivo</strong> · sync seguro entre devices
+          </p>
+        </div>
       </AuthCard>
     </>
   )
 }
 
-const LABEL_STYLE: React.CSSProperties = {
-  display: 'block', marginBottom: 6,
-  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
-  color: '#7A5C4F', letterSpacing: '.1em', textTransform: 'uppercase',
+// ─── Atoms ──────────────────────────────────────────────────────────
+
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{
+        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 5,
+      }}>
+        <label style={LABEL}>{label}</label>
+        {hint && (
+          <span style={{
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
+            fontSize: 10, color: '#9B7B6A', fontWeight: 500,
+          }}>{hint}</span>
+        )}
+      </div>
+      <div style={BOX}>{children}</div>
+    </div>
+  )
 }
 
-const INPUT_BOX: React.CSSProperties = {
+const LABEL: React.CSSProperties = {
+  display: 'block',
+  fontFamily: "'Plus Jakarta Sans',sans-serif",
+  fontSize: 10, fontWeight: 700,
+  color: '#7A5C4F', letterSpacing: '.12em', textTransform: 'uppercase',
+}
+
+const BOX: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 8,
-  background: '#FFFFFF', border: '1.5px solid #EDE6DC',
-  borderRadius: 12, padding: '12px 14px',
+  background: '#FFFFFF',
+  border: '1.5px solid #EDE6DC',
+  borderRadius: 12,
+  padding: '12px 14px',
+  transition: 'border-color .15s, box-shadow .15s',
 }
 
-const INPUT_STYLE: React.CSSProperties = {
+const INPUT: React.CSSProperties = {
   flex: 1, border: 'none', outline: 'none', background: 'transparent',
-  fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 500, color: '#2C1A0F',
+  fontFamily: "'Plus Jakarta Sans',sans-serif",
+  fontSize: 14, fontWeight: 500, color: '#2C1A0F',
   minWidth: 0,
+}
+
+const IGHOST: React.CSSProperties = {
+  background: 'transparent', border: 'none', cursor: 'pointer',
+  padding: 4, display: 'flex', alignItems: 'center',
+}
+
+function FEEDBACK_BOX(kind: 'error' | 'success'): React.CSSProperties {
+  const isErr = kind === 'error'
+  return {
+    display: 'flex', alignItems: 'flex-start', gap: 8,
+    marginTop: 12, padding: '10px 12px',
+    background: isErr ? 'rgba(196,85,59,0.08)' : 'rgba(58,133,128,0.08)',
+    border: `1px solid ${isErr ? 'rgba(196,85,59,0.25)' : 'rgba(58,133,128,0.25)'}`,
+    borderRadius: 10,
+    fontFamily: "'Plus Jakarta Sans',sans-serif",
+    fontSize: 12.5, fontWeight: 600,
+    color: isErr ? '#A8442B' : '#1E5944',
+    lineHeight: 1.4,
+  }
 }
