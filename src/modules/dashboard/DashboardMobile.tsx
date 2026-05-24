@@ -581,24 +581,6 @@ function RegularContent({ d, navigate }: {
         </motion.section>
       )}
 
-      {/* CTA leve no fim */}
-      <motion.button variants={ITEM}
-        onClick={() => navigate('/relatorios')}
-        whileTap={{ scale: 0.98 }}
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          padding: '13px 16px',
-          background: 'transparent',
-          border: '1px dashed rgba(80,78,118,0.3)',
-          borderRadius: 14,
-          cursor: 'pointer',
-          fontFamily: "'Plus Jakarta Sans',sans-serif",
-          fontSize: 12, fontWeight: 700, color: C.purple,
-          letterSpacing: '.01em',
-          marginTop: 4,
-        }}>
-        Análise completa no desktop →
-      </motion.button>
     </>
   )
 }
