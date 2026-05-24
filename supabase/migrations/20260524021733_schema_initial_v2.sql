@@ -1,0 +1,6 @@
+-- Schema completo aplicado via MCP em 2026-05-24
+-- 19 tabelas, todas com RLS owner-only ((select auth.uid()) = user_id)
+-- Triggers automáticos: set_user_id (SECURITY DEFINER, search_path lock)
+--                       set_updated_at (search_path lock)
+-- Detalhes em supabase/SETUP.md
+-- (Conteúdo gerenciado pelo Supabase MCP — refletido no painel)

@@ -1,80 +1,74 @@
-# Setup Supabase — Financeiro do Yago
+# Supabase — Financeiro do Yago
 
-Guia passo a passo pra ativar sync entre dispositivos + push notifications real.
+## ✅ Status: configurado e pronto
 
-## 1️⃣ Verificar projeto existente
+Backend rodando em **São Paulo (sa-east-1)**.
 
-O app já tem um projeto Supabase configurado em hardcoded fallback:
+| Item | Status |
+|---|---|
+| Projeto Supabase | ✅ `ynidumrinncdqdukvpfa` (São Paulo) |
+| 19 tabelas + RLS owner-only | ✅ Todas com `(select auth.uid()) = user_id` |
+| Triggers automáticos | ✅ `set_user_id` + `set_updated_at` (search_path locked) |
+| Índices em FKs | ✅ Todos cobertos |
+| Bucket `anexos` | ✅ Privado, 10 MB max, image+pdf only |
+| Storage RLS policies | ✅ 4 policies (select/insert/update/delete) por dono |
+| Security advisor | ✅ Zero warnings |
+
+## Tabelas
+
+```
+contas                       investimentos                 desejos
+categorias                   investimentos_aportes         orcamentos
+transacoes                   investimentos_proventos       app_config
+cartoes                      investimentos_movimentacoes   anexos
+lancamentos_cartao           dividas                       push_subscriptions
+contas_fixas                 dividas_movimentacoes
+pagamentos_fixos             metas
+```
+
+Cada tabela tem:
+- `id uuid` (gerado client-side via `crypto.randomUUID`)
+- `user_id uuid` (preenchido por trigger)
+- `local_id integer` (mapeia pro id do IndexedDB)
+- `updated_at timestamptz` (LWW conflict resolution)
+- `deleted boolean` (soft delete pra sync)
+- RLS: `(select auth.uid()) = user_id` (perf-optimized)
+
+## Variáveis de ambiente
+
+Defaults em `src/lib/supabase.ts`:
 - URL: `https://ynidumrinncdqdukvpfa.supabase.co`
-- Acesse https://supabase.com/dashboard, faça login com a conta que criou esse projeto
+- Anon key: hardcoded fallback (válida até 2096)
 
-**Se não tem acesso ou quer criar novo projeto:**
-1. https://supabase.com → Sign in com GitHub/Email
-2. New project → escolha região **São Paulo** → defina password do DB
-3. Aguarde ~2 min até finalizar setup
-
-## 2️⃣ Rodar schema SQL
-
-1. No painel: **SQL Editor** → **New query**
-2. Cole o conteúdo de `supabase/migrations/001_schema_initial.sql`
-3. Run
-
-Verifique em **Table Editor**: 15+ tabelas devem aparecer, todas com ícone 🔒 (RLS habilitado).
-
-## 3️⃣ Criar bucket de Storage pros anexos
-
-1. **Storage** → **New bucket**
-2. Nome: `anexos`
-3. Public: **NÃO** marcar (deve ser privado)
-4. Create
-
-Depois rode no SQL Editor:
-
-```sql
-create policy "anexos_owner_select" on storage.objects
-  for select using (
-    bucket_id = 'anexos' and auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-create policy "anexos_owner_insert" on storage.objects
-  for insert with check (
-    bucket_id = 'anexos' and auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-create policy "anexos_owner_delete" on storage.objects
-  for delete using (
-    bucket_id = 'anexos' and auth.uid()::text = (storage.foldername(name))[1]
-  );
+Pra usar projeto próprio, defina `.env.local`:
+```
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
 ```
 
-## 4️⃣ Configurar Auth (Email Magic Link)
+## Migrações aplicadas (via MCP)
 
-1. **Authentication** → **Providers** → **Email** → habilitar
-2. **Email Templates** → personalizar se quiser
-3. **URL Configuration**:
-   - Site URL: URL de produção do app (Vercel)
-   - Redirect URLs: adicione `http://localhost:5173` (dev) e a URL de produção
+| Versão | Nome |
+|---|---|
+| 20260521000201 | create_financeiro_yago_schema (legacy) |
+| 20260524021617 | drop_legacy_tables |
+| 20260524021733 | schema_initial_v2 (19 tabelas + RLS) |
+| 20260524021754 | storage_anexos_bucket |
+| 20260524021917 | harden_trigger_functions |
+| 20260524022035 | perf_rls_select_and_fk_indexes |
 
-## 5️⃣ Variáveis de ambiente (opcional)
+## Próximas fases (a implementar no client)
 
-Se quiser usar projeto diferente do hardcoded, crie `.env.local` na raiz:
+- **Fase 2**: Auth UI (tela login email + PIN, store de sessão)
+- **Fase 3**: Sync engine (push debounced, pull periódico, realtime)
+- **Fase 4**: Storage de anexos (mover blob IndexedDB → Storage upload)
+- **Fase 5**: Edge Function `notify-pending` com cron diário (Web Push real)
 
-```env
-VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua-anon-key-aqui
-```
+## Auth setup (verificar no painel)
 
-Pegue em **Settings → API** do painel.
+Email magic link já vem habilitado por padrão. Confira em:
+**Authentication → Providers → Email** → deve estar ✅
 
-## 6️⃣ Edge Function pra push notifications (Fase 5)
-
-Será criada nas próximas iterações. Por enquanto, faltam só os passos 1-5.
-
-## ✅ Como verificar que tá OK
-
-Depois de rodar o SQL:
-- Painel → Tables: deve ter `contas`, `transacoes`, `cartoes`, etc — todas com 🔒
-- Painel → Storage → Buckets: `anexos` deve existir
-- Painel → Authentication → Providers → Email: deve estar habilitado
-
-Quando os 3 estiverem ✓, me avisa que eu sigo pra Fase 2 (auth + tela de login).
+Em **URL Configuration**, adicione URLs de redirect:
+- `http://localhost:5173` (dev)
+- URL de produção (Vercel)
