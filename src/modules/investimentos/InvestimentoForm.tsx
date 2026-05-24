@@ -224,7 +224,8 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
       footer={
         <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleSave} style={PRIMARY_BTN}>
+          <button onClick={handleSave} disabled={!formValid}
+            style={{ ...PRIMARY_BTN, opacity: formValid ? 1 : 0.5, cursor: formValid ? 'pointer' : 'not-allowed' }}>
             <IconCheck size={16} stroke={2.5} />
             {isEditing ? 'Salvar' : 'Adicionar'}
           </button>

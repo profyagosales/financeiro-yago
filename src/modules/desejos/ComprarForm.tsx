@@ -37,14 +37,15 @@ export function ComprarForm({ desejo, onClose }: Props) {
 
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
 
-  const handleComprar = async () => {
-    if (!desejo.id) return
-    const valor = parseValor(form.valor)
-    if (valor <= 0) return
+  const valorParsed = parseValor(form.valor)
+  const contaIdNum = form.metodo === 'conta' ? parseInt(form.contaId) : 0
+  const cartaoIdNum = form.metodo === 'cartao' ? parseInt(form.cartaoId) : 0
+  const canComprar = !!desejo.id && valorParsed > 0
+    && (form.metodo === 'conta' ? !!contaIdNum : !!cartaoIdNum)
 
-    // Cria a transação
-    const contaIdNum = form.metodo === 'conta' ? parseInt(form.contaId) : 0
-    if (form.metodo === 'conta' && !contaIdNum) return
+  const handleComprar = async () => {
+    if (!canComprar) return
+    const valor = valorParsed
 
     const txId = (await db.transacoes.add({
       data: form.data,
@@ -129,7 +130,8 @@ export function ComprarForm({ desejo, onClose }: Props) {
       footer={
         <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleComprar} style={PRIMARY_BTN}>
+          <button onClick={handleComprar} disabled={!canComprar}
+            style={{ ...PRIMARY_BTN, opacity: canComprar ? 1 : 0.5, cursor: canComprar ? 'pointer' : 'not-allowed' }}>
             <IconCheck size={16} stroke={2.5} /> Registrar
           </button>
         </div>

@@ -16,6 +16,7 @@ import { useCartoes, useLancamentosCartao, useTotalFatura, useAllLancamentosAtiv
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { fmt, mesAnoAtual, fmtDate } from '@/lib/format'
 import { StackScreen } from '@/components/layout/StackScreen'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { CartaoForm } from './CartaoForm'
 import { sounds, haptic } from '@/lib/sounds'
 
@@ -54,6 +55,7 @@ export function CartoesMobile() {
   const { mes, ano } = mesAnoAtual()
   const lancsAtivos = useAllLancamentosAtivos()
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [confirmDeleteCartao, setConfirmDeleteCartao] = useState<Cartao | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Cartao | null>(null)
 
@@ -220,12 +222,7 @@ export function CartoesMobile() {
             cartao={selectedCartao}
             onClose={() => setSelectedId(null)}
             onEdit={() => { setEditing(selectedCartao); setFormOpen(true) }}
-            onDelete={async () => {
-              if (!confirm(`Excluir o cartão "${selectedCartao.nome}"?`)) return
-              await deleteCartao(selectedCartao.id!)
-              sounds.success(); haptic('heavy')
-              setSelectedId(null)
-            }}
+            onDelete={() => setConfirmDeleteCartao(selectedCartao)}
           />
         )}
       </StackScreen>
@@ -235,6 +232,23 @@ export function CartoesMobile() {
         open={formOpen}
         cartao={editing ?? undefined}
         onClose={() => { setFormOpen(false); setEditing(null) }}
+      />
+
+      <ConfirmDialog
+        open={!!confirmDeleteCartao}
+        title={`Excluir "${confirmDeleteCartao?.nome ?? 'cartão'}"?`}
+        body="Lançamentos e parcelas associadas serão mantidos no histórico. O cartão fica oculto da lista."
+        confirmLabel="Excluir cartão"
+        destructive
+        onConfirm={async () => {
+          if (confirmDeleteCartao?.id) {
+            await deleteCartao(confirmDeleteCartao.id)
+            sounds.success(); haptic('heavy')
+            setSelectedId(null)
+          }
+          setConfirmDeleteCartao(null)
+        }}
+        onClose={() => setConfirmDeleteCartao(null)}
       />
     </div>
   )

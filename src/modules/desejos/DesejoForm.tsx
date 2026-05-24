@@ -30,9 +30,10 @@ export function DesejoForm({ desejo, presetPrioridade, onClose }: Props) {
   })
 
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
+  const canSave = !!form.nome.trim()
 
   const handleSave = async () => {
-    if (!form.nome) return
+    if (!canSave) return
     const data = {
       nome: form.nome,
       descricao: form.descricao || undefined,
@@ -78,7 +79,8 @@ export function DesejoForm({ desejo, presetPrioridade, onClose }: Props) {
       footer={
         <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleSave} style={PRIMARY_BTN}>
+          <button onClick={handleSave} disabled={!canSave}
+            style={{ ...PRIMARY_BTN, opacity: canSave ? 1 : 0.5, cursor: canSave ? 'pointer' : 'not-allowed' }}>
             <IconCheck size={16} stroke={2.5} />
             {isEditing ? 'Salvar' : 'Adicionar'}
           </button>

@@ -41,8 +41,10 @@ export function DividaForm({ divida, onClose }: Props) {
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
   const parseInt0 = (v: string) => parseInt(v) || 0
 
+  const canSave = !!form.nome.trim() && parseValor(form.valorTotal) > 0 && parseValor(form.valorParcela) > 0
+
   const handleSave = async () => {
-    if (!form.nome || !form.valorTotal || !form.valorParcela) return
+    if (!canSave) return
     const parcelasTotalN = parseInt0(form.parcelasTotal)
     const parcelasPagasN = parseInt0(form.parcelasPagas)
     const valorParcelaN = parseValor(form.valorParcela)
@@ -102,7 +104,8 @@ export function DividaForm({ divida, onClose }: Props) {
       footer={
         <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleSave} style={PRIMARY_BTN}>
+          <button onClick={handleSave} disabled={!canSave}
+            style={{ ...PRIMARY_BTN, opacity: canSave ? 1 : 0.5, cursor: canSave ? 'pointer' : 'not-allowed' }}>
             <IconCheck size={16} stroke={2.5} />
             {isEditing ? 'Salvar' : 'Adicionar'}
           </button>

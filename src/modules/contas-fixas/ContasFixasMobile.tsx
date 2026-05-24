@@ -18,6 +18,7 @@ import { useCategorias } from '@/db/hooks/useCategorias'
 import type { ContaFixa } from '@/db/schema'
 import { fmt } from '@/lib/format'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { IconX } from '@tabler/icons-react'
 import { sounds, haptic } from '@/lib/sounds'
 
@@ -59,6 +60,7 @@ export function ContasFixasMobile() {
   const [view, setView] = useState({ mes: today.getMonth() + 1, ano: today.getFullYear() })
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<ContaFixa | null>(null)
 
   const contasFixas = useContasFixas()
   const pagamentos = usePagamentosFixos(view.mes, view.ano)
@@ -399,12 +401,24 @@ export function ContasFixasMobile() {
         mes={view.mes}
         ano={view.ano}
         onClose={() => { setAdding(false); setEditingId(null) }}
-        onDelete={editing ? async () => {
-          if (!confirm(`Excluir "${editing.nome}"?`)) return
-          await deleteContaFixa(editing.id!)
-          sounds.success(); haptic('heavy')
-          setEditingId(null)
-        } : undefined}
+        onDelete={editing ? () => setConfirmDelete(editing) : undefined}
+      />
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title={`Excluir "${confirmDelete?.nome ?? 'conta fixa'}"?`}
+        body="A conta fixa será removida da lista. Pagamentos já registrados são mantidos no histórico."
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={async () => {
+          if (confirmDelete?.id) {
+            await deleteContaFixa(confirmDelete.id)
+            sounds.success(); haptic('heavy')
+            setEditingId(null)
+          }
+          setConfirmDelete(null)
+        }}
+        onClose={() => setConfirmDelete(null)}
       />
     </div>
   )

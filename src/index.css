@@ -93,6 +93,16 @@
 * { scrollbar-width: none; -ms-overflow-style: none; }
 *::-webkit-scrollbar { display: none; }
 
+/* iOS Safari: inputs com font-size < 16px disparam zoom de auto-focus
+   (tela faz pan+zoom em cada tap, quebra UX de PWA). Força 16px no mobile.
+   Cobre TODOS os forms do app (FabModal, Conta/Cartao/Meta/Divida/etc).
+   Desktop continua com tamanhos definidos inline. */
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 html, body, #root {
   height: 100%;
   font-family: var(--font-body);

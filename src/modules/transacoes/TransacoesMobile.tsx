@@ -17,6 +17,7 @@ import { useCategorias } from '@/db/hooks/useCategorias'
 import { editTransacao, deleteTransacao } from '@/db/hooks/useTransacoes'
 import { fmt, fmtDate } from '@/lib/format'
 import { StackScreen } from '@/components/layout/StackScreen'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useUIStore } from '@/store/ui'
 import { sounds, haptic } from '@/lib/sounds'
 
@@ -545,9 +546,10 @@ function MobileTxDetail({ tx, onClose }: { tx: Transacao; onClose: () => void })
     sounds.success(); haptic('medium')
   }
 
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
   const handleDelete = async () => {
     if (!tx.id) return
-    if (!confirm('Excluir esta transação?')) return
     await deleteTransacao(tx.id)
     sounds.success(); haptic('heavy')
     onClose()
@@ -633,11 +635,11 @@ function MobileTxDetail({ tx, onClose }: { tx: Transacao; onClose: () => void })
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             boxShadow: tx.status === 'pago' ? 'none' : '0 8px 22px rgba(30,125,90,0.32)',
           }}>
-          {tx.status === 'pago' ? <IconClock size={16} stroke={2.2} /> : <IconCheck size={16} stroke={2.4} />}
-          {tx.status === 'pago' ? 'Marcar como pendente' : 'Marcar como pago'}
+          {tx.status === 'efetivada' ? <IconClock size={16} stroke={2.2} /> : <IconCheck size={16} stroke={2.4} />}
+          {tx.status === 'efetivada' ? 'Marcar como pendente' : 'Marcar como efetivada'}
         </button>
         <button
-          onClick={handleDelete}
+          onClick={() => setConfirmDelete(true)}
           style={{
             padding: '12px 16px',
             background: 'rgba(196,85,59,0.08)',
@@ -651,6 +653,15 @@ function MobileTxDetail({ tx, onClose }: { tx: Transacao; onClose: () => void })
           <IconTrash size={14} stroke={2.2} /> Excluir transação
         </button>
       </div>
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Excluir transação?"
+        body="Essa ação não pode ser desfeita. O saldo da conta será revertido."
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={async () => { await handleDelete(); setConfirmDelete(false) }}
+        onClose={() => setConfirmDelete(false)}
+      />
     </div>
   )
 }

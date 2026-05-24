@@ -45,9 +45,10 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
   const jaTemReserva = metas.some(m => m.tipo === 'reserva_emergencia' && m.id !== meta?.id)
 
   const parseValor = (v: string) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0
+  const canSave = !!form.nome.trim() && parseValor(form.valorAlvo) > 0
 
   const handleSave = async () => {
-    if (!form.nome || !form.valorAlvo) return
+    if (!canSave) return
     const data = {
       nome: form.nome,
       tipo: form.tipo,
@@ -105,7 +106,8 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
           display: 'flex', justifyContent: 'flex-end', gap: 10,
         }}>
           <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleSave} style={PRIMARY_BTN}>
+          <button onClick={handleSave} disabled={!canSave}
+            style={{ ...PRIMARY_BTN, opacity: canSave ? 1 : 0.5, cursor: canSave ? 'pointer' : 'not-allowed' }}>
             <IconCheck size={16} stroke={2.5} />
             {isEditing ? 'Salvar' : 'Criar meta'}
           </button>
