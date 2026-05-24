@@ -5,6 +5,7 @@ import { addDesejo, editDesejo } from '@/db/hooks/useDesejos'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 import { PRIORIDADES } from './constants'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 
@@ -40,7 +41,9 @@ export function DesejoForm({ desejo, presetPrioridade, onClose, onDelete, onComp
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
   const canSave = !!form.nome.trim()
 
-  const handleSave = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleSave = () => runSaving(async () => {
     const nomeTrim = form.nome.trim()
     const descricaoTrim = form.descricao.trim()
     const linkTrim = form.link.trim()
@@ -72,7 +75,7 @@ export function DesejoForm({ desejo, presetPrioridade, onClose, onDelete, onComp
       showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar desejo — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   return (
     <LegacyModalShell open onClose={onClose} maxWidth={620} zIndex={100}
@@ -117,11 +120,11 @@ export function DesejoForm({ desejo, presetPrioridade, onClose, onDelete, onComp
 
           {/* Lado direito: ações primárias */}
           <div style={{ display: 'flex', gap: 10, marginLeft: 'auto' }}>
-            <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-            <button onClick={handleSave} disabled={!canSave}
-              style={{ ...PRIMARY_BTN, opacity: canSave ? 1 : 0.5, cursor: canSave ? 'pointer' : 'not-allowed' }}>
+            <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancelar</button>
+            <button onClick={handleSave} disabled={!canSave || saving}
+              style={{ ...PRIMARY_BTN, opacity: (canSave && !saving) ? 1 : 0.5, cursor: (canSave && !saving) ? 'pointer' : 'not-allowed' }}>
               <IconCheck size={16} stroke={2.5} />
-              {isEditing ? 'Salvar' : 'Adicionar'}
+              {saving ? 'Salvando…' : isEditing ? 'Salvar' : 'Adicionar'}
             </button>
           </div>
         </div>

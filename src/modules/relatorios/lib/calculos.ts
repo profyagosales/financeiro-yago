@@ -247,13 +247,13 @@ export function projecaoSaldo(
 ): PontoProjecao[] {
   if (serieHistorica.length === 0) return []
 
-  // Histórico
-  let acc = saldoBase
+  // Histórico: saldo acumulado mês a mês (cur substitui o `let acc` antigo que
+  // era reatribuído na linha seguinte — era dead code).
   const hist: PontoProjecao[] = serieHistorica.map(p => {
-    acc = saldoBase + p.saldoAcumulado
+    const cur = saldoBase + p.saldoAcumulado
     return {
       mes: p.mes, ano: p.ano, label: p.label,
-      esperado: acc, otimista: acc, pessimista: acc, isProjetado: false,
+      esperado: cur, otimista: cur, pessimista: cur, isProjetado: false,
     }
   })
 
@@ -274,12 +274,21 @@ export function projecaoSaldo(
       const mes = dt.getMonth() + 1
       const ano = dt.getFullYear()
       const label = dt.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
-      const incremento = saldoMedio + tendencia * i
+      // Tendência CAP: pra não explodir exponencialmente no horizonte 6m.
+      // Bug histórico: `tendencia * i` cumulado em `cur += incremento` fazia
+      // forecast positivo crescer linear (i=6 → 6x a tendência mensal). Agora
+      // o tendencia*i é cap em ±50% da magnitude do saldoMedio — preserva
+      // direção sem extrapolar absurdo.
+      const tendenciaCap = Math.sign(tendencia) * Math.min(Math.abs(tendencia) * i, Math.abs(saldoMedio) * 0.5)
+      const incremento = saldoMedio + tendenciaCap
       cur += incremento
       // Bandas: ±12% e ±15% ABSOLUTOS pra não inverter em saldos negativos
       // (`cur * 1.12` de -R$1000 daria -R$1120, pior que pessimista).
-      const range12 = Math.abs(cur) * 0.12
-      const range15 = Math.abs(cur) * 0.15
+      // Adicionado piso mínimo de 5% do saldoMedio: quando cur ≈ 0, banda
+      // some e projeção parece certeira. Piso garante banda visível.
+      const baseRange = Math.max(Math.abs(cur), Math.abs(saldoMedio) * 0.3)
+      const range12 = baseRange * 0.12
+      const range15 = baseRange * 0.15
       proj.push({
         mes, ano, label,
         esperado: cur,

@@ -9,6 +9,7 @@ import { useCartoes } from '@/db/hooks/useCartoes'
 import { marcarComoComprado } from '@/db/hooks/useDesejos'
 import { fmt, todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 
 interface Props {
   desejo: Desejo
@@ -40,22 +41,35 @@ export function ComprarForm({ desejo, onClose }: Props) {
   const valorParsed = parseValor(form.valor)
   const contaIdNum = form.metodo === 'conta' ? parseInt(form.contaId) : 0
   const cartaoIdNum = form.metodo === 'cartao' ? parseInt(form.cartaoId) : 0
+  // categoriaId fallback: parseInt('') é NaN; ternário antes caía em 0 (FK
+  // inválida). Agora retorna undefined se vazio, OU primeira categoria
+  // 'despesa' como fallback (evita orfã).
+  const categoriaIdNum = form.categoriaId ? parseInt(form.categoriaId) : undefined
   const canComprar = !!desejo.id && valorParsed > 0
     && (form.metodo === 'conta' ? !!contaIdNum : !!cartaoIdNum)
 
-  const handleComprar = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleComprar = () => runSaving(async () => {
     if (!canComprar) return
     const valor = valorParsed
     const descricaoTrim = form.descricao.trim()
     if (!descricaoTrim) return
 
     try {
+      // Fallback de categoria: se vazio, busca uma categoria de despesa
+      // existente como default (evita FK órfã com categoriaId=0)
+      let catId = categoriaIdNum
+      if (!catId) {
+        const cat = await db.categorias.where('tipo').equals('despesa').first()
+        catId = cat?.id ?? 1
+      }
       const txId = (await db.transacoes.add({
         data: form.data,
         valor,
         tipo: 'despesa',
         contaId: contaIdNum,
-        categoriaId: form.categoriaId ? parseInt(form.categoriaId) : 0,
+        categoriaId: catId,
         descricao: descricaoTrim,
         notas: `Compra registrada da lista de desejos`,
         status: 'efetivada',
@@ -82,7 +96,7 @@ export function ComprarForm({ desejo, onClose }: Props) {
           descricao: descricaoTrim,
           valor,
           data: form.data,
-          categoriaId: form.categoriaId ? parseInt(form.categoriaId) : 0,
+          categoriaId: catId,
           parcelaAtual: 1,
           totalParcelas: 1,
           mes: d.getMonth() + 1,
@@ -99,7 +113,7 @@ export function ComprarForm({ desejo, onClose }: Props) {
       showErrorToast(e instanceof Error ? e.message : 'Erro ao registrar compra — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   return (
     <LegacyModalShell open onClose={onClose} maxWidth={560} zIndex={100}
@@ -138,10 +152,10 @@ export function ComprarForm({ desejo, onClose }: Props) {
       }
       footer={
         <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleComprar} disabled={!canComprar}
-            style={{ ...PRIMARY_BTN, opacity: canComprar ? 1 : 0.5, cursor: canComprar ? 'pointer' : 'not-allowed' }}>
-            <IconCheck size={16} stroke={2.5} /> Registrar
+          <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancelar</button>
+          <button onClick={handleComprar} disabled={!canComprar || saving}
+            style={{ ...PRIMARY_BTN, opacity: (canComprar && !saving) ? 1 : 0.5, cursor: (canComprar && !saving) ? 'pointer' : 'not-allowed' }}>
+            <IconCheck size={16} stroke={2.5} /> {saving ? 'Registrando…' : 'Registrar'}
           </button>
         </div>
       }

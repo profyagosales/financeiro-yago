@@ -8,6 +8,7 @@ import { useMetas } from '@/db/hooks/useMetas'
 import { useContas } from '@/db/hooks/useContas'
 import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 import { TIPOS, LIQUIDEZ_OPTIONS, TIPO_META } from './constants'
 
 interface Props {
@@ -94,14 +95,35 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
     return undefined
   }
 
-  const handleSave = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleSave = () => runSaving(async () => {
     const nomeTrim = form.nome.trim()
     const tickerTrim = form.ticker.trim().toUpperCase()
     if (!nomeTrim) return
-    // Renda variável (criação): precisa do primeiro aporte
-    if (isVar && !isEditing && (!form.primeiroAporteQtd || !form.primeiroAportePreco)) return
-    // Renda fixa: precisa de valor aplicado
-    if (!isVar && !form.valorAplicado) return
+    // Renda variável (criação): precisa do primeiro aporte COM valores positivos
+    if (isVar && !isEditing) {
+      const qtd = parseValor(form.primeiroAporteQtd)
+      const preco = parseValor(form.primeiroAportePreco)
+      if (qtd <= 0 || preco <= 0) {
+        showErrorToast('Quantidade e preço do aporte devem ser positivos')
+        return
+      }
+    }
+    // Renda fixa: precisa de valor aplicado positivo
+    if (!isVar) {
+      const vAplic = parseValor(form.valorAplicado)
+      if (vAplic <= 0) {
+        showErrorToast('Valor aplicado deve ser positivo')
+        return
+      }
+    }
+    // Vencimento (RF): se informado, deve ser após dataAplicacao
+    if (!isVar && form.dataVencimento && form.dataAplicacao
+        && form.dataVencimento < form.dataAplicacao) {
+      showErrorToast('Data de vencimento deve ser após a aplicação')
+      return
+    }
 
     try {
       if (isVar) {
@@ -204,7 +226,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
       showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar investimento — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   const formValid = form.nome && (
     isVar
@@ -234,11 +256,11 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
       }
       footer={
         <div style={{ padding: '14px 22px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleSave} disabled={!formValid}
-            style={{ ...PRIMARY_BTN, opacity: formValid ? 1 : 0.5, cursor: formValid ? 'pointer' : 'not-allowed' }}>
+          <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancelar</button>
+          <button onClick={handleSave} disabled={!formValid || saving}
+            style={{ ...PRIMARY_BTN, opacity: (formValid && !saving) ? 1 : 0.5, cursor: (formValid && !saving) ? 'pointer' : 'not-allowed' }}>
             <IconCheck size={16} stroke={2.5} />
-            {isEditing ? 'Salvar' : 'Adicionar'}
+            {saving ? 'Salvando…' : isEditing ? 'Salvar' : 'Adicionar'}
           </button>
         </div>
       }

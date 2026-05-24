@@ -4,6 +4,7 @@ import type { Meta, MetaTipo } from '@/db/schema'
 import { addMeta, editMeta, calcularAlvoReserva, useMetas } from '@/db/hooks/useMetas'
 import { fmt } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 import { META_TIPOS, META_ICONS, META_CORES, COBERTURA_OPTIONS } from './constants'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 
@@ -48,7 +49,9 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
   const parseValor = (v: string) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0
   const canSave = !!form.nome.trim() && parseValor(form.valorAlvo) > 0
 
-  const handleSave = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleSave = () => runSaving(async () => {
     const nomeTrim = form.nome.trim()
     if (!nomeTrim || parseValor(form.valorAlvo) <= 0) return
     const data = {
@@ -76,7 +79,7 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
       showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar meta — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   const isReserva = form.tipo === 'reserva_emergencia'
 
@@ -113,11 +116,11 @@ export function MetaForm({ meta, presetTipo, onClose }: Props) {
           padding: '14px 22px',
           display: 'flex', justifyContent: 'flex-end', gap: 10,
         }}>
-          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
-          <button onClick={handleSave} disabled={!canSave}
-            style={{ ...PRIMARY_BTN, opacity: canSave ? 1 : 0.5, cursor: canSave ? 'pointer' : 'not-allowed' }}>
+          <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancelar</button>
+          <button onClick={handleSave} disabled={!canSave || saving}
+            style={{ ...PRIMARY_BTN, opacity: (canSave && !saving) ? 1 : 0.5, cursor: (canSave && !saving) ? 'pointer' : 'not-allowed' }}>
             <IconCheck size={16} stroke={2.5} />
-            {isEditing ? 'Salvar' : 'Criar meta'}
+            {saving ? 'Salvando…' : isEditing ? 'Salvar' : 'Criar meta'}
           </button>
         </div>
       }

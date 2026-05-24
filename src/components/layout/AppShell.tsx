@@ -147,11 +147,16 @@ export function AppShell() {
   // ── Renovação de pagamentos fixos (idempotente): garante 12 meses
   //    futuros pra cada conta fixa ativa. Sem isso, conta cadastrada
   //    há > 12 meses pararia de aparecer na lista mensal.
+  // ── Cotação dólar: carregada no boot pra ativos USD não ficarem
+  //    convertidos a R$5.40 (default) até user abrir /investimentos.
   useEffect(() => {
     setupSyncHooks()
     void initSyncEngine()
     void migrateStatusToCanonical()
     void garantirPagamentosFuturosTodas()
+    // Cotação dólar global (cripto/ativos USD). Lazy import — não bloqueia
+    // boot e não força chunk de investimentos no bundle inicial.
+    void import('@/db/hooks/useInvestimentos').then(m => m.ensureDolarLoaded()).catch(() => { /* offline: usa default 5.40 */ })
   }, [])
 
   // ── PWA shortcut: ?action=new abre o FAB ──

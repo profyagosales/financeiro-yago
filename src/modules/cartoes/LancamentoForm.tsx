@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 
 interface Props {
   open: boolean
@@ -46,7 +47,9 @@ export function LancamentoForm({ open, cartao, lancamento, mes, ano, onClose }: 
 
   const parseValor = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0
 
-  const handleSave = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleSave = () => runSaving(async () => {
     const descricaoTrim = form.descricao.trim()
     if (!form.valor || !form.categoriaId) return
     const valor = parseValor(form.valor)
@@ -80,7 +83,7 @@ export function LancamentoForm({ open, cartao, lancamento, mes, ano, onClose }: 
       showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar lançamento — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   return (
     <Modal
@@ -193,13 +196,13 @@ export function LancamentoForm({ open, cartao, lancamento, mes, ano, onClose }: 
       </Modal.Body>
 
       <Modal.Footer>
-        <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
+        <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancelar</button>
         <button onClick={handleSave}
-          disabled={!form.valor || !form.categoriaId}
+          disabled={!form.valor || !form.categoriaId || saving}
           style={{
             ...PRIMARY_BTN,
-            opacity: (!form.valor || !form.categoriaId) ? 0.5 : 1,
-            cursor: (!form.valor || !form.categoriaId) ? 'not-allowed' : 'pointer',
+            opacity: (!form.valor || !form.categoriaId || saving) ? 0.5 : 1,
+            cursor: (!form.valor || !form.categoriaId || saving) ? 'not-allowed' : 'pointer',
           }}>
           <IconCheck size={16} stroke={2.5} />
           {isEditing ? 'Salvar alterações' : 'Lançar na fatura'}

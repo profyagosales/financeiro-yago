@@ -7,6 +7,7 @@ import { useAportes, addAporte, deleteAporte, calcAportesStats, useDolar } from 
 import { fetchCotacaoDolar, fetchCotacaoPorTipo } from '@/lib/cotacoes'
 import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 // useBodyScrollLock removido — LegacyModalShell já cuida disso
 
 interface Props {
@@ -113,7 +114,9 @@ export function AportesModal({ invest, onClose }: Props) {
 
   const preview = computeAporte()
 
-  const handleAdd = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleAdd = () => runSaving(async () => {
     if (!preview || !invest.id) return
     const observacaoTrim = form.observacao.trim()
     const observacao = (() => {
@@ -141,7 +144,7 @@ export function AportesModal({ invest, onClose }: Props) {
       showErrorToast(e instanceof Error ? e.message : 'Erro ao adicionar aporte — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   // Sugestão de cotação atual quando user clica "puxar do mercado".
   // A cotação vem na moeda do ativo (CoinGecko aceita vs_currencies=usd).
@@ -358,12 +361,12 @@ export function AportesModal({ invest, onClose }: Props) {
             </div>
           )}
 
-          <button onClick={handleAdd} disabled={!preview}
+          <button onClick={handleAdd} disabled={!preview || saving}
             style={{
               marginTop: 12, width: '100%',
-              background: preview ? 'linear-gradient(135deg, #504E76, #3A3860)' : '#E8E0D5',
-              color: preview ? '#FFFFFF' : '#9B7B6A', border: 'none', borderRadius: 12,
-              padding: '12px 0', cursor: preview ? 'pointer' : 'not-allowed',
+              background: (preview && !saving) ? 'linear-gradient(135deg, #504E76, #3A3860)' : '#E8E0D5',
+              color: (preview && !saving) ? '#FFFFFF' : '#9B7B6A', border: 'none', borderRadius: 12,
+              padding: '12px 0', cursor: (preview && !saving) ? 'pointer' : 'not-allowed',
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               boxShadow: preview ? '0 4px 16px rgba(80,78,118,0.3)' : 'none',

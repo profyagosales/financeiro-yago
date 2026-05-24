@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 const COLORS = ['#C4553B','#3A8580','#D4A017','#8B4BC8','#3D7EB5','#E89527','#D94F8A']
 
@@ -28,18 +28,23 @@ function makePieces(): Piece[] {
 }
 
 export function Confetti({ show, onDone }: ConfettiProps) {
-  // useEffect só pra disparar o callback onDone — sem setState dentro
+  // A11Y: respeita prefers-reduced-motion (vestibular / motion sickness).
+  // Sem isso, 40 motion divs animando podem causar náusea.
+  const reduceMotion = useReducedMotion()
+
+  // useEffect só pra disparar o callback onDone — sem setState dentro.
+  // Com reduceMotion, dispensa o tempo de animação e chama onDone imediato.
   useEffect(() => {
     if (!show || !onDone) return
-    const t = setTimeout(onDone, 2500)
+    const t = setTimeout(onDone, reduceMotion ? 50 : 2500)
     return () => clearTimeout(t)
-  }, [show, onDone])
+  }, [show, onDone, reduceMotion])
 
   // Math.random dentro de useMemo é puro pelo lint (compute pontual, não no body de render).
   // eslint-disable-next-line react-hooks/exhaustive-deps -- show é trigger intencional pra regenerar peças
   const pieces = useMemo(() => makePieces(), [show])
 
-  if (!show) return null
+  if (!show || reduceMotion) return null
 
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999, overflow: 'hidden' }}>

@@ -7,6 +7,7 @@ import { useMovimentacoesInvest, registrarVenda, registrarResgate, deleteMovimen
 import { fetchCotacaoPorTipo } from '@/lib/cotacoes'
 import { todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 
 interface Props {
   invest: Investimento
@@ -74,7 +75,9 @@ export function VendasModal({ invest, onClose }: Props) {
   const podeRegistrar = isVar ? !!previewVenda : !!previewResgate
   const qtdMaxima = invest.quantidade ?? 0
 
-  const handleRegistrar = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleRegistrar = () => runSaving(async () => {
     if (!invest.id) return
     const observacaoTrim = form.observacao.trim()
     try {
@@ -110,7 +113,7 @@ export function VendasModal({ invest, onClose }: Props) {
       showErrorToast(e instanceof Error ? e.message : 'Erro ao registrar movimentação — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   return (
     <LegacyModalShell open onClose={onClose} maxWidth={620} zIndex={100}
@@ -269,15 +272,15 @@ export function VendasModal({ invest, onClose }: Props) {
             </p>
           )}
 
-          <button onClick={handleRegistrar} disabled={!podeRegistrar}
+          <button onClick={handleRegistrar} disabled={!podeRegistrar || saving}
             style={{
               marginTop: 12, width: '100%',
-              background: podeRegistrar ? 'linear-gradient(135deg, #D4643A, #A8442B)' : '#E8E0D5',
-              color: podeRegistrar ? '#FFFFFF' : '#9B7B6A', border: 'none', borderRadius: 12,
-              padding: '12px 0', cursor: podeRegistrar ? 'pointer' : 'not-allowed',
+              background: (podeRegistrar && !saving) ? 'linear-gradient(135deg, #D4643A, #A8442B)' : '#E8E0D5',
+              color: (podeRegistrar && !saving) ? '#FFFFFF' : '#9B7B6A', border: 'none', borderRadius: 12,
+              padding: '12px 0', cursor: (podeRegistrar && !saving) ? 'pointer' : 'not-allowed',
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              boxShadow: podeRegistrar ? '0 4px 16px rgba(168,68,43,0.3)' : 'none',
+              boxShadow: (podeRegistrar && !saving) ? '0 4px 16px rgba(168,68,43,0.3)' : 'none',
             }}>
             <IconPlus size={15} stroke={2.4} /> Registrar {isVar ? 'venda' : 'resgate'}
           </button>

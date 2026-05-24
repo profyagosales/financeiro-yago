@@ -53,15 +53,16 @@ export async function addLancamentoCartao(data: {
   const valorParcelaArredondado = Math.round((valor / totalParcelas) * 100) / 100
   const valorUltima = Math.round((valor - valorParcelaArredondado * (totalParcelas - 1)) * 100) / 100
 
-  // Se a DATA da compra é >= dia de fechamento do cartão, a primeira
-  // parcela cai na fatura do mês seguinte. Usa a data da compra (não hoje),
-  // permitindo lançar compras retroativas no mês de fatura correto.
+  // Se a DATA da compra é DEPOIS do dia de fechamento, a primeira parcela
+  // cai na fatura do mês seguinte. Convenção mercado BR/Visa: compras NO
+  // dia do fechamento ainda entram na fatura ATUAL (corte ao final do dia).
+  // Por isso `>` e não `>=`.
   const cartao = await db.cartoes.get(data.cartaoId)
   let startMes = base.mes
   let startAno = base.ano
   if (cartao) {
     const diaCompra = new Date(data.data + 'T00:00:00').getDate()
-    if (diaCompra >= cartao.diaFechamento) {
+    if (diaCompra > cartao.diaFechamento) {
       startMes = base.mes + 1
       if (startMes > 12) { startMes = 1; startAno = base.ano + 1 }
     }

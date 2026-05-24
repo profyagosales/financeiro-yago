@@ -5,6 +5,7 @@ import type { Divida, MovimentacaoTipo } from '@/db/schema'
 import { useMovimentacoes, addMovimentacao, deleteMovimentacao, MOVIMENTACAO_LABEL, MOVIMENTACAO_COR, calcMovimentacoesTotais } from '@/db/hooks/useDividas'
 import { fmt, todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 
 interface Props {
   // Recebe o computed para ter acesso a saldoDevedor, etc.
@@ -42,7 +43,9 @@ export function MovimentacaoModal({ divida, onClose }: Props) {
   const totais = calcMovimentacoesTotais(movs)
   const valorQuitacaoSugerido = divida.saldoDevedor
 
-  const handleAdd = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleAdd = () => runSaving(async () => {
     if (!divida.id) return
     const valor = parseValor(form.valor)
     const descontoVal = parseValor(form.descontoValor)
@@ -104,7 +107,7 @@ export function MovimentacaoModal({ divida, onClose }: Props) {
       showErrorToast(e instanceof Error ? e.message : 'Erro ao registrar movimentação — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   const currentTab = TABS.find(t => t.value === tab)!
 
@@ -258,12 +261,12 @@ export function MovimentacaoModal({ divida, onClose }: Props) {
               style={INPUT_STYLE} />
           </Field>
 
-          <button onClick={handleAdd} disabled={!form.valor}
+          <button onClick={handleAdd} disabled={!form.valor || saving}
             style={{
               marginTop: 12, width: '100%',
-              background: form.valor ? `linear-gradient(135deg, ${currentTab.cor}, ${currentTab.cor}cc)` : '#E8E0D5',
-              color: form.valor ? '#FFFFFF' : '#9B7B6A', border: 'none', borderRadius: 12,
-              padding: '12px 0', cursor: form.valor ? 'pointer' : 'not-allowed',
+              background: (form.valor && !saving) ? `linear-gradient(135deg, ${currentTab.cor}, ${currentTab.cor}cc)` : '#E8E0D5',
+              color: (form.valor && !saving) ? '#FFFFFF' : '#9B7B6A', border: 'none', borderRadius: 12,
+              padding: '12px 0', cursor: (form.valor && !saving) ? 'pointer' : 'not-allowed',
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               boxShadow: form.valor ? `0 4px 16px ${currentTab.cor}50` : 'none',

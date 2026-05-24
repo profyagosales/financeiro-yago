@@ -7,6 +7,7 @@ import { TABLES } from './config'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 let channel: RealtimeChannel | null = null
+let channelUserId: string | null = null
 let onChangeCallback: (() => void) | null = null
 
 // Subscribe a INSERT/UPDATE/DELETE de TODAS as tabelas remotas filtradas
@@ -15,13 +16,20 @@ export async function subscribeRealtime(onChange: () => void) {
   const userId = await getUserId()
   if (!userId) return
 
-  // Já tem canal? Reusa
+  // Já tem canal? Reusa se for do MESMO user. Se user mudou (signOut+login
+  // outro user), descarta o canal antigo (com filter user_id=A) e cria novo
+  // pra B. Sem isso, B nunca recebia eventos remotos.
   if (channel) {
-    onChangeCallback = onChange
-    return
+    if (channelUserId === userId) {
+      onChangeCallback = onChange
+      return
+    }
+    // User diferente: descarta canal anterior
+    await unsubscribeRealtime()
   }
 
   onChangeCallback = onChange
+  channelUserId = userId
   channel = supabase.channel(`sync:${userId}`)
 
   for (const tableName of Object.keys(TABLES)) {
@@ -53,6 +61,7 @@ export async function unsubscribeRealtime() {
   if (channel) {
     await supabase.removeChannel(channel)
     channel = null
+    channelUserId = null
     onChangeCallback = null
   }
 }

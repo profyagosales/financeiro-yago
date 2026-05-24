@@ -8,6 +8,7 @@ import { RealCardVisual } from '@/components/ui/RealCardVisual'
 import { BandeiraLogo, BANDEIRAS_DISPONIVEIS } from '@/components/ui/BandeiraLogo'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 import { CORES_CARTAO } from './constants'
 
 interface Props {
@@ -59,18 +60,26 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
   const diaFechamentoNum = parseInt(form.diaFechamento) || 0
   const diaVencimentoNum = parseInt(form.diaVencimento) || 0
   const diasIguais = diaFechamentoNum > 0 && diaFechamentoNum === diaVencimentoNum
+  const limiteNum = parseValor(form.limite)
+  const limiteValido = limiteNum > 0
+  // Form só salva com: nome, limite positivo, dias diferentes, dias 1..31
+  const formValido = !!form.nome.trim() && limiteValido && !diasIguais
+                  && diaFechamentoNum >= 1 && diaFechamentoNum <= 31
+                  && diaVencimentoNum >= 1 && diaVencimentoNum <= 31
 
-  const handleSave = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleSave = () => runSaving(async () => {
+    if (!formValido) return
     // .trim() em strings que vão pra storage + defesa em profundidade
     const nomeTrim = form.nome.trim()
     const titularTrim = form.titular.trim()
-    if (!nomeTrim || !form.limite) return
     const data = {
       nome: nomeTrim,
       bandeira: form.bandeira,
-      limite: parseValor(form.limite),
-      diaFechamento: parseInt(form.diaFechamento) || 1,
-      diaVencimento: parseInt(form.diaVencimento) || 10,
+      limite: limiteNum,
+      diaFechamento: diaFechamentoNum,
+      diaVencimento: diaVencimentoNum,
       cor: form.cor,
       logo: form.logo,
       titular: titularTrim || undefined,
@@ -90,7 +99,7 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
       showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar cartão — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   const previewNome = form.nome || 'Seu cartão'
 
@@ -308,12 +317,12 @@ export function CartaoForm({ open, cartao, onClose }: Props) {
       </div>
 
       <Modal.Footer>
-        <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
+        <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancelar</button>
         <button onClick={handleSave}
-          disabled={!form.nome || !form.limite}
-          style={{ ...PRIMARY_BTN, opacity: (!form.nome || !form.limite) ? 0.5 : 1, cursor: (!form.nome || !form.limite) ? 'not-allowed' : 'pointer' }}>
+          disabled={!formValido || saving}
+          style={{ ...PRIMARY_BTN, opacity: (!formValido || saving) ? 0.5 : 1, cursor: (!formValido || saving) ? 'not-allowed' : 'pointer' }}>
           <IconCheck size={16} stroke={2.5} />
-          {isEditing ? 'Salvar alterações' : 'Adicionar cartão'}
+          {saving ? 'Salvando…' : isEditing ? 'Salvar alterações' : 'Adicionar cartão'}
         </button>
       </Modal.Footer>
     </Modal>
