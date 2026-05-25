@@ -6,6 +6,7 @@ import { BankLogo } from '@/components/ui/BankLogo'
 import { LogoUploader } from '@/components/ui/LogoUploader'
 import { fmt } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 import { BANK_PRESETS, TIPOS_CONTA, CORES_CONTA } from './constants'
 
 // Helper local (não usa state) — extrai preset do banco baseado no nome
@@ -70,7 +71,9 @@ export function ContaForm({ open, conta, onClose, onSave, onDelete }: Props) {
     }))
   }
 
-  const handleSave = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleSave = () => runSaving(async () => {
     const nomeTrim = form.nome.trim()
     if (!nomeTrim) return
     try {
@@ -91,7 +94,7 @@ export function ContaForm({ open, conta, onClose, onSave, onDelete }: Props) {
       showErrorToast(e instanceof Error ? e.message : 'Erro ao salvar conta — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   const previewNome = form.nome || 'Sua conta'
 
@@ -340,12 +343,12 @@ export function ContaForm({ open, conta, onClose, onSave, onDelete }: Props) {
           </button>
         )}
         <div style={{ display: 'flex', gap: 10, marginLeft: 'auto' }}>
-          <button onClick={onClose} style={SECONDARY_BTN}>Cancelar</button>
+          <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancelar</button>
           <button onClick={handleSave}
-            disabled={!form.nome}
-            style={{ ...PRIMARY_BTN, opacity: !form.nome ? 0.5 : 1, cursor: !form.nome ? 'not-allowed' : 'pointer' }}>
+            disabled={!form.nome || saving}
+            style={{ ...PRIMARY_BTN, opacity: (!form.nome || saving) ? 0.5 : 1, cursor: (!form.nome || saving) ? 'not-allowed' : 'pointer' }}>
             <IconCheck size={16} stroke={2.5} />
-            {isEditing ? 'Salvar alterações' : 'Adicionar conta'}
+            {saving ? 'Salvando…' : isEditing ? 'Salvar alterações' : 'Adicionar conta'}
           </button>
         </div>
       </Modal.Footer>

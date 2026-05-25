@@ -6,6 +6,7 @@ import { aportarMeta } from '@/db/hooks/useMetas'
 import { useContas } from '@/db/hooks/useContas'
 import { BankLogo } from '@/components/ui/BankLogo'
 import { showErrorToast, sounds } from '@/lib/sounds'
+import { useSavingGuard } from '@/hooks/useSavingGuard'
 
 interface Props {
   meta: Meta
@@ -26,7 +27,9 @@ export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
   const v = parseValor(valor)
   const canSubmit = v > 0 && !!meta.id
 
-  const handleAporte = async () => {
+  const { saving, runSaving } = useSavingGuard()
+
+  const handleAporte = () => runSaving(async () => {
     if (!canSubmit || !meta.id) return
     try {
       await aportarMeta(meta.id, v, contaOrigemId ? { contaOrigemId } : undefined)
@@ -37,7 +40,7 @@ export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
       showErrorToast(e instanceof Error ? e.message : 'Erro ao aportar — tente de novo')
       sounds.error()
     }
-  }
+  })
 
   return (
     <LegacyModalShell open onClose={onClose} maxWidth={520} zIndex={100}
@@ -174,11 +177,11 @@ export function AporteForm({ meta, onClose, onOpenInvestimento }: Props) {
               </div>
 
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button onClick={() => setPath(null)} style={SECONDARY_BTN}>Voltar</button>
+                <button onClick={() => setPath(null)} disabled={saving} style={SECONDARY_BTN}>Voltar</button>
                 <button onClick={handleAporte}
-                  disabled={!canSubmit}
-                  style={{ ...PRIMARY_BTN, opacity: canSubmit ? 1 : 0.5, cursor: canSubmit ? 'pointer' : 'not-allowed' }}>
-                  <IconCheck size={16} stroke={2.5} /> Aportar
+                  disabled={!canSubmit || saving}
+                  style={{ ...PRIMARY_BTN, opacity: (canSubmit && !saving) ? 1 : 0.5, cursor: (canSubmit && !saving) ? 'pointer' : 'not-allowed' }}>
+                  <IconCheck size={16} stroke={2.5} /> {saving ? 'Aportando…' : 'Aportar'}
                 </button>
               </div>
             </div>

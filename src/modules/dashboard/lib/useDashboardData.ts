@@ -5,7 +5,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/schema'
 import { useContas, useSaldoTotal } from '@/db/hooks/useContas'
-import { useTransacoes, useTotaisMes, useGastosPorCategoria, useTransacoesByMes } from '@/db/hooks/useTransacoes'
+import { useTransacoes, useTotaisMes, useGastosPorCategoria, useTransacoesByMes, isEspelhoInvestimento } from '@/db/hooks/useTransacoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useCartoes, useAllLancamentosAtivos } from '@/db/hooks/useCartoes'
 import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
@@ -200,13 +200,15 @@ export function useDashboardData(): DashboardData {
     diaAtual: hoje,
   })
 
-  // Top 5 despesas — exclui transferências
+  // Top 5 despesas — exclui transferências E espelhos de investimento
+  // (aporte de R$10k não é "top despesa", é movimentação patrimonial)
   const top5Despesas = [...txsMes]
-    .filter(t => t.tipo === 'despesa' && !t.transferId)
+    .filter(t => t.tipo === 'despesa' && !t.transferId && !isEspelhoInvestimento(t))
     .sort((a, b) => b.valor - a.valor)
     .slice(0, 5)
 
-  // Top categorias (com delta vs média 3m anterior). Exclui transferências.
+  // Top categorias (com delta vs média 3m anterior). Exclui transferências
+  // E espelhos invest pra média 3m não inflar quando user aporta regularmente.
   const ultMeses3 = serie12m.slice(-4, -1)  // exclui mês atual
   const txs3m = useLiveQuery(async () => {
     if (ultMeses3.length === 0) return []
@@ -214,7 +216,7 @@ export function useDashboardData(): DashboardData {
     const ultimo = ultMeses3[ultMeses3.length - 1]
     const fim = `${ultimo.ano}-${String(ultimo.mes).padStart(2, '0')}-31`
     return db.transacoes.where('data').between(ini, fim, true, true)
-      .filter(t => t.tipo === 'despesa' && !t.transferId)
+      .filter(t => t.tipo === 'despesa' && !t.transferId && !isEspelhoInvestimento(t))
       .toArray()
   }, [ano, mes]) ?? []
 
@@ -333,11 +335,14 @@ export function useDashboardData(): DashboardData {
         })
       }
       if (c.diaVencimento === dia) {
-        // Fatura que VAI vencer = lancs do mês anterior (fatura já fechada)
-        // Se diaVenc > diaFech, mês fatura = mês anterior; senão, próximo
+        // Fatura que VAI vencer = lancs do mês ANTERIOR (já fechado).
+        // Convenção: se diaVenc <= diaFech, fechamento foi no mês anterior.
+        // Bug histórico: usava `<` strict, então cartão legacy com
+        // diaVenc === diaFech (form R8 bloqueia novos, mas migrations vêm
+        // de devices antigos) buscava lancs do mês ATUAL → fatura R$0.
         let mesFatura = mesIt
         let anoFatura = anoIt
-        if (c.diaVencimento < c.diaFechamento) {
+        if (c.diaVencimento <= c.diaFechamento) {
           // fatura já fechou no mês anterior
           mesFatura -= 1
           if (mesFatura < 1) { mesFatura = 12; anoFatura -= 1 }

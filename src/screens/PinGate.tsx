@@ -2,11 +2,12 @@
 // Mostrada quando user tem sessão Supabase + PIN local já definido.
 // Pede PIN pra desbloquear. "Esqueci o PIN" leva pra reset (logout).
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconShieldCheck, IconAlertTriangle } from '@tabler/icons-react'
 import { useAuthStore } from '@/store/auth'
 import { useDisplayName } from '@/db/hooks/useAppConfig'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { sounds, haptic } from '@/lib/sounds'
 import { AuthHeader } from './AuthHeader'
 
@@ -21,6 +22,18 @@ export function PinGate() {
   const [confirmReset, setConfirmReset] = useState(false)
   const { unlock, signOut, email } = useAuthStore()
   const displayName = useDisplayName()
+  // Focus trap pro reset overlay (era exposto sem trap nem role=alertdialog
+  // — Tab vazava pro keypad atrás). R10 fix.
+  const resetDialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(resetDialogRef, confirmReset)
+
+  // Esc fecha o reset overlay
+  useEffect(() => {
+    if (!confirmReset) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setConfirmReset(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [confirmReset])
 
   const handleKey = useCallback(async (k: string) => {
     if (k === '⌫') {
@@ -158,6 +171,10 @@ export function PinGate() {
               display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
             }}>
             <motion.div
+              ref={resetDialogRef}
+              role="alertdialog" aria-modal="true"
+              aria-labelledby="reset-pin-title"
+              aria-describedby="reset-pin-desc"
               initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 280, damping: 24 }}
               onClick={e => e.stopPropagation()}
@@ -174,14 +191,14 @@ export function PinGate() {
               }}>
                 <IconAlertTriangle size={22} stroke={2} color="#A8442B" />
               </div>
-              <p style={{
+              <p id="reset-pin-title" style={{
                 fontFamily: "'Fraunces',Georgia,serif",
                 fontSize: 20, fontWeight: 700, color: '#2C1A0F',
                 margin: '0 0 8px', letterSpacing: '-0.3px',
               }}>
                 Esqueceu o PIN?
               </p>
-              <p style={{
+              <p id="reset-pin-desc" style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif",
                 fontSize: 13, color: '#7A5C4F', margin: '0 0 20px', lineHeight: 1.55,
               }}>

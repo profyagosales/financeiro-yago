@@ -280,8 +280,14 @@ export function AppShell() {
           Páginas de layout fixo (master-detail próprio) zeram o
           paddingBottom: 80 (que existe pra clearance de FAB / nav mobile)
           porque elas próprias controlam a altura via 100dvh.            */}
+      {/* A11Y: skip-link (WCAG 2.4.1 Bypass Blocks). Invisível até receber
+          foco via Tab — primeiro item tabbable da página. */}
+      <a href="#main-content" className="skip-link">
+        Pular para o conteúdo principal
+      </a>
       <AnimatePresence mode="wait" initial={false}>
         <motion.main key={location.pathname}
+          id="main-content"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}

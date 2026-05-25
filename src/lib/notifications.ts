@@ -15,6 +15,7 @@
 
 import { db } from '@/db/schema'
 import { fmt } from '@/lib/format'
+import { isEspelhoInvestimento } from '@/db/hooks/useTransacoes'
 
 export type PermissaoEstado = 'default' | 'granted' | 'denied' | 'unsupported'
 
@@ -170,9 +171,11 @@ export async function verificarPendencias(prefs: NotificationPrefs = NOTIF_PREFS
       .where('data').between(inicio, fim, true, true)
       .toArray()
     const gastosPorCat = new Map<number, number>()
-    // Exclui transferências: a despesa-perna na conta origem usaria a
-    // categoria default e dispararia "orçamento estourado" falsamente.
-    txs.filter(t => t.tipo === 'despesa' && !t.transferId).forEach(t => {
+    // Exclui transferências (par interno) E espelhos de investimento
+    // (aportes não são despesa real). Sem o filtro de espelhos, todo
+    // aporte na categoria "Investimentos" dispararia push falso de
+    // "Orçamento estourado".
+    txs.filter(t => t.tipo === 'despesa' && !t.transferId && !isEspelhoInvestimento(t)).forEach(t => {
       gastosPorCat.set(t.categoriaId, (gastosPorCat.get(t.categoriaId) ?? 0) + t.valor)
     })
     const cats = await db.categorias.toArray()

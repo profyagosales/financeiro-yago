@@ -9,10 +9,27 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 let channel: RealtimeChannel | null = null
 let channelUserId: string | null = null
 let onChangeCallback: (() => void) | null = null
+// Guard contra calls concorrentes (ex: 2 mounts do AppShell em rota change,
+// initSyncEngine + reconnect handler). Sem isso, ambos passavam o check
+// `if (channel)` (null) e criavam channels — o primeiro vazava.
+let subscribeInFlight: Promise<void> | null = null
 
 // Subscribe a INSERT/UPDATE/DELETE de TODAS as tabelas remotas filtradas
 // por user_id. Quando algo muda, chama o callback (geralmente trigger pull).
-export async function subscribeRealtime(onChange: () => void) {
+export async function subscribeRealtime(onChange: () => void): Promise<void> {
+  // Concurrent guard: se já há um subscribe rodando, aguarda
+  if (subscribeInFlight) return subscribeInFlight
+  subscribeInFlight = (async () => {
+    try {
+      await _subscribeRealtimeInner(onChange)
+    } finally {
+      subscribeInFlight = null
+    }
+  })()
+  return subscribeInFlight
+}
+
+async function _subscribeRealtimeInner(onChange: () => void) {
   const userId = await getUserId()
   if (!userId) return
 

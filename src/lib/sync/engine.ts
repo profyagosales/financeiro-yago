@@ -70,11 +70,18 @@ async function syncCycle(opts: { full?: boolean; skipPush?: boolean; skipPull?: 
     if (!opts.skipPush) pendingPush = true
     return
   }
-  if (!isOnline()) { setStatus('offline'); return }
+  if (!isOnline()) {
+    setStatus('offline')
+    consecutiveCycles = 0  // R10 fix: reset cap counter em early-return
+    return
+  }
 
   // Precisa de session ativa
   const { data } = await supabase.auth.getSession()
-  if (!data.session) return
+  if (!data.session) {
+    consecutiveCycles = 0  // R10 fix
+    return
+  }
 
   syncInFlight = true
   setStatus('syncing')

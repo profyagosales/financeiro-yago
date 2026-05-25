@@ -117,8 +117,12 @@ export async function deleteMeta(id: number) {
 // no início do uso). Agora divide pelo nº de meses DISTINTOS com despesa
 // (mínimo 1, máximo 6) — reflete o gasto médio real.
 export async function calcularAlvoReserva(mesesCobertura: 3 | 6 | 12): Promise<number> {
+  // Exclui transferências (par interno) E espelhos de investimento (aportes
+  // são patrimônio, não gasto). Sem filtro, alvo da reserva fica inflado em
+  // até 3x quando o user aporta regularmente.
+  const { isEspelhoInvestimento } = await import('./useTransacoes')
   const todasDespesas = await db.transacoes
-    .filter(t => t.tipo === 'despesa' && !t.transferId)
+    .filter(t => t.tipo === 'despesa' && !t.transferId && !isEspelhoInvestimento(t))
     .toArray()
   if (todasDespesas.length === 0) return 0
 

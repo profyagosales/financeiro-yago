@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { hasPinSet, verifyPin, setPin as setPinLocal, changePin as changePinLocal, clearPin } from '@/lib/auth'
 import { db, wipeAllData } from '@/db/schema'
+import { shutdownSyncEngine } from '@/lib/sync/engine'
 
 const SESSION_KEY = 'fy-session-active'
 
@@ -121,7 +122,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     // Ordem importa:
-    // 1. unsubscribePush ANTES do signOut Supabase — precisa de sessão ativa
+    // 1. shutdownSyncEngine() PRIMEIRO — para o pullInterval (30s) e
+    //    realtime channel ANTES do wipe. Sem isso, o pull em curso ou o
+    //    próximo cycle pode trazer rows de volta DEPOIS do clear() do
+    //    Dexie, recriando dados fantasma e disparando push de volta.
+    try {
+      await shutdownSyncEngine()
+    } catch (e) {
+      console.warn('[signOut] shutdownSyncEngine falhou:', e)
+    }
+    // 2. unsubscribePush ANTES do signOut Supabase — precisa de sessão ativa
     //    pra deletar a row push_subscriptions (RLS). Sem isso, o device fica
     //    recebendo push do user antigo, e se outro user logar no mesmo
     //    device, herda a subscription órfã (cross-user privacy leak).
@@ -131,17 +141,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (e) {
       console.warn('[signOut] unsubscribePush falhou:', e)
     }
-    // 2. Limpa dados locais antes do signOut do Supabase pra evitar que dados
+    // 3. Limpa dados locais antes do signOut do Supabase pra evitar que dados
     // do user anterior fiquem misturados se outro user logar nesse device.
     // Crítico: o "Esqueci o PIN" usa essa função — sem o wipe, o próximo
     // signup com email diferente herdaria todo o IndexedDB anterior.
+    // syncMappings/syncMeta já estão em wipeAllData (schema.ts) — sem race.
     try {
       await wipeAllData()
-      await Promise.all([db.syncMappings.clear(), db.syncMeta.clear()])
     } catch (e) {
       console.warn('[signOut] wipe local data falhou:', e)
     }
-    // 3. Finalmente desloga Supabase + limpa PIN local
+    // 4. Finalmente desloga Supabase + limpa PIN local
     await supabase.auth.signOut()
     clearPin()
     setSessionActive(false)
