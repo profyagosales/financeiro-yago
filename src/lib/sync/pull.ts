@@ -145,10 +145,16 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
     }
   }
 
-  // Só avança cursor pra rows que aplicamos sem erro. Se houve qualquer
-  // erro, o próximo pull vai re-tentar as rows pendentes (cursor fica
-  // no último ts aplicado com sucesso).
-  if (maxAppliedUpdatedAt) await setMeta(sinceKey, maxAppliedUpdatedAt)
+  // Cursor advance é ALL-OR-NOTHING por batch. Se QUALQUER row falhou
+  // (INSERT/UPDATE/storage), NÃO avança — próximo pull re-tenta TODAS
+  // as rows desde o último ts aplicado com sucesso, incluindo as que
+  // sucederam (LWW garante idempotência: rows já-aplicadas têm
+  // remoteUpdatedMs === existingUpdatedAt → strict `>` pula). Custo:
+  // re-pull de até 500 rows até o erro resolver (FK órfã, unique race).
+  // Benefício: zero data-loss silenciosa por hole no cursor.
+  if (maxAppliedUpdatedAt && !hadErrors) {
+    await setMeta(sinceKey, maxAppliedUpdatedAt)
+  }
   return { pulled, errors: hadErrors ? 1 : 0 }
 }
 
