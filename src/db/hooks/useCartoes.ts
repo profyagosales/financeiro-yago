@@ -43,6 +43,43 @@ export function useAllLancamentosAtivos() {
     []
   ) ?? []
 }
+
+// ─── Limite USADO real por cartão (parcelas ainda pendentes) ────────
+// R12k: Cartão de crédito bloqueia o limite assim que a compra é feita
+// e LIBERA conforme cada fatura é paga. Como o app não tem conceito
+// formal de "fatura paga", aproximamos:
+//   - Parcela em mês FUTURO (ano/mês > hoje) → sempre pendente
+//   - Parcela em mês ATUAL → pendente se hoje <= diaVencimento do cartão
+//   - Parcela em mês PASSADO → assumida paga
+//
+// Exemplo: 4x R$ 525 em cartão Nubank (venc dia 16). Hoje 25/mai:
+//   - Mai (parc 1): hoje=25 > venc=16 → PAGA → não conta
+//   - Jun,Jul,Ago (parc 2,3,4): futuro → pendente → 1575 usado
+//   - Disponível = limite - 1575
+//
+// Retorna Map<cartaoId, valor usado>.
+export function useLimiteUsadoPorCartao(cartoes: Cartao[]): Map<number, number> {
+  const lancsAtivos = useAllLancamentosAtivos()
+  const hoje = new Date()
+  const hojeMes = hoje.getMonth() + 1
+  const hojeAno = hoje.getFullYear()
+  const hojeDia = hoje.getDate()
+
+  const cartoesById = new Map<number, Cartao>()
+  cartoes.forEach(c => { if (c.id != null) cartoesById.set(c.id, c) })
+
+  const usado = new Map<number, number>()
+  for (const l of lancsAtivos) {
+    const cartao = cartoesById.get(l.cartaoId)
+    if (!cartao) continue
+    const isFuturo = l.ano > hojeAno || (l.ano === hojeAno && l.mes > hojeMes)
+    const isMesAtualPendente = l.ano === hojeAno && l.mes === hojeMes && hojeDia <= cartao.diaVencimento
+    if (isFuturo || isMesAtualPendente) {
+      usado.set(l.cartaoId, (usado.get(l.cartaoId) ?? 0) + l.valor)
+    }
+  }
+  return usado
+}
 export async function addLancamentoCartao(data: {
   cartaoId: number; descricao: string; valor: number; data: string
   categoriaId: number; totalParcelas: number; mes: number; ano: number

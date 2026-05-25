@@ -9,7 +9,8 @@ import type { Cartao, LancamentoCartao, Categoria } from '@/db/schema'
 import { db } from '@/db/schema'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import {
-  useLancamentosCartao, useTotalFatura, deleteLancamentoCartao, deleteLancamentoComParcelas,
+  useLancamentosCartao, useTotalFatura, useLimiteUsadoPorCartao,
+  deleteLancamentoCartao, deleteLancamentoComParcelas,
 } from '@/db/hooks/useCartoes'
 import { fmt, mesAnoAtual } from '@/lib/format'
 import { BankLogo } from '@/components/ui/BankLogo'
@@ -43,8 +44,14 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
 
   const lancs = useLancamentosCartao(cartao.id!, mes, ano)
   const faturaAtual = useTotalFatura(cartao.id!, mes, ano)
-  const disponivel = Math.max(0, cartao.limite - faturaAtual)
-  const pctUsado = cartao.limite > 0 ? Math.min(100, (faturaAtual / cartao.limite) * 100) : 0
+
+  // R12k: Disponível REAL = limite - parcelas futuras pendentes (não só
+  // a fatura do mês selecionado). pctUsado também reflete o compromisso
+  // real. Bug antigo: navegar pra um mês passado mostrava "100% disponível".
+  const usadoMap = useLimiteUsadoPorCartao(useMemo(() => [cartao], [cartao]))
+  const usadoReal = usadoMap.get(cartao.id!) ?? 0
+  const disponivel = Math.max(0, cartao.limite - usadoReal)
+  const pctUsado = cartao.limite > 0 ? Math.min(100, (usadoReal / cartao.limite) * 100) : 0
 
   const isCurrentMonth = mes === atual.mes && ano === atual.ano
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })

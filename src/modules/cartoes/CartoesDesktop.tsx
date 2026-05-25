@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import {
   IconPlus, IconCreditCard, IconSearch, IconTrash,
 } from '@tabler/icons-react'
-import { useCartoes, deleteCartao } from '@/db/hooks/useCartoes'
+import { useCartoes, deleteCartao, useLimiteUsadoPorCartao } from '@/db/hooks/useCartoes'
 import type { Cartao, LancamentoCartao } from '@/db/schema'
 import { db } from '@/db/schema'
 import { fmt, mesAnoAtual } from '@/lib/format'
@@ -46,6 +46,13 @@ export function CartoesDesktop() {
   ) ?? []
   const faturaTotalMes = todasLancsMes.reduce((s, l) => s + l.valor, 0)
   const limiteTotal = cartoes.reduce((s, c) => s + c.limite, 0)
+
+  // R12k: Disponível REAL = limite - parcelas futuras ainda pendentes
+  // (não apenas fatura do mês). Bug antigo mostrava limite cheio mesmo
+  // com parcelamentos comprometendo meses futuros.
+  const usadoPorCartao = useLimiteUsadoPorCartao(cartoes)
+  const usadoTotal = Array.from(usadoPorCartao.values()).reduce((s, v) => s + v, 0)
+  const disponivelTotal = Math.max(0, limiteTotal - usadoTotal)
 
   // Bandeiras únicas
   const bandeirasDisponiveis = useMemo(() => {
@@ -97,10 +104,12 @@ export function CartoesDesktop() {
           {cartoes.length > 0 && (
             <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
               <TopKpi label="Fatura do mês" value={fmt(faturaTotalMes)} cor="#C4553B" />
+              {/* fatura do mês mostra só o mês corrente; disponível é
+                  baseado em TODAS as parcelas futuras (compromisso real) */}
               <Divider />
               <TopKpi label="Limite total" value={fmt(limiteTotal)} cor="#504E76" />
               <Divider />
-              <TopKpi label="Disponível" value={fmt(Math.max(0, limiteTotal - faturaTotalMes))} cor="#1E7D5A" />
+              <TopKpi label="Disponível" value={fmt(disponivelTotal)} cor="#1E7D5A" />
 
               <button onClick={openAdd}
                 style={{

@@ -5,7 +5,7 @@
 // O service worker mantém o app rodando offline depois da primeira
 // visita: ícones, fontes, JS bundle, etc ficam cacheados.
 
-const CACHE_NAME = 'financeiro-yago-v20-r12j-logo-uploader-robust'
+const CACHE_NAME = 'financeiro-yago-v21-r12k-limite-cartao-parcelas-futuras'
 const CORE_ASSETS = [
   '/',
   '/index.html',
