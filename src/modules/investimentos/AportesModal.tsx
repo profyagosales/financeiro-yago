@@ -5,7 +5,7 @@ import { IconX, IconCheck, IconShoppingCart, IconTrash, IconPlus, IconCurrencyDo
 import type { Investimento } from '@/db/schema'
 import { useAportes, addAporte, deleteAporte, calcAportesStats, useDolar } from '@/db/hooks/useInvestimentos'
 import { fetchCotacaoDolar, fetchCotacaoPorTipo } from '@/lib/cotacoes'
-import { todayISO } from '@/lib/format'
+import { todayISO, fmtNum, fmtMoeda, fmtPct } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 import { useSavingGuard } from '@/hooks/useSavingGuard'
 // useBodyScrollLock removido — LegacyModalShell já cuida disso
@@ -44,7 +44,7 @@ export function AportesModal({ invest, onClose }: Props) {
     quantidade: '',
     precoUnitario: '',         // SEMPRE na moeda escolhida pelo modo (input puro do user)
     valorInvestido: '',        // pro modo "investi X reais/dólares"
-    cotacaoDolar: dolarCache > 0 ? dolarCache.toFixed(4) : '',  // pro modo fx
+    cotacaoDolar: dolarCache > 0 ? fmtNum(dolarCache, 4) : '',  // pro modo fx (formato BR pra parseValor)
     custos: '',                // SEMPRE na moeda do ativo (input puro)
     observacao: '',
   })
@@ -65,7 +65,7 @@ export function AportesModal({ invest, onClose }: Props) {
         setFetchingFx(true)
         fetchCotacaoDolar().then(c => {
           if (!alive) return
-          if (c !== null) setForm(f => ({ ...f, cotacaoDolar: c.toFixed(4) }))
+          if (c !== null) setForm(f => ({ ...f, cotacaoDolar: fmtNum(c, 4) }))
           setFetchingFx(false)
         })
       })
@@ -120,9 +120,9 @@ export function AportesModal({ invest, onClose }: Props) {
     if (!preview || !invest.id) return
     const observacaoTrim = form.observacao.trim()
     const observacao = (() => {
-      if (modo === 'fx') return `Comprado a ${simboloOposto} ${parseValor(form.precoUnitario).toFixed(2)}/un · câmbio R$ ${parseValor(form.cotacaoDolar).toFixed(2)}${observacaoTrim ? ' · ' + observacaoTrim : ''}`
-      if (modo === 'investido_nativo') return `Investiu ${simbolo} ${parseValor(form.valorInvestido).toFixed(2)}${observacaoTrim ? ' · ' + observacaoTrim : ''}`
-      if (modo === 'investido_fx') return `Investiu ${simboloOposto} ${parseValor(form.valorInvestido).toFixed(2)} · câmbio R$ ${parseValor(form.cotacaoDolar).toFixed(2)}${observacaoTrim ? ' · ' + observacaoTrim : ''}`
+      if (modo === 'fx') return `Comprado a ${fmtMoeda(simboloOposto, parseValor(form.precoUnitario))}/un · câmbio ${fmtMoeda('R$', parseValor(form.cotacaoDolar))}${observacaoTrim ? ' · ' + observacaoTrim : ''}`
+      if (modo === 'investido_nativo') return `Investiu ${fmtMoeda(simbolo, parseValor(form.valorInvestido))}${observacaoTrim ? ' · ' + observacaoTrim : ''}`
+      if (modo === 'investido_fx') return `Investiu ${fmtMoeda(simboloOposto, parseValor(form.valorInvestido))} · câmbio ${fmtMoeda('R$', parseValor(form.cotacaoDolar))}${observacaoTrim ? ' · ' + observacaoTrim : ''}`
       return observacaoTrim || undefined
     })()
     // Custos: input do user é sempre na moeda do ativo
@@ -157,13 +157,13 @@ export function AportesModal({ invest, onClose }: Props) {
     if (c === null) return
     if (modo === 'nativo') {
       // preço no input é na moeda do ativo — preenche direto
-      setForm(f => ({ ...f, precoUnitario: c.toFixed(moedaAtivo === 'USD' ? 4 : 2) }))
+      setForm(f => ({ ...f, precoUnitario: fmtNum(c, moedaAtivo === 'USD' ? 4 : 2) }))
     } else if (modo === 'fx') {
       // preço no input é na moeda OPOSTA — converte
       const fx = parseValor(form.cotacaoDolar)
       if (fx <= 0) return
       const precoOposto = moedaAtivo === 'USD' ? c * fx : c / fx
-      setForm(f => ({ ...f, precoUnitario: precoOposto.toFixed(2) }))
+      setForm(f => ({ ...f, precoUnitario: fmtNum(precoOposto, 2) }))
     }
   }
 
@@ -258,7 +258,7 @@ export function AportesModal({ invest, onClose }: Props) {
                 <button onClick={async () => {
                     setFetchingFx(true)
                     const c = await fetchCotacaoDolar()
-                    if (c !== null) setForm(f => ({ ...f, cotacaoDolar: c.toFixed(4) }))
+                    if (c !== null) setForm(f => ({ ...f, cotacaoDolar: fmtNum(c, 4) }))
                     setFetchingFx(false)
                   }}
                   disabled={fetchingFx}
@@ -353,7 +353,7 @@ export function AportesModal({ invest, onClose }: Props) {
                   </span>
                   <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#1E7D5A' }}>
                     {simbolo} {previewPM.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: moedaAtivo === 'USD' ? 6 : 2 })} <span style={{ fontSize: 11, fontWeight: 600, color: previewPM > stats.precoMedio ? '#C4553B' : '#1E7D5A' }}>
-                      ({previewPM > stats.precoMedio ? '+' : ''}{((previewPM - stats.precoMedio) / stats.precoMedio * 100).toFixed(2)}%)
+                      ({fmtPct((previewPM - stats.precoMedio) / stats.precoMedio * 100, 2, true)})
                     </span>
                   </span>
                 </div>

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Cartao } from '@/db/schema'
-import { fmt, mesAnoAtual } from '@/lib/format'
+import { fmt, fmtPct, mesAnoAtual } from '@/lib/format'
 import { BankLogo } from '@/components/ui/BankLogo'
 import { BandeiraLogo } from '@/components/ui/BandeiraLogo'
 
@@ -115,7 +115,7 @@ export function CartaoListRow({ cartao, active, onClick }: Props) {
           fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700,
           color: pct >= 90 ? '#C4553B' : '#9B7B6A',
           letterSpacing: '.02em', minWidth: 28, textAlign: 'right',
-        }}>{pct.toFixed(0)}%</span>
+        }}>{fmtPct(pct, 0)}</span>
       </div>
     </motion.button>
   )

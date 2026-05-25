@@ -2,7 +2,7 @@
 import { IconChartHistogram, IconArrowDownRight, IconArrowUpRight, IconCoin, IconScale } from '@tabler/icons-react'
 import { SectionShell } from '../components/SectionShell'
 import { KpiCard } from '@/components/ui/KpiCard'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import type { RelatoriosData } from '../lib/useRelatoriosData'
 
 interface Props { d: RelatoriosData }
@@ -76,7 +76,7 @@ export function SecVisaoGeral({ d }: Props) {
       }}>
         <MiniMetric label="Ticket médio receita" value={fmt(d.totais.ticketMedioReceita)} color="#1E7D5A" />
         <MiniMetric label="Ticket médio despesa" value={fmt(d.totais.ticketMedioDespesa)} color="#A8442B" />
-        <MiniMetric label="Taxa de economia" value={`${d.indicadores.taxaEconomia.toFixed(1)}%`} color={d.indicadores.taxaEconomia >= 20 ? '#1E7D5A' : d.indicadores.taxaEconomia >= 0 ? '#A8730F' : '#A8442B'} />
+        <MiniMetric label="Taxa de economia" value={fmtPct(d.indicadores.taxaEconomia, 1)} color={d.indicadores.taxaEconomia >= 20 ? '#1E7D5A' : d.indicadores.taxaEconomia >= 0 ? '#A8730F' : '#A8442B'} />
         <MiniMetric label="Liquidez (meses)" value={`${d.indicadores.liquidezMeses.toFixed(1)}m`} color={d.indicadores.liquidezMeses >= 3 ? '#1E7D5A' : '#A8730F'} />
       </div>
     </SectionShell>

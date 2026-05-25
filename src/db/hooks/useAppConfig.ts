@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type TaxasBenchmark, TAXAS_BENCHMARK_DEFAULT } from '../schema'
+import { fmtPct } from '@/lib/format'
 
 const KEY_TAXAS = 'taxas_benchmark'
 const KEY_BRAPI = 'brapi_token'
@@ -197,16 +198,16 @@ export function descreverRendimento(
 ): string | null {
   switch (inv.tipoRendimento) {
     case 'pos_cdi':
-      return inv.percentualIndexador ? `${(inv.percentualIndexador * 100).toFixed(0)}% CDI` : null
+      return inv.percentualIndexador ? `${fmtPct(inv.percentualIndexador * 100, 0)} CDI` : null
     case 'pos_selic':
-      return inv.percentualIndexador ? `${(inv.percentualIndexador * 100).toFixed(0)}% Selic` : null
+      return inv.percentualIndexador ? `${fmtPct(inv.percentualIndexador * 100, 0)} Selic` : null
     case 'ipca_mais':
-      return inv.taxaAdicional ? `IPCA + ${(inv.taxaAdicional * 100).toFixed(2)}%` : 'IPCA+'
+      return inv.taxaAdicional ? `IPCA + ${fmtPct(inv.taxaAdicional * 100, 2)}` : 'IPCA+'
     case 'prefixado_ipca':
       return 'IPCA'
     case 'prefixado':
-      return inv.rentabilidadeAnual ? `${(inv.rentabilidadeAnual * 100).toFixed(2)}% a.a. fixo` : null
+      return inv.rentabilidadeAnual ? `${fmtPct(inv.rentabilidadeAnual * 100, 2)} a.a. fixo` : null
     default:
-      return inv.rentabilidadeAnual ? `${(inv.rentabilidadeAnual * 100).toFixed(2)}% a.a.` : null
+      return inv.rentabilidadeAnual ? `${fmtPct(inv.rentabilidadeAnual * 100, 2)} a.a.` : null
   }
 }

@@ -6,7 +6,7 @@ import { addInvestimento, editInvestimento, isRendaVariavel, isRendaFixa, addApo
 import { useTaxasBenchmark, calcTaxaEfetiva } from '@/db/hooks/useAppConfig'
 import { useMetas } from '@/db/hooks/useMetas'
 import { useContas } from '@/db/hooks/useContas'
-import { todayISO } from '@/lib/format'
+import { todayISO, fmtNum, fmtPct } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 import { useSavingGuard } from '@/hooks/useSavingGuard'
 import { TIPOS, LIQUIDEZ_OPTIONS, TIPO_META } from './constants'
@@ -52,9 +52,9 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
     valorAtualSource: invest?.valorAtualSource ?? 'auto' as 'auto' | 'manual',
     // Renda fixa — modalidade de rendimento
     tipoRendimento: (invest?.tipoRendimento ?? 'pos_cdi') as TipoRendimento,
-    rentabilidadeAnual: invest?.rentabilidadeAnual ? String((invest.rentabilidadeAnual * 100).toFixed(2)) : '',
-    percentualIndexador: invest?.percentualIndexador ? String((invest.percentualIndexador * 100).toFixed(0)) : '100',
-    taxaAdicional: invest?.taxaAdicional ? String((invest.taxaAdicional * 100).toFixed(2)) : '',
+    rentabilidadeAnual: invest?.rentabilidadeAnual ? fmtNum(invest.rentabilidadeAnual * 100, 2) : '',
+    percentualIndexador: invest?.percentualIndexador ? fmtNum(invest.percentualIndexador * 100, 0) : '100',
+    taxaAdicional: invest?.taxaAdicional ? fmtNum(invest.taxaAdicional * 100, 2) : '',
     liquidez: invest?.liquidez ?? '' as InvestimentoLiquidez | '',
     // Renda variável — PRIMEIRO aporte (apenas na criação) e cotação
     primeiroAporteData: today,
@@ -582,7 +582,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#7A5C4F' }}>
                           % do {form.tipoRendimento === 'pos_cdi' ? 'CDI' : 'Selic'}
                           {' '}
-                          ({((form.tipoRendimento === 'pos_cdi' ? taxas.cdi : taxas.selic) * 100).toFixed(2)}% a.a.)
+                          ({fmtPct((form.tipoRendimento === 'pos_cdi' ? taxas.cdi : taxas.selic) * 100, 2)} a.a.)
                         </span>
                       </div>
                     )}
@@ -605,7 +605,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
                     {form.tipoRendimento === 'ipca_mais' && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 600, color: '#7A5C4F' }}>
-                          IPCA ({(taxas.ipca * 100).toFixed(2)}% a.a.) +
+                          IPCA ({fmtPct(taxas.ipca * 100, 2)} a.a.) +
                         </span>
                         <input
                           value={form.taxaAdicional}
@@ -622,7 +622,7 @@ export function InvestimentoForm({ invest, presetMetaId, onClose }: Props) {
 
                     {form.tipoRendimento === 'prefixado_ipca' && (
                       <p style={{ ...HELP_STYLE, marginBottom: 0 }}>
-                        Rende exatamente a inflação (IPCA). Taxa atual: {(taxas.ipca * 100).toFixed(2)}% a.a.
+                        Rende exatamente a inflação (IPCA). Taxa atual: {fmtPct(taxas.ipca * 100, 2)} a.a.
                       </p>
                     )}
 
@@ -729,10 +729,10 @@ function TaxaEfetivaPreview({ tipoRendimento, percentualIndexador, taxaAdicional
       </div>
       <div style={{ textAlign: 'right' }}>
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 18, fontWeight: 700, color: '#1E7D5A', letterSpacing: '-0.3px', margin: 0 }}>
-          {(taxa * 100).toFixed(2)}% <span style={{ fontSize: 11, fontWeight: 600, color: '#7A5C4F' }}>a.a.</span>
+          {fmtPct(taxa * 100, 2)} <span style={{ fontSize: 11, fontWeight: 600, color: '#7A5C4F' }}>a.a.</span>
         </p>
         <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', margin: '2px 0 0' }}>
-          ~{(mensal * 100).toFixed(2)}% ao mês
+          ~{fmtPct(mensal * 100, 2)} ao mês
         </p>
       </div>
     </div>

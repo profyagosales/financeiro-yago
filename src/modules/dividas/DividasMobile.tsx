@@ -6,7 +6,7 @@ import {
   IconCash, IconEdit, IconX,
 } from '@tabler/icons-react'
 import { useDividasComputed } from '@/db/hooks/useDividas'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { DividaForm } from './DividaForm'
 import { MovimentacaoModal } from './MovimentacaoModal'
 import type { Divida } from '@/db/schema'
@@ -96,7 +96,7 @@ export function DividasMobile() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 13.5, fontWeight: 700, color: C.ink, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nome}</p>
                     <p style={{ fontSize: 10.5, color: C.muted, margin: 0, fontWeight: 500 }}>
-                      {d.tipo}{d.jurosAnual ? ` · ${(d.jurosAnual * 100).toFixed(2)}% a.a.` : ''}
+                      {d.tipo}{d.jurosAnual ? ` · ${fmtPct(d.jurosAnual * 100, 2)} a.a.` : ''}
                       {d.parcelasRestantes > 0 && ` · ${d.parcelasRestantes} parcelas`}
                     </p>
                     <div style={{ marginTop: 6, position: 'relative', height: 4, background: '#F5EEE3', borderRadius: 999, overflow: 'hidden' }}>
@@ -105,7 +105,7 @@ export function DividasMobile() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <p style={{ fontSize: 14, fontWeight: 700, color: C.orange, letterSpacing: '-0.2px', margin: 0, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{fmt(d.saldoDevedor)}</p>
-                    <p style={{ fontSize: 10.5, color: C.muted, margin: '1px 0 0', fontWeight: 500 }}>{d.progresso.toFixed(0)}% pago</p>
+                    <p style={{ fontSize: 10.5, color: C.muted, margin: '1px 0 0', fontWeight: 500 }}>{fmtPct(d.progresso, 0)} pago</p>
                   </div>
                 </button>
               ))}

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { IconEdit, IconTrash, IconRefresh, IconLock, IconLink, IconArrowUpRight, IconArrowDownRight, IconCoins, IconCash, IconShoppingCart, IconCloudDownload, IconShoppingBag } from '@tabler/icons-react'
 import { atualizarCotacaoAuto } from '@/db/hooks/useInvestimentos'
 import type { Investimento, Meta } from '@/db/schema'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { TIPO_META, LIQUIDEZ_LABEL } from './constants'
 import { useProventos, calcDY12m, calcProventosMes, aceitaProventos, isRendaVariavel, converterParaBRL } from '@/db/hooks/useInvestimentos'
 import { descreverRendimento } from '@/db/hooks/useAppConfig'
@@ -116,7 +116,7 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
                 padding: '2px 6px', borderRadius: 6,
                 display: 'inline-flex', alignItems: 'center', gap: 3, letterSpacing: '.04em',
               }}>
-                <IconCoins size={10} stroke={2.4} /> DY {dy12m.toFixed(2)}% (12m)
+                <IconCoins size={10} stroke={2.4} /> DY {fmtPct(dy12m, 2)} (12m)
               </span>
             )}
           </div>
@@ -208,7 +208,7 @@ export function InvestimentoCard({ invest, meta, onEdit, onDelete, onProventos, 
               display: 'inline-flex', alignItems: 'center', gap: 2,
             }}>
               {positivo ? <IconArrowUpRight size={12} stroke={2.4} /> : <IconArrowDownRight size={12} stroke={2.4} />}
-              {positivo ? '+' : ''}{rendPct.toFixed(2)}%
+              {fmtPct(rendPct, 2, true)}
             </span>
             <span style={SUB_TXT}>
               {invest.moeda === 'USD' ? `US$ ${invest.valorAplicado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : `aplicado ${fmt(invest.valorAplicado)}`}

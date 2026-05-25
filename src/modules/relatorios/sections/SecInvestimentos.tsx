@@ -8,7 +8,7 @@ import {
 } from '@tabler/icons-react'
 import { SectionShell } from '../components/SectionShell'
 import { ChartTooltip } from '../components/ChartTooltip'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import type { RelatoriosData } from '../lib/useRelatoriosData'
 import { EmptyChart } from './SecFluxoCaixa'
 
@@ -91,7 +91,7 @@ export function SecInvestimentos({ d }: Props) {
                   fontFamily: "'Plus Jakarta Sans',sans-serif",
                   fontSize: 12, fontWeight: 700, color: distrib[hover].cor,
                   margin: '2px 0 0',
-                }}>{distrib[hover].pct.toFixed(1)}% · {distrib[hover].count} {distrib[hover].count === 1 ? 'ativo' : 'ativos'}</p>
+                }}>{fmtPct(distrib[hover].pct, 1)} · {distrib[hover].count} {distrib[hover].count === 1 ? 'ativo' : 'ativos'}</p>
               </>
             ) : (
               <>
@@ -110,7 +110,7 @@ export function SecInvestimentos({ d }: Props) {
                   fontSize: 12, fontWeight: 600,
                   color: d.rendimentoTotal >= 0 ? '#1E7D5A' : '#A8442B',
                   margin: '4px 0 0',
-                }}>{d.rendimentoTotal >= 0 ? '+' : ''}{fmt(d.rendimentoTotal)} ({d.rentMesPct.toFixed(1)}%)</p>
+                }}>{d.rendimentoTotal >= 0 ? '+' : ''}{fmt(d.rendimentoTotal)} ({fmtPct(d.rentMesPct, 1)})</p>
               </>
             )}
           </div>
@@ -229,7 +229,7 @@ function PerfRow({ item }: { item: { id: number; nome: string; tipo: string; pct
           fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: 13, fontWeight: 700, color: cor,
           letterSpacing: '-0.2px', margin: 0,
-        }}>{item.pctRendimento >= 0 ? '+' : ''}{item.pctRendimento.toFixed(2)}%</p>
+        }}>{fmtPct(item.pctRendimento, 2, true)}</p>
         <p style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: 10.5, fontWeight: 600, color: cor, margin: 0, opacity: 0.8,

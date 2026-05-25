@@ -16,7 +16,7 @@ import { useContas } from '@/db/hooks/useContas'
 import { useCartoes } from '@/db/hooks/useCartoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import type { ContaFixa } from '@/db/schema'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { IconX } from '@tabler/icons-react'
@@ -226,7 +226,7 @@ export function ContasFixasMobile() {
                 fontSize: 11, fontWeight: 700,
               }}>
                 {pctPago === 100 ? <IconCircleCheck size={11} stroke={2.4} /> : <IconClock size={11} stroke={2.4} />}
-                {pctPago.toFixed(0)}% pago
+                {fmtPct(pctPago, 0)} pago
               </span>
             </div>
 

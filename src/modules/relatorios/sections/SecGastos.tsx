@@ -7,7 +7,7 @@ import { ChartContainer } from '@/components/ui/ChartContainer'
 import { SectionShell } from '../components/SectionShell'
 import { ChartTooltip } from '../components/ChartTooltip'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import type { RelatoriosData } from '../lib/useRelatoriosData'
 import { EmptyChart } from './SecFluxoCaixa'
 
@@ -75,7 +75,7 @@ export function SecGastos({ d }: Props) {
                       fontFamily: "'Plus Jakarta Sans',sans-serif",
                       fontSize: 12, fontWeight: 700, color: cats[hover].cor,
                       margin: '2px 0 0',
-                    }}>{cats[hover].pct.toFixed(1)}%</p>
+                    }}>{fmtPct(cats[hover].pct, 1)}</p>
                   </>
                 ) : (
                   <>
@@ -124,7 +124,7 @@ export function SecGastos({ d }: Props) {
                       background: c.deltaPct > 0 ? 'rgba(196,85,59,0.08)' : 'rgba(58,133,128,0.08)',
                     }}>
                       {c.deltaPct > 0 ? <IconArrowUpRight size={10} stroke={2.4} /> : <IconArrowDownRight size={10} stroke={2.4} />}
-                      {c.deltaPct > 0 ? '+' : ''}{c.deltaPct.toFixed(0)}%
+                      {fmtPct(c.deltaPct, 0, true)}
                     </span>
                   )}
                   <span style={{
@@ -139,7 +139,7 @@ export function SecGastos({ d }: Props) {
                   <span style={{
                     fontFamily: "'Plus Jakarta Sans',sans-serif",
                     fontSize: 10.5, color: '#7A5C4F', minWidth: 38, textAlign: 'right', fontWeight: 600,
-                  }}>{c.pct.toFixed(1)}%</span>
+                  }}>{fmtPct(c.pct, 1)}</span>
                 </div>
               </motion.div>
             ))}

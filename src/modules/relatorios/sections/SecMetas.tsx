@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { IconTarget, IconTrophy, IconShieldCheck, IconClockHour4 } from '@tabler/icons-react'
 import { SectionShell } from '../components/SectionShell'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import type { RelatoriosData } from '../lib/useRelatoriosData'
 
 interface Props { d: RelatoriosData }
@@ -67,7 +67,7 @@ export function SecMetas({ d }: Props) {
               fontFamily: "'Plus Jakarta Sans',sans-serif",
               fontSize: 16, fontWeight: 700,
               color: d.reservaCobertura >= 100 ? '#1E7D5A' : '#A8730F',
-            }}>{d.reservaCobertura.toFixed(0)}%</span>
+            }}>{fmtPct(d.reservaCobertura, 0)}</span>
           </div>
           <ProgressBar value={d.reservaCobertura} color="#3A8580" colorTo="#1E7D5A" marker={100} height={8} background="#F5EEE3" />
           <p style={{
@@ -130,7 +130,7 @@ export function SecMetas({ d }: Props) {
                   <span style={{
                     fontFamily: "'Plus Jakarta Sans',sans-serif",
                     fontSize: 13, fontWeight: 700, color: m.cor,
-                  }}>{m.progressoPct.toFixed(0)}%</span>
+                  }}>{fmtPct(m.progressoPct, 0)}</span>
                 </div>
                 {eta !== null && eta > 0 && (
                   <div style={{

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { IconShieldCheck, IconEdit, IconPlus, IconLink, IconAlertTriangle } from '@tabler/icons-react'
 import type { MetaComputed } from '@/db/hooks/useMetas'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { reservaStatus } from './constants'
 
 interface Props {
@@ -95,7 +95,7 @@ export function ReservaCard({ reserva, onEdit, onAporte }: Props) {
               <span style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700,
                 color: status.cor, letterSpacing: '.04em',
-              }}>{status.label} · {reserva.progressoPct.toFixed(0)}%</span>
+              }}>{status.label} · {fmtPct(reserva.progressoPct, 0)}</span>
               <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(167,224,220,0.6)' }}>
                 {mesesCobertosAgora.toFixed(1)} de {meses} meses cobertos
               </span>

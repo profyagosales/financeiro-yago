@@ -5,7 +5,7 @@ import {
   IconArrowDownRight, IconArrowUpRight, IconCoin, IconCreditCardOff,
 } from '@tabler/icons-react'
 import { KpiCard } from '@/components/ui/KpiCard'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 
 interface KpiRowProps {
   receitas: number
@@ -81,7 +81,7 @@ export function KpiRow({
           color="#504E76"
           colorTo="#3D3B5F"
           icon={<IconCoin size={14} stroke={2.4} color="rgba(255,255,255,0.85)" />}
-          subtitle={rentMesPct !== 0 ? `${rentMesPct > 0 ? '+' : ''}${rentMesPct.toFixed(1)}% acumulado` : undefined}
+          subtitle={rentMesPct !== 0 ? `${fmtPct(rentMesPct, 1, true)} acumulado` : undefined}
           onClick={() => navigate('/investimentos')}
         />
       </motion.div>

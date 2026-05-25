@@ -12,7 +12,7 @@ import {
   useLancamentosCartao, useTotalFatura, useLimiteUsadoPorCartao,
   deleteLancamentoCartao, deleteLancamentoComParcelas,
 } from '@/db/hooks/useCartoes'
-import { fmt, mesAnoAtual } from '@/lib/format'
+import { fmt, fmtPct, mesAnoAtual } from '@/lib/format'
 import { BankLogo } from '@/components/ui/BankLogo'
 import { BandeiraLogo } from '@/components/ui/BandeiraLogo'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
@@ -152,7 +152,7 @@ export function CartaoDetail({ cartao, onEdit, onDelete, onLancar }: Props) {
             }}>
               <span style={{ color: '#1E7D5A', fontWeight: 700 }}>{fmt(disponivel)}</span> disponível
               {' '}<span style={{ color: '#D4C8BC' }}>·</span>{' '}
-              <span style={{ color: corBarra, fontWeight: 700 }}>{pctUsado.toFixed(0)}%</span> do limite usado
+              <span style={{ color: corBarra, fontWeight: 700 }}>{fmtPct(pctUsado, 0)}</span> do limite usado
             </p>
           </div>
           {/* Barra fina, elegante */}
@@ -511,7 +511,7 @@ function CategoriasTab({ lancs, faturaTotal }: { lancs: LancamentoCartao[]; fatu
                 initial={{ width: 0 }}
                 animate={{ width: `${pct}%` }}
                 transition={{ type: 'spring', stiffness: 80, damping: 22 }}
-                title={`${s.nome}: ${pct.toFixed(0)}%`}
+                title={`${s.nome}: ${fmtPct(pct, 0)}`}
                 style={{ background: s.cor, height: '100%' }}
               />
             )
@@ -545,7 +545,7 @@ function CategoriasTab({ lancs, faturaTotal }: { lancs: LancamentoCartao[]; fatu
                 </span>
               </div>
               <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700, color: '#7A5C4F', minWidth: 40, textAlign: 'right' }}>
-                {pct.toFixed(0)}%
+                {fmtPct(pct, 0)}
               </span>
               <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F', minWidth: 90, textAlign: 'right', letterSpacing: '-0.3px' }}>
                 {fmt(s.valor)}

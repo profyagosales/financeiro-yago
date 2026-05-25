@@ -9,7 +9,7 @@ import { ReservaCard } from './ReservaCard'
 import { AporteForm } from './AporteForm'
 import { OrcamentoSection } from './OrcamentoSection'
 import { InvestimentoForm } from '../investimentos/InvestimentoForm'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { MetaComputed } from '@/db/hooks/useMetas'
 
@@ -64,7 +64,7 @@ export function MetasDesktop() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 28 }}>
           <Kpi icon={<IconCoins size={14} stroke={2} />} label="Total guardado" value={fmt(totalGuardado)} sub={`em ${metasComReserva.length} ${metasComReserva.length === 1 ? 'meta' : 'metas'}`} cor="#3A8580" bg="#EBF5F0" border="rgba(58,133,128,0.18)" />
           <Kpi icon={<IconFlag size={14} stroke={2} />} label="Alvo total" value={fmt(totalAlvo)} sub={`${fmt(Math.max(0, totalAlvo - totalGuardado))} restante`} cor="#2C1A0F" bg="#F5F0E8" border="rgba(44,26,15,0.08)" />
-          <Kpi icon={<IconTarget size={14} stroke={2} />} label="Progresso geral" value={`${progressoGeral.toFixed(0)}%`} sub={progressoGeral >= 100 ? 'todas concluídas' : 'média ponderada'} cor="#504E76" bg="#F0EEF7" border="rgba(80,78,118,0.15)" progress={progressoGeral} />
+          <Kpi icon={<IconTarget size={14} stroke={2} />} label="Progresso geral" value={fmtPct(progressoGeral, 0)} sub={progressoGeral >= 100 ? 'todas concluídas' : 'média ponderada'} cor="#504E76" bg="#F0EEF7" border="rgba(80,78,118,0.15)" progress={progressoGeral} />
           <Kpi icon={<IconTrophy size={14} stroke={2} />} label="Conquistadas" value={`${conquistadas}`} sub={conquistadas === 0 ? 'nenhuma ainda' : conquistadas === 1 ? '1 meta atingida' : `${conquistadas} metas atingidas`} cor="#A8730F" bg="#FDF4E3" border="rgba(212,160,23,0.2)" />
         </div>
       )}

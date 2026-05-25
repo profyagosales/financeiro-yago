@@ -11,7 +11,7 @@ import {
   IconCircleCheck, IconClockHour4, IconTarget, IconShieldCheck,
   IconCreditCard, IconCoin, IconArrowUpRight,
 } from '@tabler/icons-react'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { delta as calcDelta, type MesData } from './calculos'
 
 export type InsightTone = 'positive' | 'negative' | 'neutral' | 'highlight'
@@ -57,8 +57,8 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
       out.push({
         id: 'gastos-mom',
         text: isUp
-          ? <>Gastos <strong>{Math.abs(d).toFixed(0)}% maiores</strong> que mês passado</>
-          : <>Gastos <strong>{Math.abs(d).toFixed(0)}% menores</strong> que mês passado</>,
+          ? <>Gastos <strong>{fmtPct(Math.abs(d), 0)} maiores</strong> que mês passado</>
+          : <>Gastos <strong>{fmtPct(Math.abs(d), 0)} menores</strong> que mês passado</>,
         tone: isUp ? 'negative' : 'positive',
         icon: isUp ? IconTrendingUp : IconTrendingDown,
         priority: isUp ? 8 : 6,
@@ -70,7 +70,7 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
   if (inp.categoriaSpike && inp.categoriaSpike.deltaPct >= 25) {
     out.push({
       id: 'cat-spike',
-      text: <><strong>{inp.categoriaSpike.nome}</strong> subiu {inp.categoriaSpike.deltaPct.toFixed(0)}% vs média</>,
+      text: <><strong>{inp.categoriaSpike.nome}</strong> subiu {fmtPct(inp.categoriaSpike.deltaPct, 0)} vs média</>,
       tone: 'negative',
       icon: IconAlertTriangle,
       priority: 9,
@@ -94,7 +94,7 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
     if (pct >= 30) {
       out.push({
         id: 'economia-alta',
-        text: <>Está guardando <strong>{pct.toFixed(0)}%</strong> da renda este mês</>,
+        text: <>Está guardando <strong>{fmtPct(pct, 0)}</strong> da renda este mês</>,
         tone: 'positive',
         icon: IconCircleCheck,
         priority: 6,
@@ -102,7 +102,7 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
     } else if (pct < 0) {
       out.push({
         id: 'economia-negativa',
-        text: <>Gastando <strong>{Math.abs(pct).toFixed(0)}%</strong> mais do que recebe</>,
+        text: <>Gastando <strong>{fmtPct(Math.abs(pct), 0)}</strong> mais do que recebe</>,
         tone: 'negative',
         icon: IconTrendingDown,
         priority: 10,
@@ -110,7 +110,7 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
     } else if (pct < 10) {
       out.push({
         id: 'economia-baixa',
-        text: <>Só sobra <strong>{pct.toFixed(0)}%</strong> da renda — fica apertado</>,
+        text: <>Só sobra <strong>{fmtPct(pct, 0)}</strong> da renda — fica apertado</>,
         tone: 'highlight',
         icon: IconClockHour4,
         priority: 7,
@@ -143,7 +143,7 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
   if (inp.cartaoApertado && inp.cartaoApertado.pctLimite >= 80) {
     out.push({
       id: 'cartao-limite',
-      text: <><strong>{inp.cartaoApertado.nome}</strong> em {inp.cartaoApertado.pctLimite.toFixed(0)}% do limite</>,
+      text: <><strong>{inp.cartaoApertado.nome}</strong> em {fmtPct(inp.cartaoApertado.pctLimite, 0)} do limite</>,
       tone: 'negative',
       icon: IconCreditCard,
       priority: 9,
@@ -162,7 +162,7 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
   } else if (inp.metaProxima && inp.metaProxima.progresso >= 75) {
     out.push({
       id: 'meta-proxima',
-      text: <><strong>{inp.metaProxima.nome}</strong> em {inp.metaProxima.progresso.toFixed(0)}% — quase lá!</>,
+      text: <><strong>{inp.metaProxima.nome}</strong> em {fmtPct(inp.metaProxima.progresso, 0)} — quase lá!</>,
       tone: 'positive',
       icon: IconArrowUpRight,
       priority: 5,
@@ -186,8 +186,8 @@ export function gerarInsights(inp: InsightInputs): Insight[] {
     out.push({
       id: 'rent-mes',
       text: isPos
-        ? <>Investimentos renderam <strong>+{inp.rentMesPct.toFixed(1)}%</strong> no mês</>
-        : <>Investimentos caíram <strong>{inp.rentMesPct.toFixed(1)}%</strong> no mês</>,
+        ? <>Investimentos renderam <strong>{fmtPct(inp.rentMesPct, 1, true)}</strong> no mês</>
+        : <>Investimentos caíram <strong>{fmtPct(inp.rentMesPct, 1)}</strong> no mês</>,
       tone: isPos ? 'positive' : 'negative',
       icon: IconCoin,
       priority: 4,

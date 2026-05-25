@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   IconTrendingUp, IconTrendingDown, IconCoin, IconChevronRight, IconShieldCheck,
 } from '@tabler/icons-react'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 
 interface InvestimentosResumoProps {
@@ -94,7 +94,7 @@ export function InvestimentosResumo({
               fontFamily: "'Plus Jakarta Sans',sans-serif",
               fontSize: 13, fontWeight: 700,
               color: rentMesPct >= 0 ? '#1E7D5A' : '#A8442B',
-            }}>{rentMesPct >= 0 ? '+' : ''}{rentMesPct.toFixed(2)}%</span>
+            }}>{fmtPct(rentMesPct, 2, true)}</span>
           </div>
         )}
       </div>
@@ -191,7 +191,7 @@ function PerfMini({ label, item }: { label: string; item: { nome: string; pctMes
           fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: 11, fontWeight: 700,
           color: item.pctMes >= 0 ? '#1E7D5A' : '#A8442B',
-        }}>{item.pctMes >= 0 ? '+' : ''}{item.pctMes.toFixed(2)}%</span>
+        }}>{fmtPct(item.pctMes, 2, true)}</span>
       </div>
     </div>
   )

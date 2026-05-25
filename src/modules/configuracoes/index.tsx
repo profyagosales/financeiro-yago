@@ -16,7 +16,7 @@ import type { Categoria } from '@/db/schema'
 import { useContas } from '@/db/hooks/useContas'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { fmt, todayISO } from '@/lib/format'
+import { fmt, todayISO, fmtNum } from '@/lib/format'
 import {
   IconLock, IconDeviceFloppy, IconBrandChrome, IconDeviceMobile, IconBrandApple,
   IconRefresh, IconChevronRight, IconCheck, IconTableImport, IconShieldLock,
@@ -841,7 +841,7 @@ function ImportCSVSection() {
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F', flexShrink: 0 }}>{r.data}</span>
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#2C1A0F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.descricao}</span>
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: r.tipo === 'receita' ? '#3A8580' : '#C4553B', flexShrink: 0, letterSpacing: '-0.3px' }}>
-                          {r.tipo === 'receita' ? '+' : '−'}R$ {r.valor.toFixed(2)}
+                          {r.tipo === 'receita' ? '+' : '−'}{fmt(r.valor)}
                         </span>
                       </div>
                     ))}
@@ -1133,13 +1133,14 @@ function BrapiTokenSection() {
 function TaxasMercadoSection() {
   const taxas = useTaxasBenchmark()
   const [form, setForm] = useState({
-    cdi: (taxas.cdi * 100).toFixed(2),
-    selic: (taxas.selic * 100).toFixed(2),
-    ipca: (taxas.ipca * 100).toFixed(2),
+    cdi: fmtNum(taxas.cdi * 100, 2),
+    selic: fmtNum(taxas.selic * 100, 2),
+    ipca: fmtNum(taxas.ipca * 100, 2),
   })
   const [saved, setSaved] = useState(false)
 
-  const parse = (s: string) => parseFloat(s.replace(',', '.')) || 0
+  // Parse robusto: aceita "12,50" (BR) ou "12.50" (US). Remove milhar BR primeiro.
+  const parse = (s: string) => parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0
 
   const handleSave = async () => {
     await setTaxasBenchmark({

@@ -5,7 +5,7 @@ import { IconX, IconCheck, IconShoppingBag, IconTrash, IconPlus, IconArrowUpRigh
 import type { Investimento } from '@/db/schema'
 import { useMovimentacoesInvest, registrarVenda, registrarResgate, deleteMovimentacaoInvest, calcVendasStats, isRendaVariavel } from '@/db/hooks/useInvestimentos'
 import { fetchCotacaoPorTipo } from '@/lib/cotacoes'
-import { todayISO } from '@/lib/format'
+import { todayISO, fmtNum, fmtMoeda, fmtPct } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 import { useSavingGuard } from '@/hooks/useSavingGuard'
 
@@ -41,7 +41,7 @@ export function VendasModal({ invest, onClose }: Props) {
     setFetchingCot(true)
     const c = await fetchCotacaoPorTipo(invest.tipo, invest.ticker)
     setFetchingCot(false)
-    if (c !== null) setForm(f => ({ ...f, precoUnitario: c.toFixed(2) }))
+    if (c !== null) setForm(f => ({ ...f, precoUnitario: fmtNum(c, 2) }))
   }
 
   // Preview do resultado da operação
@@ -226,33 +226,33 @@ export function VendasModal({ invest, onClose }: Props) {
             <div style={{ marginTop: 10, padding: '12px 14px', background: 'rgba(168,68,43,0.07)', border: '1px solid rgba(168,68,43,0.18)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
               {previewVenda && (
                 <>
-                  <Linha label="Valor bruto" valor={`${simbolo} ${previewVenda.valorBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
-                  <Linha label="Custos" valor={`-${simbolo} ${parseValor(form.custos).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} cor="#C4553B" />
-                  <Linha label="Líquido" valor={`${simbolo} ${previewVenda.valorLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} bold />
-                  <Linha label={`Custo do estoque (PM ${simbolo} ${(invest.precoMedio ?? 0).toFixed(2)})`} valor={`-${simbolo} ${previewVenda.custoEstoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                  <Linha label="Valor bruto" valor={fmtMoeda(simbolo, previewVenda.valorBruto)} />
+                  <Linha label="Custos" valor={`-${fmtMoeda(simbolo, parseValor(form.custos))}`} cor="#C4553B" />
+                  <Linha label="Líquido" valor={fmtMoeda(simbolo, previewVenda.valorLiquido)} bold />
+                  <Linha label={`Custo do estoque (PM ${fmtMoeda(simbolo, invest.precoMedio ?? 0)})`} valor={`-${fmtMoeda(simbolo, previewVenda.custoEstoque)}`} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 8, borderTop: '1px dashed rgba(168,68,43,0.3)' }}>
                     <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#A8442B', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                       {previewVenda.resultado >= 0 ? <IconArrowUpRight size={13} stroke={2.5} /> : <IconArrowDownRight size={13} stroke={2.5} />}
                       Resultado
                     </span>
                     <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700, color: previewVenda.resultado >= 0 ? '#1E7D5A' : '#C4553B', letterSpacing: '-0.3px' }}>
-                      {previewVenda.resultado >= 0 ? '+' : ''}{simbolo} {Math.abs(previewVenda.resultado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({previewVenda.pctResultado.toFixed(2)}%)
+                      {previewVenda.resultado >= 0 ? '+' : ''}{fmtMoeda(simbolo, previewVenda.resultado)} ({fmtPct(previewVenda.pctResultado, 2)})
                     </span>
                   </div>
                 </>
               )}
               {previewResgate && (
                 <>
-                  <Linha label="Valor resgatado" valor={`${simbolo} ${previewResgate.valorBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
-                  <Linha label="Custos" valor={`-${simbolo} ${parseValor(form.custos).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} cor="#C4553B" />
-                  <Linha label="Líquido recebido" valor={`${simbolo} ${previewResgate.valorLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} bold />
-                  <Linha label={`Custo proporcional (${(previewResgate.proporcao * 100).toFixed(1)}% da posição)`} valor={`-${simbolo} ${previewResgate.custoProporcional.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                  <Linha label="Valor resgatado" valor={fmtMoeda(simbolo, previewResgate.valorBruto)} />
+                  <Linha label="Custos" valor={`-${fmtMoeda(simbolo, parseValor(form.custos))}`} cor="#C4553B" />
+                  <Linha label="Líquido recebido" valor={fmtMoeda(simbolo, previewResgate.valorLiquido)} bold />
+                  <Linha label={`Custo proporcional (${fmtPct(previewResgate.proporcao * 100, 1)} da posição)`} valor={`-${fmtMoeda(simbolo, previewResgate.custoProporcional)}`} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 8, borderTop: '1px dashed rgba(168,68,43,0.3)' }}>
                     <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#A8442B' }}>
                       Rendimento neste resgate
                     </span>
                     <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 16, fontWeight: 700, color: previewResgate.resultado >= 0 ? '#1E7D5A' : '#C4553B', letterSpacing: '-0.3px' }}>
-                      {previewResgate.resultado >= 0 ? '+' : ''}{simbolo} {Math.abs(previewResgate.resultado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {previewResgate.resultado >= 0 ? '+' : ''}{fmtMoeda(simbolo, previewResgate.resultado)}
                     </span>
                   </div>
                 </>
@@ -268,7 +268,7 @@ export function VendasModal({ invest, onClose }: Props) {
           )}
           {!isVar && parseValor(form.valorResgate) > invest.valorAtual && (
             <p style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(196,85,59,0.1)', borderRadius: 8, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#C4553B', fontWeight: 600 }}>
-              Valor maior que o disponível ({simbolo} {invest.valorAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).
+              Valor maior que o disponível ({fmtMoeda(simbolo, invest.valorAtual)}).
             </p>
           )}
 
@@ -319,8 +319,8 @@ export function VendasModal({ invest, onClose }: Props) {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 13, fontWeight: 700, color: '#2C1A0F', margin: 0 }}>
                         {m.tipo === 'venda'
-                          ? `${(m.quantidade ?? 0).toLocaleString('pt-BR')} × ${simbolo} ${(m.precoUnitario ?? 0).toFixed(2)}`
-                          : `${simbolo} ${(m.valorResgate ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} resgatado`
+                          ? `${(m.quantidade ?? 0).toLocaleString('pt-BR')} × ${fmtMoeda(simbolo, m.precoUnitario ?? 0)}`
+                          : `${fmtMoeda(simbolo, m.valorResgate ?? 0)} resgatado`
                         }
                       </p>
                       {m.observacao && (

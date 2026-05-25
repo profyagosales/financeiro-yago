@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { IconEdit, IconTrash, IconPlus, IconHistory, IconArrowUpRight, IconArrowDownRight } from '@tabler/icons-react'
 import type { Conta } from '@/db/schema'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { BankLogo } from '@/components/ui/BankLogo'
 
 interface Props {
@@ -92,7 +92,7 @@ export function ContaCard({
               padding: '2px 8px', borderRadius: 16, letterSpacing: '.02em',
             }}>
               {variacaoPct >= 0 ? <IconArrowUpRight size={11} stroke={2.4} /> : <IconArrowDownRight size={11} stroke={2.4} />}
-              {Math.abs(variacaoPct).toFixed(1)}%
+              {fmtPct(Math.abs(variacaoPct), 1)}
             </span>
           )}
         </div>

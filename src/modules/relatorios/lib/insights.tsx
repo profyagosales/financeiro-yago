@@ -12,7 +12,7 @@ import {
   IconArrowsExchange,
   type Icon,
 } from '@tabler/icons-react'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import type { PontoMensal, AgrCategoria, PerformerInvest } from './calculos'
 
 export type InsightTone = 'positive' | 'negative' | 'neutral' | 'highlight'
@@ -58,14 +58,14 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
           out.push({
             id: 'tend-desp-up',
             title: 'Tendência: gastos em alta',
-            body: <>Despesas subiram <strong>{variacao.toFixed(0)}%</strong> entre as primeiras e últimas semanas do período. Cuidado pra não consolidar esse novo patamar.</>,
+            body: <>Despesas subiram <strong>{fmtPct(variacao, 0)}</strong> entre as primeiras e últimas semanas do período. Cuidado pra não consolidar esse novo patamar.</>,
             tone: 'negative', icon: IconTrendingUp, priority: 9, categoria: 'tendencia',
           })
         } else if (variacao <= -15) {
           out.push({
             id: 'tend-desp-down',
             title: 'Tendência: gastos em queda',
-            body: <>Conseguiu reduzir gastos em <strong>{Math.abs(variacao).toFixed(0)}%</strong> ao longo do período. Continue assim.</>,
+            body: <>Conseguiu reduzir gastos em <strong>{fmtPct(Math.abs(variacao), 0)}</strong> ao longo do período. Continue assim.</>,
             tone: 'positive', icon: IconTrendingDown, priority: 7, categoria: 'tendencia',
           })
         }
@@ -81,7 +81,7 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
       out.push({
         id: 'mes-pico',
         title: `${maisCaro.labelLong} foi atípico`,
-        body: <>Gastou <strong>{fmt(maisCaro.despesas)}</strong> — {((maisCaro.despesas / mediaOutros - 1) * 100).toFixed(0)}% acima da média dos outros meses.</>,
+        body: <>Gastou <strong>{fmt(maisCaro.despesas)}</strong> — {fmtPct((maisCaro.despesas / mediaOutros - 1) * 100, 0)} acima da média dos outros meses.</>,
         tone: 'highlight', icon: IconChartBar, priority: 5, categoria: 'anomalia',
       })
     }
@@ -93,7 +93,7 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
     out.push({
       id: 'cat-subiu',
       title: 'Categoria que mais cresceu',
-      body: <><strong>{subiu.nome}</strong> subiu <strong>{subiu.deltaPct!.toFixed(0)}%</strong> ({fmt(subiu.valor)}) vs período anterior. Vale revisitar.</>,
+      body: <><strong>{subiu.nome}</strong> subiu <strong>{fmtPct(subiu.deltaPct!, 0)}</strong> ({fmt(subiu.valor)}) vs período anterior. Vale revisitar.</>,
       tone: 'negative', icon: IconTrendingUp, priority: 8, categoria: 'comparativo',
     })
   }
@@ -104,7 +104,7 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
     out.push({
       id: 'cat-caiu',
       title: 'Conquista em economia',
-      body: <>Reduziu <strong>{Math.abs(caiu.deltaPct!).toFixed(0)}%</strong> em <strong>{caiu.nome}</strong>. Manteve {fmt(caiu.valor)}.</>,
+      body: <>Reduziu <strong>{fmtPct(Math.abs(caiu.deltaPct!), 0)}</strong> em <strong>{caiu.nome}</strong>. Manteve {fmt(caiu.valor)}.</>,
       tone: 'positive', icon: IconSparkles, priority: 6, categoria: 'conquista',
     })
   }
@@ -116,7 +116,7 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
       out.push({
         id: 'cat-dominante',
         title: 'Gasto concentrado',
-        body: <><strong>{dominante.pct.toFixed(0)}%</strong> das despesas estão em <strong>{dominante.nome}</strong>. Diversificar a alocação pode trazer mais controle.</>,
+        body: <><strong>{fmtPct(dominante.pct, 0)}</strong> das despesas estão em <strong>{dominante.nome}</strong>. Diversificar a alocação pode trazer mais controle.</>,
         tone: 'highlight', icon: IconChartArrows, priority: 5, categoria: 'sugestao',
       })
     }
@@ -129,21 +129,21 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
       out.push({
         id: 'econ-otima',
         title: 'Taxa de economia excelente',
-        body: <>Guardando <strong>{pct.toFixed(0)}%</strong> da renda. Ideal pra ampliar investimentos diversificados.</>,
+        body: <>Guardando <strong>{fmtPct(pct, 0)}</strong> da renda. Ideal pra ampliar investimentos diversificados.</>,
         tone: 'positive', icon: IconCircleCheck, priority: 7, categoria: 'conquista',
       })
     } else if (pct < 0) {
       out.push({
         id: 'econ-negativa',
         title: 'Você está gastando mais do que ganha',
-        body: <>Déficit de <strong>{Math.abs(pct).toFixed(0)}%</strong> no período. Saldo só se mantém com reserva ou crédito. Priorize cortar despesas variáveis.</>,
+        body: <>Déficit de <strong>{fmtPct(Math.abs(pct), 0)}</strong> no período. Saldo só se mantém com reserva ou crédito. Priorize cortar despesas variáveis.</>,
         tone: 'negative', icon: IconAlertTriangle, priority: 10, categoria: 'sugestao',
       })
     } else if (pct < 10) {
       out.push({
         id: 'econ-baixa',
         title: 'Margem de segurança apertada',
-        body: <>Só <strong>{pct.toFixed(0)}%</strong> da renda restam após despesas. Ideal mínimo: 10%, recomendado: 20%+.</>,
+        body: <>Só <strong>{fmtPct(pct, 0)}</strong> da renda restam após despesas. Ideal mínimo: 10%, recomendado: 20%+.</>,
         tone: 'highlight', icon: IconClockHour4, priority: 7, categoria: 'sugestao',
       })
     }
@@ -175,7 +175,7 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
       out.push({
         id: 'inv-top',
         title: 'Destaque positivo na carteira',
-        body: <><strong>{top.nome}</strong> rendeu <strong>+{top.pctRendimento.toFixed(2)}%</strong> ({fmt(top.ganho)}).</>,
+        body: <><strong>{top.nome}</strong> rendeu <strong>{fmtPct(top.pctRendimento, 2, true)}</strong> ({fmt(top.ganho)}).</>,
         tone: 'positive', icon: IconCoin, priority: 4, categoria: 'conquista',
       })
     }
@@ -184,7 +184,7 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
       out.push({
         id: 'inv-pior',
         title: 'Ativo com prejuízo',
-        body: <><strong>{pior.nome}</strong> está em <strong>{pior.pctRendimento.toFixed(2)}%</strong> ({fmt(pior.ganho)}). Avalie se faz sentido manter.</>,
+        body: <><strong>{pior.nome}</strong> está em <strong>{fmtPct(pior.pctRendimento, 2)}</strong> ({fmt(pior.ganho)}). Avalie se faz sentido manter.</>,
         tone: 'negative', icon: IconTrendingDown, priority: 6, categoria: 'sugestao',
       })
     }
@@ -201,7 +201,7 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
       out.push({
         id: 'inv-concentrado',
         title: 'Carteira concentrada',
-        body: <><strong>{(maior[1] / inp.totalInvestido * 100).toFixed(0)}%</strong> em <strong>{maior[0]}</strong>. Diversificar entre classes (RF, RV, Caixa) reduz risco sistêmico.</>,
+        body: <><strong>{fmtPct(maior[1] / inp.totalInvestido * 100, 0)}</strong> em <strong>{maior[0]}</strong>. Diversificar entre classes (RF, RV, Caixa) reduz risco sistêmico.</>,
         tone: 'highlight', icon: IconArrowsExchange, priority: 5, categoria: 'sugestao',
       })
     }
@@ -214,7 +214,7 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
       out.push({
         id: 'divida-alta',
         title: 'Endividamento elevado',
-        body: <>Dívidas representam <strong>{exposicao.toFixed(0)}%</strong> dos seus ativos líquidos. Priorize quitar as de maior juros.</>,
+        body: <>Dívidas representam <strong>{fmtPct(exposicao, 0)}</strong> dos seus ativos líquidos. Priorize quitar as de maior juros.</>,
         tone: 'negative', icon: IconAlertTriangle, priority: 8, categoria: 'sugestao',
       })
     }
@@ -237,7 +237,7 @@ export function gerarInsightsAnaliticos(inp: Inputs): InsightAnalitico[] {
         out.push({
           id: 'sazonal-pico',
           title: 'Padrão sazonal detectado',
-          body: <><strong>{pico.labelLong}</strong> é seu mês historicamente mais caro ({((pico.despesas / media - 1) * 100).toFixed(0)}% acima da média anual). Planeje reservas adicionais com antecedência.</>,
+          body: <><strong>{pico.labelLong}</strong> é seu mês historicamente mais caro ({fmtPct((pico.despesas / media - 1) * 100, 0)} acima da média anual). Planeje reservas adicionais com antecedência.</>,
           tone: 'neutral', icon: IconBulb, priority: 4, categoria: 'tendencia',
         })
       }

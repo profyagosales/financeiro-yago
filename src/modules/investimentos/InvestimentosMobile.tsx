@@ -6,7 +6,7 @@ import {
   IconShoppingCart, IconShoppingBag, IconCoins, IconEdit, IconX,
 } from '@tabler/icons-react'
 import { useInvestimentos, useTotalInvestimentos, isRendaVariavel, aceitaProventos } from '@/db/hooks/useInvestimentos'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { InvestimentoForm } from './InvestimentoForm'
 import { AportesModal } from './AportesModal'
 import { ProventosModal } from './ProventosModal'
@@ -83,7 +83,7 @@ export function InvestimentosMobile() {
               {pct !== 0 && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '3px 9px', borderRadius: 999, background: pct > 0 ? 'rgba(30,125,90,0.12)' : 'rgba(196,85,59,0.12)', color: pct > 0 ? C.green : C.orange, fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 700 }}>
                   {pct > 0 ? <IconTrendingUp size={11} stroke={2.4} /> : <IconTrendingDown size={11} stroke={2.4} />}
-                  {pct > 0 ? '+' : ''}{pct.toFixed(2)}% ({pct > 0 ? '+' : ''}{fmt(rendimento)})
+                  {fmtPct(pct, 2, true)} ({pct > 0 ? '+' : ''}{fmt(rendimento)})
                 </span>
               )}
             </div>
@@ -118,7 +118,7 @@ export function InvestimentosMobile() {
                           : fmt(inv.valorAtual)}
                       </p>
                       <p style={{ fontSize: 10.5, fontWeight: 700, color: inv.pctRend >= 0 ? C.green : C.orange, margin: '1px 0 0' }}>
-                        {inv.pctRend >= 0 ? '+' : ''}{inv.pctRend.toFixed(2)}%
+                        {fmtPct(inv.pctRend, 2, true)}
                       </p>
                     </div>
                     <IconChevronRight size={14} stroke={2.2} color={C.muted} />

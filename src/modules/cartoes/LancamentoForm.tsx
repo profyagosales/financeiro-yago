@@ -7,7 +7,7 @@ import {
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { Modal } from '@/components/ui/Modal'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { todayISO } from '@/lib/format'
+import { todayISO, fmt } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 import { useSavingGuard } from '@/hooks/useSavingGuard'
 
@@ -137,7 +137,7 @@ export function LancamentoForm({ open, cartao, lancamento, mes, ano, onClose }: 
             </div>
             {!isEditing && form.totalParcelas > 1 && form.valor && (
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: '#7A5C4F', margin: '6px 0 0' }}>
-                {form.totalParcelas}x de R$ {(parseValor(form.valor) / form.totalParcelas).toFixed(2).replace('.', ',')}
+                {form.totalParcelas}x de {fmt(parseValor(form.valor) / form.totalParcelas)}
               </p>
             )}
             {isEditing && lancamento && lancamento.totalParcelas > 1 && (

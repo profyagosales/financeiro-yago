@@ -6,7 +6,7 @@ import { useCartoes } from '@/db/hooks/useCartoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { BandeiraLogo } from '@/components/ui/BandeiraLogo'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import type { Categoria, Conta, Cartao, ContaFixa } from '@/db/schema'
 import { IconPlus, IconX, IconTrash, IconCheck, IconEdit, IconChevronLeft, IconChevronRight, IconAlertTriangle, IconCircleCheck, IconCalendarDue, IconTrendingUp, IconCalendar, IconFlame, IconBuildingBank, IconCreditCard, IconCalendarRepeat } from '@tabler/icons-react'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
@@ -263,7 +263,7 @@ export function ContasFixasDesktop() {
                   icon={<IconFlame size={16} stroke={2} color="#C4553B" />}
                   label="Maior gasto fixo"
                   value={maiorFixa.nome}
-                  hint={`${((maiorFixa.valor / totalMes) * 100).toFixed(0)}% do total mensal`}
+                  hint={`${fmtPct((maiorFixa.valor / totalMes) * 100, 0)} do total mensal`}
                   amount={fmt(maiorFixa.valor)}
                   cor="#C4553B"
                 />

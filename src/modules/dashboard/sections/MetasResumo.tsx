@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { IconChevronRight, IconTarget, IconTrophy } from '@tabler/icons-react'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 
 interface MetaItem {
@@ -110,7 +110,7 @@ export function MetasResumo({ metas }: MetasResumoProps) {
                   color: m.pct >= 75 ? '#1E7D5A' : m.pct >= 40 ? '#A8730F' : '#7A5C4F',
                 }}>
                   {m.pct >= 95 && <IconTrophy size={13} stroke={2.4} />}
-                  {m.pct.toFixed(0)}%
+                  {fmtPct(m.pct, 0)}
                 </span>
               </div>
               <ProgressBar

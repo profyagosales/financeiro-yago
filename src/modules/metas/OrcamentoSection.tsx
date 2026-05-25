@@ -4,7 +4,7 @@ import { IconPlus, IconEdit, IconX, IconAlertTriangle, IconCheck, IconTrash } fr
 import { useOrcamentos, addOrcamento, editOrcamento, deleteOrcamento } from '@/db/hooks/useOrcamentos'
 import { useCategorias } from '@/db/hooks/useCategorias'
 import { useGastosPorCategoria } from '@/db/hooks/useTransacoes'
-import { fmt, mesAnoAtual } from '@/lib/format'
+import { fmt, fmtPct, mesAnoAtual } from '@/lib/format'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { sounds } from '@/lib/sounds'
 import { db } from '@/db/schema'
@@ -96,7 +96,7 @@ export function OrcamentoSection() {
             <div style={{ flex: 1 }}>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 9, fontWeight: 700, color: '#7A5C4F', letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>Uso geral</p>
               <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: '#2C1A0F', letterSpacing: '-0.3px', margin: '2px 0 0' }}>
-                {totalLimite > 0 ? ((totalGasto / totalLimite) * 100).toFixed(0) : 0}%
+                {totalLimite > 0 ? fmtPct((totalGasto / totalLimite) * 100, 0) : '0%'}
               </p>
             </div>
             <div style={{ width: 1, background: '#EDE6DC' }} />

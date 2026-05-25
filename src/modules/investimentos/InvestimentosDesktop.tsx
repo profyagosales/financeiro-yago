@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconPlus, IconChartLine, IconRefresh, IconArrowUpRight, IconArrowDownRight, IconTrash } from '@tabler/icons-react'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import {
   useInvestimentos, useTotalInvestimentos,
   deleteInvestimento, aplicarRentabilidadeAutoTodos,
@@ -175,7 +175,7 @@ export function InvestimentosDesktop() {
                     {rendimentoPositivo ? <IconArrowUpRight size={14} stroke={2.4} color="#F2C745" /> : <IconArrowDownRight size={14} stroke={2.4} color="#F2C745" />}
                     {fmt(rendimento)}
                     <span style={{ fontSize: 12, fontFamily: "'Plus Jakarta Sans',sans-serif", color: '#F2C745', fontWeight: 600 }}>
-                      ({rendimentoPositivo ? '+' : ''}{rendimentoPct.toFixed(2)}%)
+                      ({fmtPct(rendimentoPct, 2, true)})
                     </span>
                   </span>
                 }
@@ -206,7 +206,7 @@ export function InvestimentosDesktop() {
                       <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span style={{ width: 8, height: 8, borderRadius: 2, background: CLASSE_COR[c], flexShrink: 0 }} />
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(255,255,255,0.85)', flex: 1 }}>{CLASSE_LABEL[c]}</span>
-                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#FFFFFF' }}>{pct.toFixed(0)}%</span>
+                        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 12, fontWeight: 700, color: '#FFFFFF' }}>{fmtPct(pct, 0)}</span>
                         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: 'rgba(196,195,227,0.7)', minWidth: 70, textAlign: 'right' }}>{fmt(v)}</span>
                       </div>
                     )

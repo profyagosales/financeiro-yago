@@ -3,7 +3,7 @@ import { LegacyModalShell } from '@/components/ui/LegacyModalShell'
 import { IconX, IconCheck, IconCoins, IconTrash, IconPlus } from '@tabler/icons-react'
 import type { Investimento, ProventoTipo } from '@/db/schema'
 import { useProventos, addProvento, deleteProvento, calcDY12m, calcProventosMes } from '@/db/hooks/useInvestimentos'
-import { fmt, todayISO } from '@/lib/format'
+import { fmt, fmtPct, todayISO } from '@/lib/format'
 import { showErrorToast, sounds } from '@/lib/sounds'
 import { useSavingGuard } from '@/hooks/useSavingGuard'
 
@@ -114,7 +114,7 @@ export function ProventosModal({ invest, onClose }: Props) {
         {/* KPIs */}
         <div style={{ padding: '16px 26px', background: '#FBF8F3', borderBottom: '1px solid #EDE6DC', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 12 }}>
           <Kpi label="Total recebido" value={fmt(totalRecebido)} sub={`${proventos.length} ${proventos.length === 1 ? 'registro' : 'registros'}`} cor="#1E7D5A" />
-          <Kpi label="DY 12 meses" value={`${dy12m.toFixed(2)}%`} sub="sobre valor atual" cor="#3A8580" />
+          <Kpi label="DY 12 meses" value={fmtPct(dy12m, 2)} sub="sobre valor atual" cor="#3A8580" />
           <Kpi label="Este mês" value={fmt(mesAtual)} sub={mesAtual > 0 ? 'recebido' : 'nada ainda'} cor="#A8730F" />
         </div>
 

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconEdit, IconTrash, IconCheck, IconLink, IconCash, IconDiscount } from '@tabler/icons-react'
 import type { Divida } from '@/db/schema'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { TIPO_META } from './constants'
 
 interface DividaComputed extends Divida {
@@ -105,7 +105,7 @@ export function DividaCard({ divida, onEdit, onDelete, onMovimentar }: Props) {
             {divida.jurosAnual && (
               <>
                 {divida.instituicao && <Dot />}
-                <span style={SUB_TXT}>{(divida.jurosAnual * 100).toFixed(2)}% a.a.</span>
+                <span style={SUB_TXT}>{fmtPct(divida.jurosAnual * 100, 2)} a.a.</span>
               </>
             )}
             {divida.valorParcela > 0 && (
@@ -127,7 +127,7 @@ export function DividaCard({ divida, onEdit, onDelete, onMovimentar }: Props) {
                   )}
                 </span>
                 <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700, color: cor }}>
-                  {divida.progresso.toFixed(0)}%
+                  {fmtPct(divida.progresso, 0)}
                 </span>
               </div>
               <div style={{ height: 5, borderRadius: 3, background: 'rgba(196,85,59,0.12)', overflow: 'hidden' }}>

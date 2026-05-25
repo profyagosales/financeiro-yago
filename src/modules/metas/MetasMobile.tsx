@@ -6,7 +6,7 @@ import {
   IconCurrencyReal, IconEdit, IconTrash, IconX,
 } from '@tabler/icons-react'
 import { useMetasComputed, useReservaEmergencia, deleteMeta, type MetaComputed } from '@/db/hooks/useMetas'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { MetaForm } from './MetaForm'
 import { ReservaCard } from './ReservaCard'
 import { AporteForm } from './AporteForm'
@@ -256,7 +256,7 @@ function MetaActionSheet({
               fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, color: C.muted,
               margin: '2px 0 0', fontWeight: 500,
             }}>
-              {fmt(meta.valorAtualTotal)} de {fmt(meta.valorAlvo)} · {meta.progressoPct.toFixed(0)}%
+              {fmt(meta.valorAtualTotal)} de {fmt(meta.valorAlvo)} · {fmtPct(meta.progressoPct, 0)}
             </p>
           </div>
           <button onClick={onClose} aria-label="Fechar"
@@ -367,7 +367,7 @@ function MetaRow({ meta, onClick, concluida }: {
           </p>
         </div>
         <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, fontWeight: 700, color: meta.cor, whiteSpace: 'nowrap', letterSpacing: '-0.2px' }}>
-          {pct.toFixed(0)}%
+          {fmtPct(pct, 0)}
         </span>
       </div>
       <div style={{ position: 'relative', height: 6, background: '#F5EEE3', borderRadius: 999, overflow: 'hidden' }}>

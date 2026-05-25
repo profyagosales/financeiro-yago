@@ -4,7 +4,7 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { IconChartBar } from '@tabler/icons-react'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 
 interface OrcamentoMesProps {
   receitas: number
@@ -168,7 +168,7 @@ function LegendItem({ color, label, value, pct, highlight }: { color: string; la
           fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: 10, fontWeight: 700,
           color: '#7A5C4F', letterSpacing: '.06em', textTransform: 'uppercase',
-        }}>{label} · {pct.toFixed(0)}%</span>
+        }}>{label} · {fmtPct(pct, 0)}</span>
         <span style={{
           fontFamily: "'Plus Jakarta Sans',sans-serif",
           fontSize: 13, fontWeight: highlight ? 700 : 600,

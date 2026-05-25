@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconEdit, IconTrash, IconExternalLink, IconShoppingCart, IconCircleMinus, IconRotateClockwise, IconCircleCheck } from '@tabler/icons-react'
 import type { Desejo } from '@/db/schema'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { desistirDesejo, reabrirDesejo } from '@/db/hooks/useDesejos'
 
 interface Props {
@@ -75,7 +75,7 @@ export function DesejoCard({ desejo, onEdit, onComprar, onDelete }: Props) {
               padding: '2px 6px', borderRadius: 6,
               letterSpacing: '.04em',
             }}>
-              {fmt(desejo.valorMenorEncontrado!)} (-{((economia / desejo.valorEstimado!) * 100).toFixed(0)}%)
+              {fmt(desejo.valorMenorEncontrado!)} (-{fmtPct((economia / desejo.valorEstimado!) * 100, 0)})
             </span>
           )}
         </div>

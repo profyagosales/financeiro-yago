@@ -2,7 +2,7 @@ import { createElement, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconEdit, IconTrash, IconPlus, IconTrophy, IconLink, IconCalendarEvent } from '@tabler/icons-react'
 import type { MetaComputed } from '@/db/hooks/useMetas'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { getMetaIcon, META_TIPO_BY } from './constants'
 
 interface Props {
@@ -119,7 +119,7 @@ export function MetaCard({ meta, onEdit, onAporte, onDelete }: Props) {
           <span style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, fontWeight: 700,
             color: corBarra, letterSpacing: '.04em',
-          }}>{meta.progressoPct.toFixed(0)}% concluído</span>
+          }}>{fmtPct(meta.progressoPct, 0)} concluído</span>
           {!atingida && (
             <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: '#7A5C4F' }}>
               faltam {fmt(falta)}

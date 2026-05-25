@@ -10,7 +10,7 @@ import type { Conta, Transacao, Categoria } from '@/db/schema'
 import { db } from '@/db/schema'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useCategorias } from '@/db/hooks/useCategorias'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { BankLogo } from '@/components/ui/BankLogo'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 
@@ -173,7 +173,7 @@ export function AccountDetail({ conta, onEdit, onLancar, onHistorico, onDelete }
                 letterSpacing: '.02em',
               }}>
                 {positivo ? <IconArrowUpRight size={12} stroke={2.4} /> : <IconArrowDownRight size={12} stroke={2.4} />}
-                {positivo ? '+' : ''}{fmt(delta30d)} ({Math.abs(trendPct).toFixed(1)}%) em 30d
+                {positivo ? '+' : ''}{fmt(delta30d)} ({fmtPct(Math.abs(trendPct), 1)}) em 30d
               </span>
             )}
           </div>

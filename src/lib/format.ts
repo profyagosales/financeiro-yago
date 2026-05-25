@@ -7,6 +7,41 @@ export function fmt(value: number, showSign = false) {
   return value < 0 ? `-${formatted}` : formatted
 }
 
+// ─── Helpers de número/percentual em pt-BR ──────────────────────────
+// O Brasil usa `.` pra milhar e `,` pra decimal (208.504,32). Sem helper
+// dedicado, vários componentes caíam em `.toFixed(N)` (que sempre devolve
+// "208504.32" — formato US) ou em template literals com ponto, criando
+// inconsistência visual entre telas.
+//
+// Use SEMPRE estes helpers em qualquer texto de display:
+//   - fmt(v)           → "R$ 1.234,56"           (currency BRL canônica)
+//   - fmtMoeda('US$', v) → "US$ 1.234,56"        (currency com símbolo custom: USD, BTC, etc.)
+//   - fmtPct(v, 1)     → "12,3%"                  (percentagem com N decimais)
+//   - fmtNum(v, 2)     → "1.234,56"               (número puro, sem símbolo)
+
+export function fmtPct(value: number, decimals = 1, showSign = false) {
+  const formatted = new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(Math.abs(value))
+  const withSign = showSign && value > 0 ? `+${formatted}` : value < 0 ? `-${formatted}` : formatted
+  return `${withSign}%`
+}
+
+export function fmtNum(value: number, decimals = 2) {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value)
+}
+
+// Para moedas com símbolo customizado (US$, BTC, etc) — Intl.NumberFormat
+// com currency='USD' acabaria devolvendo "US$ 1.234,56" em pt-BR, mas pra
+// crypto/símbolos custom não existe código ISO. Usa fmtNum + prefixo manual.
+export function fmtMoeda(simbolo: string, value: number, decimals = 2) {
+  return `${simbolo} ${fmtNum(Math.abs(value), decimals)}`
+}
+
 export function fmtDate(dateStr: string) {
   const date = new Date(dateStr + 'T12:00:00')
   const today = new Date()

@@ -9,7 +9,7 @@ import {
 } from '@tabler/icons-react'
 import { useRelatoriosData } from './lib/useRelatoriosData'
 import { corStatus, labelStatus } from '@/modules/dashboard/lib/calculos'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import { usePeriodo, type PeriodoPreset } from './lib/usePeriodo'
 
 const C = {
@@ -131,7 +131,7 @@ export function RelatoriosMobile() {
                   <div style={{ position: 'relative', height: 4, background: '#F5EEE3', borderRadius: 999, overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${c.pct}%`, background: c.cor, borderRadius: 999 }} />
                   </div>
-                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: C.muted, margin: '4px 0 0', fontWeight: 600 }}>{c.pct.toFixed(1)}%</p>
+                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 10, color: C.muted, margin: '4px 0 0', fontWeight: 600 }}>{fmtPct(c.pct, 1)}</p>
                 </div>
               ))}
             </div>
@@ -199,7 +199,7 @@ function KpiTile({ label, value, color, icon: Icon, delta, inverse, signed }: {
           fontSize: 10, fontWeight: 700,
           color: inverse ? (delta > 0 ? C.orange : C.green) : (delta > 0 ? C.green : C.orange),
         }}>
-          {delta > 0 ? '+' : ''}{delta.toFixed(0)}% vs anterior
+          {fmtPct(delta, 0, true)} vs anterior
         </span>
       )}
     </div>

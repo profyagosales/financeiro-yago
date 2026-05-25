@@ -14,7 +14,7 @@ import {
   IconTrendingUp, IconTrendingDown,
   IconCreditCard,
 } from '@tabler/icons-react'
-import { fmt, fmtDate } from '@/lib/format'
+import { fmt, fmtPct, fmtDate } from '@/lib/format'
 import { useDashboardData, saudacao } from './lib/useDashboardData'
 import { useDisplayName } from '@/db/hooks/useAppConfig'
 import { useCategorias } from '@/db/hooks/useCategorias'
@@ -216,7 +216,7 @@ export function DashboardMobile() {
                   fontSize: 11, fontWeight: 700,
                 }}>
                   {d.trendSaldo > 0 ? <IconTrendingUp size={11} stroke={2.4} /> : <IconTrendingDown size={11} stroke={2.4} />}
-                  {d.trendSaldo > 0 ? '+' : ''}{d.trendSaldo.toFixed(0)}%
+                  {fmtPct(d.trendSaldo, 0, true)}
                 </span>
               )}
             </div>

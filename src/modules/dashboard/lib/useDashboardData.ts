@@ -12,7 +12,7 @@ import { useContasFixas, usePagamentosFixos } from '@/db/hooks/useContasFixas'
 import { useMetasComputed, useReservaEmergencia } from '@/db/hooks/useMetas'
 import { useDividasComputed } from '@/db/hooks/useDividas'
 import { useInvestimentos, useTotalInvestimentos } from '@/db/hooks/useInvestimentos'
-import { mesAnoAtual } from '@/lib/format'
+import { mesAnoAtual, fmtPct } from '@/lib/format'
 import {
   serieUltimosMeses,
   delta,
@@ -270,8 +270,8 @@ export function useDashboardData(): DashboardData {
       alertas.push({
         id: `cc-${c.id}`, severity: pct >= 95 ? 'critical' : 'warning', iconKey: 'cartao',
         title: c.nome,
-        subtitle: `${pct.toFixed(0)}% do limite (${(c.limite - usado).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} disponível)`,
-        meta: `${pct.toFixed(0)}%`, href: '/cartoes',
+        subtitle: `${fmtPct(pct, 0)} do limite (${(c.limite - usado).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} disponível)`,
+        meta: `${fmtPct(pct, 0)}`, href: '/cartoes',
         priority: pct >= 95 ? 9 : 6,
       })
     }
@@ -282,8 +282,8 @@ export function useDashboardData(): DashboardData {
     alertas.push({
       id: 'reserva-baixa', severity: 'warning', iconKey: 'reserva',
       title: 'Reserva de emergência baixa',
-      subtitle: `${reserva.progressoPct.toFixed(0)}% do alvo`,
-      meta: `${reserva.progressoPct.toFixed(0)}%`,
+      subtitle: `${fmtPct(reserva.progressoPct, 0)} do alvo`,
+      meta: `${fmtPct(reserva.progressoPct, 0)}`,
       href: '/metas', priority: 7,
     })
   }

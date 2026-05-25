@@ -14,7 +14,7 @@ import {
 import { db, type Cartao, type LancamentoCartao } from '@/db/schema'
 import { useCartoes, useLancamentosCartao, useTotalFatura, useAllLancamentosAtivos, deleteCartao } from '@/db/hooks/useCartoes'
 import { useCategorias } from '@/db/hooks/useCategorias'
-import { fmt, mesAnoAtual, fmtDate } from '@/lib/format'
+import { fmt, fmtPct, mesAnoAtual, fmtDate } from '@/lib/format'
 import { StackScreen } from '@/components/layout/StackScreen'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { CartaoForm } from './CartaoForm'
@@ -356,7 +356,7 @@ function CartaoCard({ cartao, mes, ano, lancsAtivos, onClick }: {
               fontSize: 10.5, fontWeight: 600,
             }}>
               <span style={{ color: alerta ? C.orange : C.inkSoft }}>
-                {pctLimite.toFixed(0)}% usado
+                {fmtPct(pctLimite, 0)} usado
               </span>
               <span style={{ color: C.muted }}>{fmt(cartao.limite - usadoCartao)} disponível</span>
             </div>

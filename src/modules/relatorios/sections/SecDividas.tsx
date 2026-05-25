@@ -7,7 +7,7 @@ import {
 } from '@tabler/icons-react'
 import { SectionShell } from '../components/SectionShell'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { fmt } from '@/lib/format'
+import { fmt, fmtPct } from '@/lib/format'
 import type { RelatoriosData } from '../lib/useRelatoriosData'
 
 interface Props { d: RelatoriosData }
@@ -123,7 +123,7 @@ export function SecDividas({ d }: Props) {
                     fontFamily: "'Plus Jakarta Sans',sans-serif",
                     fontSize: 11, color: '#7A5C4F', margin: 0, fontWeight: 500,
                   }}>
-                    {dv.jurosAnual > 0 ? `${dv.jurosAnual.toFixed(2)}% a.a.` : 'Sem juros'} · {dv.parcelasRestantes} parcelas restantes
+                    {dv.jurosAnual > 0 ? `${fmtPct(dv.jurosAnual, 2)} a.a.` : 'Sem juros'} · {dv.parcelasRestantes} parcelas restantes
                   </p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -142,7 +142,7 @@ export function SecDividas({ d }: Props) {
               <p style={{
                 fontFamily: "'Plus Jakarta Sans',sans-serif",
                 fontSize: 10.5, color: '#7A5C4F', margin: '4px 0 0', fontWeight: 600,
-              }}>{progressoPct.toFixed(0)}% quitado</p>
+              }}>{fmtPct(progressoPct, 0)} quitado</p>
             </motion.div>
           )
         })}
