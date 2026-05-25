@@ -133,13 +133,39 @@ export async function pullTable(tableName: string, opts: { full?: boolean } = {}
       // INSERT novo. Bug histórico: cursor avançava MESMO se INSERT falhasse
       // (unique violation, FK pending) → row nunca era re-pullada até full sync.
       // Agora só avança se o INSERT realmente aplicou.
+      //
+      // R12 fix: appConfig com schema `++id, &key` (UNIQUE) ocasionalmente
+      // viola unique em pull (mesma key já local). Em vez de hadErrors=true
+      // (que trava sync inteiro), DELE local existente + cria mapping +
+      // avança cursor. Recovery automático sem dataloss.
       try {
         const newLocalId = await config.dexie().add(localRecord) as number
         await setMapping(tableName, newLocalId, remoteUuid)
         pulled += 1
         maxAppliedUpdatedAt = remoteUpdatedAt
       } catch (e) {
-        console.warn(`[sync pull insert] ${tableName}:`, e)
+        const msg = e instanceof Error ? e.message : String(e)
+        // ConstraintError (unique violation): tenta UPDATE pelo nome do índice
+        if (msg.includes('Index key is not unique') || msg.includes('ConstraintError')) {
+          try {
+            // Pra appConfig, busca por key e atualiza (recovery)
+            if (tableName === 'appConfig' && typeof localRecord.key === 'string') {
+              const existing = await config.dexie().where('key').equals(localRecord.key).first() as { id?: number } | undefined
+              if (existing?.id) {
+                await config.dexie().update(existing.id, localRecord)
+                await setMapping(tableName, existing.id, remoteUuid)
+                pulled += 1
+                maxAppliedUpdatedAt = remoteUpdatedAt
+                continue
+              }
+            }
+            console.warn(`[sync pull insert] ${tableName} unique violation, sem recovery:`, msg)
+          } catch (e2) {
+            console.warn(`[sync pull insert recovery] ${tableName}:`, e2)
+          }
+        } else {
+          console.warn(`[sync pull insert] ${tableName}:`, e)
+        }
         hadErrors = true
       }
     }

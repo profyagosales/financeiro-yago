@@ -174,10 +174,28 @@ export async function editTransacao(id: number, data: Partial<Transacao>) {
 
 // ─── Migra status legados ('confirmado', 'pago') pro canônico 'efetivada' ──
 // Roda 1x no boot. Idempotente: rápido e sem efeito se já normalizado.
+// Também limpa lastDolar legacy do appConfig (bug R9-R12 que causava
+// crash 'null is not an object n.type' em loop por unique violation
+// no &key constraint). Cleanup one-time.
 let _statusMigrated = false
 export async function migrateStatusToCanonical(): Promise<void> {
   if (_statusMigrated) return
   _statusMigrated = true
+
+  // R12 cleanup: remove lastDolar do appConfig (era persistido no R9
+  // mas causava ConstraintError em pull insert por &key unique).
+  // Agora cotação fica em localStorage. Pull recovery em pull.ts
+  // já trata se vier do Supabase, mas idealmente limpamos local também.
+  try {
+    const legacyDolar = await db.appConfig.where('key').equals('lastDolar').toArray()
+    if (legacyDolar.length > 0) {
+      await Promise.all(legacyDolar.map(r => r.id ? db.appConfig.delete(r.id) : Promise.resolve()))
+      console.log(`[migration R12] removidas ${legacyDolar.length} rows legacy lastDolar do appConfig`)
+    }
+  } catch (e) {
+    console.warn('[migration R12] cleanup lastDolar falhou:', e)
+  }
+
   try {
     const legados = await db.transacoes
       .filter(t => t.status === 'confirmado' || t.status === 'pago')

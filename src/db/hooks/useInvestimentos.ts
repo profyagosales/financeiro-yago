@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Investimento, type InvestimentoTipo, type InvestimentoProvento, type InvestimentoAporte, type InvestimentoMovimentacao } from '../schema'
 import { getTaxasBenchmark, calcTaxaEfetiva, getBrapiToken } from './useAppConfig'
@@ -487,72 +487,64 @@ export function calcVendasStats(movs: InvestimentoMovimentacao[]) {
 }
 
 // ─── Conversão de moeda (BRL ↔ USD) ──────────────────────────────────
-// Reativo: useDolar() retorna a cotação atual do dólar.
-// Estratégia dual:
-//   - `_ultimoDolar` (module-level): valor síncrono pra `converterParaBRL`/`totalCarteiraBRL`
-//   - `db.appConfig['lastDolar']`: persistência reativa via useLiveQuery
-// Quando fetchDolarECache resolve, atualiza AMBOS — useLiveQuery dispara
-// re-render dos consumidores (Dashboard, Relatórios) e totalCarteiraBRL
-// lê o `_ultimoDolar` síncrono já atualizado.
+// Cotação do dólar: cache LOCAL apenas (localStorage), NÃO no appConfig.
+//
+// HISTÓRICO crítico do bug R12:
+// R9 tentou persistir lastDolar no db.appConfig pra ser reativo via
+// useLiveQuery cross-device. PROBLEMA:
+//   - appConfig tem schema Dexie `++id, &key` (& = UNIQUE).
+//   - Sync pull trazia lastDolar do Supabase, INSERT local violava unique
+//     em key → ConstraintError → corrompia optimisticOps do
+//     dexie-react-hooks → crash 'null is not an object n.type' em loop.
+//   - Push também enviava lastDolar com id null → 400 NOT NULL constraint.
+//   - Cada cycle infinito de pull/push amplificava o crash.
+//
+// SOLUÇÃO: cotação é dado puramente LOCAL (mesma API responde igual em
+// qualquer device — não precisa sync). Persistido em localStorage. Sem
+// reatividade Dexie. setState manual via hook simples.
+const LS_KEY = 'fy:lastDolar'
 let _ultimoDolar = 5.40
 
-// Hook reativo: re-renderiza components quando lastDolar muda em appConfig.
-//
-// CRÍTICO: NÃO mutar _ultimoDolar durante render (era bug R9 que causava
-// re-render loop em React 19 + crash 'null is not an object' por hooks
-// fora de ordem). Sincronização vai pra useEffect.
+// Lê do localStorage no module load (síncrono — disponível antes de qualquer hook)
+try {
+  const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(LS_KEY) : null
+  if (raw) {
+    const v = parseFloat(raw)
+    if (!isNaN(v) && v > 0) _ultimoDolar = v
+  }
+} catch { /* SSR ou private mode: usa default 5.40 */ }
+
+// Sistema simples de subscribers pra useDolar ser reativo sem useLiveQuery
+const dolarSubscribers = new Set<(v: number) => void>()
+function notifyDolarChange(v: number) {
+  dolarSubscribers.forEach(cb => cb(v))
+}
+
 export function useDolar(): number {
-  const stored = useLiveQuery(
-    () => db.appConfig.where('key').equals('lastDolar').first(),
-    [],
-  )
-  const v = stored?.value as number | undefined
-
-  // Sincroniza módulo-level FORA do render (useEffect)
+  const [value, setValue] = useState(_ultimoDolar)
   useEffect(() => {
-    if (typeof v === 'number' && v > 0 && v !== _ultimoDolar) {
-      _ultimoDolar = v
-    }
-  }, [v])
-
-  // Retorna o valor reativo se disponível, _ultimoDolar como fallback
-  return typeof v === 'number' && v > 0 ? v : _ultimoDolar
+    dolarSubscribers.add(setValue)
+    return () => { dolarSubscribers.delete(setValue) }
+  }, [])
+  return value
 }
 
 export async function fetchDolarECache(): Promise<number> {
   const c = await fetchCotacaoDolar()
   if (c && c > 0) {
     _ultimoDolar = c
-    // Persiste em appConfig pra disparar useLiveQuery reativo
-    try {
-      const existing = await db.appConfig.where('key').equals('lastDolar').first()
-      if (existing?.id) {
-        await db.appConfig.update(existing.id, { value: c, updatedAt: Date.now() })
-      } else {
-        await db.appConfig.add({ key: 'lastDolar', value: c, updatedAt: Date.now() })
-      }
-    } catch { /* fallback gracioso: usa só module-level */ }
+    try { localStorage.setItem(LS_KEY, String(c)) } catch { /* noop */ }
+    notifyDolarChange(c)
   }
   return _ultimoDolar
 }
 
-// Inicializa cotação na primeira chamada (chame em AppShell mount).
-// Lê valor de appConfig antes de fetch pra recuperar estado cross-session.
+// Inicializa cotação no boot. Fast path: localStorage já loaded acima.
+// Slow path: fetch API em background.
 let _dolarFetchInProgress: Promise<number> | null = null
 export async function ensureDolarLoaded(): Promise<number> {
   if (!_dolarFetchInProgress) {
-    _dolarFetchInProgress = (async () => {
-      // Tenta ler do appConfig primeiro (cache cross-session)
-      try {
-        const cached = await db.appConfig.where('key').equals('lastDolar').first()
-        const v = cached?.value as number | undefined
-        if (typeof v === 'number' && v > 0) {
-          _ultimoDolar = v
-        }
-      } catch { /* noop */ }
-      // Refresh em background da API (sem await — não bloqueia boot)
-      return fetchDolarECache()
-    })()
+    _dolarFetchInProgress = fetchDolarECache().catch(() => _ultimoDolar)
   }
   return _dolarFetchInProgress
 }
