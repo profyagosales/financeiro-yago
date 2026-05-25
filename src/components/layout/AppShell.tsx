@@ -93,43 +93,10 @@ function isFixedLayoutRoute(pathname: string): boolean {
 }
 
 function BackgroundMesh() {
-  // Respeita prefers-reduced-motion: orbs ficam estáticas, sem animação
-  // (continuam visíveis pra preservar identidade visual, mas sem movimento).
-  const reduceMotion = useReducedMotion()
-  // EMERGÊNCIA perf R11: reduzido pra 2 orbs MENORES com blur menor.
-  // Antes: 4 orbs com size=700 + blur(291px) — destruía GPU em Mac/iPhone
-  // standalone PWA. blur grande força compositor a pintar layer enorme
-  // a cada frame, causando 30+ fps drops.
-  const orbs = [
-    { left: '78%', top: '8%',  color: 'rgba(196,85,59,0.22)', size: 380, dur: 24, delay: 0 },
-    { left: '20%', top: '78%', color: 'rgba(58,133,128,0.18)', size: 320, dur: 28, delay: 5 },
-  ]
-  return (
-    <div data-decorative-motion="true" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
-      {orbs.map((orb, i) => (
-        <motion.div key={i}
-          animate={reduceMotion ? undefined : {
-            x: [0, 30, -20, 0],
-            y: [0, -25, 18, 0],
-          }}
-          transition={reduceMotion ? undefined : { duration: orb.dur, repeat: Infinity, ease: 'easeInOut', delay: orb.delay }}
-          style={{
-            position: 'absolute',
-            left: orb.left,
-            top: orb.top,
-            width: orb.size,
-            height: orb.size,
-            borderRadius: '50%',
-            background: orb.color,
-            // blur reduzido pra 80px fixo (era ~290px) — GPU agradece
-            filter: 'blur(80px)',
-            transform: 'translate(-50%, -50%)',
-            willChange: reduceMotion ? 'auto' : 'transform',
-          }}
-        />
-      ))}
-    </div>
-  )
+  // R12e: DESABILITADO completamente. R11 reduziu pra 2 orbs com blur 80px,
+  // mas user reportou que ainda travava Mac/iPhone PWA. Background decorativo
+  // não vale o custo. Gradient estático suffices via CSS no <main> bg.
+  return null
 }
 
 export function AppShell() {
@@ -304,22 +271,20 @@ export function AppShell() {
       <a href="#main-content" className="skip-link">
         Pular para o conteúdo principal
       </a>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.main key={location.pathname}
-          id="main-content"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 26, mass: 0.8 }}
-          style={{
-            flex: 1, overflowY: 'auto', overflowX: 'hidden',
-            paddingBottom: isFixedLayoutRoute(location.pathname) ? 0 : 80,
-            position: 'relative', zIndex: 1,
-          }}
-          className="main-content">
-          <Outlet />
-        </motion.main>
-      </AnimatePresence>
+      {/* R12e perf: trocado motion.main + AnimatePresence por main puro.
+          A transition spring por route mount adicionava 200-300ms de
+          unmount/mount + layout, perceptível em devices lentos. Trade-off:
+          troca de página é instantânea (sem fade), ganho UX > custo perf. */}
+      <main
+        id="main-content"
+        style={{
+          flex: 1, overflowY: 'auto', overflowX: 'hidden',
+          paddingBottom: isFixedLayoutRoute(location.pathname) ? 0 : 80,
+          position: 'relative', zIndex: 1,
+        }}
+        className="main-content">
+        <Outlet />
+      </main>
 
       {/* Bottom nav — mobile only */}
       <div className="bottomnav-mobile">
