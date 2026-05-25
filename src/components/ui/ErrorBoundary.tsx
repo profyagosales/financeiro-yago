@@ -83,6 +83,12 @@ export class ErrorBoundary extends Component<Props, State> {
       return this.props.fallback(this.state.error, this.handleReset)
     }
 
+    // Detecta stale chunk especificamente — mensagem mais direta
+    const msg = this.state.error.message || ''
+    const isStaleChunk = msg.includes('Importing a module script failed')
+                      || msg.includes('Failed to fetch dynamically imported module')
+                      || msg.includes('error loading dynamically imported module')
+
     return (
       <div style={{
         position: 'fixed', inset: 0, zIndex: 99999,
@@ -109,17 +115,22 @@ export class ErrorBoundary extends Component<Props, State> {
             fontFamily: "'Fraunces',Georgia,serif",
             fontSize: 24, fontWeight: 700, color: '#2C1A0F',
             margin: '0 0 10px', letterSpacing: '-0.4px',
-          }}>Algo travou no app</h1>
+          }}>
+            {isStaleChunk ? 'Versão antiga em cache' : 'Algo travou no app'}
+          </h1>
           <p style={{
             fontSize: 14, color: '#7A5C4F', lineHeight: 1.55,
             margin: '0 0 22px',
           }}>
-            Encontramos um erro inesperado. Seus dados financeiros estão seguros — nada foi perdido.
-            Recarregue a página pra continuar.
+            {isStaleChunk
+              ? 'Há uma versão nova disponível. Vamos limpar o cache e recarregar — seus dados financeiros ficam intactos.'
+              : 'Encontramos um erro inesperado. Seus dados financeiros estão seguros — nada foi perdido. Recarregue a página pra continuar.'}
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-            <button onClick={this.handleReload}
+            {/* Pra stale chunk, botão primário é Limpar cache (mais
+                provável de resolver). Recarregar fica secundário. */}
+            <button onClick={isStaleChunk ? this.handleClearCache : this.handleReload}
               style={{
                 padding: '13px 0', borderRadius: 12, border: 'none',
                 background: 'linear-gradient(135deg, #504E76, #3D3B5F)',
@@ -128,9 +139,10 @@ export class ErrorBoundary extends Component<Props, State> {
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 boxShadow: '0 6px 18px rgba(80,78,118,0.35)',
               }}>
-              <IconRefresh size={16} stroke={2.4} /> Recarregar
+              {isStaleChunk ? <IconTrash size={16} stroke={2.4} /> : <IconRefresh size={16} stroke={2.4} />}
+              {isStaleChunk ? 'Limpar cache e recarregar' : 'Recarregar'}
             </button>
-            <button onClick={this.handleClearCache}
+            <button onClick={isStaleChunk ? this.handleReload : this.handleClearCache}
               style={{
                 padding: '11px 0', borderRadius: 12,
                 border: '1.5px solid #EDE6DC', background: '#FBF8F3',
@@ -138,7 +150,8 @@ export class ErrorBoundary extends Component<Props, State> {
                 fontSize: 12.5, fontWeight: 700,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}>
-              <IconTrash size={13} stroke={2.2} /> Limpar cache do app
+              {isStaleChunk ? <IconRefresh size={13} stroke={2.2} /> : <IconTrash size={13} stroke={2.2} />}
+              {isStaleChunk ? 'Só recarregar' : 'Limpar cache do app'}
             </button>
           </div>
 
