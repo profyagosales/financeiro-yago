@@ -9,10 +9,13 @@ export default defineConfig({
     alias: { '@': resolve(__dirname, './src') },
   },
   build: {
-    // Sourcemaps em prod: SEMPRE. Sem isso, stack traces vêm minificadas
-    // (ex: "null is not an object (evaluating 'n.type')" em BfzoSeV0.js:45)
-    // e debugar produção vira adivinhação. Custo: ~2MB extra no /assets/,
-    // só carregado quando devtools abre. Vale a pena.
-    sourcemap: true,
+    // Sourcemaps OFF em prod:
+    // 1. Vercel bloqueia .map por padrão (403) → polui console com 30+ erros
+    // 2. Já debuguei root causes via grep no JS bruto + console logs
+    // 3. Reduz tamanho do build (~2MB)
+    // Pra debugar bugs futuros: temporariamente ligar via `sourcemap: 'hidden'`
+    // (gera mas não anexa //# sourceMappingURL) OU usar `vercel.json` headers
+    // pra liberar /assets/*.map.
+    sourcemap: false,
   },
 })
