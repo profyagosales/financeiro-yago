@@ -643,49 +643,103 @@ export async function wipeInvestmentsOnly() {
 }
 
 // ═══ Seeds ════════════════════════════════════════════════════════════
-let _seeding = false
-export async function seedCategories() {
-  if (_seeding) return
-  _seeding = true
-  try {
-    const count = await db.categorias.count()
-    if (count > 0) {
-      // Categoria nova "Empréstimos & Dívidas" — garantir mesmo em bases antigas
-      const existeEmprestimos = await db.categorias.filter(c => c.nome.toLowerCase().includes('empréstimo') || c.nome.toLowerCase().includes('emprestimo')).first()
-      if (!existeEmprestimos) {
-        await db.categorias.add({ nome: 'Empréstimos & Dívidas', tipo: 'despesa', icone: '', cor: '#B94040', ordem: 11 })
+// R12g: seedCategories agora ATOMIC via db.transaction. Bug histórico:
+// múltiplos boots em paralelo (rounds antes de R12 sequencial) chamavam
+// seedCategories simultâneo. Cada um via count==0 (race) e adicionava
+// 15 categorias → user acabou com 75+ categorias duplicadas (5x cada).
+// Transaction atomic: check + bulkAdd no mesmo lock, race impossível.
+let _seedingPromise: Promise<void> | null = null
+export async function seedCategories(): Promise<void> {
+  if (_seedingPromise) return _seedingPromise
+  _seedingPromise = (async () => {
+    await db.transaction('rw', db.categorias, async () => {
+      const count = await db.categorias.count()
+      if (count > 0) {
+        // Garante "Empréstimos & Dívidas" mesmo em bases antigas
+        const existe = await db.categorias.filter(c =>
+          c.nome.toLowerCase().includes('empréstimo') || c.nome.toLowerCase().includes('emprestimo'),
+        ).first()
+        if (!existe) {
+          await db.categorias.add({ nome: 'Empréstimos & Dívidas', tipo: 'despesa', icone: '', cor: '#B94040', ordem: 11 })
+        }
+        return
       }
-      _seeding = false
-      return
-    }
-    await db.categorias.bulkAdd([
-      { nome: 'Alimentação',          tipo: 'despesa', icone: '', cor: '#E8622A', ordem: 1 },
-      { nome: 'Moradia',              tipo: 'despesa', icone: '', cor: '#3D7EB5', ordem: 2 },
-      { nome: 'Transporte',           tipo: 'despesa', icone: '', cor: '#7C5CBF', ordem: 3 },
-      { nome: 'Saúde',                tipo: 'despesa', icone: '', cor: '#3AA876', ordem: 4 },
-      { nome: 'Lazer',                tipo: 'despesa', icone: '', cor: '#E89527', ordem: 5 },
-      { nome: 'Educação',             tipo: 'despesa', icone: '', cor: '#8B4BC8', ordem: 6 },
-      { nome: 'Vestuário',            tipo: 'despesa', icone: '', cor: '#D94F8A', ordem: 7 },
-      { nome: 'Assinaturas',          tipo: 'despesa', icone: '', cor: '#2AA899', ordem: 8 },
-      { nome: 'Investimentos',        tipo: 'despesa', icone: '', cor: '#1E7D5A', ordem: 9 },
-      { nome: 'Outros gastos',        tipo: 'despesa', icone: '', cor: '#9B8A7A', ordem: 10 },
-      { nome: 'Empréstimos & Dívidas',tipo: 'despesa', icone: '', cor: '#B94040', ordem: 11 },
-      { nome: 'Salário',              tipo: 'receita', icone: '', cor: '#3A8580', ordem: 12 },
-      { nome: 'Freelance',            tipo: 'receita', icone: '', cor: '#1E7D5A', ordem: 13 },
-      { nome: 'Rendimentos',          tipo: 'receita', icone: '', cor: '#D4A017', ordem: 14 },
-      { nome: 'Outros',               tipo: 'receita', icone: '', cor: '#7A5C4F', ordem: 15 },
-    ])
-  } finally { _seeding = false }
+      await db.categorias.bulkAdd([
+        { nome: 'Alimentação',          tipo: 'despesa', icone: '', cor: '#E8622A', ordem: 1 },
+        { nome: 'Moradia',              tipo: 'despesa', icone: '', cor: '#3D7EB5', ordem: 2 },
+        { nome: 'Transporte',           tipo: 'despesa', icone: '', cor: '#7C5CBF', ordem: 3 },
+        { nome: 'Saúde',                tipo: 'despesa', icone: '', cor: '#3AA876', ordem: 4 },
+        { nome: 'Lazer',                tipo: 'despesa', icone: '', cor: '#E89527', ordem: 5 },
+        { nome: 'Educação',             tipo: 'despesa', icone: '', cor: '#8B4BC8', ordem: 6 },
+        { nome: 'Vestuário',            tipo: 'despesa', icone: '', cor: '#D94F8A', ordem: 7 },
+        { nome: 'Assinaturas',          tipo: 'despesa', icone: '', cor: '#2AA899', ordem: 8 },
+        { nome: 'Investimentos',        tipo: 'despesa', icone: '', cor: '#1E7D5A', ordem: 9 },
+        { nome: 'Outros gastos',        tipo: 'despesa', icone: '', cor: '#9B8A7A', ordem: 10 },
+        { nome: 'Empréstimos & Dívidas',tipo: 'despesa', icone: '', cor: '#B94040', ordem: 11 },
+        { nome: 'Salário',              tipo: 'receita', icone: '', cor: '#3A8580', ordem: 12 },
+        { nome: 'Freelance',            tipo: 'receita', icone: '', cor: '#1E7D5A', ordem: 13 },
+        { nome: 'Rendimentos',          tipo: 'receita', icone: '', cor: '#D4A017', ordem: 14 },
+        { nome: 'Outros',               tipo: 'receita', icone: '', cor: '#7A5C4F', ordem: 15 },
+      ])
+    })
+  })()
+  return _seedingPromise
 }
 
-export async function deduplicateCategories() {
+// R12g: dedupe agora REASSIGNA FKs antes de deletar duplicatas.
+// Bug histórico: deletava duplicata mas transações/lancamentos/contasFixas
+// continuavam apontando pro ID deletado → FK órfã (categoriaId inválido).
+// Agora: mantém o MENOR ID por (nome, tipo), reassigna todas as FKs dos
+// IDs duplicados pro ID canônico, depois deleta as duplicatas.
+export async function deduplicateCategories(): Promise<{ removed: number; reassigned: number }> {
   const all = await db.categorias.orderBy('id').toArray()
-  const seen = new Set<string>()
-  const toDelete: number[] = []
+  const canonical = new Map<string, number>()  // key → ID canônico (menor)
+  const remap = new Map<number, number>()      // ID duplicado → ID canônico
   for (const cat of all) {
-    const key = `${cat.nome}|${cat.tipo}`
-    if (seen.has(key)) toDelete.push(cat.id!)
-    else seen.add(key)
+    if (cat.id == null) continue
+    const key = `${cat.nome.trim().toLowerCase()}|${cat.tipo}`
+    const existing = canonical.get(key)
+    if (existing == null) {
+      canonical.set(key, cat.id)
+    } else {
+      remap.set(cat.id, existing)
+    }
   }
-  if (toDelete.length > 0) await db.categorias.bulkDelete(toDelete)
+  if (remap.size === 0) return { removed: 0, reassigned: 0 }
+
+  let reassigned = 0
+  // Reassigna FKs em TODAS as tabelas que apontam pra categoria
+  await db.transaction('rw',
+    [db.transacoes, db.lancamentosCartao, db.contasFixas, db.orcamentos, db.desejos, db.categorias],
+    async () => {
+      for (const [dupId, canId] of remap.entries()) {
+        // transacoes
+        const txCount = await db.transacoes.where('categoriaId').equals(dupId)
+          .modify({ categoriaId: canId, updatedAt: Date.now() })
+        reassigned += txCount
+        // lancamentosCartao (categoriaId não indexado → filter scan)
+        const lancCount = await db.lancamentosCartao.filter(l => l.categoriaId === dupId)
+          .modify({ categoriaId: canId, updatedAt: Date.now() })
+        reassigned += lancCount
+        // contasFixas
+        const cfCount = await db.contasFixas.where('categoriaId').equals(dupId)
+          .modify({ categoriaId: canId, updatedAt: Date.now() })
+        reassigned += cfCount
+        // orcamentos
+        const orcCount = await db.orcamentos.where('categoriaId').equals(dupId)
+          .modify({ categoriaId: canId, updatedAt: Date.now() })
+        reassigned += orcCount
+        // desejos (categoriaId não indexado → filter)
+        const desCount = await db.desejos.filter(d => d.categoriaId === dupId)
+          .modify({ categoriaId: canId, updatedAt: Date.now() })
+        reassigned += desCount
+      }
+      // Agora seguro deletar duplicatas — todas FKs já reassinadas
+      await db.categorias.bulkDelete([...remap.keys()])
+    },
+  )
+
+  const removed = remap.size
+  console.log(`[dedupe] removidas ${removed} categorias duplicadas, ${reassigned} FKs reassinadas`)
+  return { removed, reassigned }
 }
