@@ -144,9 +144,20 @@ export const TABLES: Record<string, TableConfig> = {
   },
 }
 
-// Ordem final filtrada (só tabelas que realmente existem no TABLES map)
+// Ordem final filtrada (só tabelas que realmente existem no TABLES map).
+//
+// R12f: appConfig REMOVIDO do sync. Histórico:
+// - R9 tentou usar pra cross-device cache de lastDolar → bug crítico
+//   (unique constraint &key violation em pull → corrompia optimisticOps)
+// - R12b moveu lastDolar pra localStorage; appConfig ficou sem uso real
+// - Sync continuava enviando rows legacy lastDolar com id=null → 400
+//   "null value in column id" repetidamente
+// - Solução: tirar appConfig do sync inteiro. Local-only.
+// Migration R12 limpa rows legacy. Se você precisar de prefs cross-device
+// no futuro, use estrutura diferente (talvez tabela própria com schema
+// alinhado, ou Storage Supabase pra JSON pequeno).
 export const SYNC_TABLES_ORDERED: string[] = [
-  'categorias', 'contas', 'cartoes', 'metas', 'appConfig',
+  'categorias', 'contas', 'cartoes', 'metas',
   'orcamentos', 'transacoes', 'lancamentosCartao', 'contasFixas', 'investimentos',
   'pagamentosFixos', 'investimentosAportes', 'investimentosProventos', 'investimentosMovimentacoes', 'dividas',
   'desejos',

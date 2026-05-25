@@ -5,7 +5,7 @@
 // O service worker mantém o app rodando offline depois da primeira
 // visita: ícones, fontes, JS bundle, etc ficam cacheados.
 
-const CACHE_NAME = 'financeiro-yago-v15-r12e-perf-overhaul'
+const CACHE_NAME = 'financeiro-yago-v16-r12f-appconfig-out-skipwaiting'
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -22,22 +22,28 @@ const CORE_ASSETS = [
 
 // Install: pré-cache dos assets core. NÃO faz skipWaiting automático —
 // o client (AppShell) detecta `registration.waiting` e mostra toast pro
-// user; só quando ele clica "Atualizar" mandamos SKIP_WAITING aqui.
+// R12f: skipWaiting() AUTOMÁTICO. Era opt-in (só via SKIP_WAITING msg do
+// client), mas user reportou que PWA Mac/iPhone ficava preso em versões
+// antigas mesmo após múltiplos deploys. Cada deploy gera novos hashes de
+// chunk, e SW velho servia HTML cached apontando pra hashes deletados →
+// 404 em loop → ErrorBoundary. Aceitar troca imediata é o trade-off certo
+// pra app financeiro com user único: zero risco de race entre dois clientes.
 self.addEventListener('install', (event) => {
+  self.skipWaiting()
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(CORE_ASSETS).catch(() => { /* alguns assets podem falhar em dev */ }))
   )
 })
 
-// Mensagens do client: 'SKIP_WAITING' ativa a versão nova imediatamente.
+// Mensagens do client: 'SKIP_WAITING' redundante mas mantido pra compat.
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting()
   }
 })
 
-// Activate: limpa caches antigos
+// Activate: limpa TODOS caches antigos + claim imediato pros clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()

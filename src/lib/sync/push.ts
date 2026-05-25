@@ -100,6 +100,12 @@ export async function pushTable(tableName: string, opts: { force?: boolean } = {
       const existingRemote = getRemoteId(tableName, r.id)
       if (existingRemote) payload.id = existingRemote
 
+      // R12f defesa: NUNCA envia id como null/undefined no payload.
+      // Algumas tabelas (ex: app_config legacy) tinham id NOT NULL no remote
+      // mas sem default funcionando — null causava 400 'violates not-null'.
+      // Se não tem mapping (insert novo), deixa Supabase gerar via default.
+      if (payload.id == null) delete payload.id
+
       payloads.push(payload)
       localIds.push(r.id)
       const u = (r.updatedAt as number) ?? 0
