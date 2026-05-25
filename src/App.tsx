@@ -1,16 +1,21 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { AuthFlow } from '@/screens/AuthFlow'
-import { AppShell } from '@/components/layout/AppShell'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
-// ─── Lazy-loaded routes ──────────────────────────────────────────────
-// Cada rota vira um chunk próprio. Bundle inicial cai de ~1.9MB pra ~600kb,
-// first-paint mais rápido especialmente em 4G e em PWA cold start.
-// Dashboard é eager (rota inicial — usuário sempre carrega) pra evitar
-// flash de loading no boot. As outras carregam sob demanda.
-import { Page as DashboardPage } from '@/modules/dashboard'
+// R12i: AppShell lazy + DashboardPage lazy. Antes carregavam ESTATICAMENTE
+// no bundle index — forçando ~600KB de Dexie/Supabase/framer/Recharts a
+// dar parse antes do AuthFlow nem montar. Em PWA Safari standalone (sem
+// JIT desde iOS 16), parse de 935KB demorava 3-8s = tela branca.
+// Agora: bundle inicial só tem AuthFlow + ErrorBoundary + React Router.
+// AppShell + Dashboard só carregam DEPOIS do unlock.
+const AppShell = lazy(() => import('@/components/layout/AppShell').then(m => ({ default: m.AppShell })))
 
+// ─── Lazy-loaded routes ──────────────────────────────────────────────
+// R12i: TUDO lazy (Dashboard também). Era eager pra evitar flash, mas
+// trazia chunk de Recharts (325KB) pro bundle inicial — destruía boot.
+// Skeleton no Suspense fallback resolve o flash visualmente.
+const DashboardPage    = lazy(() => import('@/modules/dashboard').then(m => ({ default: m.Page })))
 const TransacoesPage   = lazy(() => import('@/modules/transacoes').then(m => ({ default: m.Page })))
 const CartoesPage      = lazy(() => import('@/modules/cartoes').then(m => ({ default: m.Page })))
 const MaisPage         = lazy(() => import('@/modules/mais').then(m => ({ default: m.Page })))
@@ -55,9 +60,10 @@ export default function App() {
     <ErrorBoundary>
       <AuthFlow>
         <BrowserRouter>
+          <Suspense fallback={<RouteLoading />}>
           <Routes>
             <Route path="/" element={<AppShell />}>
-              <Route index element={<DashboardPage />} />
+              <Route index element={<Suspense fallback={<RouteLoading />}><DashboardPage /></Suspense>} />
               <Route path="transacoes" element={<Suspense fallback={<RouteLoading />}><TransacoesPage /></Suspense>} />
               <Route path="cartoes" element={<Suspense fallback={<RouteLoading />}><CartoesPage /></Suspense>} />
               <Route path="mais" element={<Suspense fallback={<RouteLoading />}><MaisPage /></Suspense>} />
@@ -71,6 +77,7 @@ export default function App() {
               <Route path="configuracoes" element={<Suspense fallback={<RouteLoading />}><ConfiguracoesPage /></Suspense>} />
             </Route>
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthFlow>
     </ErrorBoundary>

@@ -7,7 +7,6 @@
 //   - tudo OK           → children (app)
 
 import { useEffect } from 'react'
-import { motion } from 'framer-motion'
 import { useAuthStore } from '@/store/auth'
 import { AuthBackground, AuthCard } from './AuthBackground'
 import { WelcomeScreen } from './WelcomeScreen'
@@ -23,6 +22,7 @@ export function AuthFlow({ children }: { children: React.ReactNode }) {
   if (!loading && hasSession && hasPin && isUnlocked) return <>{children}</>
 
   if (loading) {
+    // R12i: SEM framer-motion no splash. spinner é CSS pura (animação leve).
     return (
       <>
         <AuthBackground />
@@ -31,23 +31,17 @@ export function AuthFlow({ children }: { children: React.ReactNode }) {
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           minHeight: '100dvh', gap: 20,
         }}>
-          <motion.div
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-          >
-            <Logo variant="mark" size={72} />
-          </motion.div>
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+          <Logo variant="mark" size={72} />
+          <div
             style={{
               width: 26, height: 26,
               border: '2.5px solid rgba(242,199,69,0.18)',
               borderTopColor: '#F2C745',
               borderRadius: '50%',
+              animation: 'fy-splash-spin 1s linear infinite',
             }}
           />
+          <style>{`@keyframes fy-splash-spin{to{transform:rotate(360deg)}}`}</style>
         </div>
       </>
     )

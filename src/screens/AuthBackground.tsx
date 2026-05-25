@@ -1,8 +1,9 @@
 // ─── Fundo das telas de autenticação ────────────────────────────────
-// Gradient profundo roxo (mesmo do hero do Dashboard) + orbs decorativos
-// + ruído sutil. AuthCard é o cartão "vidro" centralizado por cima.
+// R12i: TUDO ESTÁTICO. Orbs animados infinitos (4 motion.div com blur
+// grande) eram um dos culpados da tela branca de 5-10s no boot. PWA
+// Safari iOS desabilita JIT — parse de framer-motion + 4 orbs animando
+// simultâneo destruía perf. Gradient + orbs estáticos preservam estilo.
 
-import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 
 export function AuthBackground() {
@@ -11,28 +12,16 @@ export function AuthBackground() {
       aria-hidden
       style={{
         position: 'fixed', inset: 0, zIndex: 0,
-        background: 'radial-gradient(circle at 25% 15%, #3A2D54 0%, #2A1E3F 38%, #1A1228 100%)',
+        // Gradiente já cobre 95% do estilo visual sem custo de animação
+        background: `
+          radial-gradient(circle at 78% -8%, rgba(212,160,23,0.18), transparent 35%),
+          radial-gradient(circle at -6% 58%, rgba(196,85,59,0.14), transparent 40%),
+          radial-gradient(circle at 50% 88%, rgba(80,78,118,0.24), transparent 45%),
+          radial-gradient(circle at 25% 15%, #3A2D54 0%, #2A1E3F 38%, #1A1228 100%)
+        `,
         overflow: 'hidden',
       }}
     >
-      {/* Orbs animados — paleta direta da marca */}
-      <Orb left="78%" top="-8%"   size={520} color="rgba(212,160,23,0.32)" dur={22} delay={0} />
-      <Orb left="-6%" top="58%"   size={460} color="rgba(196,85,59,0.22)"  dur={26} delay={3} />
-      <Orb left="50%" top="88%"   size={620} color="rgba(80,78,118,0.36)"  dur={30} delay={6} />
-      <Orb left="14%" top="12%"   size={300} color="rgba(242,199,69,0.16)" dur={18} delay={9} />
-
-      {/* Ruído sutil (textura fina) */}
-      <div
-        style={{
-          position: 'absolute', inset: 0,
-          backgroundImage:
-            'radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px)',
-          backgroundSize: '3px 3px',
-          mixBlendMode: 'overlay',
-          opacity: 0.6,
-        }}
-      />
-
       {/* Vinheta sutil pra puxar foco pro centro */}
       <div
         style={{
@@ -44,33 +33,13 @@ export function AuthBackground() {
   )
 }
 
-function Orb({ left, top, size, color, dur, delay }: {
-  left: string; top: string; size: number; color: string; dur: number; delay: number
-}) {
-  return (
-    <motion.div
-      animate={{
-        x: [0, 40, -28, 0],
-        y: [0, -32, 22, 0],
-        scale: [1, 1.06, 0.96, 1],
-      }}
-      transition={{ duration: dur, repeat: Infinity, ease: 'easeInOut', delay }}
-      style={{
-        position: 'absolute', left, top, width: size, height: size,
-        borderRadius: '50%', background: color,
-        filter: `blur(${Math.round(size / 2.6)}px)`,
-        transform: 'translate(-50%, -50%)',
-        pointerEvents: 'none',
-      }}
-    />
-  )
-}
-
 // ─── AuthCard: vidro premium centralizado ───────────────────────────
 // Layout pattern: margin auto pra centrar quando cabe + anchor topo
 // quando estoura (keyboard aberto, iPhone SE, etc.). Safe-area top/bot
 // respeitados via max(clamp, env) — não cola no notch/home-indicator.
 export function AuthCard({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+  // R12i: motion.div substituído por <div> puro. Spring scale+y no mount
+  // era ~250ms de animation block — perceptível em devices lentos.
   return (
     <div style={{
       position: 'relative', zIndex: 1,
@@ -81,10 +50,7 @@ export function AuthCard({ children, wide = false }: { children: ReactNode; wide
       paddingLeft: 'clamp(16px, 4vw, 32px)',
       paddingRight: 'clamp(16px, 4vw, 32px)',
     }}>
-      <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 220, damping: 24 }}
+      <div
         style={{
           position: 'relative',
           background: 'rgba(255,255,255,0.96)',
@@ -94,14 +60,12 @@ export function AuthCard({ children, wide = false }: { children: ReactNode; wide
           padding: 'clamp(24px, 4vw, 36px) clamp(20px, 4vw, 32px)',
           width: '100%',
           maxWidth: wide ? 480 : 400,
-          // Auto margins: centraliza quando cabe, anchor no topo se estoura
           margin: 'auto',
           boxShadow:
             '0 24px 60px rgba(13,5,25,0.42), 0 6px 18px rgba(13,5,25,0.24), inset 0 1px 0 rgba(255,255,255,0.6)',
           border: '1px solid rgba(255,255,255,0.7)',
         }}
       >
-        {/* Highlight superior sutil — borda luminosa */}
         <div
           aria-hidden
           style={{
@@ -111,7 +75,7 @@ export function AuthCard({ children, wide = false }: { children: ReactNode; wide
           }}
         />
         {children}
-      </motion.div>
+      </div>
     </div>
   )
 }
