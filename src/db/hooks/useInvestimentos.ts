@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Investimento, type InvestimentoTipo, type InvestimentoProvento, type InvestimentoAporte, type InvestimentoMovimentacao } from '../schema'
 import { getTaxasBenchmark, calcTaxaEfetiva, getBrapiToken } from './useAppConfig'
@@ -495,18 +496,27 @@ export function calcVendasStats(movs: InvestimentoMovimentacao[]) {
 // lê o `_ultimoDolar` síncrono já atualizado.
 let _ultimoDolar = 5.40
 
-// Hook reativo: re-renderiza components quando lastDolar muda em appConfig
+// Hook reativo: re-renderiza components quando lastDolar muda em appConfig.
+//
+// CRÍTICO: NÃO mutar _ultimoDolar durante render (era bug R9 que causava
+// re-render loop em React 19 + crash 'null is not an object' por hooks
+// fora de ordem). Sincronização vai pra useEffect.
 export function useDolar(): number {
   const stored = useLiveQuery(
     () => db.appConfig.where('key').equals('lastDolar').first(),
     [],
   )
   const v = stored?.value as number | undefined
-  // Sincroniza _ultimoDolar com appConfig (caso pull tenha vindo de outro device)
-  if (typeof v === 'number' && v > 0 && v !== _ultimoDolar) {
-    _ultimoDolar = v
-  }
-  return _ultimoDolar
+
+  // Sincroniza módulo-level FORA do render (useEffect)
+  useEffect(() => {
+    if (typeof v === 'number' && v > 0 && v !== _ultimoDolar) {
+      _ultimoDolar = v
+    }
+  }, [v])
+
+  // Retorna o valor reativo se disponível, _ultimoDolar como fallback
+  return typeof v === 'number' && v > 0 ? v : _ultimoDolar
 }
 
 export async function fetchDolarECache(): Promise<number> {

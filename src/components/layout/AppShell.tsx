@@ -96,20 +96,21 @@ function BackgroundMesh() {
   // Respeita prefers-reduced-motion: orbs ficam estáticas, sem animação
   // (continuam visíveis pra preservar identidade visual, mas sem movimento).
   const reduceMotion = useReducedMotion()
+  // EMERGÊNCIA perf R11: reduzido pra 2 orbs MENORES com blur menor.
+  // Antes: 4 orbs com size=700 + blur(291px) — destruía GPU em Mac/iPhone
+  // standalone PWA. blur grande força compositor a pintar layer enorme
+  // a cada frame, causando 30+ fps drops.
   const orbs = [
-    { left: '72%', top: '0%',  color: 'rgba(196,85,59,0.32)',  size: 700, dur: 14, delay: 0 },
-    { left: '90%', top: '50%', color: 'rgba(58,133,128,0.26)', size: 580, dur: 17, delay: 3 },
-    { left: '50%', top: '85%', color: 'rgba(212,160,23,0.22)', size: 500, dur: 20, delay: 6 },
-    { left: '12%', top: '28%', color: 'rgba(196,85,59,0.14)',  size: 440, dur: 24, delay: 9 },
+    { left: '78%', top: '8%',  color: 'rgba(196,85,59,0.22)', size: 380, dur: 24, delay: 0 },
+    { left: '20%', top: '78%', color: 'rgba(58,133,128,0.18)', size: 320, dur: 28, delay: 5 },
   ]
   return (
     <div data-decorative-motion="true" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
       {orbs.map((orb, i) => (
         <motion.div key={i}
           animate={reduceMotion ? undefined : {
-            x: [0, 50, -32, 0],
-            y: [0, -40, 26, 0],
-            scale: [1, 1.08, 0.94, 1],
+            x: [0, 30, -20, 0],
+            y: [0, -25, 18, 0],
           }}
           transition={reduceMotion ? undefined : { duration: orb.dur, repeat: Infinity, ease: 'easeInOut', delay: orb.delay }}
           style={{
@@ -120,10 +121,9 @@ function BackgroundMesh() {
             height: orb.size,
             borderRadius: '50%',
             background: orb.color,
-            filter: `blur(${orb.size / 2.4}px)`,
+            // blur reduzido pra 80px fixo (era ~290px) — GPU agradece
+            filter: 'blur(80px)',
             transform: 'translate(-50%, -50%)',
-            // GPU hint: força compositor a manter orb em layer separada,
-            // evita repaint da árvore principal durante o tween x/y/scale.
             willChange: reduceMotion ? 'auto' : 'transform',
           }}
         />
