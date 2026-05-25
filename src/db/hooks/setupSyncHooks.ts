@@ -40,12 +40,17 @@ export function setupSyncHooks() {
     // Bug histórico 2: pull em device A escrevia local → updating hook → push
     // → device B recebia → updating hook → push de volta = loop perpétuo.
     // Fix: pull seta isPulling()=true, hook checa e pula triggerPush.
+    // BUG R11/12: retornar `{ ...mods, updatedAt }` (objeto INTEIRO) corrompia
+    // o `optimisticOps` do dexie-react-hooks → crash 'null is not an object
+    // evaluating n.type' em dr@reduce após 'entrar na plataforma'.
+    // Docs Dexie: hook updating deve retornar APENAS o DELTA de novas mods,
+    // não mods inteiro. Returning `{ updatedAt: Date.now() }` é correto.
     table.hook('updating', (mods: Record<string, unknown>) => {
       if (!isPulling()) {
         queueMicrotask(() => triggerPush())
       }
       if (!('updatedAt' in mods)) {
-        return { ...mods, updatedAt: Date.now() }
+        return { updatedAt: Date.now() }  // só o DELTA — não { ...mods }
       }
       return undefined
     })

@@ -44,7 +44,20 @@ function RouteLoading() {
 
 export default function App() {
   useEffect(() => {
-    seedCategories().then(deduplicateCategories)
+    // Sequencial pra evitar race com initSyncEngine no AppShell que pode
+    // estar instalando hooks/triggerPush simultaneamente.
+    let cancelled = false
+    ;(async () => {
+      try {
+        if (cancelled) return
+        await seedCategories()
+        if (cancelled) return
+        await deduplicateCategories()
+      } catch (e) {
+        console.warn('[App] seed/dedupe falhou:', e)
+      }
+    })()
+    return () => { cancelled = true }
   }, [])
 
   return (

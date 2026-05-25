@@ -142,21 +142,40 @@ export function AppShell() {
   useAutoLock()
   useNotificationCheck()
 
-  // ── Sync engine: instala hooks + boot única vez por sessão ──
-  // ── Migrations idempotentes (status legados → canônico) ──
-  // ── Renovação de pagamentos fixos (idempotente): garante 12 meses
-  //    futuros pra cada conta fixa ativa. Sem isso, conta cadastrada
-  //    há > 12 meses pararia de aparecer na lista mensal.
-  // ── Cotação dólar: carregada no boot pra ativos USD não ficarem
-  //    convertidos a R$5.40 (default) até user abrir /investimentos.
+  // ── Boot tasks SEQUENCIAIS — evita race no IndexedDB ──
+  // Bug R11: setupSyncHooks + initSyncEngine + migrate + garantir + ensureDolar
+  // rodando em paralelo causavam corrupção do `optimisticOps` do dexie-react-hooks
+  // ('null is not an object evaluating n.type' em dr@reduce). Múltiplas
+  // operações concorrentes no mesmo IDB scope podiam deixar slot null no
+  // optimisticOps array — depois subscriber tentava .type e crashava.
+  //
+  // Sequência correta:
+  //   1. setupSyncHooks — síncrono, instala hooks
+  //   2. migrateStatusToCanonical — write batch idempotente
+  //   3. garantirPagamentosFuturosTodas — write batch idempotente
+  //   4. ensureDolarLoaded — read appConfig + fetch
+  //   5. initSyncEngine — connect realtime + cycle
+  // Cada um aguarda o anterior. Total <300ms em rede ok.
   useEffect(() => {
     setupSyncHooks()
-    void initSyncEngine()
-    void migrateStatusToCanonical()
-    void garantirPagamentosFuturosTodas()
-    // Cotação dólar global (cripto/ativos USD). Lazy import — não bloqueia
-    // boot e não força chunk de investimentos no bundle inicial.
-    void import('@/db/hooks/useInvestimentos').then(m => m.ensureDolarLoaded()).catch(() => { /* offline: usa default 5.40 */ })
+    let cancelled = false
+    ;(async () => {
+      try {
+        if (cancelled) return
+        await migrateStatusToCanonical().catch(e => console.warn('[boot] migrate:', e))
+        if (cancelled) return
+        await garantirPagamentosFuturosTodas().catch(e => console.warn('[boot] fixas:', e))
+        if (cancelled) return
+        await import('@/db/hooks/useInvestimentos')
+          .then(m => m.ensureDolarLoaded())
+          .catch(e => console.warn('[boot] dolar:', e))
+        if (cancelled) return
+        await initSyncEngine().catch(e => console.warn('[boot] sync:', e))
+      } catch (e) {
+        console.error('[boot] sequence failed:', e)
+      }
+    })()
+    return () => { cancelled = true }
   }, [])
 
   // ── PWA shortcut: ?action=new abre o FAB ──
