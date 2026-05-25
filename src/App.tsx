@@ -1,9 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { useEffect, lazy, Suspense } from 'react'
+import { lazy, Suspense } from 'react'
 import { AuthFlow } from '@/screens/AuthFlow'
 import { AppShell } from '@/components/layout/AppShell'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
-import { seedCategories, deduplicateCategories } from '@/db/schema'
 
 // ─── Lazy-loaded routes ──────────────────────────────────────────────
 // Cada rota vira um chunk próprio. Bundle inicial cai de ~1.9MB pra ~600kb,
@@ -42,24 +41,16 @@ function RouteLoading() {
   )
 }
 
+// R12h: REMOVIDO seedCategories + deduplicateCategories do App.tsx.
+// Bug: rodavam ANTES do PIN unlock, bloqueando main thread com Dexie
+// transaction pesada (dedupe de 60+ categorias × reassign FKs em 5
+// tabelas com centenas de transações). PWA Mac ficava com tela branca
+// 5-10s, congelando até o sistema.
+//
+// Agora rodam no AppShell APÓS o unlock — tela de PIN é instantânea,
+// boot tasks rodam quando o user já está vendo o Dashboard (skeleton
+// loaders escondem qualquer delay).
 export default function App() {
-  useEffect(() => {
-    // Sequencial pra evitar race com initSyncEngine no AppShell que pode
-    // estar instalando hooks/triggerPush simultaneamente.
-    let cancelled = false
-    ;(async () => {
-      try {
-        if (cancelled) return
-        await seedCategories()
-        if (cancelled) return
-        await deduplicateCategories()
-      } catch (e) {
-        console.warn('[App] seed/dedupe falhou:', e)
-      }
-    })()
-    return () => { cancelled = true }
-  }, [])
-
   return (
     <ErrorBoundary>
       <AuthFlow>

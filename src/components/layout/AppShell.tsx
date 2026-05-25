@@ -126,22 +126,43 @@ export function AppShell() {
   useEffect(() => {
     setupSyncHooks()
     let cancelled = false
-    ;(async () => {
-      try {
-        if (cancelled) return
-        await migrateStatusToCanonical().catch(e => console.warn('[boot] migrate:', e))
-        if (cancelled) return
-        await garantirPagamentosFuturosTodas().catch(e => console.warn('[boot] fixas:', e))
-        if (cancelled) return
-        await import('@/db/hooks/useInvestimentos')
-          .then(m => m.ensureDolarLoaded())
-          .catch(e => console.warn('[boot] dolar:', e))
-        if (cancelled) return
-        await initSyncEngine().catch(e => console.warn('[boot] sync:', e))
-      } catch (e) {
-        console.error('[boot] sequence failed:', e)
-      }
-    })()
+    // R12h: defer pra requestIdleCallback (ou setTimeout 100ms fallback)
+    // pra NÃO bloquear o primeiro paint do AppShell. Boot tasks são
+    // todas idempotent e podem rodar quando browser tiver folga. O user
+    // já vê Dashboard com skeleton enquanto isso rola em background.
+    const scheduleBootTasks = () => {
+      void (async () => {
+        try {
+          // 0. Lazy seed das categorias (caso não tenha rodado ainda em
+          //    sessão nova). + dedupe defensivo (fix de bases corruptas R9).
+          //    MOVIDO de App.tsx pra cá pra não bloquear PIN screen.
+          if (cancelled) return
+          const { seedCategories, deduplicateCategories } = await import('@/db/schema')
+          await seedCategories().catch(e => console.warn('[boot] seed:', e))
+          if (cancelled) return
+          await deduplicateCategories().catch(e => console.warn('[boot] dedupe:', e))
+          if (cancelled) return
+          await migrateStatusToCanonical().catch(e => console.warn('[boot] migrate:', e))
+          if (cancelled) return
+          await garantirPagamentosFuturosTodas().catch(e => console.warn('[boot] fixas:', e))
+          if (cancelled) return
+          await import('@/db/hooks/useInvestimentos')
+            .then(m => m.ensureDolarLoaded())
+            .catch(e => console.warn('[boot] dolar:', e))
+          if (cancelled) return
+          await initSyncEngine().catch(e => console.warn('[boot] sync:', e))
+        } catch (e) {
+          console.error('[boot] sequence failed:', e)
+        }
+      })()
+    }
+    // requestIdleCallback não existe em Safari — fallback pra setTimeout
+    const ric = (window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback
+    if (typeof ric === 'function') {
+      ric(scheduleBootTasks, { timeout: 1500 })
+    } else {
+      setTimeout(scheduleBootTasks, 100)
+    }
     return () => { cancelled = true }
   }, [])
 
