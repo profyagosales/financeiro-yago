@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { IconUpload, IconTrash, IconClipboard } from '@tabler/icons-react'
+import { IconUpload, IconTrash, IconClipboard, IconLoader2 } from '@tabler/icons-react'
 import { BankLogo } from './BankLogo'
 
 // ─── LogoUploader ─────────────────────────────────────────────────────
@@ -12,6 +12,15 @@ import { BankLogo } from './BankLogo'
 //  - Validação de tamanho (max ~500KB recomendado)
 //  - Compressão automática (resize pra 256x256 max)
 //  - Fallback: mostra BankLogo com iniciais quando vazio
+//
+// R12j: refatorado pra ser ROBUSTO em PWA Safari standalone:
+// - createImageBitmap() em vez de new Image() (suporta HEIC do iPhone,
+//   PNG, JPG, WebP de forma uniforme — sem onload/onerror que falham
+//   silenciosamente em Safari)
+// - try/catch em CADA step com setError() visível
+// - Loading state durante processamento (era invisível antes — user
+//   selecionava foto e "nada acontecia")
+// - Console.log em cada step pra debug
 
 interface LogoUploaderProps {
   logo?: string                          // base64 atual
@@ -27,43 +36,100 @@ export function LogoUploader({ logo, nome, cor, onChange }: LogoUploaderProps) {
   const [dragOver, setDragOver] = useState(false)
   const [pasteHover, setPasteHover] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [processing, setProcessing] = useState(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   const processFile = useCallback(async (file: File) => {
+    console.log('[LogoUploader] processFile started:', file.name, file.type, file.size)
     setError(null)
-    if (!file.type.startsWith('image/')) {
-      setError('Apenas imagens são aceitas')
-      return
-    }
-    // Lê o arquivo
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-      const dataUrl = e.target?.result as string
-      // Resize via canvas pra reduzir tamanho
-      const img = new Image()
-      img.onload = () => {
-        const ratio = Math.min(1, MAX_DIM / Math.max(img.width, img.height))
-        const w = Math.round(img.width * ratio)
-        const h = Math.round(img.height * ratio)
-        const canvas = document.createElement('canvas')
-        canvas.width = w
-        canvas.height = h
-        const ctx = canvas.getContext('2d')
-        if (!ctx) { onChange(dataUrl); return }
-        ctx.drawImage(img, 0, 0, w, h)
-        const out = canvas.toDataURL('image/png', 0.9)
-        if (out.length > MAX_BYTES * 1.5) {
-          // try jpeg
-          const jpg = canvas.toDataURL('image/jpeg', 0.85)
-          onChange(jpg)
-        } else {
-          onChange(out)
-        }
+    setProcessing(true)
+    try {
+      // Aceita "image/*" + HEIC (mime varia: image/heic, image/heif)
+      const isImage = file.type.startsWith('image/')
+                   || /\.(heic|heif|jpe?g|png|webp|gif|svg)$/i.test(file.name)
+      if (!isImage) {
+        setError('Apenas imagens são aceitas')
+        return
       }
-      img.onerror = () => onChange(dataUrl)
-      img.src = dataUrl
+      if (file.size === 0) {
+        setError('Arquivo vazio')
+        return
+      }
+      if (file.size > 15_000_000) {
+        setError('Imagem muito grande (>15MB)')
+        return
+      }
+
+      // Decode + resize via createImageBitmap (suporta HEIC em Safari moderno)
+      let bitmap: ImageBitmap | null = null
+      try {
+        bitmap = await createImageBitmap(file)
+        console.log('[LogoUploader] bitmap created:', bitmap.width, 'x', bitmap.height)
+      } catch (bitmapErr) {
+        console.warn('[LogoUploader] createImageBitmap falhou, tentando fallback img tag:', bitmapErr)
+        // Fallback: FileReader + Image() pra browsers velhos
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = e => resolve(e.target?.result as string)
+          reader.onerror = () => reject(new Error('FileReader falhou'))
+          reader.readAsDataURL(file)
+        })
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const i = new Image()
+          i.onload = () => resolve(i)
+          i.onerror = () => reject(new Error('Image decode falhou — formato pode não ser suportado (HEIC?)'))
+          // Timeout: 8s pra decode
+          setTimeout(() => reject(new Error('Timeout no decode da imagem')), 8000)
+          i.src = dataUrl
+        })
+        // cast pra ter mesma interface: { width, height } + drawable
+        bitmap = img as unknown as ImageBitmap
+      }
+
+      const srcW = bitmap.width
+      const srcH = bitmap.height
+      if (!srcW || !srcH) {
+        setError('Imagem inválida (dimensões zero)')
+        return
+      }
+
+      const ratio = Math.min(1, MAX_DIM / Math.max(srcW, srcH))
+      const w = Math.round(srcW * ratio)
+      const h = Math.round(srcH * ratio)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        setError('Canvas não disponível no navegador')
+        return
+      }
+      ctx.drawImage(bitmap as CanvasImageSource, 0, 0, w, h)
+      console.log('[LogoUploader] redimensionada pra', w, 'x', h)
+
+      // Tenta PNG primeiro, JPEG se grande demais
+      let out = canvas.toDataURL('image/png', 0.9)
+      if (out.length > MAX_BYTES * 1.5) {
+        out = canvas.toDataURL('image/jpeg', 0.85)
+        console.log('[LogoUploader] PNG grande, usando JPEG:', out.length, 'bytes')
+      } else {
+        console.log('[LogoUploader] PNG:', out.length, 'bytes')
+      }
+
+      if (!out || out === 'data:,') {
+        setError('Falha ao gerar imagem final')
+        return
+      }
+
+      onChange(out)
+      console.log('[LogoUploader] ✓ logo salva com sucesso')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      console.error('[LogoUploader] erro processando arquivo:', e)
+      setError(`Erro: ${msg}`)
+    } finally {
+      setProcessing(false)
     }
-    reader.readAsDataURL(file)
   }, [onChange])
 
   const handleDrop = (e: React.DragEvent) => {
@@ -116,8 +182,13 @@ export function LogoUploader({ logo, nome, cor, onChange }: LogoUploaderProps) {
             color: '#2C1A0F', margin: 0,
             display: 'inline-flex', alignItems: 'center', gap: 6,
           }}>
-            <IconUpload size={14} stroke={2} color="#7A5C4F" />
-            {logo ? 'Trocar logo' : 'Adicionar logo do banco'}
+            {processing ? (
+              <IconLoader2 size={14} stroke={2} color="#7A5C4F" style={{ animation: 'fy-spin 1s linear infinite' }} />
+            ) : (
+              <IconUpload size={14} stroke={2} color="#7A5C4F" />
+            )}
+            {processing ? 'Processando…' : logo ? 'Trocar logo' : 'Adicionar logo do banco'}
+            <style>{`@keyframes fy-spin{to{transform:rotate(360deg)}}`}</style>
           </p>
           <p style={{
             fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 11, fontWeight: 500,
